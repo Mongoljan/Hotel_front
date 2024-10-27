@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { schemaLogin } from '../../schema';
@@ -25,6 +25,21 @@ export default function LoginPage() {
   } = useForm<FormFields>({
     resolver: zodResolver(schemaLogin),
   });
+  useEffect(() => {
+    // Check if user is already logged in
+    const token = Cookies.get('jwtToken');
+    const userType = Cookies.get('userType');
+
+    if (token) {
+      // Redirect based on user type
+      if (userType === 'Owner') {
+        router.push('/admin/dashboard');
+      } else if (userType === 'SuperAdmin') {
+        router.push('/superadmin/dashboard');
+      }
+    }
+  }, [router]);
+
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     try {
@@ -58,17 +73,22 @@ export default function LoginPage() {
   
         // Store token and userType in cookies
         Cookies.set('jwtToken', responseData.token, {
-          expires: 1, // Set expiration as desired
+          expires: 0.02083,  // Set expiration as desired
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'Strict',
         });
   
         Cookies.set('userType', userType, {
-          expires: 1,
+          expires: 0.02083, 
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'Strict',
         });
         Cookies.set('hotelName', responseData.hotel_name, {
+          expires: 0.02083,  // 1 day expiration
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'Strict',
+        });
+        Cookies.set('pk', responseData.pk, {
           expires: 0.02083,  // 1 day expiration
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'Strict',
@@ -110,7 +130,7 @@ export default function LoginPage() {
 <div className="mb-5"> Аккаунт байхгүй юу?   
 <Link
             className="text-blue-500 ml-[4px] hover:text-blue-300"
-            href={"/auth/SignUp"}
+            href={"/auth/register"}
           >
             Бүртгүүлэх
           </Link>

@@ -110,6 +110,30 @@ export const schemaRegistration = z
   }),
 })
 
+export const schemaHotelRegistration = z.object({
+  email: z
+    .string()
+    .email({ message: "Email format is invalid" })
+    .max(255, { message: "Email address cannot exceed 255 characters" }),
+  hotel_name: z
+    .string()
+    .min(3, { message: "Зочид буудлын нэр 3-аас дээш тэмдэгттэй байх ёстой" }),
+  contact_number: z
+    .string()
+    .min(3, { message: "Гар утасны дугаар багадаа 3 оронтой байна." }),
+  address: z
+    .string()
+    .min(3, { message: "Зочид буудлын хаяг 3-аас дээш тэмдэгттэй байх ёстой" }),
+  map_url: z
+    .string()
+    .max(200, {message :"Google map дээрээс хийсэн холбоос нь 200 тэмдэгтээс урт байх ёсгүй"})
+    .url({ message: "Газрын зургийн холбоос буруу байна" }),
+  gst_number: z.string().min(3, { message: "must be include gst"}),
+  food_gst_percentage: z.string().min(1, {message :" must include food gst"}),
+  room_gst_percentage: z.string().min( 1, {message:"must include room gst"}),
+  // joined_date: z.string(),
+});
+
 export const schemaRegistrationEmployee = z
 .object({
 

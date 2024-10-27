@@ -80,6 +80,13 @@ export default function Sidebar( ){
         >
 Register staff
         </Link>
+        <Link
+          className="rounded-lg px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors"
+          href="/admin/register_hotel"
+        >
+Register hotel
+        </Link>
+      
       </nav>
     </div>
   );
