@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Link from "next/link";
-
+import { MdOutlineSpaceDashboard } from "react-icons/md";
+import { IoPersonOutline } from "react-icons/io5";
+import { LuHotel } from "react-icons/lu";
 
 
 export default function Sidebar( ){
@@ -15,76 +17,30 @@ export default function Sidebar( ){
       {/* <div className="text-xl font-bold mb-8">My Sidebar</div> */}
       <nav className="flex flex-col gap-4">
         <Link
-          className="rounded-lg px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors"
+          className="rounded-lg items-center px-4 py-2 flex hover:bg-blue-500 hover:text-white transition-colors"
           href="/admin/dashboard"
         >
 
-          Admin dashboard
+<MdOutlineSpaceDashboard className="mr-2 text-[24px]" />
+          Admin dashboard 
+
         </Link>
-        {/* <Link
-          className="rounded-lg px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors"
-          href="/reports"
-        >
-          Reports
-        </Link>
-      
-        <div className="flex flex-col">
-          <button
-            className="rounded-lg px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors flex justify-between items-center"
-            onClick={toggleHotelMenu}
-          >
-            Manage Hotel
-            <span className={`ml-2 transform transition-transform ease-in-out duration-400 ${isHotelMenuOpen ? "rotate-180" : ""}`}>
-              ▼
-            </span>
-          </button>
-          {isHotelMenuOpen && (
-            <div className="flex flex-col ml-4 mt-2 space-y-2">
-              <Link
-                className="rounded-lg px-4 py-2 bg-gray-100 hover:bg-blue-500 hover:text-white transition-colors"
-                href="/manage-hotel/rooms"
-              >
-                Rooms
-              </Link>
-              <Link
-                className="rounded-lg px-4 py-2 bg-gray-100 hover:bg-blue-500 hover:text-white transition-colors"
-                href="/manage-hotel/bookings"
-              >
-                Bookings
-              </Link>
-              <Link
-                className="rounded-lg px-4 py-2 bg-gray-100 hover:bg-blue-500 hover:text-white transition-colors"
-                href="/manage-hotel/staff"
-              >
-                Staff
-              </Link>
-            </div>
-          )}
-        </div>
 
         <Link
-          className="rounded-lg px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors"
-          href="/settings"
-        >
-          Settings
-        </Link>
-        <Link
-          className="rounded-lg px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors"
-          href="/support"
-        >
-          Support
-        </Link> */}
-        <Link
-          className="rounded-lg px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors"
+          className="rounded-lg items-center px-4  flex py-2 hover:bg-blue-500 hover:text-white transition-colors"
           href="/admin/register"
         >
+          <IoPersonOutline className="mr-2 text-[24px]" />
 Register staff
+
         </Link>
         <Link
-          className="rounded-lg px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors"
+          className="rounded-lg items-center flex  px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors"
           href="/admin/register_hotel"
         >
+          <LuHotel className="mr-2 text-[24px]" />
 Register hotel
+
         </Link>
       
       </nav>
