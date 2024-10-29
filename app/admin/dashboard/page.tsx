@@ -57,7 +57,7 @@ export default function Dashboard() {
   });
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [hotelInfo, setHotelInfo] = useState<HotelInfo | null>(null);
-  const [isEditMode, setIsEditMode] = useState<boolean>(false); // State for edit mode
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -97,7 +97,6 @@ export default function Dashboard() {
         ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/hotel-info/update/${formData.id}/`
         : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/hotel-info/create/`;
       const method = isEditMode ? 'PUT' : 'POST';
-      console.log(selectedHotel?.pk)
 
       const body = {
         hotel: selectedHotel?.pk,
@@ -107,7 +106,7 @@ export default function Dashboard() {
         room_type_counts: formData.room_type_counts.map(({ room_count, room_type }) => ({
           room_type: room_type.id,
           room_count,
-          id: room_type.id, // Include the room type id for updates
+          id: room_type.id,
         })),
       };
 
@@ -122,7 +121,7 @@ export default function Dashboard() {
       toast.success('Hotel information submitted successfully!');
       resetForm();
       setShowForm(false);
-      setIsEditMode(false); // Reset edit mode
+      setIsEditMode(false);
     } catch (err) {
       console.error('Error submitting form:', err);
       toast.error(`Error submitting form: ${(err as Error).message}`);
@@ -139,11 +138,11 @@ export default function Dashboard() {
         setHotelInfo(data);
         setFormData(data);
         setShowForm(true);
-        setIsEditMode(true); // Set edit mode when fetching existing hotel info
+        setIsEditMode(true);
       } else if (response.status === 404) {
         resetForm();
         setShowForm(true);
-        setIsEditMode(false); // Reset edit mode for new hotel info
+        setIsEditMode(false);
       }
     } catch (err) {
       console.error('Error fetching hotel info:', err);
@@ -161,19 +160,19 @@ export default function Dashboard() {
       room_type_counts: [{ room_type: { id: 1, name: "", is_custom: false }, room_count: 0, id: 0 }],
     });
     setHotelInfo(null);
-    setIsEditMode(false); // Reset edit mode
+    setIsEditMode(false);
   };
 
   useEffect(() => {
     if (selectedHotel) {
       fetchHotelInfo(selectedHotel.pk);
     }
-  }, [selectedHotel]);
+  }, [selectedHotel, fetchHotelInfo]);
 
   const addRoomType = () => {
     const newRoomType: RoomType = {
       id: formData.room_type_counts.length + 1,
-      name: "",  // You can set a default name if necessary
+      name: "",
       is_custom: false,
     };
 
@@ -186,13 +185,13 @@ export default function Dashboard() {
     }));
   };
 
-  const updateRoomTypeCount = (index: number, field: keyof RoomTypeCount, value: any) => {
+  const updateRoomTypeCount = (index: number, field: keyof RoomTypeCount, value: number | RoomType) => {
     setFormData((prev) => {
       const updatedRoomTypeCounts = [...prev.room_type_counts];
       if (field === 'room_count') {
-        updatedRoomTypeCounts[index].room_count = value;
+        updatedRoomTypeCounts[index].room_count = value as number;
       } else {
-        updatedRoomTypeCounts[index].room_type = value; // Ensure 'value' is of type RoomType
+        updatedRoomTypeCounts[index].room_type = value as RoomType;
       }
       return { ...prev, room_type_counts: updatedRoomTypeCounts };
     });
@@ -256,58 +255,49 @@ export default function Dashboard() {
 
       {showForm && (
         <form onSubmit={handleFormSubmit} className="mt-4 p-4 border-t-2 border-gray-300">
-          <h2 className="text-2xl font-bold mb-2">{isEditMode ? 'Edit Hotel Info' : 'Add Hotel Info'}</h2>
-          
-          <div>
-            <label>Total Rooms:</label>
+          <div className="mb-4">
+            <label>Total Rooms</label>
             <input
               type="number"
               value={formData.total_rooms}
-              onChange={(e) => setFormData({ ...formData, total_rooms: Number(e.target.value) })}
-              className="block w-full border p-1 rounded"
-              required
+              onChange={(e) => setFormData((prev) => ({ ...prev, total_rooms: parseInt(e.target.value) }))}
+              className="w-full p-2 border rounded"
             />
           </div>
 
-          <div>
-            <label>Selling Rooms:</label>
-            <input
-              type="number"
-              value={formData.selling_room}
-              onChange={(e) => setFormData({ ...formData, selling_room: Number(e.target.value) })}
-              className="block w-full border p-1 rounded"
-              required
-            />
-          </div>
+          {/* Add Room Types */}
+          <button onClick={addRoomType} type="button" className="bg-green-500 text-white p-2 rounded">
+            Add Room Type
+          </button>
 
-          <h3 className="mt-4 text-lg">Room Types</h3>
+          {/* Render room types */}
           {formData.room_type_counts.map((roomTypeCount, index) => (
-            <div key={index} className="flex gap-2 mt-2">
+            <div key={index} className="flex items-center gap-2 mt-4">
               <input
                 type="text"
                 value={roomTypeCount.room_type.name}
-                onChange={(e) => updateRoomTypeCount(index, 'room_type', { ...roomTypeCount.room_type, name: e.target.value })}
-                placeholder="Room Type"
-                className="border p-1 rounded flex-1"
+                onChange={(e) =>
+                  updateRoomTypeCount(index, 'room_type', { ...roomTypeCount.room_type, name: e.target.value })
+                }
+                className="flex-1 p-2 border rounded"
               />
               <input
                 type="number"
                 value={roomTypeCount.room_count}
-                onChange={(e) => updateRoomTypeCount(index, 'room_count', Number(e.target.value))}
-                placeholder="Room Count"
-                className="border p-1 rounded w-20"
+                onChange={(e) =>
+                  updateRoomTypeCount(index, 'room_count', parseInt(e.target.value))
+                }
+                className="w-20 p-2 border rounded"
               />
             </div>
           ))}
-          <button type="button" onClick={addRoomType} className="mt-2 bg-gray-300 p-2 rounded">
-            Add Room Type
-          </button>
 
-          <button type="submit" className="mt-4 bg-green-500 text-white p-2 rounded" disabled={submitting}>
+          <button
+            type="submit"
+            className="mt-4 bg-blue-500 text-white p-2 rounded"
+            disabled={submitting}
+          >
             {submitting ? 'Submitting...' : isEditMode ? 'Update' : 'Create'}
-          </button>
-          <button type="button" onClick={() => setShowForm(false)} className="mt-4 ml-2 bg-red-500 text-white p-2 rounded">
-            Cancel
           </button>
         </form>
       )}
