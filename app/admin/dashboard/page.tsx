@@ -47,7 +47,10 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
   const [showForm, setShowForm] = useState<boolean>(false);
+  const [Action, setAction]= useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<HotelInfo>({
+
     id: 0,
     hotel: 0,
     total_rooms: 0,
@@ -56,7 +59,7 @@ export default function Dashboard() {
     room_type_counts: [{ room_type: { id: 1, name: "", is_custom: false }, room_count: 0, id: 0 }],
   });
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [hotelInfo, setHotelInfo] = useState<HotelInfo | null>(null);
+  const [hotelInfo, setHotelInfo] = useState<HotelInfo[] | null>(null); // Single hotelInfo
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
 
   useEffect(() => {
@@ -90,6 +93,7 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  const toggleModal = () => setIsOpen(!isOpen);
   const handleFormSubmit = async () => {
     setSubmitting(true);
     try {
@@ -103,11 +107,13 @@ export default function Dashboard() {
         total_rooms: formData.total_rooms,
         selling_room: formData.selling_room,
         joined_date: formData.joined_date,
-        room_type_counts: formData.room_type_counts.map(({ room_count, room_type }) => ({
-          room_type: room_type.id,
-          room_count,
-          id: room_type.id,
-        })),
+        room_type_counts: formData.room_type_counts
+          .filter(rt => rt.room_count > 0)
+          .map(({ room_count, room_type, id }) => ({
+            room_type: room_type.id,
+            room_count,
+            id,
+          })),
       };
 
       const response = await fetch(url, {
@@ -134,13 +140,13 @@ export default function Dashboard() {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/hotel-info/${hotelPk}/`);
       if (response.ok) {
-        const data = await response.json();
-        setHotelInfo(data);
-        setFormData(data);
+        const data: HotelInfo[] = await response.json(); // Single hotelInfo
+        setHotelInfo(data); // Set hotelInfo for this hotel
+        setFormData(data[0]); // Populate formData for editing
         setShowForm(true);
         setIsEditMode(true);
       } else if (response.status === 404) {
-        resetForm();
+        resetForm(); // Reset form if no hotel info is found
         setShowForm(true);
         setIsEditMode(false);
       }
@@ -159,15 +165,25 @@ export default function Dashboard() {
       joined_date: new Date().toISOString(),
       room_type_counts: [{ room_type: { id: 1, name: "", is_custom: false }, room_count: 0, id: 0 }],
     });
-    setHotelInfo(null);
+    setHotelInfo(null); // Reset hotelInfo when form is reset
     setIsEditMode(false);
   };
+   function action(){
+     setAction(true);
+
+  }
 
   useEffect(() => {
     if (selectedHotel) {
-      fetchHotelInfo(selectedHotel.pk);
+      fetchHotelInfo(selectedHotel.pk); // Fetch hotel info when a hotel is selected
     }
-  }, [selectedHotel, fetchHotelInfo]);
+  }, [selectedHotel]);
+
+  useEffect(() => {
+    if (selectedHotel) {
+     setAction(false); // Fetch hotel info when a hotel is selected
+    }
+  }, []);
 
   const addRoomType = () => {
     const newRoomType: RoomType = {
@@ -180,18 +196,18 @@ export default function Dashboard() {
       ...prev,
       room_type_counts: [
         ...prev.room_type_counts,
-        { room_type: newRoomType, room_count: 0, id: 0 },
+        { room_type: newRoomType, room_count: 0, id: Date.now() },
       ],
     }));
   };
 
-  const updateRoomTypeCount = (index: number, field: keyof RoomTypeCount, value: number | RoomType) => {
+  const updateRoomTypeCount = (index: number, field: keyof RoomTypeCount, value: any) => {
     setFormData((prev) => {
       const updatedRoomTypeCounts = [...prev.room_type_counts];
       if (field === 'room_count') {
-        updatedRoomTypeCounts[index].room_count = value as number;
-      } else {
-        updatedRoomTypeCounts[index].room_type = value as RoomType;
+        updatedRoomTypeCounts[index].room_count = value;
+      } else if (field === 'room_type') {
+        updatedRoomTypeCounts[index].room_type = value;
       }
       return { ...prev, room_type_counts: updatedRoomTypeCounts };
     });
@@ -199,6 +215,21 @@ export default function Dashboard() {
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
+
+  const deleteRoomType = (index: number) => {
+    setFormData((prev) => {
+      const updatedRoomTypeCounts = prev.room_type_counts.filter((_, i) => i !== index);
+      return { ...prev, room_type_counts: updatedRoomTypeCounts };
+    });
+  };
+
+  const roomTypeOptions = [
+    { label: 'Ерөнхийлөгчийн', value: 5 },
+    { label: 'Гэр бүлийн', value: 4 },
+    { label: 'Бүтэн люкс', value: 3 },
+    { label: 'Хагас люкс', value: 2 },
+    { label: 'Энгийн', value: 1 },
+  ];
 
   return (
     <div className="text-black mt-5 p-5 relative">
@@ -221,85 +252,140 @@ export default function Dashboard() {
                 size={250}
               />
               <h3 className="text-3xl relative z-10">{hotel.hotel_name}</h3>
+              {/* <div className="text-md">{hotel.address}</div> */}
             </div>
           ))
         ) : (
-          <p>No hotels available.</p>
+          <div>No Hotels Available</div>
         )}
+      </div>
+      <div className="border-solid border-gray-400 border-b mt-[10px]">
+
       </div>
 
       {hotelInfo && (
-        <div className="mt-8 p-4 border-t-2 border-gray-300">
-          <h2 className="text-2xl font-bold mb-2">{hotelInfo.hotel} Details</h2>
-          <p>Total Rooms: {hotelInfo.total_rooms}</p>
-          <p>Selling Rooms: {hotelInfo.selling_room}</p>
-          <p>Joined Date: {new Date(hotelInfo.joined_date).toLocaleDateString()}</p>
+            <div className=" gap-x-3 mt-[40px] p-10 bg-white rounded-lg h-[50vh] max-w-[1500px]">
+              <h3 className="text-3xl">{selectedHotel?.hotel_name}</h3>
+              
+              <div className="mt-10">
+              <p className="text-xl" >Total Rooms: {hotelInfo[0].total_rooms}</p>
+              <p className="text-xl">Selling Rooms: {hotelInfo[0].selling_room}</p>
 
-          {hotelInfo.room_type_counts.map((roomTypeCount) => (
-            <div key={roomTypeCount.id} className="mt-2">
-              <p>Room Type: {roomTypeCount.room_type.name}</p>
-              <p>Room Count: {roomTypeCount.room_count}</p>
-            </div>
-          ))}
-          
-          {hotelInfo ? (
-            <button
-              onClick={() => setShowForm(true)}
-              className="mt-4 bg-blue-500 text-white p-2 rounded"
-            >
-              Edit
-            </button>
-          ) : null}
+              </div>
+              <div>
+                Room types: 
+                </div>
+              <div>
+
+  {
+    hotelInfo[0].room_type_counts.map((type) => (
+      <div key={type.id}>
+        <div>
+    Id.{type.id}:      {type.room_type.name} :{type.room_count} {/* Assuming you want to display the room type name */}
         </div>
-      )}
+      </div>
+    ))
+  }
+</div>
+<div>{hotelInfo[0].joined_date}</div>
 
-      {showForm && (
-        <form onSubmit={handleFormSubmit} className="mt-4 p-4 border-t-2 border-gray-300">
-          <div className="mb-4">
+
+            </div>
+          ) }
+
+    <button onClick={() => setAction(true)}>
+    {isEditMode ? <div>Edit Hotel Info</div> : <div>Create Hotel Info</div>}
+    </button>
+
+
+
+      {Action && (
+         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
+        <div className="mt-10 bg-gray-200  p-10">
+          <div className="flex gap-5 mb-5">
+            <button
+              className="px-5 py-2 bg-gray-300 rounded-md"
+              onClick={() => resetForm()}
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-5 py-2 bg-blue-500 text-white rounded-md"
+              onClick={handleFormSubmit}
+              disabled={submitting}
+            >
+              {submitting ? 'Submitting...' : 'Save Hotel Info'}
+            </button>
+          </div>
+
+          <div className="space-y-3">
             <label>Total Rooms</label>
             <input
               type="number"
+              className="w-full p-2 border border-gray-300 rounded-md"
               value={formData.total_rooms}
-              onChange={(e) => setFormData((prev) => ({ ...prev, total_rooms: parseInt(e.target.value) }))}
-              className="w-full p-2 border rounded"
+              onChange={(e) => setFormData({ ...formData, total_rooms: +e.target.value })}
             />
           </div>
 
-          {/* Add Room Types */}
-          <button onClick={addRoomType} type="button" className="bg-green-500 text-white p-2 rounded">
-            Add Room Type
-          </button>
+          <div className="space-y-3">
+            <label>Selling Rooms</label>
+            <input
+              type="number"
+              className="w-full p-2 border border-gray-300 rounded-md"
+              value={formData.selling_room}
+              onChange={(e) => setFormData({ ...formData, selling_room: +e.target.value })}
+            />
+          </div>
 
-          {/* Render room types */}
-          {formData.room_type_counts.map((roomTypeCount, index) => (
-            <div key={index} className="flex items-center gap-2 mt-4">
-              <input
-                type="text"
-                value={roomTypeCount.room_type.name}
-                onChange={(e) =>
-                  updateRoomTypeCount(index, 'room_type', { ...roomTypeCount.room_type, name: e.target.value })
-                }
-                className="flex-1 p-2 border rounded"
-              />
-              <input
-                type="number"
-                value={roomTypeCount.room_count}
-                onChange={(e) =>
-                  updateRoomTypeCount(index, 'room_count', parseInt(e.target.value))
-                }
-                className="w-20 p-2 border rounded"
-              />
-            </div>
-          ))}
-
-          <button
-            type="submit"
-            className="mt-4 bg-blue-500 text-white p-2 rounded"
-            disabled={submitting}
-          >
-            {submitting ? 'Submitting...' : isEditMode ? 'Update' : 'Create'}
-          </button>
-        </form>
+          
+          <div className="space-y-3">
+            <label>Room Types</label>
+            
+            {formData.room_type_counts.map((roomType, index) => (
+              <div key={roomType.id} className="flex gap-3 items-center">
+                <select
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={roomType.room_type.id}
+                  onChange={(e) =>
+                    updateRoomTypeCount(index, 'room_type', roomTypeOptions.find(rt => rt.value === +e.target.value)!)
+                  }
+                >
+                  {roomTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  className="w-20 p-2 border border-gray-300 rounded-md"
+                  value={roomType.room_count}
+                  onChange={(e) => updateRoomTypeCount(index, 'room_count', +e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="px-2 py-1 bg-red-500 text-white rounded-md"
+                  onClick={() => deleteRoomType(index)}
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="px-5 py-2 bg-green-500 text-white rounded-md mt-3"
+              onClick={addRoomType}
+            >
+              Add Room Type
+            </button>
+            <button onClick={() => setAction(false)} className="mt-4 text-red-500">Close</button>
+          </div>
+        </div>
+        </div>
+        </div>
       )}
     </div>
   );
