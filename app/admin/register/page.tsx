@@ -123,7 +123,7 @@ export default function RegisterPage() {
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-10 px-20 max-w-[600px] rounded-md text-gray-600"
+        className="bg-white border-primary border-solid border-[1px] p-10 px-10 max-w-[600px] rounded-md text-gray-600"
       >
         <h2 className="text-2xl font-bold mx-auto text-center text-blue-500 mb-10">Бүртүүлэх</h2>
 
@@ -228,7 +228,7 @@ export default function RegisterPage() {
 
         <button
           type="submit"
-          className="w-full h-12 bg-[#70f3c4] text-white font-semibold rounded-md shadow-lg"
+          className="w-full h-12 bg-primary  text-white font-semibold rounded-[10px] shadow-lg"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Бүртгэж байна...' : 'Бүртгүүлэх'}

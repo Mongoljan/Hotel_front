@@ -89,9 +89,9 @@ export default function AdminDashboardClient({ hotelName }: Props) {
          <div className="text-black text-[30px]">{hotelName}</div>
       </div>
 
-      <table className="w-full mt-4 border-collapse border bg-white border-gray-300">
+      <table className="w-full mt-4 border-collapse border bg-white border-primary">
         <thead>
-          <tr className="bg-gray-200">
+          <tr className="bg-primary text-white">
             <th className="border p-2">Owner Name</th>
             <th className="border p-2">Hotel Name</th>
             <th className="border p-2">Hotel Address</th>
@@ -109,7 +109,7 @@ export default function AdminDashboardClient({ hotelName }: Props) {
               <td className="border p-2">{owner.hotel_address}</td>
               <td className="border p-2">{owner.user_mail}</td>
               <td className="border p-2">{owner.user_phone}</td>
-              <td className="border p-2">{owner.approved ? <div className="text-green-500">Yes</div> : <div className="text-red-500">No</div>}</td>
+              <td className="border p-2">{owner.approved ? <div className="text-green-500">Зөвшөөрсөн</div> : <div className="text-red-500">Цуцалсан</div>}</td>
               <td className="border p-2">
                 <button
                   onClick={() => handleApprove(owner.owner_pk, owner.approved)}
@@ -117,7 +117,7 @@ export default function AdminDashboardClient({ hotelName }: Props) {
                     owner.approved ? 'bg-blue-500' : 'bg-blue-500'
                   } text-white`}
                 >
-                  {owner.approved ? 'Disapprove' : 'Approve'}
+                  {owner.approved ? 'Цуцлах' : 'Зөвшөөрөх'}
                 </button>
               </td>
             </tr>

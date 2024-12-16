@@ -120,7 +120,7 @@ export default function LoginPage() {
   
 
   return (
-    <div className="flex bg-[#E5FDoD] justify-center items-center min-h-screen h-full py-[100px]  rounded-[20px]">
+    <div className="flex bg-[#E5F0FD] justify-center items-center min-h-screen h-full py-[100px]  rounded-[20px]">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}

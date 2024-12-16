@@ -15,10 +15,10 @@ export default function Sidebar( ){
       {/* <div className="text-xl font-bold mb-8">My Sidebar</div> */}
       <nav className="flex flex-col gap-4">
         <Link
-          className="rounded-lg px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors"
+          className="rounded-lg px-4 py-2 text-black hover:bg-blue-500 hover:text-white transition-colors"
           href="/admin/dashboard"
         >
-
+Admin dashboard
         </Link>
         
       </nav>

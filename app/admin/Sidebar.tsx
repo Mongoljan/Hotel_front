@@ -1,48 +1,41 @@
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
 import { IoPersonOutline } from "react-icons/io5";
 import { LuHotel } from "react-icons/lu";
 
-
-export default function Sidebar( ){
+export default function Sidebar() {
   const [isHotelMenuOpen, setHotelMenuOpen] = useState(false);
 
   const toggleHotelMenu = () => {
     setHotelMenuOpen(!isHotelMenuOpen);
   };
 
+  const pathname = usePathname();
+  const navItems = [
+    { href: "/admin/dashboard", icon: <MdOutlineSpaceDashboard />, label: "Admin dashboard" },
+    { href: "/admin/register", icon: <IoPersonOutline />, label: "Register staff" },
+    { href: "/admin/register_hotel", icon: <LuHotel />, label: "Register hotel" },
+  ];
+
   return (
-    <div className="p-4 h-full bg-white text-black">
-      {/* <div className="text-xl font-bold mb-8">My Sidebar</div> */}
+    <div className="p-4 h-full pt-[50px]  bg-[#4b91e2]  text-blue-200">
       <nav className="flex flex-col gap-4">
-        <Link
-          className="rounded-lg items-center px-4 py-2 flex hover:bg-blue-500 hover:text-white transition-colors"
-          href="/admin/dashboard"
-        >
-
-<MdOutlineSpaceDashboard className="mr-2 text-[24px]" />
-          Admin dashboard 
-
-        </Link>
-
-        <Link
-          className="rounded-lg items-center px-4  flex py-2 hover:bg-blue-500 hover:text-white transition-colors"
-          href="/admin/register"
-        >
-          <IoPersonOutline className="mr-2 text-[24px]" />
-Register staff
-
-        </Link>
-        <Link
-          className="rounded-lg items-center flex  px-4 py-2 hover:bg-blue-500 hover:text-white transition-colors"
-          href="/admin/register_hotel"
-        >
-          <LuHotel className="mr-2 text-[24px]" />
-Register hotel
-
-        </Link>
-      
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`rounded-lg   items-center px-4 py-4 flex transition-colors ${
+              pathname === item.href
+                ? " text-white font-bold"
+                : " hover:text-white  "
+            }`}
+          >
+         <div className="text-2xl">   {item.icon}</div> 
+            <span className="ml-2">{item.label}</span>
+          </Link>
+        ))}
       </nav>
     </div>
   );

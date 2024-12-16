@@ -89,7 +89,7 @@ export default function CreateHotel() {
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit, showValidationErrors)}
-        className="bg-white p-10 px-20 max-w-[600px] rounded-md text-gray-600"
+        className="bg-white border-[#4A90E2] border-solid border-[1px]  p-10 px-10 max-w-[500px] rounded-[10px] text-gray-600"
       >
         <h2 className="text-2xl font-bold mx-auto text-center text-blue-500 mb-10">
           Зочид буудлын бүртгэл
@@ -150,7 +150,7 @@ export default function CreateHotel() {
 
         <button
           type="submit"
-          className="w-full h-12 bg-[#70f3c4] text-white font-semibold rounded-md shadow-lg"
+          className="w-full h-12 bg-primary text-white font-semibold rounded-[10px] shadow-lg"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Бүртгэж байна...' : 'Бүртгүүлэх'}
