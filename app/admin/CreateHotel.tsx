@@ -85,7 +85,7 @@ export default function CreateHotel() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen py-[100px] bg-[#E5FDoD] rounded-[20px]">
+    <div className="flex justify-center items-center min-h-screen py-[100px] bg-[#E5FDoD] rounded-[12px]">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit, showValidationErrors)}

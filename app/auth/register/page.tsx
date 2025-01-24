@@ -133,7 +133,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen h-full py-[100px] bg-[#E5FDoD] rounded-[20px]">
+    <div className="flex justify-center   items-center min-h-screen h-full py-[100px] bg-background rounded-[12px]">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}

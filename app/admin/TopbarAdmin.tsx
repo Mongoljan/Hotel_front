@@ -41,13 +41,13 @@ export default function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar:
   return (
     <div className=" ">
 <div
-  className="  h-[50px] backdrop-blur-md  bg-opacity-[1] opaicty-[50] border-b-[1px] bg-primary px-[50px] text-black flex justify-between items-center"
+  className="  h-[50px] backdrop-blur-md   opaicty-[50] border-b-[1px] border-primary/30 border-opacity-30 bg-background px-[50px] text-black flex justify-between items-center"
 >
 
 
         <div className="mr-2">
        {/* <LanguageToggle/> */}
-       <div className=" text-white">
+       <div className=" text-black font-semibold">
         Admin 
        </div>
        </div>
@@ -55,7 +55,7 @@ export default function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar:
         <div className="flex gap-2 items-center">
           <button
             onClick={handleLogout}  // Attach the logout handler
-            className="rounded-sm border border-solid text-xs border-white hover:border-blue-200 transition-colors flex items-center justify-center hover:blue-100  sm:text-base h-7 sm:h-8 px-1 sm:px-1 sm:min-w-36 text-white hover:text-blue-200"
+            className="rounded-sm bg-white border border-solid text-xs border-primary hover:border-blue-400 transition-colors flex items-center justify-center hover:blue-100  sm:text-base h-7 sm:h-8 px-1 sm:px-1 sm:min-w-36 text-primary hover:text-blue-500"
           >
             sign out
             <HiArrowRightOnRectangle className="ml-2 text-[24px]" />
@@ -69,13 +69,13 @@ export default function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar:
         </div>
         <button onClick={toggleSidebar} className="flex ml-4 flex-col justify-center items-center mr-4">
           <span
-            className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "rotate-45 translate-y-1" : "-translate-y-0.5"}`}
+            className={`bg-primary block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "rotate-45 translate-y-1" : "-translate-y-0.5"}`}
           ></span>
           <span
-            className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${sideBarOpen ? "opacity-0" : "opacity-100"}`}
+            className={`bg-primary block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${sideBarOpen ? "opacity-0" : "opacity-100"}`}
           ></span>
           <span
-            className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "-rotate-45 -translate-y-1" : "translate-y-0.5"}`}
+            className={`bg-primary block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "-rotate-45 -translate-y-1" : "translate-y-0.5"}`}
           ></span>
         </button>
       </div>
