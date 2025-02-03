@@ -20,7 +20,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="p-2 h-full pt-[100px] text-sidebar-accent-foreground  border-[#4b91e2] border-solid border-[1px] bg-background border-opacity-30  ">
+    <div className="p-2 h-full pt-[100px] bg-white text-sidebar-accent-foreground  border-primary border-solid border-[1px]  border-opacity-30  ">
       <nav className="flex flex-col gap-4 font-normal">
         {navItems.map((item) => (
           <Link
@@ -28,8 +28,8 @@ export default function Sidebar() {
             href={item.href}
             className={`rounded-lg    items-center px-2 py-2 flex transition-colors ${
               pathname === item.href
-                ? "   bg-blue-200"
-                : " hover:bg-blue-200 "
+                ? "   bg-background"
+                : " hover:bg-background "
             }`}
           >
          <div className="text-lg">   {item.icon}</div> 
