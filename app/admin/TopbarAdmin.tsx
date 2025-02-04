@@ -47,15 +47,15 @@ export default function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar:
 
         <div className="mr-2">
        {/* <LanguageToggle/> */}
-       <div className=" text-black font-semibold">
-        Admin 
+       <div className=" text-black font-semibold text-[24px]">
+        Буудлын админ 
        </div>
        </div>
        <div className="flex">
         <div className="flex gap-2 items-center">
           <button
             onClick={handleLogout}  // Attach the logout handler
-            className="rounded-sm bg-white border border-solid text-xs border-primary hover:border-blue-400 transition-colors flex items-center justify-center hover:blue-100  sm:text-base h-7 sm:h-8 px-1 sm:px-1 sm:min-w-36 text-black  hover:bg-background"
+            className="rounded-sm bg-white border border-solid font-semibold text-xs border-primary hover:border-blue-400 transition-colors flex items-center justify-center hover:blue-100  sm:text-base h-7 sm:h-8 px-1 sm:px-1 sm:min-w-36 text-black  hover:bg-background"
           >
             sign out
             <HiArrowRightOnRectangle className="ml-2 text-[24px]" />

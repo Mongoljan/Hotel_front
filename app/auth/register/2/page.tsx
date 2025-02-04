@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { schemaRegistration } from '../../schema';
+import { schemaRegistration } from '../../../schema';
 import { z } from 'zod';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
@@ -138,126 +138,86 @@ export default function RegisterPage() {
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px] rounded-[15px] text-gray-600"
+        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">Буудлын мэдээлэл</h2>
+        <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">Ажилтны мэдээлэл</h2>
 
         
-  <section className="flex gap-x-4">
-    <div>
-    <div className="text-black">И-мэйл хаяг</div>
-        <input
-          type="text"
-          placeholder=""
-          {...register('contact_person_name')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
-        />
-        
-        
-        {errors.contact_person_name && <div className="text-red-500">{errors.contact_person_name.message}</div>}
-        </div>
-        <div>
-        <div className="text-black">Буудлын төрөл</div>
-        <input
-          type="text"
-          placeholder=""
-          {...register('contact_person_name')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
-        />
-        {errors.contact_person_name && <div className="text-red-500">{errors.contact_person_name.message}</div>}
-        </div>
-        </section>
+  
 <section>
         <div className="text-black">
-        Буудлын нэр (англи)
+        Таны нэр 
         </div>
         <input
           type="text"
           placeholder=""
           {...register('hotel_name')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+          className="border border-soft p-2 w-full mb-4 h-[45px] rounded-[15px]"
           required
         />
         </section>
-        <section className="flex gap-x-4">
-    <div>
-    <div className="text-black">ААН-н РД</div>
-        <input
-          type="text"
-          placeholder=""
-          {...register('contact_person_name')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
-        />
-        
-        
-        {errors.contact_person_name && <div className="text-red-500">{errors.contact_person_name.message}</div>}
-        </div>
-        <div>
-        <div className="text-black">ААН-н нэр</div>
-        <input
-          type="text"
-          placeholder=""
-          {...register('contact_person_name')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
-        />
-        {errors.contact_person_name && <div className="text-red-500">{errors.contact_person_name.message}</div>}
-        </div>
-        </section>
+       
 <section>
-  <div className="text-black">Буудлын утасны дугаар</div>
+  <div className="text-black">Албан тушаал</div>
         <input
           type="email"
           placeholder=""
           {...register('email')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+          className="border border-soft p-2 w-full mb-4 h-[45px] rounded-[15px]"
           required
         />
         {errors.email && <div className="text-red-500">{errors.email.message}</div>}
 
         </section>
 
+
 <section>
-<div className="text-black"> Дэлгэрэнгүй хаяг</div>
+  <div className="text-black">
+<PhoneInput
+  country={"mn"}
+  enableSearch
+  disableSearchIcon
+  value={getValues("contact_number")}
+  onChange={(phone) => setValue("contact_number", phone)}
+  specialLabel="Утасны дугаар"
+  containerStyle={{ borderRadius: "15px", background: "white" }}
+  inputStyle={{
+    width: "100%",
+    fontSize: "0.875rem",
+    border: "solid",
+    borderColor: "#9DA4B0",
+    background: "inherit",
+    padding: "14px",
+    borderWidth: "1px",
+    marginBottom: "15px",
+    borderRadius: "15px",
+  }}
+/>
+</div>
+        </section>
+        
+        <section>
+<div className="text-black"> И-мэйл хаяг </div>
         <input
           type="text"
           placeholder=""
           {...register('address_location')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+          className="border border-soft p-2 w-full mb-4 h-[45px] rounded-[15px]"
         />
-        </section>
-
-        {/* <PhoneInput
-          country={"mn"}
-          enableSearch
-          disableSearchIcon
-          value={getValues("contact_number")}
-          onChange={(phone) => setValue("contact_number", phone)}
-          containerStyle={{ borderRadius: "12px", background: "white" }}
-          inputStyle={{
-            width: "100%",
-            fontSize: "0.875rem",
-            border: "solid",
-            borderColor: "#E5E7EB",
-            background: "inherit",
-            padding: "14px",
-            marginBottom: "15px",
-            borderRadius: "4px",
-          }}
-        />
+  
         {errors.contact_number && (
           <div className="text-red-500 text-sm">{errors.contact_number.message}</div>
         )}
+              </section>
 
+              <section>
+              <div className="text-black"> Нууц үг </div>
         <div className="relative mb-4">
           <input
             type={isPasswordVisible ? 'text' : 'password'}
-            placeholder="Нууц үг"
+            placeholder=""
             {...register('password')}
-            className="border p-2 w-full h-14 rounded-md"
+            className="border border-soft p-2 w-full h-[45px] rounded-[15px]"
             required
           />
           <button
@@ -265,17 +225,20 @@ export default function RegisterPage() {
             className="absolute right-3 top-2"
             onClick={() => setIsPasswordVisible((prev) => !prev)}
           >
-            {isPasswordVisible ? <HiEye size={20} /> : <HiEyeSlash size={20} />}
+            {isPasswordVisible ? <HiEye className="self-center"  size={20} /> : <HiEyeSlash size={20} />}
           </button>
         </div>
         {errors.password && <div className="text-red-500">{errors.password.message}</div>}
+        </section>
 
+<section>
+<div className="text-black">Нууц үг давтах</div>
         <div className="relative mb-4">
           <input
             type={isConfirmPasswordVisible ? 'text' : 'password'}
-            placeholder="Нууц үг давтах"
+            placeholder=""
             {...register('confirmPassword')}
-            className="border p-2 w-full h-14 rounded-md"
+            className="border border-soft p-2 w-full h-[45px] rounded-[15px] "
             required
           />
           <button
@@ -288,10 +251,11 @@ export default function RegisterPage() {
         </div>
         {errors.confirmPassword && (
           <div className="text-red-500">{errors.confirmPassword.message}</div>
-        )} */}
+        )}
+        </section>
 <div className="flex gap-x-4">
 <Link
-            href={"/auth/login"}
+            href={"/auth/register"}
           className="w-full flex justify-center  mt-[35px] text-black py-3 hover:bg-bg px-4  border-primary border-[1px] border-solid font-semibold rounded-[15px]"
       
         >
@@ -300,7 +264,7 @@ export default function RegisterPage() {
         
           </Link>
           <Link
-            href={"/auth/register/2"}
+            href={"/auth/register/3"}
           className="w-full flex justify-center  mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
      
         >
