@@ -134,6 +134,120 @@ export const schemaHotelRegistration = z.object({
   // joined_date: z.string(),
 });
 
+export const schemaHotelRegistration2 = z.object({
+
+  register: z 
+  .string()
+  .min(6, { message:"Байгууллагын РД 6 оронтой байх ёстойг анхаарна уу?",})
+  .max(6, { message:"Байгууллагын РД 6 оронтой байх ёстойг анхаарна уу?",}),
+  CompanyName: z
+  .string(),
+  PropertyName : z
+  .string(),
+  location : z
+  .string(),
+  property_type: z
+  .string(),
+  phone: z 
+  .string()
+  .min(8, {message:"Гар утасны дугаарыг оруулна уу? "}),
+  mail: z 
+  .string()
+  .email({message: "И-мэйл хаяг буруу байна"}),
+
+
+})
+
+export const schemaHotelSteps1 = z.object({
+  property_name_mn: z.string().min(1, { message: "Монгол нэрийг оруулна уу" }),
+  property_name_en: z.string().min(1, { message: "Англи нэрийг оруулна уу" }),
+  start_date: z.string().refine(
+    (date) => !isNaN(Date.parse(date)),
+    { message: "Эхлэх огноо буруу байна" }
+  ),
+  star_rating: z
+    .string()
+    .min(1, { message: "Одны зэрэглэл хамгийн багадаа 1 байх ёстой" })
+    .max(5, { message: "Одны зэрэглэл хамгийн ихдээ 5 байх ёстой" }),
+  part_of_group: z.boolean(),
+  total_hotel_rooms: z
+    .string()
+    .min(1, { message: "Нийт өрөөний тоо хамгийн багадаа 1 байх ёстой" }),
+  available_rooms: z
+    .string()
+    .min(0, { message: "Боломжит өрөөний тоо сөрөг байж болохгүй" }),
+  sales_room_limitation: z.boolean(),
+  languages: z
+    .array(z.string())
+    .min(1, { message: "Хамгийн багадаа нэг хэл сонгоно уу" }),
+});
+
+export const schemaHotelSteps2 = z.object({
+  zipCode: z
+    .string()
+    .min(4, { message: "Шуудангийн код хамгийн багадаа 4 оронтой байх ёстой" })
+    .max(10, { message: "Шуудангийн код хамгийн ихдээ 10 оронтой байх ёстой" }),
+  total_floor_number: z
+    .string()
+    .min(1, { message: "Барилгын давхарын тоо хамгийн багадаа 1 байх ёстой" }),
+  province_city: z
+    .string()
+    .min(1, { message: "Хот/аймгийн мэдээллийг оруулна уу" }),
+  city: z
+    .string()
+    .min(1, { message: "Хорооны мэдээллийг оруулна уу" }),
+  soum: z
+    .string()
+    .min(1, { message: "Сум/дүүргийн мэдээллийг оруулна уу" }),
+  district: z
+    .string()
+    .min(1, { message: "Дүүргийн мэдээллийг оруулна уу" }),
+});
+
+export const schemaHotelSteps3 = z.object({
+  cancel_time: z.string(),
+  before_fee: z.string(),
+  after_fee: z.string(),
+  subsequent_days_percentage: z.string(),
+  special_condition_percentage: z.string(),
+  check_in_from: z.string(),
+  check_in_until: z.string(),
+  check_out_from: z.string(),
+  check_out_until: z.string(),
+  breakfast_policy: z.string(),
+  allow_children: z.boolean(),
+  allow_pets: z.boolean(),
+});
+
+
+export const schemaHotelSteps5 = z.object({
+  entries: z.array(
+    z.object({
+      images: z
+        .string()
+        .url({ message: 'Image must be a valid URL.' })
+        .min(1, { message: 'Image URL is required.' }),
+      descriptions: z
+        .string()
+        .min(1, { message: 'Description must not be empty.' }),
+    })
+  ).min(1, { message: 'At least one image and description set is required.' }),
+});
+
+
+export const schemaHotelSteps6 = z.object({
+  google_map: z
+    .string()
+    .url({ message: 'Please enter a valid Google Maps URL' }),
+  parking_situation: z
+    .string()
+    .min(2, {message:"enter valid reason"}),
+  general_facilities: z
+    .array(z.string())
+    .min(1, { message: 'Select at least one general facility' }),
+});
+
+
 export const schemaRegistrationEmployee = z
 .object({
 

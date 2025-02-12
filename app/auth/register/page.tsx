@@ -1,114 +1,87 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { schemaRegistration } from '../../schema';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { schemaHotelRegistration2 } from '../../schema';
 import { z } from 'zod';
-import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
-import { HiEye, HiEyeSlash } from 'react-icons/hi2';
-import PhoneInput from "react-phone-input-2";
+import 'react-toastify/dist/ReactToastify.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
-type Location = {
-  lat: number;
-  lng: number;
-};
+const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
+const API_CREATE_PROPERTY = 'https://dev.kacc.mn/api/properties/create/';
 
-const DefaultLocation: Location = { lat: 47.918873, lng: 106.917017 }; // Example: Ulaanbaatar
-const DefaultZoom = 10;
+interface PropertyType {
+  id: number;
+  name_mn: string;
+}
 
-type FormFields = z.infer<typeof schemaRegistration>;
+type FormFields = z.infer<typeof schemaHotelRegistration2>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [location, setLocation] = useState<Location>(DefaultLocation);
-  const [zoom, setZoom] = useState(DefaultZoom);
+  const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
 
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
-    useState(false);
-
-  const modalRef = useRef<HTMLDialogElement>(null);
-
-  // Handle form validation and submission using react-hook-form
   const {
     register,
     handleSubmit,
-    setError,
     setValue,
-    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
-    resolver: zodResolver(schemaRegistration),
+    resolver: zodResolver(schemaHotelRegistration2),
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedLocation = localStorage.getItem('mapLocation');
-      if (savedLocation) {
-        setLocation(JSON.parse(savedLocation));
+    const fetchData = async () => {
+      try {
+        const response = await fetch(API_COMBINED_DATA);
+        const data = await response.json();
+        setPropertyTypes(data.property_types);
+      } catch (error) {
+        console.error('Error fetching combined data:', error);
       }
+    };
 
-      const savedZoom = localStorage.getItem('mapZoom');
-      if (savedZoom) {
-        setZoom(JSON.parse(savedZoom));
-      }
-    }
+    fetchData();
   }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mapLocation', JSON.stringify(location));
-      localStorage.setItem('mapZoom', JSON.stringify(zoom));
-    }
-  }, [location, zoom]);
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     try {
-      const requestBody = {
-        owner_pk: 0, // Fixed value for owner registration
-        owner_token: "", // Fixed empty value for owner_token
-        user_type: 2, // Fixed value for user_type
-
-        // Values from the form
-        user_name: data.contact_person_name,
-        hotel_name: data.hotel_name, // Hotel name (only for owners)
-        hotel_address: data.address_location, // Hotel address (only for owners)
-        user_pass: data.password,
-        user_mail: data.email,
-        user_phone: data.contact_number,
-      };
-
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/register/`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const response = await fetch(API_CREATE_PROPERTY, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
 
       if (response.ok) {
-        router.push('/auth/login');
-              toast.success('Registration successful! Your registration approval is pending. Log in with our credientials');
+        const responseData = await response.json();
+        const propertyId = responseData.pk;
+
+        const propertyData = {
+          propertyBasicInfo: 1,
+          confirmAddress: 1,
+          propertyPolicies: 1,
+          google_map: '',
+          parking_situation: 'free',
+          property: propertyId,
+          general_facilities: [],
+          property_photos: [],
+        };
+
+        localStorage.setItem('propertyData', JSON.stringify(propertyData));
+
+        toast.success('Registration successful!');
+        router.push('/auth/register/Hotel');
       } else {
         const errorData = await response.json();
-        
-        // Display dynamic error messages from the API
-        if (errorData.email && errorData.email.length > 0) {
-          toast.error(errorData.email[0]); // Display the first email error message
-        } else if (errorData.password && errorData.password.length > 0) {
-          toast.error(errorData.password[0]); // Display the first password error message
-        } else {
-          toast.error('Registration failed. Please check your input.');
-        }
+        toast.error(errorData.message || 'Registration failed.');
       }
     } catch (error) {
       toast.error('An unexpected error occurred during registration');
@@ -116,25 +89,8 @@ export default function RegisterPage() {
     }
   };
 
-  const handleCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocation({ lat: latitude, lng: longitude });
-          setZoom(15);
-        },
-        () => {
-          alert('Error getting your location');
-        }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
-    }
-  };
-
   return (
-    <div className="flex justify-center   items-center min-h-screen h-full py-[100px]  rounded-[12px]">
+    <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -142,172 +98,111 @@ export default function RegisterPage() {
       >
         <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">Буудлын мэдээлэл</h2>
 
-        
-  <section className="flex gap-x-4">
-    <div>
-    <div className="text-black">И-мэйл хаяг</div>
-        <input
-          type="text"
-          placeholder=""
-          {...register('contact_person_name')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
-        />
-        
-        
-        {errors.contact_person_name && <div className="text-red-500">{errors.contact_person_name.message}</div>}
-        </div>
-        <div>
-        <div className="text-black">Буудлын төрөл</div>
-        <input
-          type="text"
-          placeholder=""
-          {...register('contact_person_name')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
-        />
-        {errors.contact_person_name && <div className="text-red-500">{errors.contact_person_name.message}</div>}
-        </div>
-        </section>
-<section>
-        <div className="text-black">
-        Буудлын нэр (англи)
-        </div>
-        <input
-          type="text"
-          placeholder=""
-          {...register('hotel_name')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
-        />
-        </section>
         <section className="flex gap-x-4">
-    <div>
-    <div className="text-black">ААН-н РД</div>
-        <input
-          type="text"
-          placeholder=""
-          {...register('contact_person_name')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
-        />
-        
-        
-        {errors.contact_person_name && <div className="text-red-500">{errors.contact_person_name.message}</div>}
-        </div>
-        <div>
-        <div className="text-black">ААН-н нэр</div>
-        <input
-          type="text"
-          placeholder=""
-          {...register('contact_person_name')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
-        />
-        {errors.contact_person_name && <div className="text-red-500">{errors.contact_person_name.message}</div>}
-        </div>
-        </section>
-<section>
-  <div className="text-black">Буудлын утасны дугаар</div>
-        <input
-          type="email"
-          placeholder=""
-          {...register('email')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
-        />
-        {errors.email && <div className="text-red-500">{errors.email.message}</div>}
+          <div>
+            <div className="text-black">ААН-н РД</div>
+            <input
+              type="text"
+              {...register('register')}
+              className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+              required
+            />
+            {errors.register && <div className="text-red-500">{errors.register.message}</div>}
+          </div>
 
+          <div>
+            <div className="text-black">ААН-н нэр</div>
+            <input
+              type="text"
+              {...register('CompanyName')}
+              className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+              required
+            />
+            {errors.CompanyName && <div className="text-red-500">{errors.CompanyName.message}</div>}
+          </div>
         </section>
 
-<section>
-<div className="text-black"> Дэлгэрэнгүй хаяг</div>
-        <input
-          type="text"
-          placeholder=""
-          {...register('address_location')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-        />
-        </section>
-
-        {/* <PhoneInput
-          country={"mn"}
-          enableSearch
-          disableSearchIcon
-          value={getValues("contact_number")}
-          onChange={(phone) => setValue("contact_number", phone)}
-          containerStyle={{ borderRadius: "12px", background: "white" }}
-          inputStyle={{
-            width: "100%",
-            fontSize: "0.875rem",
-            border: "solid",
-            borderColor: "#E5E7EB",
-            background: "inherit",
-            padding: "14px",
-            marginBottom: "15px",
-            borderRadius: "4px",
-          }}
-        />
-        {errors.contact_number && (
-          <div className="text-red-500 text-sm">{errors.contact_number.message}</div>
-        )}
-
-        <div className="relative mb-4">
+        <section>
+          <div className="text-black">Буудлын нэр</div>
           <input
-            type={isPasswordVisible ? 'text' : 'password'}
-            placeholder="Нууц үг"
-            {...register('password')}
-            className="border p-2 w-full h-14 rounded-md"
+            type="text"
+            {...register('PropertyName')}
+            className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
             required
           />
-          <button
-            type="button"
-            className="absolute right-3 top-2"
-            onClick={() => setIsPasswordVisible((prev) => !prev)}
-          >
-            {isPasswordVisible ? <HiEye size={20} /> : <HiEyeSlash size={20} />}
-          </button>
-        </div>
-        {errors.password && <div className="text-red-500">{errors.password.message}</div>}
+          {errors.PropertyName && <div className="text-red-500">{errors.PropertyName.message}</div>}
+        </section>
 
-        <div className="relative mb-4">
+        <section className="flex gap-x-4">
+          <div>
+            <div className="text-black">Байршил</div>
+            <input
+              type="text"
+              {...register('location')}
+              className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+              required
+            />
+            {errors.location && <div className="text-red-500">{errors.location.message}</div>}
+          </div>
+
+          <div>
+            <div className="text-black">Буудлын төрөл</div>
+            <select
+              {...register('property_type')}
+              className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+              required
+            >
+              <option value="">Сонгох</option>
+              {propertyTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name_mn}
+                </option>
+              ))}
+            </select>
+            {errors.property_type && <div className="text-red-500">{errors.property_type.message}</div>}
+          </div>
+        </section>
+
+        <section>
+          <div className="text-black">Утасны дугаар</div>
+          <PhoneInput
+            country={'mn'}
+            onChange={(phone) => setValue('phone', phone)}
+            inputClass="border p-2 w-full h-[45px] rounded-[15px]"
+          />
+          {errors.phone && <div className="text-red-500">{errors.phone.message}</div>}
+        </section>
+
+        <section>
+          <div className="text-black">И-мэйл хаяг</div>
           <input
-            type={isConfirmPasswordVisible ? 'text' : 'password'}
-            placeholder="Нууц үг давтах"
-            {...register('confirmPassword')}
-            className="border p-2 w-full h-14 rounded-md"
+            type="email"
+            {...register('mail')}
+            className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
             required
           />
-          <button
-            type="button"
-            className="absolute right-3 top-2"
-            onClick={() => setIsConfirmPasswordVisible((prev) => !prev)}
-          >
-            {isConfirmPasswordVisible ? <HiEye size={20} /> : <HiEyeSlash size={20} />}
-          </button>
-        </div>
-        {errors.confirmPassword && (
-          <div className="text-red-500">{errors.confirmPassword.message}</div>
-        )} */}
-<div className="flex gap-x-4">
-<Link
-            href={"/auth/login"}
-          className="w-full flex justify-center  mt-[35px] text-black py-3 hover:bg-bg px-4  border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-      
-        >
-      <div className="flex ">  <FaArrowLeft className="self-center mx-1" />   Буцах</div> 
-    
-        
-          </Link>
+          {errors.mail && <div className="text-red-500">{errors.mail.message}</div>}
+        </section>
+
+        <div className="flex gap-x-4">
           <Link
-            href={"/auth/register/2"}
-          className="w-full flex justify-center  mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-     
-        >
-     <div className="flex">    Дараах
-          <FaArrowRight className=" self-center mx-1" />
-          </div> 
-        </Link>
+            href={"/auth/login"}
+            className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
+          >
+            <div className="flex">
+              <FaArrowLeft className="self-center mx-1" /> Буцах
+            </div>
+          </Link>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
+          >
+            <div className="flex">
+              Дараах <FaArrowRight className="self-center mx-1" />
+            </div>
+          </button>
         </div>
       </form>
     </div>
