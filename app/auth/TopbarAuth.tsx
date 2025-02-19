@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";  // Import from next/navigation
 import Cookies from "js-cookie";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useTranslations } from "next-intl";
 import { HiArrowRightOnRectangle } from "react-icons/hi2";  // Import js-cookie
 // import LanguageToggle from "../components/languageToggle";
 interface Topbar{
@@ -16,6 +18,7 @@ interface HeaderDictionary {
 }
 
 export default function Topbar() {
+  const t = useTranslations("Controls");
   const pathname = usePathname();  // Get current path using usePathname
   const router = useRouter();      // Get router for navigation
 
@@ -51,7 +54,7 @@ export default function Topbar() {
             className="text-black ml-[4px] hover:text-blue-300"
             href={"/auth/login"}
           >
-            Нэвтрэх
+            {t("login")}
           </Link>
         </div>
         <div className="flex gap-2 items-center">
@@ -59,9 +62,10 @@ export default function Topbar() {
             className="text-black ml-[4px] hover:text-blue-300"
             href={"/auth/register"}
           >
-            Бүртгүүлэх
+                 {t("register")}
           </Link>
         </div>
+        <LanguageSwitcher/>
        
       </div>
       </div>

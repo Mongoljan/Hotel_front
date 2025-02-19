@@ -17,6 +17,11 @@ interface LanguageType {
   languages_name_mn: string;
 }
 
+interface RatingType {
+  id: number;
+  rating: string;
+}
+
 interface Props {
   onNext: () => void;
   onBack: () => void;
@@ -26,6 +31,7 @@ type FormFields = z.infer<typeof schemaHotelSteps1>;
 
 export default function RegisterHotel1({ onNext, onBack }: Props) {
   const [languages, setLanguages] = useState<LanguageType[]>([]);
+  const [ratings, setRatings] = useState<RatingType[]>([]);
 
   const {
     register,
@@ -42,6 +48,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         const response = await fetch(API_COMBINED_DATA);
         const data = await response.json();
         setLanguages(data.languages);
+        setRatings(data.ratings);
       } catch (error) {
         console.error('Error fetching combined data:', error);
       }
@@ -117,14 +124,18 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         {errors.start_date && <div className="text-red-500">{errors.start_date.message}</div>}
 
         <div className="text-black">Одны зэрэглэл</div>
-        <input
-          type="number"
+        <select
           {...register('star_rating')}
           className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          min={1}
-          max={5}
           required
-        />
+        >
+          <option value="">Сонгох</option>
+          {ratings.map((rating) => (
+            <option key={rating.id} value={rating.id}>
+              {rating.rating}
+            </option>
+          ))}
+        </select>
         {errors.star_rating && <div className="text-red-500">{errors.star_rating.message}</div>}
 
         <div className="text-black">Группын нэг хэсэг үү?</div>

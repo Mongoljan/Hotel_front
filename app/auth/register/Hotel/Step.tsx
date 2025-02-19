@@ -27,9 +27,9 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ totalSteps, currentStep }
               return (
                 <div key={stepNumber} className="flex items-center">
                   <div
-                    className={`w-10 h-10 flex items-center justify-center rounded-full border-2 ${
+                    className={`w-12 h-12 flex items-center justify-center rounded-full border-2 ${
                       isCompleted
-                        ? 'bg-primary text-white border-primary'
+                        ? 'bg-primary text-white border-primary border-[3px]'
                         : isActive
                         ? 'border-primary text-primary'
                         : 'bg-white text-black border-gray-300'
@@ -40,7 +40,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ totalSteps, currentStep }
 
                   {stepNumber < totalSteps && (
                     <div
-                      className={`w-10 h-1 ${
+                      className={`w-40 h-1 ${
                         isCompleted ? 'bg-primary' : 'bg-gray-300'
                       }`}
                     ></div>
@@ -50,16 +50,16 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ totalSteps, currentStep }
             })}
           </div>
           
-      <div className="flex items-center space-x-10 mt-2">
+      <div className="flex items-center space-x-40 mt-2">
         {stepNames.map((name, i) => {
           const stepNumber = i + 1;
           const isCompleted = stepNumber < currentStep;
           const isActive = stepNumber === currentStep;
 
           return (
-            <div key={i} className="w-10 text-center">
+            <div key={i} className="w-12 text-center">
               <div
-                className={`text-xs ${
+                className={`text-[16px] text-center text ${
                   isCompleted || isActive ? 'text-primary' : 'text-black'
                 }`}
               >

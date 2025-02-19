@@ -1,4 +1,5 @@
 import Link from "next/link"
+import LanguageSwitcher from "./LanguageSwitcher"
 
 export default function Topbar() {
     return(
@@ -20,6 +21,7 @@ export default function Topbar() {
           >
             Бүртгүүлэх
           </Link>
+          <LanguageSwitcher/>
         </div>
 
         </div>

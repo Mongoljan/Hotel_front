@@ -1,33 +1,40 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+const locales = ["en", "mn"]; // Supported locales
+const defaultLocale = "en"; // Default language
 
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get('jwtToken')?.value;
-  const userType = req.cookies.get('userType')?.value;
+  const token = req.cookies.get("jwtToken")?.value;
+  const userType = req.cookies.get("userType")?.value;
+  const userLocale = req.cookies.get("NEXT_LOCALE")?.value || defaultLocale; // Get locale from cookies
 
-  // If the user is not authenticated, redirect to the login page
+  // Ensure locale is valid; otherwise, default to "en"
+  const locale = locales.includes(userLocale) ? userLocale : defaultLocale;
+
+  // Redirect to login if user is not authenticated
   if (!token) {
-    return NextResponse.redirect(new URL('/auth/login', req.url));
+    return NextResponse.redirect(new URL(`/auth/login`, req.url));
   }
 
-  // Restrict access based on user type for admin routes
-  if (req.nextUrl.pathname.startsWith('/admin')) {
-    if (userType !== 'Owner') {
-      return NextResponse.redirect(new URL('/unauthorized', req.url)); // Redirect to unauthorized page or another appropriate action
-    }
+  // Restrict access for admin routes
+  if (req.nextUrl.pathname.startsWith("/admin") && userType !== "Owner") {
+    return NextResponse.redirect(new URL(`/unauthorized`, req.url));
   }
 
-  // Restrict access based on user type for superadmin routes
-  if (req.nextUrl.pathname.startsWith('/superadmin')) {
-    if (userType !== 'SuperAdmin') {
-      return NextResponse.redirect(new URL('/unauthorized', req.url)); // Redirect to unauthorized page or another appropriate action
-    }
+  // Restrict access for superadmin routes
+  if (req.nextUrl.pathname.startsWith("/superadmin") && userType !== "SuperAdmin") {
+    return NextResponse.redirect(new URL(`/unauthorized`, req.url));
   }
 
-  return NextResponse.next();
+  // Pass locale as a header to be used in frontend
+  const response = NextResponse.next();
+  response.headers.set("x-locale", locale);
+
+  return response;
 }
 
-// Protect admin and user routes
+// Apply middleware to protected routes
 export const config = {
-  matcher: ['/admin/:path*', '/superadmin/:path*', '/user/:path*'],
+  matcher: ["/admin/:path*", "/superadmin/:path*", "/user/:path*"],
 };

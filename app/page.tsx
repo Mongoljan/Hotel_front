@@ -1,4 +1,5 @@
 import Topbar from "@/components/topbar";
+import { getTranslations } from "next-intl/server";
 
 interface SystemInfo {
   id: number;
@@ -9,6 +10,7 @@ interface SystemInfo {
 
 export default async function Home() {
   
+  const t = await getTranslations('HomePage');
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/system-info/`, {
     method: 'GET',
     headers: {
@@ -25,7 +27,7 @@ export default async function Home() {
       <Topbar />
       <div className="grid grid-rows-[20px_1fr_20px] bg-[#E5F0FD] text-black items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
         <main className="flex flex-col gap-8 justify-center row-start-2 items-center sm:items-start">
-          <div className="text-[40px]">Нүүр хуудас</div>
+          <div className="text-[40px]">{t('home')}</div>
 
           {/* Display the data by mapping over the array */}
           {data.map((item) => (
