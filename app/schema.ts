@@ -46,6 +46,29 @@ export const schemaLogin = z.object({
     email: z.string().email('И-мэйл хаяг зөв биш байна'),
     password: z.string().min(1, { message: "schemas_enteremail"}),
   });
+  export const schemaCreateRoom = z.object({
+    // token: z.string().min(10, { message: "Token is required" }),
+    // hotel: z.string().min(1,{ message: "Hotel ID is required" }),
+    room_number: z.string().min(1, { message: "Room number is required" }),
+    room_type: z.string().min(1,{ message: "Room type is required" }),
+    room_category: z.string().min(1,{ message: "Room category is required" }),
+    room_size: z.string().min(1, { message: "Room size must be at least 5m²" }),
+    bed_type: z.string().min(1,{ message: "Bed type is required" }),
+    is_Bathroom: z.boolean(),
+    room_Facilities: z.array(z.string()).min(1,{ message: "Select at least one facility" }),
+    bathroom_Items: z.array(z.string()).min(1,{ message: "Select at least one facility" }),
+    free_Toiletries: z.array(z.string()).min(1,{ message: "Select at least one facility" }),
+    food_And_Drink: z.array(z.string()).min(1,{ message: "Select at least one facility" }),
+    outdoor_And_View: z.array(z.string()).min(1,{ message: "Select at least one facility" }),
+    number_of_rooms: z.string().min(1,{ message: "Number of rooms is required" }),
+    number_of_rooms_to_sell: z.string().min(1,{ message: "Rooms to sell is required" }),
+    room_Description: z.string().min(5, { message: "Description is required" }),
+    smoking_allowed: z.boolean(),
+    RoomNo: z.string().min(1,{ message: "Enter valid room numbers" }),
+  });
+  
+  
+
   
 export const schemaRegistration = z
 .object({
@@ -246,6 +269,28 @@ export const schemaHotelSteps6 = z.object({
     .array(z.string())
     .min(1, { message: 'Select at least one general facility' }),
 });
+
+export const schemaRegistrationEmployee2 =z.object({
+  email: z.string().email({ message: "Email format is invalid" }).max(255, { message: "Email address cannot exceed 255 characters" }),
+  contact_person_name: z.string().min(3, { message: "Холбоо барих хүний нэр" }),
+  user_type: z.string().min(1, { message: "User type is required" }),
+  user_type_id: z.string(),
+  position: z.string(),
+  contact_number: z.string().min(3, { message: "Гар утасны дугаар багадаа 3 оронтой байна." }),
+  password: z.string().min(8, {
+    message: "The password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+  }).max(100, {
+    message: "Password cannot exceed 100 characters",
+  }).regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
+    .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
+    .regex(/\d/, { message: "Password must contain at least one number" })
+    .regex(/[@$!%*;?&#]/, { message: "Password must contain at least one special character" }),
+  confirmPassword: z.string().min(8, { message: "The password must be at least 8 characters long" }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
 
 
 export const schemaRegistrationEmployee = z

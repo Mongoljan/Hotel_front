@@ -19,6 +19,7 @@ const API_CREATE_PROPERTY = 'https://dev.kacc.mn/api/properties/create/';
 interface PropertyType {
   id: number;
   name_mn: string;
+  name_en: string;
 }
 
 type FormFields = z.infer<typeof schemaHotelRegistration2>;
@@ -41,14 +42,19 @@ export default function RegisterPage() {
       try {
         const response = await fetch(API_COMBINED_DATA);
         const data = await response.json();
-        setPropertyTypes(data.property_types);
+        console.log("API Response:", data);
+        if (data.property_types) {
+          setPropertyTypes([...data.property_types]); // Ensure React re-renders
+        }
       } catch (error) {
-        console.error('Error fetching combined data:', error);
+        console.error("Error fetching combined data:", error);
       }
     };
-
+  
     fetchData();
   }, []);
+  
+  
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     try {
@@ -78,7 +84,7 @@ export default function RegisterPage() {
         localStorage.setItem('propertyData', JSON.stringify(propertyData));
 
         toast.success('Registration successful!');
-        router.push('/auth/register/Hotel');
+        router.push('/auth/register/2');
       } else {
         const errorData = await response.json();
         toast.error(errorData.message || 'Registration failed.');
@@ -88,6 +94,8 @@ export default function RegisterPage() {
       console.error('Error during registration:', error);
     }
   };
+
+  // console.log("property types:", propertyTypes)
 
   return (
     <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">
