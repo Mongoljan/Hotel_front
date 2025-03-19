@@ -34,7 +34,7 @@ export default function Layout({ children,}: { children: React.ReactNode; }) {
       <div className="relative flex">
         {/* Sidebar */}
         <div
-          className={`fixed top-0  left-0 z-50 transition-transform duration-500 ease-in-out transform bg-gray-100 shadow-lg w-60 h-screen
+          className={`fixed top-0  left-0  transition-transform duration-500 ease-in-out transform bg-gray-100 shadow-lg w-60 h-screen
           ${isSidebarVisible ? "translate-x-0" : "-translate-x-full"}`}
         >
           <Sidebar   />
@@ -42,7 +42,7 @@ export default function Layout({ children,}: { children: React.ReactNode; }) {
 
         {/* Main content */}
         <div
-          className={`flex-grow pt-[50px] bg-white z-10 transition-all duration-700 ease-in-out ${isSidebarVisible ? "ml-60" : "ml-0"}`}
+          className={`flex-grow mt-[50px] bg-white  transition-all duration-700 ease-in-out ${isSidebarVisible ? "ml-60" : "ml-0"}`}
         >
           {children}
         </div>

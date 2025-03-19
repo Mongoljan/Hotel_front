@@ -46,26 +46,34 @@ export const schemaLogin = z.object({
     email: z.string().email('И-мэйл хаяг зөв биш байна'),
     password: z.string().min(1, { message: "schemas_enteremail"}),
   });
-  export const schemaCreateRoom = z.object({
-    // token: z.string().min(10, { message: "Token is required" }),
-    // hotel: z.string().min(1,{ message: "Hotel ID is required" }),
+
+
+export const schemaCreateRoom = z.object({
     room_number: z.string().min(1, { message: "Room number is required" }),
-    room_type: z.string().min(1,{ message: "Room type is required" }),
-    room_category: z.string().min(1,{ message: "Room category is required" }),
+    room_type: z.string().min(1, { message: "Room type is required" }),
+    room_category:  z.string().min(1, { message: "Room category is required" }),
     room_size: z.string().min(1, { message: "Room size must be at least 5m²" }),
-    bed_type: z.string().min(1,{ message: "Bed type is required" }),
-    is_Bathroom: z.boolean(),
-    room_Facilities: z.array(z.string()).min(1,{ message: "Select at least one facility" }),
-    bathroom_Items: z.array(z.string()).min(1,{ message: "Select at least one facility" }),
-    free_Toiletries: z.array(z.string()).min(1,{ message: "Select at least one facility" }),
-    food_And_Drink: z.array(z.string()).min(1,{ message: "Select at least one facility" }),
-    outdoor_And_View: z.array(z.string()).min(1,{ message: "Select at least one facility" }),
-    number_of_rooms: z.string().min(1,{ message: "Number of rooms is required" }),
-    number_of_rooms_to_sell: z.string().min(1,{ message: "Rooms to sell is required" }),
+    bed_type: z.string().min(1, { message: "Bed type is required" }),
+    is_Bathroom: z.string().min(1, { message: "Нэгийг сонгонo уу?"}),
+    room_Facilities: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+    bathroom_Items: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+    free_Toiletries: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+    food_And_Drink: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+    outdoor_And_View: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+    number_of_rooms: z.string().min(1, { message: "Number of rooms is required" })
+        .regex(/^\d+$/, { message: "Must be a valid number" }),
+    number_of_rooms_to_sell: z.string().min(1, { message: "Rooms to sell is required" })
+        .regex(/^\d+$/, { message: "Must be a valid number" }),
     room_Description: z.string().min(5, { message: "Description is required" }),
-    smoking_allowed: z.boolean(),
-    RoomNo: z.string().min(1,{ message: "Enter valid room numbers" }),
-  });
+    smoking_allowed: z.string().min(1, { message: "Нэгийг сонгонo уу?"}),
+    RoomNo: z.string().min(1, { message: "Enter valid room numbers" }),
+}).refine((data) => {
+    return parseInt(data.number_of_rooms_to_sell, 10) <= parseInt(data.number_of_rooms, 10);
+}, {
+    message: "Rooms to sell cannot exceed total number of rooms",
+    path: ["number_of_rooms_to_sell"], // Attach error to this field
+});
+
   
   
 
