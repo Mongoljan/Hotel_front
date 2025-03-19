@@ -19,9 +19,12 @@ interface Room extends GridValidRowModel {
   description: string;
   smokingAllowed: string;
 }
-
+interface RoomModalProps {
+   isRoomAdded: boolean,
+   setIsRoomAdded: (value: boolean) => void;
+}
 // Main Component
-export default function RoomManagement() {
+export default function RoomManagement({isRoomAdded, setIsRoomAdded} : RoomModalProps) {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,7 +65,9 @@ export default function RoomManagement() {
     };
 
     fetchRooms();
-  }, []);
+  }, [isRoomAdded]);
+  setIsRoomAdded(false);
+  
 
   // Adjust width dynamically when window resizes
   useEffect(() => {
@@ -87,7 +92,7 @@ export default function RoomManagement() {
   ];
 
   return (
-    <div className="w-full">
+    <div className=" w-full">
       <div className="flex justify-between mb-4">
         <h1 className="text-lg font-semibold">Өрөө бүртгэл</h1>
         <button 
@@ -98,7 +103,7 @@ export default function RoomManagement() {
         </button>
       </div>
 
-      <RoomModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <RoomModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}  isRoomAdded={isRoomAdded} setIsRoomAdded={setIsRoomAdded} />
 
       <div 
         className="overflow-auto" 

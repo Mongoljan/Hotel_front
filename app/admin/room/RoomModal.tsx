@@ -74,10 +74,12 @@ type FormFields = z.infer<typeof schemaCreateRoom>;
 interface RoomModalProps {
     isOpen: boolean;
     onClose: () => void;
+    isRoomAdded: boolean,
+    setIsRoomAdded: (value: boolean) => void;
   }
   
 
-export default function RegisterRoom({ isOpen, onClose} : RoomModalProps) {
+export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAdded} : RoomModalProps) {
     const [step, setStep] = useState(1);
     const isBathroomTrue = true;
     const isBathroomFalse = false
@@ -121,7 +123,7 @@ export default function RegisterRoom({ isOpen, onClose} : RoomModalProps) {
       room_category: "",
       room_size: "",
       bed_type: "",
-      number_of_rooms: "",
+      number_of_rooms: 0,
       number_of_rooms_to_sell: "",
       room_Description: "",
       smoking_allowed: "",
@@ -217,6 +219,9 @@ export default function RegisterRoom({ isOpen, onClose} : RoomModalProps) {
       });
 
       if (response.ok) {
+        setIsRoomAdded(true);
+     
+        
         const responseData = await response.json();
 
         // Store submitted data in localStorage
@@ -225,6 +230,9 @@ export default function RegisterRoom({ isOpen, onClose} : RoomModalProps) {
         localStorage.setItem('propertyData', JSON.stringify(propertyData));
 
         toast.success('Room registered successfully!');
+        setTimeout(() => {
+            onClose();
+          }, 2000);
       
       } else {
         const errorData = await response.json();
@@ -243,12 +251,12 @@ export default function RegisterRoom({ isOpen, onClose} : RoomModalProps) {
 
 
       <form onSubmit={handleSubmit(onSubmit)}  onClick={(e) => e.stopPropagation()} className="p-6 bg-white border max-w-[60%] w-full max-h-[80vh] overflow-y-auto rounded-lg shadow-lg relative">
-     
+     <ToastContainer className="mt-10" />
      <div className="flex justify-between mb-2"> 
      <h2 className="text-lg font-bold text-center">Өрөө нэмэх</h2>
         <button onClick={onClose}> <IoIosCloseCircleOutline className="text-3xl text-black hover:text-primary " /></button>
      </div>
-  <ToastContainer className="mt-10" />
+ 
 
 {/* Header */}
   <section className="mb-5">
@@ -364,13 +372,13 @@ export default function RegisterRoom({ isOpen, onClose} : RoomModalProps) {
 
   <div className="mb-4 w-[45%]">
     <label>Number of Rooms</label>
-    <input type="number" placeholder='0' {...register('number_of_rooms')} className="border rounded-sd p-2 w-16 block" />
+    <input type="number" min="0" placeholder='0'  {...register('number_of_rooms')} className="border rounded-sd p-2 w-16 block" />
     {errors.number_of_rooms && <span className="text-red-500">{errors.number_of_rooms.message}</span>}
   </div>
 
   <div className="mb-4 w-[45%]">
     <label>Number of Rooms to Sell</label>
-    <input type="number"  placeholder='0' {...register('number_of_rooms_to_sell')} className="border p-2 rounded-sd w-16 block" />
+    <input type="number" min="0"  placeholder='0' {...register('number_of_rooms_to_sell')} className="border p-2 rounded-sd w-16 block" />
     {errors.number_of_rooms_to_sell && <span className="text-red-500">{errors.number_of_rooms_to_sell.message}</span>}
   </div>
 

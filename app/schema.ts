@@ -60,15 +60,20 @@ export const schemaCreateRoom = z.object({
     free_Toiletries: z.array(z.string()).min(1, { message: "Select at least one facility" }),
     food_And_Drink: z.array(z.string()).min(1, { message: "Select at least one facility" }),
     outdoor_And_View: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-    number_of_rooms: z.string().min(1, { message: "Number of rooms is required" })
-        .regex(/^\d+$/, { message: "Must be a valid number" }),
+    number_of_rooms: z.preprocess(
+      (val) => Number(val), // Convert input to number
+      z.number()
+        .int({ message: "Must be a whole number" }) // Ensures it's an integer
+        .min(1, { message: "Must be a natural number (1 or greater)" }) // Ensures it's ≥ 1
+    ),
+    
     number_of_rooms_to_sell: z.string().min(1, { message: "Rooms to sell is required" })
         .regex(/^\d+$/, { message: "Must be a valid number" }),
     room_Description: z.string().min(5, { message: "Description is required" }),
     smoking_allowed: z.string().min(1, { message: "Нэгийг сонгонo уу?"}),
     RoomNo: z.string().min(1, { message: "Enter valid room numbers" }),
 }).refine((data) => {
-    return parseInt(data.number_of_rooms_to_sell, 10) <= parseInt(data.number_of_rooms, 10);
+    return parseInt(data.number_of_rooms_to_sell, 10) <= data.number_of_rooms;
 }, {
     message: "Rooms to sell cannot exceed total number of rooms",
     path: ["number_of_rooms_to_sell"], // Attach error to this field

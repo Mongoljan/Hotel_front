@@ -20,11 +20,12 @@ import RoomList from './RoomList'
 export default function RegisterRoom() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRoomAdded, setIsRoomAdded]= useState(false);
 
   return (
     <div className="flex   h-full  rounded-[12px] max-w-full p-10">
   
-<RoomList/>
+<RoomList isRoomAdded={isRoomAdded} setIsRoomAdded={setIsRoomAdded}/>
 
 
 
