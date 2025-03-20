@@ -1,8 +1,10 @@
-import CreateHotel from "../CreateHotel"
+import CreateHotel from "./CreateHotel"
 export default function registeHotel(){
     return(
         <div>
-<CreateHotel/>
+            
+
+{/* <CreateHotel/> */}
         </div>
     )
 }

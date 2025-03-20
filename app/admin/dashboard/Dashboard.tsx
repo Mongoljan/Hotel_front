@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';  // Import js-cookie
-import CreateHotel from '../CreateHotel';
+import CreateHotel from '../register_hotel/CreateHotel';
 
 
 export default function AdminDashboard() {

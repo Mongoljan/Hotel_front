@@ -24,8 +24,8 @@ export default function Sidebar() {
   const pathname = usePathname();
   const navItems = [
     { href: "/admin/dashboard", icon: <MdOutlineSpaceDashboard />, label: "Dashboard" },
-    { href: "/admin/register", icon: <IoPersonOutline />, label: "Register staff" },
-    { href: "/admin/register_hotel", icon: <LuHotel />, label: "Register hotel" },
+    // { href: "/admin/register", icon: <IoPersonOutline />, label: "Register staff" },
+    { href: "/admin/register_hotel", icon: <LuHotel />, label: "Буудлын бүртгэл" },
     {
       label: "Rooms",
       icon: <MdOutlineBedroomChild />,

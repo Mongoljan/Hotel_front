@@ -5,6 +5,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Topbar from "@/components/topbar";
 import { ReactNode } from "react";
+import Cookies from "js-cookie";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
