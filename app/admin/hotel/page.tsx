@@ -1,5 +1,5 @@
 'use client'
-import RegisterPage from "@/app/auth/register/Hotel/page";
+import RegisterPage from "@/app/auth/register/Hotel/Hotel";
 // import HotelInfo from "./HotelInfo";
 import Proceed from "@/app/auth/register/Hotel/Proceed";
 import SixStepInfo from "./SixStepInfo";
