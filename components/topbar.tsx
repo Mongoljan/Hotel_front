@@ -1,7 +1,12 @@
 import Link from "next/link"
 import LanguageSwitcher from "./LanguageSwitcher"
+import { getTranslations } from "next-intl/server";
 
-export default function Topbar() {
+
+
+export default async function Topbar() {
+  const t = await getTranslations('Topbar');
+  
     return(
 
         <>
@@ -12,14 +17,14 @@ export default function Topbar() {
             className="rounded-sm border border-solid text-xs  border-blue-500 transition-colors flex items-center justify-center hover:bg-blue-500  hover:border-transparent  sm:text-base h-8 sm:h-10 px-2 sm:px-2 sm:min-w-36 text-blue-500 hover:text-white"
             href={"/auth/login"}
           >
-            Нэвтрэх
+           {t("signIn")}
           </Link>
 
           <Link
             className="rounded-sm border border-solid  border-blue-500 transition-colors flex items-center justify-center hover:bg-blue-500  hover:border-transparent text-xs sm:text-base h-8 sm:h-10 px-2 sm:px-2 sm:min-w-36 text-blue-500 hover:text-white"
             href={"/auth/register"}
           >
-            Бүртгүүлэх
+            {t("signUp")}
           </Link>
           <LanguageSwitcher/>
         </div>

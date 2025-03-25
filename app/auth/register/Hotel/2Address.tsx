@@ -101,7 +101,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">
+    <div className="flex justify-center items-center min-h-screen h-full  rounded-[12px]">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}

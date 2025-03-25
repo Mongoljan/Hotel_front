@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -12,13 +12,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import { schemaRegistrationEmployee2 } from '@/app/schema';
+import { useTranslations } from "next-intl";
 
 type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
 
 export default function RegisterEmployee() {
+  const t = useTranslations("RegisterStaff");
   const router = useRouter();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [userTypes, setUserTypes] = useState<{ pk: number; name: string }[]>([]);
 
   const {
     register,
@@ -30,45 +33,54 @@ export default function RegisterEmployee() {
     resolver: zodResolver(schemaRegistrationEmployee2),
   });
 
+  useEffect(() => {
+    const fetchUserTypes = async () => {
+      try {
+        const res = await fetch("https://dev.kacc.mn/api/user-type/");
+        const data = await res.json();
+        setUserTypes(data);
+      } catch (err) {
+        console.error("Failed to fetch user types:", err);
+        toast.error("Хэрэглэгчийн төрөл ачаалагдсангүй.");
+      }
+    };
+    fetchUserTypes();
+  }, []);
+
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    console.log()
     if (Object.keys(errors).length > 0) {
-      console.log("Missing fields:", errors); // Log missing fields
       toast.error('Формыг бүрэн бөглөнө үү!');
       return;
     }
 
     try {
-     
       const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
       const hotel = propertyData?.property;
+      console.log(hotel);
+
       const requestBody = {
         name: data.contact_person_name,
         position: data.position,
         contact_number: data.contact_number,
         email: data.email,
         password: data.password,
-        user_type_id: data.user_type_id,
         user_type: data.user_type,
-        hotel:hotel
-
+        hotel: hotel,
       };
 
       const response = await fetch('https://dev.kacc.mn/api/EmployeeRegister/', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
-        router.push('/admin/dashboard');
         toast.success('Ажилтны бүртгэл амжилттай!');
+        router.push('/admin/dashboard');
       } else {
         const errorData = await response.json();
-        console.log(errorData)
-        toast.error(errorData.message || 'Бүртгэл амжилтгүй боллоо.');
+        console.log(errorData);
+        toast.error(errorData || 'Бүртгэл амжилтгүй боллоо.');
       }
     } catch (error) {
       toast.error('Алдаа гарлаа, дахин оролдоно уу.');
@@ -83,9 +95,9 @@ export default function RegisterEmployee() {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:max-w-[440px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">Ажилтны мэдээлэл</h2>
-        
-        <label className="text-black">Таны нэр</label>
+        <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">{t("staff_info")}</h2>
+
+        <label className="text-black">{t("name")}</label>
         <input
           type="text"
           {...register('contact_person_name')}
@@ -93,7 +105,7 @@ export default function RegisterEmployee() {
         />
         {errors.contact_person_name && <p className="text-red-500 text-sm">{errors.contact_person_name.message}</p>}
 
-        <label className="text-black">Албан тушаал</label>
+        <label className="text-black">{t("title")}</label>
         <input
           type="text"
           {...register('position')}
@@ -101,23 +113,20 @@ export default function RegisterEmployee() {
         />
         {errors.position && <p className="text-red-500 text-sm">{errors.position.message}</p>}
 
-        <label className="text-black">User Type</label>
-        <input
-          type="text"
-          {...register('user_type')}
-          className="border border-soft p-2 w-full mb-2 h-[45px] rounded-[15px]"
-        />
-        {errors.user_type && <p className="text-red-500 text-sm">{errors.user_type.message}</p>}
+        <label className="text-black">{t("user_type")}</label>
+<select
+  {...register('user_type', { valueAsNumber: true })} // cast value to number
+  className="border border-soft p-2 w-full mb-2 h-[45px] rounded-[15px]"
+  defaultValue=""
+>
+  <option value="" disabled>-- Хэрэглэгчийн төрөл сонгоно уу --</option>
+  {userTypes.map((type) => (
+    <option key={type.pk} value={type.pk}>{type.name}</option>
+  ))}
+</select>
+{errors.user_type && <p className="text-red-500 text-sm">{errors.user_type.message}</p>}
 
-        <label className="text-black">User Type ID</label>
-        <input
-          type="number"
-          {...register('user_type_id')}
-          className="border border-soft p-2 w-full mb-2 h-[45px] rounded-[15px]"
-        />
-        {errors.user_type_id && <p className="text-red-500 text-sm">{errors.user_type_id.message}</p>}
-
-        <label className="text-black">Утасны дугаар</label>
+        <label className="text-black">{t("phone_number")}</label>
         <PhoneInput
           country="mn"
           enableSearch
@@ -129,7 +138,7 @@ export default function RegisterEmployee() {
         />
         {errors.contact_number && <p className="text-red-500 text-sm">{errors.contact_number.message}</p>}
 
-        <label className="text-black">И-мэйл хаяг</label>
+        <label className="text-black">{t("email")}</label>
         <input
           type="email"
           {...register('email')}
@@ -137,7 +146,7 @@ export default function RegisterEmployee() {
         />
         {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
 
-        <label className="text-black">Нууц үг</label>
+        <label className="text-black">{t("password")}</label>
         <div className="relative mb-2">
           <input
             type={isPasswordVisible ? 'text' : 'password'}
@@ -150,7 +159,7 @@ export default function RegisterEmployee() {
         </div>
         {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
 
-        <label className="text-black">Нууц үг давтах</label>
+        <label className="text-black">{t("password_again")}</label>
         <div className="relative mb-2">
           <input
             type={isConfirmPasswordVisible ? 'text' : 'password'}
@@ -169,7 +178,7 @@ export default function RegisterEmployee() {
             className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
             <div className="flex">
-              <FaArrowLeft className="self-center mx-1" /> Буцах
+              <FaArrowLeft className="self-center mx-1" /> {t("back")}
             </div>
           </Link>
 
@@ -179,7 +188,7 @@ export default function RegisterEmployee() {
             className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
             <div className="flex">
-              Дараах <FaArrowRight className="self-center mx-1" />
+              {t("next")} <FaArrowRight className="self-center mx-1" />
             </div>
           </button>
         </div>

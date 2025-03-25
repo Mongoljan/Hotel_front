@@ -75,7 +75,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
   };
 
   return (
-    <div className="flex justify-center items-center pt-10">
+    <div className="flex justify-center items-center ">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}

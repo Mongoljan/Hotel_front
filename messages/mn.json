@@ -1,14 +1,54 @@
 {
-  "Error": {
-    "description": "<p>We've unfortunately encountered an error.</p><p>You can try to <retry>reload the page</retry> you were visiting.</p>",
-    "title": "Something went wrong!"
-  },
+   "Topbar":{
+   "signIn":"Нэвтрэх",
+   "signUp":"Бүртгүүлэх"
+   },
+
   "HomePage": {
     "title": "сайн уу",
     "about": "пэйж",
     "main": "Нүүр хуудас руу очих",
     "home": "Нүүр"
   },
+  "AuthLogin":{
+    "signIn":"Нэвтрэх",
+     "signUp":"Бүртгүүлэх",
+    "email":"И-мэйл хаяг",
+    "password":"Нууц үг",
+    "savePassword":"Нууц үг мартсан?",
+    "remember":"Намайг сана",
+    "wait":"Түр хүлээнэ үү..."
+  },
+  "AuthRegister":{
+    "hotel_info":"Буудлын мэдээлэл",
+    "company_Reg":"ААН-н РД",
+    "company_name":"ААН-н нэр",
+    "hotel_name":"Буудлын нэр",
+    "location":"Байршил",
+    "hotel_type":"Буудлын төрөл",
+    "select":"Сонгох",
+    "phone_number":"Утасны дугаар",
+    "email":"И-мэйл хаяг",
+    "back":"буцах",
+    "next":"дараах"
+  },
+  "RegisterStaff":{
+   "staff_info":"Ажилтны мэдээлэл",
+   "name":"Tаны нэр",
+   "title":"Албан тушаал",
+   "user_type":"Хэрэглэгчийн төрөл",
+   "phone_number":"Утасны дугаар",
+   "password":"Нууц үг",
+   "email":"И-мэйл хаяг",
+   "password_again":"Нууц үг давтах",
+      "back":"буцах",
+    "next":"дараах"
+
+},
+
+   
+
+  
   "AccessDeniedPage": {
     "title": "Хандах эрх хаалттай",
     "description": "Та энэ хуудсанд нэвтрэх эрхгүй байна.",

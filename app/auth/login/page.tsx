@@ -11,10 +11,13 @@ import { HiEye, HiEyeSlash } from 'react-icons/hi2';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import Link from 'next/link';
+import { useTranslations } from "next-intl";
+
 
 type FormFields = z.infer<typeof schemaLogin>;
 
-export default function LoginPage() {
+export default  function LoginPage() {
+  const t = useTranslations('AuthLogin');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
 
@@ -69,6 +72,15 @@ export default function LoginPage() {
           general_facilities: [],
           property_photos: [],
         };
+        const userInfo ={
+          hotel: responseData?.hotel,
+          name: responseData?.name,
+          position:responseData?.position,
+          contact_number:responseData?.contact_number,
+          email:responseData?.email,
+
+        }
+        localStorage.setItem('userInfo', JSON.stringify(userInfo))
         localStorage.setItem('propertyData', JSON.stringify(propertyData));
 
         Cookies.set('token', responseData.token, {
@@ -108,9 +120,9 @@ export default function LoginPage() {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-10 px-10 max-w-[600px] md:min-w-[440px] min-w-[250px] border-primary border-solid border-[1px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">Нэвтрэх</h2>
+        <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">{t("signIn")}</h2>
 
-        <div className="text-black">И-мэйл хаяг</div>
+        <div className="text-black">{t("email")}</div>
         <input
           type="email"
           {...register('email')}
@@ -119,7 +131,7 @@ export default function LoginPage() {
         />
         {errors.email && <div className="text-red-500">{errors.email.message}</div>}
 
-        <div className="text-black">Нууц үг</div>
+        <div className="text-black">{t("password")}</div>
         <div className="relative">
           <input
             type={isPasswordVisible ? 'text' : 'password'}
@@ -137,8 +149,8 @@ export default function LoginPage() {
         </div>
 
         <div className="flex justify-between text-black">
-          <Link className="ml-[4px] hover:text-blue-300" href={"/auth/resetpassword"}>Намайг сана</Link>
-          <Link className="ml-[4px] hover:text-blue-300" href={"/auth/resetpassword"}>Нууц үг мартсан?</Link>
+          <Link className="ml-[4px] hover:text-blue-300" href={"/auth/resetpassword"}>{t("remember")}</Link>
+          <Link className="ml-[4px] hover:text-blue-300" href={"/auth/resetpassword"}>{t("savePassword")}</Link>
         </div>
 
         {errors.password && <div className="text-red-500">{errors.password.message}</div>}
@@ -148,14 +160,14 @@ export default function LoginPage() {
           className="w-full border-primary border-solid border-[1px] hover:bg-bg mt-[50px] text-black py-2 px-4 font-semibold rounded-[15px]"
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Түр хүлээнэ үү...' : 'Нэвтрэх'}
+          {isSubmitting ? t("wait") : t("signIn")}
         </button>
 
         <Link
           className="block text-center bg-primary w-full hover:bg text-white py-2 px-4 font-semibold rounded-[15px] mt-[20px] hover:bg-bg-3 hover:text-black border-primary border-solid border-[1px]"
           href={"/auth/register"}
         >
-          Бүртгүүлэх
+      {t("signUp")}
         </Link>
       </form>
     </div>

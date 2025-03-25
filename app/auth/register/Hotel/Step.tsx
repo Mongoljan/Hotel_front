@@ -17,7 +17,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ totalSteps, currentStep }
   return (
     <div className="flex items-center justify-center ">
       <div className="flex items-center space-x-4">
-        <div className=" items-center justify-center mt-10">
+        <div className=" items-center justify-center ">
           <div className="flex items-center">
             {[...Array(totalSteps)].map((_, i) => {
               const stepNumber = i + 1;

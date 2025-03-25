@@ -174,8 +174,8 @@ export const schemaHotelRegistration2 = z.object({
 
   register: z 
   .string()
-  .min(6, { message:"Байгууллагын РД 6 оронтой байх ёстойг анхаарна уу?",})
-  .max(6, { message:"Байгууллагын РД 6 оронтой байх ёстойг анхаарна уу?",}),
+  .min(7, { message:"Байгууллагын РД 7 оронтой байх ёстойг анхаарна уу?",})
+  .max(7, { message:"Байгууллагын РД 7 оронтой байх ёстойг анхаарна уу?",}),
   CompanyName: z
   .string(),
   PropertyName : z
@@ -286,8 +286,8 @@ export const schemaHotelSteps6 = z.object({
 export const schemaRegistrationEmployee2 =z.object({
   email: z.string().email({ message: "Email format is invalid" }).max(255, { message: "Email address cannot exceed 255 characters" }),
   contact_person_name: z.string().min(3, { message: "Холбоо барих хүний нэр" }),
-  user_type: z.string().min(1, { message: "User type is required" }),
-  user_type_id: z.string(),
+  user_type: z.number().min(1, { message: "User type is required" }),
+  // user_type_id: z.string(),
   position: z.string(),
   contact_number: z.string().min(3, { message: "Гар утасны дугаар багадаа 3 оронтой байна." }),
   password: z.string().min(8, {

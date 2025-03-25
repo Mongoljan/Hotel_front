@@ -7,7 +7,7 @@ import { schemaHotelSteps1 } from '../../../schema';
 import { z } from 'zod';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FaArrowRight } from "react-icons/fa6";
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const API_PROPERTY_BASIC_INFO = 'https://dev.kacc.mn/api/property-basic-info/';
@@ -88,7 +88,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">
+    <div className="flex justify-center items-center min-h-screen h-full  rounded-[12px]">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -178,6 +178,12 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         </select>
         {errors.languages && <div className="text-red-500">{errors.languages.message}</div>}
 
+        <div className="flex gap-x-4">
+  <button type="button" onClick={onBack} className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]">
+            <div className="flex items-center">
+              <FaArrowLeft className="mr-1" /> Back
+            </div>
+          </button>
         <button
           type="submit"
           disabled={isSubmitting}
@@ -187,6 +193,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
             Дараах <FaArrowRight className="self-center mx-1" />
           </div>
         </button>
+        </div>
       </form>
     </div>
   );

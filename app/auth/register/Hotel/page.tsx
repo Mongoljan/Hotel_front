@@ -12,7 +12,11 @@ import RegisterHotel4 from './4PropertyPolicies';
 import RegisterHotel6 from './6PropertyDetails';
 import { useRouter } from 'next/navigation';
 
-export default function RegisterPage() {
+interface ProceedProps{
+  proceed: number;
+  setProceed : (value: number) => void;
+}
+export default function RegisterPage({proceed, setProceed} : ProceedProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 6;
   const router = useRouter();
@@ -52,7 +56,7 @@ export default function RegisterPage() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <RegisterHotel1 onNext={() => handleNext(2)} onBack={() => handleBack(1)} />;
+        return <RegisterHotel1 onNext={() => handleNext(2)} onBack={() => setProceed(0)} />;
       case 2:
         return <RegisterHotel2 onNext={() => handleNext(3)} onBack={() => handleBack(2)} />;
       case 3:

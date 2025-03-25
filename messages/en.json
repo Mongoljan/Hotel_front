@@ -1,14 +1,50 @@
 {
-  "Error": {
-    "description": "<p>We've unfortunately encountered an error.</p><p>You can try to <retry>reload the page</retry> you were visiting.</p>",
-    "title": "Something went wrong!"
-  },
+  "Topbar":{
+    "signIn":"Sign In",
+    "signUp":"Sign Up"
+    },
+ 
+ 
   "HomePage": {
     "title": "Hello world!",
     "about": "Go to the about page",
     "main": "Go to main page",
     "home": "Home"
   },
+  "AuthLogin": {
+  "signIn": "Sign In",
+  "signUp": "Register",
+  "email": "Email Address",
+  "password": "Password",
+  "savePassword": "Forgot Password?",
+  "remember": "Remember Me",
+  "wait": "Please wait..."
+},
+"AuthRegister": {
+  "hotel_info": "Hotel Information",
+  "company_Reg": "Business Registration Number",
+  "company_name": "Business Name",
+  "hotel_name": "Hotel Name",
+  "location": "Location",
+  "hotel_type": "Hotel Type",
+  "select": "Select",
+  "phone_number": "Phone Number",
+  "email": "Email Address",
+  "back": "Back",
+  "next": "Next"
+},
+"RegisterStaff": {
+  "staff_info": "Staff Information",
+  "name": "Your Name",
+  "title": "Position",
+  "email": "Email Address",
+  "user_type": "User Type",
+  "phone_number": "Phone Number",
+  "password": "Password",
+  "password_again": "Repeat Password",
+  "back": "Back",
+  "next": "Next"
+},
 
   "AccessDeniedPage": {
     "title": "Access Denied",

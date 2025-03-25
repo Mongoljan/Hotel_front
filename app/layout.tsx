@@ -6,6 +6,7 @@ import "./globals.css";
 import Topbar from "@/components/topbar";
 import { ReactNode } from "react";
 import Cookies from "js-cookie";
+import { getTranslations } from "next-intl/server";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -22,6 +23,8 @@ const geistMono = localFont({
 type RootLayoutProps = {
   children: ReactNode;
 };
+
+
 
 export default async function RootLayout({ children }: RootLayoutProps) {
   const locale = await getLocale();
