@@ -17,9 +17,11 @@ type FormFields = z.infer<typeof schemaHotelSteps6>;
 type Props = {
   onNext: () => void;
   onBack: () => void;
+  proceed: number;
+  setProceed : (value: number) => void;
 };
 
-export default function RegisterHotel6({ onNext, onBack }: Props) {
+export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: Props) {
   const [facilities, setFacilities] = useState<{ id: number; name_en: string }[]>([]);
 
   const {
@@ -78,8 +80,15 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
       const responseData = await response.json();
 
       if (response.ok) {
+        
         console.log('Success:', responseData);
+        
         toast.success('Property details saved successfully!');
+        setTimeout(() => {
+         setProceed(0)
+        }, 2000)
+  
+        
         onNext();
       } else {
         console.error('Failed Response:', responseData);

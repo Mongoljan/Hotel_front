@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler, useFieldArray } from 'react-hook-form';
 import { schemaCreateRoom } from '@/app/schema';
 import { z } from 'zod';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FaArrowRight, FaArrowLeft } from "react-icons/fa6";
+import { FaArrowRight, FaArrowLeft, FaTrash, FaPlus } from "react-icons/fa6";
 import Cookies from 'js-cookie';
 import { IoIosCloseCircleOutline } from "react-icons/io";
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/all-data/';
@@ -108,10 +108,27 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
 
   const hotelId = getHotelId();
 
+  
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64Image = reader.result as string;
+          setValue(`entries.${index}.images`, base64Image);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+  
+
+
+
   const {
     register,
     handleSubmit,
     setValue,
+    control,
     trigger,
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
@@ -134,7 +151,12 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       free_Toiletries :[],
       food_And_Drink: [],
       outdoor_And_View: [],
+      entries: [{ images: '', descriptions: '' }],
     },
+  });
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'entries',
   });
 
   useEffect(() => {
@@ -191,7 +213,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       const transformedData = {
         token: token || '',
         hotel: hotel || 0,
-        room_number: Number(formData.room_number),
+        room_number: 0,
         room_type: Number(formData.room_type),
         room_category: Number(formData.room_category),
         room_size: parseFloat(formData.room_size.toString()),
@@ -361,10 +383,54 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
  
   </section>
 
-  <section className="h-[100px] w-full">
-    <div>
-        Энд зургууд оруулах хэсэг гарч ирнэ
-    </div>
+  <section className=" w-1/2">
+    <h2 className="text-2xl font-bold text-center mb-6">Property Images</h2>
+   
+           {fields.map((field, index) => (
+             <div key={field.id} className="mb-4 border p-4 rounded-lg">
+               <section className="mb-2">
+                 <label className="text-black">Upload Image</label>
+                 <input
+                   type="file"
+                   accept="image/*"
+                   onChange={(e) => handleImageChange(e, index)}
+                   className="border p-2 w-full rounded-[15px]"
+                 />
+                 {errors.entries?.[index]?.images && (
+                   <div className="text-red-500 text-sm">{errors.entries[index]?.images?.message}</div>
+                 )}
+               </section>
+   
+               <section className="mb-2">
+                 <label className="text-black">Description</label>
+                 <input
+                   type="text"
+                   {...register(`entries.${index}.descriptions`)}
+                   className="border p-2 w-full rounded-[15px]"
+                 />
+                 {errors.entries?.[index]?.descriptions && (
+                   <div className="text-red-500 text-sm">{errors.entries[index]?.descriptions?.message}</div>
+                 )}
+               </section>
+   
+               <button
+                 type="button"
+                 onClick={() => remove(index)}
+                 className="flex items-center justify-center w-full text-red-500 border border-red-500 rounded-lg p-2 mt-2"
+               >
+                 <FaTrash className="mr-2" /> Remove
+               </button>
+             </div>
+           ))}
+   
+           <button
+             type="button"
+             onClick={() => append({ images: '', descriptions: '' })}
+             className="w-full flex justify-center text-black py-2 border border-primary rounded-lg mb-4"
+           >
+             <FaPlus className="mr-2" /> Add More
+           </button>
+   
   </section>
   
 
@@ -398,11 +464,11 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
 
   </section>
   
-  <div className="mb-4 ">
+  {/* <div className="mb-4 ">
     <label>Room Number</label>
     <input type="text" {...register('room_number')} className="border p-2 w-full" />
     {errors.room_number && <span className="text-red-500">{errors.room_number.message}</span>}
-  </div>
+  </div> */}
 
 
 

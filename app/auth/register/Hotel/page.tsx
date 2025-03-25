@@ -40,6 +40,10 @@ export default function RegisterPage({proceed, setProceed} : ProceedProps) {
       localStorage.setItem('currentStep', step.toString());
     }, transitionDelay); // ✅ Add delay before transitioning
   };
+    useEffect(() => {
+    console.log("Proceed value changed:", proceed);
+    // You can add other logic here based on proceed value
+  }, [proceed]);
 
   const handleBack = (step: number) => {
     if (step === 1) {
@@ -68,11 +72,13 @@ export default function RegisterPage({proceed, setProceed} : ProceedProps) {
       case 6:
         return (
           <RegisterHotel6
+          proceed={proceed}
+          setProceed={setProceed}
             onNext={() => {
               toast.success('Registration completed!');
               setTimeout(() => {
                 localStorage.removeItem('currentStep'); // ✅ Clear saved step after completion
-                router.push('/admin/dashboard');
+                router.push('/admin/hotel');
               }, transitionDelay);
             }}
             onBack={() => handleBack(6)}

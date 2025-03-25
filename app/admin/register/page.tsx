@@ -99,7 +99,7 @@ export default function RegisterPage() {
 
       if (response.ok) {
         toast.success('Registration successful! Your registration approval is pending.');
-        router.push('/admin/dashboard');
+        router.push('/admin/hotel');
       } else {
         const errorData = await response.json();
         

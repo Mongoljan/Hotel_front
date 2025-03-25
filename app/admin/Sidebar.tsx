@@ -23,7 +23,7 @@ export default function Sidebar() {
 
   const pathname = usePathname();
   const navItems = [
-    { href: "/admin/dashboard",  icon: <LuHotel />, label: "Буудлын бүртгэл" },
+    { href: "/admin/hotel",  icon: <LuHotel />, label: "Буудлын бүртгэл"},
     // { href: "/admin/register", icon: <IoPersonOutline />, label: "Register staff" },
     // { href: "/admin/register_hotel", icon: <LuHotel />, label: "Буудлын бүртгэл" },
     {
@@ -32,7 +32,7 @@ export default function Sidebar() {
       subMenu: [
         { href: "/admin/room", icon: <MdOutlineAddBox />, label: "Add Room" },
         { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: "Rooms' price" },
-        { href: "/admin/room/categories", icon: <MdOutlineCategory />, label: "Room Categories" },
+        // { href: "/admin/room/categories", icon: <MdOutlineCategory />, label: "Room Categories" },
       ],
     },
   ];

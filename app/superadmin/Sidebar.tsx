@@ -16,9 +16,9 @@ export default function Sidebar( ){
       <nav className="flex flex-col gap-4">
         <Link
           className="rounded-lg  px-4 py-2 text-black hover:bg-blue-500 hover:text-white transition-colors"
-          href="/admin/dashboard"
+          href="/admin/hotel"
         >
-Admin dashboard
+Буудлын бүртгэл
         </Link>
         
       </nav>

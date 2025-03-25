@@ -49,7 +49,18 @@ export const schemaLogin = z.object({
 
 
 export const schemaCreateRoom = z.object({
-    room_number: z.string().min(1, { message: "Room number is required" }),
+  entries: z.array(
+    z.object({
+      images: z
+        .string()
+        .url({ message: 'Image must be a valid URL.' })
+        .min(1, { message: 'Image URL is required.' }),
+      descriptions: z
+        .string()
+        .min(1, { message: 'Description must not be empty.' }),
+    })
+  ).min(1, { message: 'At least one image and description set is required.' }),
+    // room_number: z.string().min(1, { message: "Room number is required" }),
     room_type: z.string().min(1, { message: "Room type is required" }),
     room_category:  z.string().min(1, { message: "Room category is required" }),
     room_size: z.string().min(1, { message: "Room size must be at least 5m²" }),

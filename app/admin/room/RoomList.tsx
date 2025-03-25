@@ -18,6 +18,7 @@ interface Room extends GridValidRowModel {
   numberOfRoomsToSell: number;
   description: string;
   smokingAllowed: string;
+  
 }
 interface RoomModalProps {
    isRoomAdded: boolean,

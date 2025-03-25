@@ -76,7 +76,7 @@ export default function RegisterEmployee() {
 
       if (response.ok) {
         toast.success('Ажилтны бүртгэл амжилттай!');
-        router.push('/admin/dashboard');
+        router.push('/admin/hotel');
       } else {
         const errorData = await response.json();
         console.log(errorData);

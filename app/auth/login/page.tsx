@@ -29,18 +29,18 @@ export default  function LoginPage() {
     resolver: zodResolver(schemaLogin),
   });
 
-  useEffect(() => {
-    const token = Cookies.get('jwtToken');
-    const userType = Cookies.get('userType');
+  // useEffect(() => {
+  //   const token = Cookies.get('jwtToken');
+  //   const userType = Cookies.get('userType');
 
-    if (token) {
-      if (userType === 'Owner') {
-        router.push('/admin/dashboard');
-      } else if (userType === 'SuperAdmin') {
-        router.push('/superadmin/dashboard');
-      }
-    }
-  }, [router]);
+  //   if (token) {
+  //     if (userType === 'Owner') {
+  //       router.push('/admin/dashboard');
+  //     } else if (userType === 'SuperAdmin') {
+  //       router.push('/superadmin/dashboard');
+  //     }
+  //   }
+  // }, [router]);
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     try {
@@ -102,7 +102,7 @@ export default  function LoginPage() {
         });
 
         toast.success('Login successful!');
-        router.push('/admin/dashboard');
+        router.push('/admin/hotel');
       } else {
         const errorData = await response.json();
         toast.error(errorData.message || 'Login failed. Please check your credentials.');

@@ -25,7 +25,7 @@ export default function Menu({
         <li><a href="/about">Тухай</a></li>
 
         {showAdminDashboard && (
-          <li><a href="/admin/dashboard">Админ хуудас</a></li>
+          <li><a href="/admin/hotel">Админ хуудас</a></li>
         )}
 
         {showAdminSettings && (
