@@ -108,7 +108,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
 
   const hotelId = getHotelId();
 
-  
+
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
       const file = event.target.files?.[0];
       if (file) {
@@ -229,6 +229,10 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
         room_Description: formData.room_Description,
         smoking_allowed: Boolean(formData.smoking_allowed),
         RoomNo: roomNumbers, // Now it's a valid array of numbers
+        images: formData.entries.map(entry => ({
+          image: entry.images,
+          description: entry.descriptions,
+        }))
       };
       console.log("Transformed Data:", transformedData);
     
