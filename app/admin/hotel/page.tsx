@@ -4,11 +4,21 @@ import RegisterPage from "@/app/auth/register/Hotel/Hotel";
 import Proceed from "@/app/auth/register/Hotel/Proceed";
 import SixStepInfo from "./SixStepInfo";
 import { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
+import { cookies } from "next/headers";
 
 
 export default  function  registeHotel(){
 
     const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const cookieStore = cookies();
+  const token = cookieStore.get("token")?.value;
+  if(token){
+    const user =jwtDecode(token);
+    console.log(user);
+  }
+
+  
   
       const [proceed, setProceed] = useState(0);
       console.log(proceed);
