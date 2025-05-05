@@ -38,17 +38,18 @@ export default function RegisterHotel() {
 
       // Load propertyData for potential step2
       const hotel = Cookies.get("hotel") 
-      const pd = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const propertyId = pd.hotel;
-     
-      console.log(propertyId)
-      if (propertyId) {
+      const pd = JSON.parse(localStorage.getItem('propertyData') || '{}');
+
+     console.log("here is hotel exists: ", hotel)
+
+      if (hotel) {
         try {
           const res = await fetch(
             `https://dev.kacc.mn/api/property-details/?property=${hotel}`
           );
           const details = await res.json();
           if (Array.isArray(details) && details.length > 0) {
+            console.log("its worked")
             setProceed(2);
             console.log("its worked")
             return;
@@ -59,11 +60,11 @@ export default function RegisterHotel() {
       }
 
       // Fallback based on what data is in storage
-      if (Array.isArray(pd.general_facilities) && pd.general_facilities.length > 0) {
-        setProceed(1);
-      } else {
-        setProceed(0);
-      }
+      // if (Array.isArray(pd.general_facilities) && pd.general_facilities.length > 0) {
+      //   setProceed(1);
+      // } else {
+      //   setProceed(0);
+      // }
     }
 
     init();

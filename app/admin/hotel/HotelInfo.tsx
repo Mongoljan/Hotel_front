@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 
 interface Hotel {
   pk: number;
@@ -21,8 +22,8 @@ export default function HotelInfo() {
   const getHotelId = (): string | null => {
     
     try {
-      const userInfo= JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const hotel=userInfo?.hotel;
+      const hotel = Cookies.get("hotel");
+
       return hotel || null;
     } catch (error) {
       console.error("Error parsing hotel ID:", error);

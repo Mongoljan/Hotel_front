@@ -212,11 +212,11 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}') || {};
 
       const token= Cookies.get('token');
-      const userInfo= JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const hotel=userInfo?.hotel;
+      const hotel1= Cookies.get('hotel');
+   
       const transformedData = {
         token: token || '',
-        hotel: hotel || 0,
+        hotel: hotel1 || 0,
         room_number: 0,
         room_type: Number(formData.room_type),
         room_category: Number(formData.room_category),

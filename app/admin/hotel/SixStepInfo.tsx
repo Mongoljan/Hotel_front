@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import Cookies from 'js-cookie';
 
 interface PropertyPhoto {
   id: number;
@@ -74,6 +75,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     const loadData = async () => {
       const propertyData = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const targetPropertyId = propertyData.hotel;
+      const hotel = Cookies.get("hotel");
 
       const detailRes = await fetch(`https://dev.kacc.mn/api/property-details/?property=${targetPropertyId}`);
       const details = await detailRes.json();
@@ -83,7 +85,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         setProceed(0);
         return;
       }
-
+ console.log("its worked")
       setProceed(2);
       setPropertyDetail(matchedDetail);
 
