@@ -16,70 +16,62 @@ export default function RegisterHotel() {
   const [proceed, setProceed] = useState<number | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo>({});
 
-  // Hydrate userInfo and initial proceed from localStorage once on the client
+  // Hydrate userInfo and determine initial step
   useEffect(() => {
-    // Load user info
-    const storedUser = localStorage.getItem('userInfo');
-    if (storedUser) {
-      try {
-        setUserInfo(JSON.parse(storedUser));
-      } catch {
-        // ignore malformed JSON
+    async function init() {
+      // Load user info
+      const storedUser = localStorage.getItem('userInfo');
+      if (storedUser) {
+        try {
+          setUserInfo(JSON.parse(storedUser));
+        } catch {
+          // ignore malformed JSON
+        }
+      }
+
+      // If a manual proceed was saved, respect it
+      const saved = localStorage.getItem('proceed');
+      if (saved) {
+        setProceed(parseInt(saved, 10));
+        return;
+      }
+
+      // Load propertyData for potential step2
+      const pd = JSON.parse(localStorage.getItem('propertyData') || '{}');
+      const propertyId = pd.property;
+
+      if (propertyId) {
+        try {
+          const res = await fetch(
+            `https://dev.kacc.mn/api/property-details/?property=${propertyId}`
+          );
+          const details = await res.json();
+          if (Array.isArray(details) && details.length > 0) {
+            setProceed(2);
+            return;
+          }
+        } catch {
+          // fetch failed, fall through to step0
+        }
+      }
+
+      // Fallback based on what data is in storage
+      if (Array.isArray(pd.general_facilities) && pd.general_facilities.length > 0) {
+        setProceed(1);
+      } else {
+        setProceed(0);
       }
     }
 
-    // Determine which step to start on
-    const savedProceed = localStorage.getItem('proceed');
-    if (savedProceed) {
-      setProceed(parseInt(savedProceed, 10));
-      return;
-    }
-
-    const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-
-    if (Array.isArray(propertyData.property_photos) && propertyData.property_photos.length > 0) {
-      setProceed(2);
-    } else if (Array.isArray(propertyData.general_facilities) && propertyData.general_facilities.length > 0) {
-      setProceed(1);
-    } else {
-      setProceed(0);
-    }
+    init();
   }, []);
 
-  // Persist proceed back to localStorage whenever it changes
+  // Persist proceed whenever it changes
   useEffect(() => {
     if (proceed !== null) {
       localStorage.setItem('proceed', proceed.toString());
     }
   }, [proceed]);
-
-  // Sanity-check propertyDetails before allowing step 2
-  useEffect(() => {
-    if (proceed !== 2) return;
-
-    const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-    const propertyId = propertyData.property;
-    if (!propertyId) {
-      setProceed(0);
-      return;
-    }
-
-    fetch(`https://dev.kacc.mn/api/property-details/?property=${propertyId}`)
-      .then((res) => res.json())
-      .then((details: any[]) => {
-        if (Array.isArray(details) && details.length > 0) {
-          // valid property, ensure we're on step 2
-          setProceed(2);
-        } else {
-          // no details found → restart flow
-          setProceed(0);
-        }
-      })
-      .catch(() => {
-        // fetch error → restart flow
-        setProceed(0);
-      });
-  }, [proceed, setProceed]);
 
   if (proceed === null) {
     return <div>Loading…</div>;
