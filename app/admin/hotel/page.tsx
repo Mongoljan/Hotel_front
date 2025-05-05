@@ -55,7 +55,7 @@ export default function RegisterHotel() {
 
   if (proceed === null) {
     // still hydrating
-    return <div>{t('Loading…')}</div>;
+    return <div>Loading…</div>;
   }
 
   return (

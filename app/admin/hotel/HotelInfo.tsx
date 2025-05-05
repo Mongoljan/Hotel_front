@@ -23,7 +23,6 @@ export default function HotelInfo() {
     try {
       const userInfo= JSON.parse(localStorage.getItem('userInfo') || '{}');
       const hotel=userInfo?.hotel;
- || "{}");
       return hotel || null;
     } catch (error) {
       console.error("Error parsing hotel ID:", error);
