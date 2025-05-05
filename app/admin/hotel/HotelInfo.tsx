@@ -19,9 +19,12 @@ export default function HotelInfo() {
   const [loading, setLoading] = useState(true);
 
   const getHotelId = (): string | null => {
+    
     try {
-      const propertyData = JSON.parse(localStorage.getItem("propertyData") || "{}");
-      return propertyData?.property || null;
+      const userInfo= JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const hotel=userInfo?.hotel;
+ || "{}");
+      return hotel || null;
     } catch (error) {
       console.error("Error parsing hotel ID:", error);
       return null;
