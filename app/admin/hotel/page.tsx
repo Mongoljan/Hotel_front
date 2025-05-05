@@ -53,8 +53,30 @@ export default function RegisterHotel() {
     }
   }, [proceed]);
 
+  // Sanity-check propertyDetails before allowing step 2
+  useEffect(() => {
+    if (proceed !== 2) return;
+
+    const propertyData = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const propertyId = propertyData.hotel;
+    if (!propertyId) {
+      setProceed(0);
+      return;
+    }
+
+    fetch(`https://dev.kacc.mn/api/property-details/?property=${propertyId}`)
+      .then((res) => res.json())
+      .then((details: any[]) => {
+        if (!Array.isArray(details) || details.length === 0) {
+          setProceed(0);
+        }
+      })
+      .catch(() => {
+        setProceed(0);
+      });
+  }, [proceed]);
+
   if (proceed === null) {
-    // still hydrating
     return <div>Loading…</div>;
   }
 
