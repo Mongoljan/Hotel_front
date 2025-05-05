@@ -5,7 +5,7 @@ import Proceed from '@/app/auth/register/Hotel/Proceed';
 import RegisterPage from '@/app/auth/register/Hotel/Hotel';
 import SixStepInfo from './SixStepInfo';
 import { useTranslations } from 'next-intl';
-
+import Cookies from 'js-cookie';
 interface UserInfo {
   name?: string;
   email?: string;
@@ -37,6 +37,7 @@ export default function RegisterHotel() {
       }
 
       // Load propertyData for potential step2
+      const hotel = Cookies.get("hotel") 
       const pd = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const propertyId = pd.hotel;
      
@@ -44,7 +45,7 @@ export default function RegisterHotel() {
       if (propertyId) {
         try {
           const res = await fetch(
-            `https://dev.kacc.mn/api/property-details/?property=${propertyId}`
+            `https://dev.kacc.mn/api/property-details/?property=${hotel}`
           );
           const details = await res.json();
           if (Array.isArray(details) && details.length > 0) {
