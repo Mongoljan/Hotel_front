@@ -64,38 +64,45 @@ interface ProceedProps {
 }
 
 export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
+  const t = useTranslations("SixStepInfo");
+
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
   const [propertyImages, setPropertyImages] = useState<PropertyPhoto[]>([]);
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
-  const t = useTranslations("SixStepInfo")
 
   useEffect(() => {
-    const loadData = async () => {
+    async function loadData() {
       const propertyData = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const targetPropertyId = propertyData.hotel;
-      const hotel = Cookies.get("hotel");
 
-      const detailRes = await fetch(`https://dev.kacc.mn/api/property-details/?property=${targetPropertyId}`);
-      const details = await detailRes.json();
-      const matchedDetail: PropertyDetail | undefined = details[0];
+      // 1) Fetch the detail
+      const detailRes = await fetch(
+        `https://dev.kacc.mn/api/property-details/?property=${targetPropertyId}`,
+        { cache: 'no-store' }
+      );
+      const details: PropertyDetail[] = await detailRes.json();
+      const matchedDetail = details[0];
 
       if (!matchedDetail) {
         setProceed(0);
         return;
       }
- console.log("its worked")
+
+      console.log("its worked — matchedDetail:", matchedDetail);
       setProceed(2);
       setPropertyDetail(matchedDetail);
 
-      // Fetch individual resources by ID
+      // 2) **Directly** use the returned photos
+      setPropertyImages(matchedDetail.property_photos);
+
+      // 3) Fetch the other pieces in parallel
       const [policyRes, addressRes, basicInfoRes] = await Promise.all([
         fetch(`https://dev.kacc.mn/api/property-policies/${matchedDetail.propertyPolicies}/`),
         fetch(`https://dev.kacc.mn/api/confirm-address/${matchedDetail.confirmAddress}/`),
         fetch(`https://dev.kacc.mn/api/property-basic-info/${matchedDetail.propertyBasicInfo}/`)
       ]);
-
       const [policy, addressData, basicInfoData] = await Promise.all([
         policyRes.json(),
         addressRes.json(),
@@ -105,24 +112,17 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       setPropertyPolicy(policy);
       setAddress(addressData);
       setBasicInfo(basicInfoData);
-
-      // Load property images from the list and filter based on photo IDs
-      const imagesRes = await fetch('https://dev.kacc.mn/api/property-images/');
-      const allImages = await imagesRes.json();
-
-      const filteredImages = allImages.filter((img: PropertyPhoto) =>
-        matchedDetail.property_photos.map(p => p.id).includes(img.id)
-      );
-      setPropertyImages(filteredImages);
-    };
+    }
 
     loadData();
   }, [setProceed]);
 
-  if (!propertyDetail) return <div>{t("8")}</div>;
+  if (!propertyDetail) {
+    return <div>{t("8")}</div>;
+  }
 
   return (
-    <div className=" text-black">
+    <div className="text-black">
       <h1 className="text-2xl font-bold mb-4">{t("title")}</h1>
 
       {basicInfo && (
@@ -131,34 +131,40 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           <p>{basicInfo.property_name_en}</p>
         </div>
       )}
-      
-           {basicInfo && (
+      {basicInfo && (
         <div className="mb-4">
           <p className="font-semibold">{t("9")}:</p>
           <p>{basicInfo.property_name_mn}</p>
         </div>
       )}
-
       {address && (
         <div className="mb-4">
           <p className="font-semibold">{t("2")}:</p>
           <p>{address.zipCode}</p>
         </div>
       )}
-
       {propertyPolicy && (
         <div className="mb-4">
           <p className="font-semibold">{t("3")}:</p>
-          <p>{propertyPolicy.check_in_from} - {propertyPolicy.check_in_until}</p>
+          <p>
+            {propertyPolicy.check_in_from} – {propertyPolicy.check_in_until}
+          </p>
           <p className="font-semibold">{t("4")}:</p>
-          <p>{propertyPolicy.check_out_from} - {propertyPolicy.check_out_until}</p>
+          <p>
+            {propertyPolicy.check_out_from} – {propertyPolicy.check_out_until}
+          </p>
         </div>
       )}
 
       <div className="mb-4">
         <p className="font-semibold">{t("5")}:</p>
-        <a href={propertyDetail.google_map} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-        {t("6")}
+        <a
+          href={propertyDetail.google_map}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500"
+        >
+          {t("6")}
         </a>
       </div>
 
@@ -170,7 +176,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {propertyImages.map(photo => (
           <div key={photo.id} className="rounded-lg shadow p-2">
-            <img src={photo.image} alt={photo.description} className="w-full h-40 object-cover rounded-md mb-2" />
+            <img
+              src={photo.image}
+              alt={photo.description}
+              className="w-full h-40 object-cover rounded-md mb-2"
+            />
             <p className="text-sm text-gray-700">{photo.description}</p>
           </div>
         ))}

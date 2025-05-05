@@ -6,6 +6,7 @@ import RegisterPage from '@/app/auth/register/Hotel/Hotel';
 import SixStepInfo from './SixStepInfo';
 import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
+
 interface UserInfo {
   name?: string;
   email?: string;
@@ -17,66 +18,76 @@ export default function RegisterHotel() {
   const [proceed, setProceed] = useState<number | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo>({});
 
-  // Hydrate userInfo and determine initial step
+  // Helper to build a per-user storage key
+  const getProceedKey = () => {
+    // Use email or hotel ID as namespace
+    return `proceed_${userInfo.email || userInfo.hotel || 'guest'}`;
+  };
+
+  // Load userInfo once
   useEffect(() => {
-    async function init() {
-      // Load user info
-      const storedUser = localStorage.getItem('userInfo');
-      if (storedUser) {
-        try {
-          setUserInfo(JSON.parse(storedUser));
-        } catch {
-          // ignore malformed JSON
-        }
+    const storedUser = localStorage.getItem('userInfo');
+    if (storedUser) {
+      try {
+        setUserInfo(JSON.parse(storedUser));
+      } catch {
+        // ignore malformed JSON
       }
-
-      // If a manual proceed was saved, respect it
-      const saved = localStorage.getItem('proceed');
-      if (saved) {
-        setProceed(parseInt(saved, 10));
-        return;
-      }
-
-      // Load propertyData for potential step2
-      const hotel = Cookies.get("hotel") 
-      const pd = JSON.parse(localStorage.getItem('propertyData') || '{}');
-
-     console.log("here is hotel exists: ", hotel)
-
-      if (hotel) {
-        try {
-          const res = await fetch(
-            `https://dev.kacc.mn/api/property-details/?property=${userInfo.hotel}`
-          );
-          const details = await res.json();
-          if (Array.isArray(details) && details.length > 0) {
-            console.log("its worked")
-            setProceed(2);
-            console.log("its worked")
-            return;
-          }
-        } catch {
-          // fetch failed, fall through to step0
-        }
-      }
-
-      // Fallback based on what data is in storage
-      // if (Array.isArray(pd.general_facilities) && pd.general_facilities.length > 0) {
-      //   setProceed(1);
-      // } else {
-      //   setProceed(0);
-      // }
     }
-
-    init();
   }, []);
 
-  // Persist proceed whenever it changes
+  // Once userInfo is loaded, determine or load proceed
   useEffect(() => {
-    if (proceed !== null) {
-      localStorage.setItem('proceed', proceed.toString());
+    if (!userInfo.email && !userInfo.hotel) {
+      // still loading userInfo
+      return;
     }
-  }, [proceed]);
+    const key = getProceedKey();
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      setProceed(parseInt(saved, 10));
+    } else {
+      determineStep();
+    }
+  }, [userInfo]);
+
+  // Persist proceed to user-specific key
+  useEffect(() => {
+    if (proceed !== null && (userInfo.email || userInfo.hotel)) {
+      localStorage.setItem(getProceedKey(), proceed.toString());
+    }
+  }, [proceed, userInfo]);
+
+  // Logic to decide which step to show
+  const determineStep = async () => {
+    // Step 1 check
+    const pd = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    if (Array.isArray(pd.general_facilities) && pd.general_facilities.length > 0) {
+      setProceed(1);
+      return;
+    }
+
+    // Use hotel ID from cookie or userInfo
+    const hotelId = Number(Cookies.get('hotel') || pd.property || userInfo.hotel);
+    if (hotelId) {
+      try {
+        const res = await fetch(
+          `https://dev.kacc.mn/api/property-details/?property=${hotelId}`,
+          { cache: 'no-store' }
+        );
+        const details = await res.json();
+        if (Array.isArray(details) && details.length > 0) {
+          setProceed(2);
+          return;
+        }
+      } catch {
+        // fetch failed; fallback
+      }
+    }
+
+    // Default to step 0
+    setProceed(0);
+  };
 
   if (proceed === null) {
     return <div>Loading…</div>;

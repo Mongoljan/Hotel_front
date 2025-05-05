@@ -48,8 +48,8 @@ export default function Proceed({proceed, setProceed} : ProceedProps) {
   
     const getHotelId = (): string | null => {
       try {
-        const propertyData = JSON.parse(localStorage.getItem("propertyData") || "{}");
-        return propertyData?.property || null;
+        const propertyData = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        return propertyData?.hotel || null;
       } catch (error) {
         console.error("Error parsing hotel ID:", error);
         return null;
