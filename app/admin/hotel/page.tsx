@@ -37,8 +37,8 @@ export default function RegisterHotel() {
       }
 
       // Load propertyData for potential step2
-      const pd = JSON.parse(localStorage.getItem('propertyData') || '{}');
-      const propertyId = pd.property;
+      const pd = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const propertyId = pd.hotel;
 
       if (propertyId) {
         try {
@@ -48,6 +48,7 @@ export default function RegisterHotel() {
           const details = await res.json();
           if (Array.isArray(details) && details.length > 0) {
             setProceed(2);
+            console.log("its worked")
             return;
           }
         } catch {
