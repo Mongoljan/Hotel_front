@@ -5,7 +5,7 @@ import { FaGlobe } from "react-icons/fa";
 
 export default function LanguageSwitcher() {
   const router = useRouter();
-  const [locale, setLocale] = useState("en");
+  const [locale, setLocale] = useState("mn");
   const [isSpinning, setIsSpinning] = useState(false);
 
   const switchLanguage = (lang: string) => {
@@ -20,7 +20,7 @@ export default function LanguageSwitcher() {
   return (
     <div className="relative group">
       <button
-        onClick={() => switchLanguage(locale === "en" ? "mn" : "en")}
+        onClick={() => switchLanguage(locale === "mn" ? "en" : "mn")}
         className="relative flex items-center justify-center w-10 h-10 rounded-full  hover:bg-bg transition"
       >
         <FaGlobe

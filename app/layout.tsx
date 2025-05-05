@@ -1,3 +1,4 @@
+// app/[locale]/layout.tsx (or wherever your layout is)
 import { NextIntlClientProvider } from "next-intl";
 import { notFound } from "next/navigation";
 import { getMessages, getLocale } from 'next-intl/server';
@@ -5,8 +6,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Topbar from "@/components/topbar";
 import { ReactNode } from "react";
-import Cookies from "js-cookie";
-import { getTranslations } from "next-intl/server";
+import { cookies } from 'next/headers'; // ✅ use next/headers for server-side cookies
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -24,8 +24,6 @@ type RootLayoutProps = {
   children: ReactNode;
 };
 
-
-
 export default async function RootLayout({ children }: RootLayoutProps) {
   const locale = await getLocale();
   let messages;
@@ -37,11 +35,18 @@ export default async function RootLayout({ children }: RootLayoutProps) {
     notFound();
   }
 
+  // ✅ Get user-related cookies (server-side)
+  const cookieStore = cookies();
+  const userName = cookieStore.get('userName')?.value;
+  const userEmail = cookieStore.get('userEmail')?.value;
+
+  const isLoggedIn = !!cookieStore.get('token'); // check if token exists
+
   return (
     <html lang={locale}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {/* <Topbar /> */}
+          {/* <Topbar   /> */}
           {children}
         </NextIntlClientProvider>
       </body>

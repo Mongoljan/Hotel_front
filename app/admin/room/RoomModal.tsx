@@ -127,6 +127,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
   const {
     register,
     handleSubmit,
+    watch,
     setValue,
     control,
     trigger,
@@ -158,6 +159,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
     control,
     name: 'entries',
   });
+  const watchedEntries = watch('entries');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -415,6 +417,13 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
                  {errors.entries?.[index]?.descriptions && (
                    <div className="text-red-500 text-sm">{errors.entries[index]?.descriptions?.message}</div>
                  )}
+                  {watchedEntries?.[index]?.images && (
+        <img
+          src={watchedEntries[index].images}
+          alt={`Room image ${index + 1}`}
+          className="mt-2 max-h-20 w-auto rounded-md border"
+        />
+      )}
                </section>
    
                <button

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface PropertyPhoto {
   id: number;
@@ -67,6 +68,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
+  const t = useTranslations("SixStepInfo")
 
   useEffect(() => {
     const loadData = async () => {
@@ -115,44 +117,51 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     loadData();
   }, [setProceed]);
 
-  if (!propertyDetail) return <div>Loading hotel details...</div>;
+  if (!propertyDetail) return <div>{t("8")}</div>;
 
   return (
-    <div className="p-6 text-black">
-      <h1 className="text-2xl font-bold mb-4">Property Dashboard</h1>
+    <div className=" text-black">
+      <h1 className="text-2xl font-bold mb-4">{t("title")}</h1>
 
       {basicInfo && (
         <div className="mb-4">
-          <p className="font-semibold">Hotel Name (EN):</p>
+          <p className="font-semibold">{t("1")}:</p>
           <p>{basicInfo.property_name_en}</p>
+        </div>
+      )}
+      
+           {basicInfo && (
+        <div className="mb-4">
+          <p className="font-semibold">{t("9")}:</p>
+          <p>{basicInfo.property_name_mn}</p>
         </div>
       )}
 
       {address && (
         <div className="mb-4">
-          <p className="font-semibold">Zip Code:</p>
+          <p className="font-semibold">{t("2")}:</p>
           <p>{address.zipCode}</p>
         </div>
       )}
 
       {propertyPolicy && (
         <div className="mb-4">
-          <p className="font-semibold">Check-in:</p>
+          <p className="font-semibold">{t("3")}:</p>
           <p>{propertyPolicy.check_in_from} - {propertyPolicy.check_in_until}</p>
-          <p className="font-semibold">Check-out:</p>
+          <p className="font-semibold">{t("4")}:</p>
           <p>{propertyPolicy.check_out_from} - {propertyPolicy.check_out_until}</p>
         </div>
       )}
 
       <div className="mb-4">
-        <p className="font-semibold">Google Map:</p>
+        <p className="font-semibold">{t("5")}:</p>
         <a href={propertyDetail.google_map} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-          View Location
+        {t("6")}
         </a>
       </div>
 
       <div className="mb-4">
-        <p className="font-semibold">Parking:</p>
+        <p className="font-semibold">{t("7")}:</p>
         <p>{propertyDetail.parking_situation}</p>
       </div>
 

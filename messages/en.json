@@ -1,8 +1,126 @@
 {
+
+
+  "Proceed":{
+    "title":"Proceed registeration",
+    "1":"Company",
+    "2":"Phone",
+    "3":"Email",
+    "4":"Approved",
+    "5":"Proceed"
+  },
+
+  "3GoogleMap":{
+    "title":"Google map",
+     "1": "Back",
+    "2": "Next"
+  },
+
+  "4PropertyPolicies":{
+    "title":"Property Policies",
+    "1":"Cancel Time",
+    "2":"Before Time",
+    "3":"After Fee",
+    "4":"Subsequent Days",
+    "5":"Special Condition",
+    "6":"Check-in From",
+    "7":"Check-in Until",
+    "8":"Check-out From",
+    "9":"Check-out Until",
+    "10":"Breakfast Policy",
+    "11":"Allow Children",
+    "12":"Allow Pets",
+    "13": "Back",
+    "14": "Next"
+
+  },
+
+  "5PropertyImages":{
+    "title":"Property Images",
+    "1":"Upload Image",
+    "2":"Description",
+    "3":"Remove",
+    "4":"Add more",
+    "5": "Back",
+    "6": "Next"
+
+  },
+  "6FinalPropertyDetails":{
+    "title":"Final Property Details",
+    "1":"Google Map URL",
+    "2":"Parking Situation",
+    "3":"General Facilities",
+    "5": "Back",
+    "6": "Next"
+  },
+  "SixStepInfo":{
+   "title":"Property Dashboard",
+   "1":"Hotel Name (EN)",
+   "2":"Zip Code",
+   "3":"Check-in",
+   "4":"Check-out",
+   "5":"Google map",
+   "6":"View Location",
+   "7":"Parking",
+   "8":"Loading hotel details...",
+   "9":"Hotel Name (MN)"
+  },
+  "2ConfirmAddress":{
+    "title":"Confirm Address",
+    "1":"Province",
+    "2":"City",
+    "3":"Soum",
+    "4":"District",
+    "5":"Zip Code",
+    "6":"Total Floor Number",
+    "10": "Back",
+    "11": "Next"
+
+  },
+
+  "1BasicInfo": {
+  "title": "Hotel Basic Information",
+  "1": "Name in Mongolian",
+  "2": "Name in English",
+  "3": "Start Date",
+  "4": "Star Rating",
+  "5": "Part of a Group",
+  "6": "Total Number of Rooms",
+  "7": "Available Number of Rooms",
+  "8": "Room Restriction Applicable",
+  "9": "Languages",
+  "10": "Back",
+  "11": "Next"
+},
+
+
+  "6Step":{
+    "basicInfo":"Property Basic Info",
+    "confirmAddress":"Confirm Address",
+    "googleMap":"Google Map",
+    "propertyPolicies":"Property Policies",
+    "propertyImage":"Property Image",
+    "propertyDetails":"Property Details"
+  },
+
+  "AdminPage":{
+    "Hi" : "Hi",
+    "Welcome":"Welcome"
+
+  },
   "Topbar":{
     "signIn":"Sign In",
-    "signUp":"Sign Up"
+    "signUp":"Sign Up",
+    "signOut":"Sign Out"
     },
+    "Sidebar":{
+      "hotelManagement":"Hotel management",
+      "rooms":"Rooms",
+       "addRooms":"Add rooms",
+        "roomPrice":"Rooms' price"
+      },
+      
+    
  
  
   "HomePage": {

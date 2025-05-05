@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { schemaHotelSteps6 } from '../../../schema';
 import { z } from 'zod';
+import { useTranslations, useLocale  } from 'next-intl';
 
 const API_PROPERTY_DETAILS = 'https://dev.kacc.mn/api/property-details/';
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
@@ -22,8 +23,9 @@ type Props = {
 };
 
 export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: Props) {
-  const [facilities, setFacilities] = useState<{ id: number; name_en: string }[]>([]);
-
+  const [facilities, setFacilities] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
+const t = useTranslations("6FinalPropertyDetails")
+const locale = useLocale(); 
   const {
     register,
     handleSubmit,
@@ -52,6 +54,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
   }, []);
 
   const onSubmit: SubmitHandler<FormFields> = async (formData) => {
+    
     console.log('Form submission triggered');
     try {
       console.log('Form Data:', formData);
@@ -108,10 +111,10 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
         noValidate
         className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-2xl font-bold text-center mb-6">Final Property Details</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">{t("title")}</h2>
 
         <section className="mb-4">
-          <label className="text-black">Google Map URL</label>
+          <label className="text-black">{t("1")} </label>
           <input
             type="url"
             {...register('google_map')}
@@ -124,7 +127,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
         </section>
 
         <section className="mb-4">
-          <label className="text-black">Parking Situation</label>
+          <label className="text-black">{t("2")}</label>
           <input
             type="text"
             {...register('parking_situation')}
@@ -137,7 +140,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
         </section>
 
         <section className="mb-4">
-          <label className="text-black">General Facilities</label>
+          <label className="text-black">{t("3")}</label>
           {facilities.map((facility) => (
             <div key={facility.id} className="flex items-center">
               <input
@@ -146,7 +149,9 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
                 {...register('general_facilities')}
                 className="mr-2"
               />
-              <label>{facility.name_en}</label>
+              <label> {locale === 'mn'
+                  ? facility.name_mn
+                  : facility.name_en}</label>
             </div>
           ))}
           {errors.general_facilities && (
@@ -160,14 +165,14 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
             onClick={onBack}
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
-            <FaArrowLeft className="self-center mx-1" /> Back
+            <FaArrowLeft className="self-center mx-1" /> {t("5")}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
-            Submit <FaArrowRight className="self-center mx-1" />
+            {t("6")} <FaArrowRight className="self-center mx-1" />
           </button>
         </div>
       </form>

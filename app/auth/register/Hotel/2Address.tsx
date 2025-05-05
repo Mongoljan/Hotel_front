@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaArrowRight, FaArrowLeft } from "react-icons/fa6";
+import { useTranslations } from 'next-intl';
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const API_CONFIRM_ADDRESS = 'https://dev.kacc.mn/api/confirm-address/';
@@ -42,6 +43,7 @@ interface CombinedData {
 type FormFields = z.infer<typeof schemaHotelSteps2>;
 
 export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void; onBack: () => void; }) {
+  const t = useTranslations("2ConfirmAddress")
   const [combinedData, setCombinedData] = useState<CombinedData>({
     province: [],
     city: [],
@@ -107,7 +109,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-[30px] font-bold text-center text-black mb-8">Confirm Address</h2>
+        <h2 className="text-[30px] font-bold text-center text-black mb-8">{t("title")}</h2>
 
         <div className="mb-4">
           <label className="text-black">Province</label>

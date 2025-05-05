@@ -2,6 +2,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";  // Import from next/navigation
 import Cookies from "js-cookie";
 import { HiArrowRightOnRectangle } from "react-icons/hi2";  // Import js-cookie
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useTranslations } from 'next-intl';
 // import LanguageToggle from "../components/languageToggle";
 interface Topbar{
   sign_in:string;
@@ -14,9 +16,10 @@ interface HeaderDictionary {
   title: string; // Adjust based on the actual structure of your dictionary
 }
 
-export default function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar: () => void; sideBarOpen: boolean;}) {
+export default  function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar: () => void; sideBarOpen: boolean;}) {
   const pathname = usePathname();  // Get current path using usePathname
   const router = useRouter();      // Get router for navigation
+  const t =  useTranslations('Topbar');
 
   // Function to change the language in the current route
   const changeLanguage = (newLang: string) => {
@@ -57,7 +60,7 @@ export default function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar:
             onClick={handleLogout}  // Attach the logout handler
             className="rounded-sm bg-white border border-solid font-semibold text-xs border-primary hover:border-blue-400 transition-colors flex items-center justify-center hover:blue-100  sm:text-base h-7 sm:h-8 px-1 sm:px-1 sm:min-w-36 text-black  hover:bg-background"
           >
-            sign out
+            {t("signOut")}
             <HiArrowRightOnRectangle className="ml-2 text-[24px]" />
           </button>
           {/* <Link
@@ -66,6 +69,7 @@ export default function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar:
           >
          sign up
           </Link> */}
+            <LanguageSwitcher/>
         </div>
         <button onClick={toggleSidebar} className="flex ml-4 flex-col justify-center items-center mr-4">
           <span

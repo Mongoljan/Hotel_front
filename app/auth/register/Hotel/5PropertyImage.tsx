@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { ToastContainer, toast } from 'react-toastify';
@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaArrowLeft, FaArrowRight, FaPlus, FaTrash } from 'react-icons/fa6';
 import { schemaHotelSteps5 } from '../../../schema';
 import { z } from 'zod';
+import { useTranslations } from 'next-intl';
 
 const API_PROPERTY_IMAGES = 'https://dev.kacc.mn/api/property-images/';
 
@@ -19,9 +20,11 @@ type Props = {
 };
 
 export default function RegisterHotel5({ onNext, onBack }: Props) {
+  const t = useTranslations("5PropertyImages");
   const {
     register,
     control,
+    watch,
     handleSubmit,
     setValue,
     formState: { errors, isSubmitting },
@@ -31,6 +34,9 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       entries: [{ images: '', descriptions: '' }],
     },
   });
+
+  // watch entries so previews update immediately
+  const watchedEntries = watch('entries');
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -43,7 +49,8 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64Image = reader.result as string;
-        setValue(`entries.${index}.images`, base64Image);
+        // update the form value (and trigger validation/render)
+        setValue(`entries.${index}.images`, base64Image, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
     }
@@ -53,14 +60,12 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
     try {
       const formattedData = data.entries.map(entry => ({
         image: entry.images,
-        description: entry.descriptions
+        description: entry.descriptions,
       }));
 
       const response = await fetch(API_PROPERTY_IMAGES, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formattedData),
       });
 
@@ -89,53 +94,68 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
+        className="bg-white p-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-2xl font-bold text-center mb-6">Property Images</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">{t("title")}</h2>
 
-        {fields.map((field, index) => (
-          <div key={field.id} className="mb-4 border p-4 rounded-lg">
-            <section className="mb-2">
-              <label className="text-black">Upload Image</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange(e, index)}
-                className="border p-2 w-full rounded-[15px]"
-              />
-              {errors.entries?.[index]?.images && (
-                <div className="text-red-500 text-sm">{errors.entries[index]?.images?.message}</div>
-              )}
-            </section>
+        {fields.map((field, index) => {
+          const previewSrc = watchedEntries?.[index]?.images;
+          return (
+            <div key={field.id} className="mb-4 border p-4 rounded-lg">
+              <section className="mb-2">
+                <label className="text-black">{t("1")}</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e, index)}
+                  className="border p-2 w-full rounded-[15px]"
+                />
+                {errors.entries?.[index]?.images && (
+                  <div className="text-red-500 text-sm">
+                    {errors.entries[index]?.images?.message}
+                  </div>
+                )}
+                {previewSrc && (
+                  <img
+                    src={previewSrc}
+                    alt={`Preview ${index + 1}`}
+                    className="mt-2 max-h-40 w-auto rounded-md border"
+                  />
+                )}
+              </section>
 
-            <section className="mb-2">
-              <label className="text-black">Description</label>
-              <input
-                type="text"
-                {...register(`entries.${index}.descriptions`)}
-                className="border p-2 w-full rounded-[15px]"
-              />
-              {errors.entries?.[index]?.descriptions && (
-                <div className="text-red-500 text-sm">{errors.entries[index]?.descriptions?.message}</div>
-              )}
-            </section>
+              <section className="mb-2">
+                <label className="text-black">{t("2")}</label>
+                <input
+                  type="text"
+                  {...register(`entries.${index}.descriptions`)}
+                  className="border p-2 w-full rounded-[15px]"
+                />
+                {errors.entries?.[index]?.descriptions && (
+                  <div className="text-red-500 text-sm">
+                    {errors.entries[index]?.descriptions?.message}
+                  </div>
+                )}
+              </section>
 
-            <button
-              type="button"
-              onClick={() => remove(index)}
-              className="flex items-center justify-center w-full text-red-500 border border-red-500 rounded-lg p-2 mt-2"
-            >
-              <FaTrash className="mr-2" /> Remove
-            </button>
-          </div>
-        ))}
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                className="flex items-center justify-center w-full text-red-500 border border-red-500 rounded-lg p-2 mt-2"
+              >
+                <FaTrash className="mr-2" />
+                {t("3")}
+              </button>
+            </div>
+          );
+        })}
 
         <button
           type="button"
           onClick={() => append({ images: '', descriptions: '' })}
           className="w-full flex justify-center text-black py-2 border border-primary rounded-lg mb-4"
         >
-          <FaPlus className="mr-2" /> Add More
+          <FaPlus className="mr-2" /> {t("4")}
         </button>
 
         <div className="flex gap-x-4">
@@ -144,14 +164,16 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
             onClick={onBack}
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
-            <FaArrowLeft className="self-center mx-1" /> Back
+            <FaArrowLeft className="self-center mx-1" />
+            {t("5")}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
-            Next <FaArrowRight className="self-center mx-1" />
+            {t("6")}
+            <FaArrowRight className="self-center mx-1" />
           </button>
         </div>
       </form>

@@ -12,8 +12,10 @@ import {
 } from "react-icons/md";
 import { IoPersonOutline } from "react-icons/io5";
 import { LuHotel } from "react-icons/lu";
+import { useTranslations } from 'next-intl';
 
 export default function Sidebar() {
+  const t = useTranslations('Sidebar');
   const [isHotelMenuOpen, setHotelMenuOpen] = useState(false);
   const [isRoomMenuOpen, setRoomMenuOpen] = useState(false); // State for Room Submenu
 
@@ -23,15 +25,15 @@ export default function Sidebar() {
 
   const pathname = usePathname();
   const navItems = [
-    { href: "/admin/hotel",  icon: <LuHotel />, label: "Буудлын бүртгэл"},
+    { href: "/admin/hotel",  icon: <LuHotel />, label: t("hotelManagement")},
     // { href: "/admin/register", icon: <IoPersonOutline />, label: "Register staff" },
     // { href: "/admin/register_hotel", icon: <LuHotel />, label: "Буудлын бүртгэл" },
     {
-      label: "Rooms",
+      label: t("rooms"),
       icon: <MdOutlineBedroomChild />,
       subMenu: [
-        { href: "/admin/room", icon: <MdOutlineAddBox />, label: "Add Room" },
-        { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: "Rooms' price" },
+        { href: "/admin/room", icon: <MdOutlineAddBox />, label: t("addRooms") },
+        { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: t("roomPrice") },
         // { href: "/admin/room/categories", icon: <MdOutlineCategory />, label: "Room Categories" },
       ],
     },

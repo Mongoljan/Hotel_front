@@ -12,6 +12,7 @@ import PhoneInput from "react-phone-input-2";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
+import { useTranslations } from 'next-intl';
 
 interface Hotel {
   pk: number;
@@ -41,6 +42,7 @@ const DefaultZoom = 10;
 type FormFields = z.infer<typeof schemaRegistration>;
 
 export default function Proceed({proceed, setProceed} : ProceedProps) {
+  const t = useTranslations("Proceed");
     const [hotel, setHotel] = useState<Hotel | null>(null);
     const [loading, setLoading] = useState(true);
   
@@ -190,7 +192,7 @@ export default function Proceed({proceed, setProceed} : ProceedProps) {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-[24px] font-bold mx-auto text-center text-black mb-10">Бүртгэлийг үргэлжлүүлэх</h2>
+        <h2 className="text-[24px] font-bold mx-auto text-center text-black mb-10">{t("title")}</h2>
 
         
   
@@ -199,11 +201,11 @@ export default function Proceed({proceed, setProceed} : ProceedProps) {
   <h2 className="text-2xl font-bold text-center text-gray-800">{hotel?.PropertyName}</h2>
 
   <div className="w-[200px] text-soft">
-  <Info label="Company" value={hotel?.CompanyName || ""} />
+  <Info label={t("1")} value={hotel?.CompanyName || ""} />
 </div>
-<Info label="Phone" value={hotel?.phone|| ""} />
-<Info label="Email" value={hotel?.mail|| ""} />
-<Info label="Approved" value={hotel?.is_approved ? "Yes" : "No"} />
+<Info label={t("2")} value={hotel?.phone|| ""} />
+<Info label={t("3")} value={hotel?.mail|| ""} />
+<Info label={t("4")} value={hotel?.is_approved ? "Yes" : "No"} />
 </section>
 
 
@@ -222,7 +224,7 @@ export default function Proceed({proceed, setProceed} : ProceedProps) {
           className="w-full flex justify-center  mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
      
         >
-     <div className="flex">    Үргэлжлүүлэх
+     <div className="flex">   {t("5")}
           <FaArrowRight className=" self-center mx-1" />
           </div> 
         </button>

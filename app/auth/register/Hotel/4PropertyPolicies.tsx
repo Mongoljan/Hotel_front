@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { schemaHotelSteps3 } from '../../../schema';
 import { z } from 'zod';
+import { useTranslations } from 'next-intl';
 
 const API_PROPERTY_POLICIES = 'https://dev.kacc.mn/api/property-policies/';
 
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export default function RegisterHotel3({ onNext, onBack }: Props) {
+  const t = useTranslations("4PropertyPolicies")
   const {
     register,
     handleSubmit,
@@ -81,18 +83,18 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-2xl font-bold text-center mb-6">Property Policies</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">{t("title")}</h2>
 
         <section className="mb-4">
           <div className="flex gap-4">
             <div className="w-1/2">
-              <label className="text-black">Cancel Time</label>
+              <label className="text-black">{t("1")}</label>
               <input type="time" {...register('cancel_time')} className="border p-2 w-full rounded-[15px]" />
               {errors.cancel_time && <div className="text-red-500 text-sm">{errors.cancel_time.message}</div>}
             </div>
 
             <div className="w-1/2">
-              <label className="text-black">Before Fee (%)</label>
+              <label className="text-black">{t("2")} (%)</label>
               <input type="text" {...register('before_fee')} className="border p-2 w-full rounded-[15px]" />
               {errors.before_fee && <div className="text-red-500 text-sm">{errors.before_fee.message}</div>}
             </div>
@@ -102,13 +104,13 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         <section className="mb-4">
           <div className="flex gap-4">
             <div className="w-1/2">
-              <label className="text-black">After Fee (%)</label>
+              <label className="text-black">{t("3")} (%)</label>
               <input type="text" {...register('after_fee')} className="border p-2 w-full rounded-[15px]" />
               {errors.after_fee && <div className="text-red-500 text-sm">{errors.after_fee.message}</div>}
             </div>
 
             <div className="w-1/2">
-              <label className="text-black">Subsequent Days (%)</label>
+              <label className="text-black">{t("4")} (%)</label>
               <input type="text" {...register('subsequent_days_percentage')} className="border p-2 w-full rounded-[15px]" />
               {errors.subsequent_days_percentage && <div className="text-red-500 text-sm">{errors.subsequent_days_percentage.message}</div>}
             </div>
@@ -116,7 +118,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         </section>
 
         <section className="mb-4">
-          <label className="text-black">Special Condition (%)</label>
+          <label className="text-black">{t("5")} (%)</label>
           <input type="text" {...register('special_condition_percentage')} className="border p-2 w-full rounded-[15px]" />
           {errors.special_condition_percentage && <div className="text-red-500 text-sm">{errors.special_condition_percentage.message}</div>}
         </section>
@@ -124,13 +126,13 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         <section className="mb-4">
           <div className="flex gap-4">
             <div className="w-1/2">
-              <label className="text-black">Check-in From</label>
+              <label className="text-black">{t("6")}</label>
               <input type="time" {...register('check_in_from')} className="border p-2 w-full rounded-[15px]" />
               {errors.check_in_from && <div className="text-red-500 text-sm">{errors.check_in_from.message}</div>}
             </div>
 
             <div className="w-1/2">
-              <label className="text-black">Check-in Until</label>
+              <label className="text-black">{t("7")}</label>
               <input type="time" {...register('check_in_until')} className="border p-2 w-full rounded-[15px]" />
               {errors.check_in_until && <div className="text-red-500 text-sm">{errors.check_in_until.message}</div>}
             </div>
@@ -140,13 +142,13 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         <section className="mb-4">
           <div className="flex gap-4">
             <div className="w-1/2">
-              <label className="text-black">Check-out From</label>
+              <label className="text-black">{t("8")}</label>
               <input type="time" {...register('check_out_from')} className="border p-2 w-full rounded-[15px]" />
               {errors.check_out_from && <div className="text-red-500 text-sm">{errors.check_out_from.message}</div>}
             </div>
 
             <div className="w-1/2">
-              <label className="text-black">Check-out Until</label>
+              <label className="text-black">{t("9")}</label>
               <input type="time" {...register('check_out_until')} className="border p-2 w-full rounded-[15px]" />
               {errors.check_out_until && <div className="text-red-500 text-sm">{errors.check_out_until.message}</div>}
             </div>
@@ -154,20 +156,68 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         </section>
 
         <section className="mb-4">
-          <label className="text-black">Breakfast Policy (%)</label>
+          <label className="text-black">{t("10")} (%)</label>
           <input type="number" {...register('breakfast_policy')} className="border p-2 w-full rounded-[15px]" />
           {errors.breakfast_policy && <div className="text-red-500 text-sm">{errors.breakfast_policy.message}</div>}
         </section>
 
         <section className="flex gap-4 mb-4">
           <div className="w-1/2">
-            <label className="text-black">Allow Children</label>
-            <input type="checkbox" {...register('allow_children')} className="ml-2" />
-          </div>
+          <label className="text-black">{t("11")}</label>
+        <div className=" flex items-center">
+      
+  {/* Hidden checkbox that acts as the real form input */}
+  <input
+    type="checkbox"
+    id="allowChildren"
+    {...register("allow_children")}
+    className="hidden peer"
+  />
+
+  {/* Label styled as a button, changes appearance when peer (the input) is checked */}
+  <label
+    htmlFor="allowChildren"
+    className="
+      px-4 py-2
+      border border-gray-300
+      rounded-lg
+      cursor-pointer
+      select-none
+      transition
+      peer-checked:bg-blue-600
+      peer-checked:border-blue-600
+      peer-checked:text-white
+      peer-hover:bg-gray-100
+    "
+  >
+    {t("15")}
+  </label>
+</div>
+</div>
+
 
           <div className="w-1/2">
-            <label className="text-black">Allow Pets</label>
-            <input type="checkbox" {...register('allow_pets')} className="ml-2" />
+            <label className="text-black">{t("12")}</label>
+            <div className=" flex items-center">
+            <input type="checkbox" id="allowPets" {...register('allow_pets')} className="hidden peer" />
+            <label
+    htmlFor="allowPets"
+    className="
+      px-4 py-2
+      border border-gray-300
+      rounded-lg
+      cursor-pointer
+      select-none
+      transition
+      peer-checked:bg-blue-600
+      peer-checked:border-blue-600
+      peer-checked:text-white
+      peer-hover:bg-gray-100
+    "
+  >
+    {t("15")}
+  </label>
+  </div>
           </div>
         </section>
 
@@ -177,14 +227,14 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             onClick={onBack}
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
-            <FaArrowLeft className="self-center mx-1" /> Back
+            <FaArrowLeft className="self-center mx-1" /> {t("13")}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
-            Next <FaArrowRight className="self-center mx-1" />
+           {t("14")} <FaArrowRight className="self-center mx-1" />
           </button>
         </div>
       </form>

@@ -1,19 +1,22 @@
 import { FaCheck } from 'react-icons/fa';
+import { useTranslations } from 'next-intl';
 
 interface StepIndicatorProps {
   totalSteps: number;
   currentStep: number;
 }
-const stepNames = [
-  'Property Basic Info',
-  'Confirm Address',
-  'Google Map',
-  'Property Policies',
-  'Property Image',
-  'Property Details',
-];
 
-const StepIndicator: React.FC<StepIndicatorProps> = ({ totalSteps, currentStep }) => {
+
+const StepIndicator: React.FC<StepIndicatorProps> =  ({ totalSteps, currentStep }) => {
+  const t =  useTranslations('6Step');
+  const stepNames = [
+    t("basicInfo"),
+    t("confirmAddress"),
+    t("googleMap"),
+    t("propertyPolicies"),
+    t("propertyImage"),
+    t("propertyDetails"),
+  ];
   return (
     <div className="flex items-center justify-center ">
       <div className="flex items-center space-x-4">
