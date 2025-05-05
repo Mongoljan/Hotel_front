@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import RoomPriceList from './RoomPriceList';
+import SeasonPrice from './SeasonPrice';
 
 
 export default function RoomManagement() {
@@ -13,6 +14,7 @@ export default function RoomManagement() {
   return (
     <div className="p-6">
      <RoomPriceList isRoomAdded={isRoomAdded} setIsRoomAdded={setIsRoomAdded }/>
+     <SeasonPrice isRoomAdded={isRoomAdded} setIsRoomAdded={setIsRoomAdded }/>
     </div>
   );
 }

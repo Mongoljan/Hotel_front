@@ -190,7 +190,7 @@ export default function RoomManagement({ isRoomAdded, setIsRoomAdded }: RoomMana
 
       <RoomModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} isRoomAdded={isRoomAdded} setIsRoomAdded={setIsRoomAdded} />
 
-      <div className="overflow-auto" style={{ width: tableWidth, height: 500 }}>
+      <div className="overflow-auto min-h-full" style={{ width: tableWidth, height:"100vh" }}>
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <CircularProgress />
