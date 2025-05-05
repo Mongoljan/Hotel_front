@@ -9,6 +9,7 @@ import Cookies from 'js-cookie';
 interface UserInfo {
   name?: string;
   email?: string;
+  hotel?: number;
 }
 
 export default function RegisterHotel() {
@@ -45,7 +46,7 @@ export default function RegisterHotel() {
       if (hotel) {
         try {
           const res = await fetch(
-            `https://dev.kacc.mn/api/property-details/?property=${hotel}`
+            `https://dev.kacc.mn/api/property-details/?property=${userInfo.hotel}`
           );
           const details = await res.json();
           if (Array.isArray(details) && details.length > 0) {
