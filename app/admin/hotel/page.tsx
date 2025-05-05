@@ -57,8 +57,8 @@ export default function RegisterHotel() {
   useEffect(() => {
     if (proceed !== 2) return;
 
-    const propertyData = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    const propertyId = propertyData.hotel;
+    const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    const propertyId = propertyData.property;
     if (!propertyId) {
       setProceed(0);
       return;
@@ -67,14 +67,19 @@ export default function RegisterHotel() {
     fetch(`https://dev.kacc.mn/api/property-details/?property=${propertyId}`)
       .then((res) => res.json())
       .then((details: any[]) => {
-        if (!Array.isArray(details) || details.length === 0) {
+        if (Array.isArray(details) && details.length > 0) {
+          // valid property, ensure we're on step 2
+          setProceed(2);
+        } else {
+          // no details found → restart flow
           setProceed(0);
         }
       })
       .catch(() => {
+        // fetch error → restart flow
         setProceed(0);
       });
-  }, [proceed]);
+  }, [proceed, setProceed]);
 
   if (proceed === null) {
     return <div>Loading…</div>;
