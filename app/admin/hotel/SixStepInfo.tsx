@@ -72,8 +72,8 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
   useEffect(() => {
     const loadData = async () => {
-      const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-      const targetPropertyId = propertyData.property;
+      const propertyData = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const targetPropertyId = propertyData.hotel;
 
       const detailRes = await fetch(`https://dev.kacc.mn/api/property-details/?property=${targetPropertyId}`);
       const details = await detailRes.json();

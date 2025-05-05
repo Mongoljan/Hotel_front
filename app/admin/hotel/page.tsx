@@ -39,7 +39,8 @@ export default function RegisterHotel() {
       // Load propertyData for potential step2
       const pd = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const propertyId = pd.hotel;
-
+     
+      console.log(propertyId)
       if (propertyId) {
         try {
           const res = await fetch(
