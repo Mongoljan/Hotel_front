@@ -210,8 +210,10 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
 
     try {
       const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}') || {};
-      const hotel = propertyData?.property;
+
       const token= Cookies.get('token');
+      const userInfo= JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const hotel=userInfo?.hotel;
       const transformedData = {
         token: token || '',
         hotel: hotel || 0,
@@ -239,8 +241,10 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       console.log("Transformed Data:", transformedData);
     
       const response = await fetch(API_CREATE_ROOM, {
+        // credentials: 'include',    
         method: 'POST',
         headers: {
+        
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(transformedData),
@@ -269,7 +273,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       }
     } catch (error) {
       toast.error('An unexpected error occurred while registering the room.');
-      console.error('Error:', error);
+      console.error(' Error in Room modal:', error);
     }
   };
   if (!isOpen) return null;

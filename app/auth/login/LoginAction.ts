@@ -29,7 +29,7 @@ export async function loginAction(formData: {
     };
 
     cookies().set('token', data.token, {
-      httpOnly: true,
+      // httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 60 * 30,
