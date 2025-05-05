@@ -58,14 +58,14 @@ const locale = useLocale();
     console.log('Form submission triggered');
     try {
       console.log('Form Data:', formData);
-      const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
+      const propertyData = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const requestBody = {
         propertyBasicInfo: propertyData.propertyBasicInfo,
         confirmAddress: propertyData.confirmAddress,
         propertyPolicies: propertyData.propertyPolicies,
         google_map: formData.google_map,
         parking_situation: formData.parking_situation,
-        property: propertyData.property,
+        property: propertyData.hotel,
         general_facilities: formData.general_facilities.map(Number),
         property_photos: propertyData.property_photos,
       };
