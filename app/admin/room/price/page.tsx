@@ -14,7 +14,7 @@ export default function RoomManagement() {
   return (
     <div className="p-6">
      <RoomPriceList isRoomAdded={isRoomAdded} setIsRoomAdded={setIsRoomAdded }/>
-     <SeasonPrice isRoomAdded={isRoomAdded} setIsRoomAdded={setIsRoomAdded }/>
+     <SeasonPrice />
     </div>
   );
 }
