@@ -90,13 +90,13 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             <div className="w-1/2">
               <label className="text-black">{t("1")}</label>
               <input type="time" {...register('cancel_time')} className="border p-2 w-full rounded-[15px]" />
-              {errors.cancel_time && <div className="text-red-500 text-sm">{errors.cancel_time.message}</div>}
+              {errors.cancel_time && <div className="text-red text-sm">{errors.cancel_time.message}</div>}
             </div>
 
             <div className="w-1/2">
               <label className="text-black">{t("2")} (%)</label>
               <input type="text" {...register('before_fee')} className="border p-2 w-full rounded-[15px]" />
-              {errors.before_fee && <div className="text-red-500 text-sm">{errors.before_fee.message}</div>}
+              {errors.before_fee && <div className="text-red text-sm">{errors.before_fee.message}</div>}
             </div>
           </div>
         </section>
@@ -106,13 +106,13 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             <div className="w-1/2">
               <label className="text-black">{t("3")} (%)</label>
               <input type="text" {...register('after_fee')} className="border p-2 w-full rounded-[15px]" />
-              {errors.after_fee && <div className="text-red-500 text-sm">{errors.after_fee.message}</div>}
+              {errors.after_fee && <div className="text-red text-sm">{errors.after_fee.message}</div>}
             </div>
 
             <div className="w-1/2">
               <label className="text-black">{t("4")} (%)</label>
               <input type="text" {...register('subsequent_days_percentage')} className="border p-2 w-full rounded-[15px]" />
-              {errors.subsequent_days_percentage && <div className="text-red-500 text-sm">{errors.subsequent_days_percentage.message}</div>}
+              {errors.subsequent_days_percentage && <div className="text-red text-sm">{errors.subsequent_days_percentage.message}</div>}
             </div>
           </div>
         </section>
@@ -120,7 +120,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         <section className="mb-4">
           <label className="text-black">{t("5")} (%)</label>
           <input type="text" {...register('special_condition_percentage')} className="border p-2 w-full rounded-[15px]" />
-          {errors.special_condition_percentage && <div className="text-red-500 text-sm">{errors.special_condition_percentage.message}</div>}
+          {errors.special_condition_percentage && <div className="text-red text-sm">{errors.special_condition_percentage.message}</div>}
         </section>
 
         <section className="mb-4">
@@ -128,13 +128,13 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             <div className="w-1/2">
               <label className="text-black">{t("6")}</label>
               <input type="time" {...register('check_in_from')} className="border p-2 w-full rounded-[15px]" />
-              {errors.check_in_from && <div className="text-red-500 text-sm">{errors.check_in_from.message}</div>}
+              {errors.check_in_from && <div className="text-red text-sm">{errors.check_in_from.message}</div>}
             </div>
 
             <div className="w-1/2">
               <label className="text-black">{t("7")}</label>
               <input type="time" {...register('check_in_until')} className="border p-2 w-full rounded-[15px]" />
-              {errors.check_in_until && <div className="text-red-500 text-sm">{errors.check_in_until.message}</div>}
+              {errors.check_in_until && <div className="text-red text-sm">{errors.check_in_until.message}</div>}
             </div>
           </div>
         </section>
@@ -144,13 +144,13 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             <div className="w-1/2">
               <label className="text-black">{t("8")}</label>
               <input type="time" {...register('check_out_from')} className="border p-2 w-full rounded-[15px]" />
-              {errors.check_out_from && <div className="text-red-500 text-sm">{errors.check_out_from.message}</div>}
+              {errors.check_out_from && <div className="text-red text-sm">{errors.check_out_from.message}</div>}
             </div>
 
             <div className="w-1/2">
               <label className="text-black">{t("9")}</label>
               <input type="time" {...register('check_out_until')} className="border p-2 w-full rounded-[15px]" />
-              {errors.check_out_until && <div className="text-red-500 text-sm">{errors.check_out_until.message}</div>}
+              {errors.check_out_until && <div className="text-red text-sm">{errors.check_out_until.message}</div>}
             </div>
           </div>
         </section>
@@ -158,7 +158,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         <section className="mb-4">
           <label className="text-black">{t("10")} (%)</label>
           <input type="number" {...register('breakfast_policy')} className="border p-2 w-full rounded-[15px]" />
-          {errors.breakfast_policy && <div className="text-red-500 text-sm">{errors.breakfast_policy.message}</div>}
+          {errors.breakfast_policy && <div className="text-red text-sm">{errors.breakfast_policy.message}</div>}
         </section>
 
         <section className="flex gap-4 mb-4">

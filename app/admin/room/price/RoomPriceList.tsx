@@ -1,27 +1,21 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-
 import Cookies from "js-cookie";
-import { DataGrid, GridColDef, GridValidRowModel } from "@mui/x-data-grid";
+import {
+  DataGrid, GridColDef, GridValidRowModel
+} from "@mui/x-data-grid";
 import {
   CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  MenuItem,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, Button, MenuItem
 } from "@mui/material";
 
-// Lookup data types
 interface AllData {
   room_types: { id: number; name: string; is_custom: boolean }[];
   room_category: { id: number; name: string; is_custom: boolean }[];
 }
 
-// Price entry type
 interface PriceEntry {
   id: number;
   base_price: number;
@@ -32,7 +26,6 @@ interface PriceEntry {
   room_category: number;
 }
 
-// Combined row type with type/category ids
 interface RoomRow extends GridValidRowModel {
   id: number;
   roomNumber: number;
@@ -56,24 +49,42 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
   const [lookup, setLookup] = useState<AllData>({ room_types: [], room_category: [] });
   const [loading, setLoading] = useState<boolean>(true);
   const [openAdd, setOpenAdd] = useState(false);
-  const [form, setForm] = useState({ room_type: 0, room_category: 0, base_price: 0, single_person_price: 0, half_day_price: 0 });
+  const [form, setForm] = useState({
+    room_type: 0,
+    room_category: 0,
+    base_price: 0,
+    single_person_price: 0,
+    half_day_price: 0
+  });
 
-  // Get hotel id from stored userInfo
   const hotel = typeof window !== 'undefined'
     ? JSON.parse(localStorage.getItem('userInfo') || '{}').hotel
     : 0;
 
-  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const token = Cookies.get("token");
         if (!token) throw new Error("Token not found");
+
+        const lookupCache = localStorage.getItem("roomLookup");
+        const roomsCache = localStorage.getItem("roomData");
+        const priceCache = localStorage.getItem(`roomPrices_${hotel}`);
+
+        if (lookupCache && roomsCache && priceCache && !isRoomAdded) {
+          setLookup(JSON.parse(lookupCache));
+          const roomsData = JSON.parse(roomsCache);
+          const prices: PriceEntry[] = JSON.parse(priceCache);
+          setRows(buildRows(JSON.parse(lookupCache), roomsData, prices));
+          setLoading(false);
+          return;
+        }
+
         const [allRes, roomsRes, pricesRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/all-data/`),
           fetch(`https://dev.kacc.mn/api/roomsNew/?token=${token}`),
-          fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}`),
+          fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}`)
         ]);
         if (!allRes.ok || !roomsRes.ok || !pricesRes.ok) throw new Error("Fetch failed");
 
@@ -81,31 +92,14 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
         const roomsData = await roomsRes.json();
         const prices: PriceEntry[] = await pricesRes.json();
 
-        // Save lookup lists
-        setLookup({ room_types: allData.room_types, room_category: allData.room_category });
+        localStorage.setItem("roomLookup", JSON.stringify(allData));
+        localStorage.setItem("roomData", JSON.stringify(roomsData));
+        localStorage.setItem(`roomPrices_${hotel}`, JSON.stringify(prices));
 
-        // Map existing prices
-        const priceMap = new Map(prices.map(p => [`${p.room_type}-${p.room_category}`, p]));
-
-        const mapped: RoomRow[] = roomsData.map((r: any) => {
-          const key = `${r.room_type}-${r.room_category}`;
-          const price = priceMap.get(key);
-          return {
-            id: r.room_number,
-            roomNumber: r.room_number,
-            room_type: r.room_type,
-            room_category: r.room_category,
-            type: allData.room_types.find(t => t.id === r.room_type)?.name ?? String(r.room_type),
-            category: allData.room_category.find(c => c.id === r.room_category)?.name ?? String(r.room_category),
-            basePrice: price?.base_price ?? null,
-            singlePrice: price?.single_person_price ?? null,
-            halfDayPrice: price?.half_day_price ?? null,
-            numberOfRoomsToSell: r.number_of_rooms_to_sell,
-          };
-        });
-        setRows(mapped);
+        setLookup(allData);
+        setRows(buildRows(allData, roomsData, prices));
       } catch (e) {
-        console.error(e);
+        console.error("RoomPriceList fetch error:", e);
       } finally {
         setLoading(false);
         if (isRoomAdded) setIsRoomAdded(false);
@@ -114,7 +108,30 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
     fetchData();
   }, [isRoomAdded, hotel]);
 
-  // Group options by type-category
+  const buildRows = (
+    allData: AllData,
+    rooms: any[],
+    prices: PriceEntry[]
+  ): RoomRow[] => {
+    const priceMap = new Map(prices.map(p => [`${p.room_type}-${p.room_category}`, p]));
+    return rooms.map((r) => {
+      const key = `${r.room_type}-${r.room_category}`;
+      const price = priceMap.get(key);
+      return {
+        id: r.room_number,
+        roomNumber: r.room_number,
+        room_type: r.room_type,
+        room_category: r.room_category,
+        type: allData.room_types.find(t => t.id === r.room_type)?.name ?? `Type ${r.room_type}`,
+        category: allData.room_category.find(c => c.id === r.room_category)?.name ?? `Category ${r.room_category}`,
+        basePrice: price?.base_price ?? null,
+        singlePrice: price?.single_person_price ?? null,
+        halfDayPrice: price?.half_day_price ?? null,
+        numberOfRoomsToSell: r.number_of_rooms_to_sell,
+      };
+    });
+  };
+
   const options = useMemo(() => {
     const map = new Map<string, { label: string; count: number; room_type: number; room_category: number }>();
     rows.forEach(r => {
@@ -124,7 +141,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
           label: `${r.type} – ${r.category}`,
           count: 1,
           room_type: r.room_type,
-          room_category: r.room_category,
+          room_category: r.room_category
         });
       } else {
         map.get(key)!.count++;
@@ -137,7 +154,6 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
     }));
   }, [rows]);
 
-  // Add price
   const createPrice = async () => {
     const token = Cookies.get("token");
     if (!token) throw new Error("Token not found");
@@ -146,6 +162,8 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ hotel, ...form }),
     });
+    // Clear cache to force re-fetch
+    localStorage.removeItem(`roomPrices_${hotel}`);
     setOpenAdd(false);
     setIsRoomAdded(true);
   };
@@ -175,12 +193,17 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
               <CircularProgress />
             </div>
           ) : (
-            <DataGrid rows={rows} columns={columns} getRowId={r => r.id} pageSizeOptions={[5, 10, 20]} autoPageSize />
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              getRowId={r => r.id}
+              pageSizeOptions={[5, 10, 20]}
+              autoPageSize
+            />
           )}
         </div>
       </div>
 
-      {/* Add Price Modal */}
       <Dialog open={openAdd} onClose={() => setOpenAdd(false)}>
         <DialogTitle>Нэмэх Үнийн Мэдээлэл</DialogTitle>
         <DialogContent>

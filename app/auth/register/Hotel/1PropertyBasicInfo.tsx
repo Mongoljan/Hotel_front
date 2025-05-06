@@ -99,7 +99,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
           className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
           required
         />
-        {errors.property_name_mn && <div className="text-red-500">{errors.property_name_mn.message}</div>}
+        {errors.property_name_mn && <div className="text-red">{errors.property_name_mn.message}</div>}
 
         <div className="text-black">{t('2')}</div>
         <input
@@ -108,7 +108,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
           className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
           required
         />
-        {errors.property_name_en && <div className="text-red-500">{errors.property_name_en.message}</div>}
+        {errors.property_name_en && <div className="text-red">{errors.property_name_en.message}</div>}
 
         <div className="text-black">{t('3')}</div>
         <input
@@ -117,7 +117,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
           className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
           required
         />
-        {errors.start_date && <div className="text-red-500">{errors.start_date.message}</div>}
+        {errors.start_date && <div className="text-red">{errors.start_date.message}</div>}
 
         <div className="text-black">{t('4')}</div>
         <select
@@ -132,7 +132,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
             </option>
           ))}
         </select>
-        {errors.star_rating && <div className="text-red-500">{errors.star_rating.message}</div>}
+        {errors.star_rating && <div className="text-red">{errors.star_rating.message}</div>}
 
         <div className="text-black">{t('5')}?</div>
         <input type="checkbox" {...register('part_of_group')} />
@@ -145,7 +145,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
           min={1}
           required
         />
-        {errors.total_hotel_rooms && <div className="text-red-500">{errors.total_hotel_rooms.message}</div>}
+        {errors.total_hotel_rooms && <div className="text-red">{errors.total_hotel_rooms.message}</div>}
 
         <div className="text-black">{t('7')}</div>
         <input
@@ -155,7 +155,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
           min={0}
           required
         />
-        {errors.available_rooms && <div className="text-red-500">{errors.available_rooms.message}</div>}
+        {errors.available_rooms && <div className="text-red">{errors.available_rooms.message}</div>}
 
         <div className="text-black">{t('8')}</div>
         <input type="checkbox" {...register('sales_room_limitation')} />
@@ -172,7 +172,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
             </option>
           ))}
         </select>
-        {errors.languages && <div className="text-red-500">{errors.languages.message}</div>}
+        {errors.languages && <div className="text-red">{errors.languages.message}</div>}
 
         <div className="flex gap-x-4">
           <button

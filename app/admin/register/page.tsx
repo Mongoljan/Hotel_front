@@ -140,7 +140,7 @@ export default function RegisterPage() {
           className="border p-2 w-full mb-4 h-14 rounded-md"
           required
         />
-        {errors.contact_person_name && <div className="text-red-500">{errors.contact_person_name.message}</div>}
+        {errors.contact_person_name && <div className="text-red">{errors.contact_person_name.message}</div>}
 
         <input
           type="email"
@@ -149,7 +149,7 @@ export default function RegisterPage() {
           className="border p-2 w-full mb-4 h-14 rounded-md"
           required
         />
-        {errors.email && <div className="text-red-500">{errors.email.message}</div>}
+        {errors.email && <div className="text-red">{errors.email.message}</div>}
 
      
 
@@ -172,7 +172,7 @@ export default function RegisterPage() {
           }}
         />
         {errors.contact_number && (
-          <div className="text-red-500 text-sm">{errors.contact_number.message}</div>
+          <div className="text-red text-sm">{errors.contact_number.message}</div>
         )}
 
         {/* Dropdown for selecting user type */}
@@ -188,7 +188,7 @@ export default function RegisterPage() {
             </option>
           ))}
         </select>
-        {errors.user_type && <div className="text-red-500">{errors.user_type.message}</div>}
+        {errors.user_type && <div className="text-red">{errors.user_type.message}</div>}
 
         <div className="relative mb-4">
           <input
@@ -206,7 +206,7 @@ export default function RegisterPage() {
             {isPasswordVisible ? <HiEye size={20} /> : <HiEyeSlash size={20} />}
           </button>
         </div>
-        {errors.password && <div className="text-red-500">{errors.password.message}</div>}
+        {errors.password && <div className="text-red">{errors.password.message}</div>}
 
         <div className="relative mb-4">
           <input
@@ -224,7 +224,7 @@ export default function RegisterPage() {
             {isConfirmPasswordVisible ? <HiEye size={20} /> : <HiEyeSlash size={20} />}
           </button>
         </div>
-        {errors.confirmPassword && <div className="text-red-500">{errors.confirmPassword.message}</div>}
+        {errors.confirmPassword && <div className="text-red">{errors.confirmPassword.message}</div>}
 
         <button
           type="submit"

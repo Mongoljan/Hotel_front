@@ -68,7 +68,7 @@ const locale = useLocale();
         propertyPolicies: propertyData.propertyPolicies,
         google_map: formData.google_map,
         parking_situation: formData.parking_situation,
-        property: hotel.hotel,
+        property: propertyData.property,
         general_facilities: formData.general_facilities.map(Number),
         property_photos: propertyData.property_photos,
       };
@@ -91,7 +91,7 @@ const locale = useLocale();
         
         toast.success('Property details saved successfully!');
         setTimeout(() => {
-         setProceed(0)
+         setProceed(2)
         }, 2000)
   
         
@@ -125,7 +125,7 @@ const locale = useLocale();
             required
           />
           {errors.google_map && (
-            <div className="text-red-500 text-sm">{errors.google_map.message}</div>
+            <div className="text-red text-sm">{errors.google_map.message}</div>
           )}
         </section>
 
@@ -138,7 +138,7 @@ const locale = useLocale();
             required
           />
           {errors.parking_situation && (
-            <div className="text-red-500 text-sm">{errors.parking_situation.message}</div>
+            <div className="text-red text-sm">{errors.parking_situation.message}</div>
           )}
         </section>
 
@@ -158,7 +158,7 @@ const locale = useLocale();
             </div>
           ))}
           {errors.general_facilities && (
-            <div className="text-red-500 text-sm">{errors.general_facilities.message}</div>
+            <div className="text-red text-sm">{errors.general_facilities.message}</div>
           )}
         </section>
 

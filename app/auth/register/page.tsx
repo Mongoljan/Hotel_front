@@ -93,35 +93,45 @@ export default function RegisterPage() {
         },
         body: JSON.stringify(data),
       });
-
-      if (response.ok) {
-        const responseData = await response.json();
-        const propertyId = responseData.pk;
-
-        const propertyData = {
-          propertyBasicInfo: 1,
-          confirmAddress: 1,
-          propertyPolicies: 1,
-          google_map: '',
-          parking_situation: 'free',
-          property: propertyId,
-          general_facilities: [],
-          property_photos: [],
-        };
-
-        localStorage.setItem('propertyData', JSON.stringify(propertyData));
-
-        toast.success('Registration successful!');
-        router.push('/auth/register/2');
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData || 'Registration failed.');
+  
+      const responseData = await response.json();
+  
+      if (!response.ok) {
+        // Show a specific error if message is available
+        if (responseData?.message) {
+          toast.error(responseData);
+        } else if(responseData?.register) {
+          console.log(responseData?.register);
+          toast.error(responseData?.register[0]);
+        }else{
+          toast.error("Registration failed please report to sysadmin")
+        }
+        return;
       }
+  
+      const propertyId = responseData.pk;
+  
+      const propertyData = {
+        propertyBasicInfo: 1,
+        confirmAddress: 1,
+        propertyPolicies: 1,
+        google_map: '',
+        parking_situation: 'free',
+        property: propertyId,
+        general_facilities: [],
+        property_photos: [],
+      };
+  
+      localStorage.setItem('propertyData', JSON.stringify(propertyData));
+  
+      toast.success('Registration successful!');
+      router.push('/auth/register/2');
     } catch (error) {
       toast.error('An unexpected error occurred during registration');
       console.error('Error during registration:', error);
     }
   };
+  
 
   return (
     <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">
@@ -155,7 +165,7 @@ export default function RegisterPage() {
                 {loadingCompany ? "..." : <FaArrowAltCircleRight />}
               </button>
             </div>
-            {errors.register && <div className="text-red-500">{errors.register.message}</div>}
+            {errors.register && <div className="text-red">{errors.register.message}</div>}
           </div>
 
           <div className="w-full">
@@ -166,7 +176,7 @@ export default function RegisterPage() {
               className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
               required
             />
-            {errors.CompanyName && <div className="text-red-500">{errors.CompanyName.message}</div>}
+            {errors.CompanyName && <div className="text-red">{errors.CompanyName.message}</div>}
           </div>
         </section>
 
@@ -178,7 +188,7 @@ export default function RegisterPage() {
             className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
             required
           />
-          {errors.PropertyName && <div className="text-red-500">{errors.PropertyName.message}</div>}
+          {errors.PropertyName && <div className="text-red">{errors.PropertyName.message}</div>}
         </section>
 
         <section className="flex gap-x-4">
@@ -190,7 +200,7 @@ export default function RegisterPage() {
               className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
               required
             />
-            {errors.location && <div className="text-red-500">{errors.location.message}</div>}
+            {errors.location && <div className="text-red">{errors.location.message}</div>}
           </div>
 
           <div>
@@ -207,7 +217,7 @@ export default function RegisterPage() {
                 </option>
               ))}
             </select>
-            {errors.property_type && <div className="text-red-500">{errors.property_type.message}</div>}
+            {errors.property_type && <div className="text-red">{errors.property_type.message}</div>}
           </div>
         </section>
 
@@ -215,10 +225,12 @@ export default function RegisterPage() {
           <div className="text-black">{t("phone_number")}</div>
           <PhoneInput
             country={'mn'}
+            enableSearch
+          disableSearchIcon
             onChange={(phone) => setValue('phone', phone)}
             inputClass="border p-2 w-full h-[45px] rounded-[15px]"
           />
-          {errors.phone && <div className="text-red-500">{errors.phone.message}</div>}
+          {errors.phone && <div className="text-red">{errors.phone.message}</div>}
         </section>
 
         <section>
@@ -229,7 +241,7 @@ export default function RegisterPage() {
             className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
             required
           />
-          {errors.mail && <div className="text-red-500">{errors.mail.message}</div>}
+          {errors.mail && <div className="text-red">{errors.mail.message}</div>}
         </section>
 
         <div className="flex gap-x-4">

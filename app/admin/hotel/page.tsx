@@ -11,6 +11,7 @@ interface UserInfo {
   name?: string;
   email?: string;
   hotel?: number;
+  position?: string;
 }
 
 export default function RegisterHotel() {
@@ -18,85 +19,86 @@ export default function RegisterHotel() {
   const [proceed, setProceed] = useState<number | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo>({});
 
-  // Helper to build a per-user storage key
-  const getProceedKey = () => {
-    // Use email or hotel ID as namespace
-    return `proceed_${userInfo.email || userInfo.hotel || 'guest'}`;
-  };
-
-  // Load userInfo once
+  // Load userInfo from localStorage
   useEffect(() => {
-    const storedUser = localStorage.getItem('userInfo');
-    if (storedUser) {
-      try {
+    try {
+      const storedUser = localStorage.getItem('userInfo');
+      if (storedUser) {
         setUserInfo(JSON.parse(storedUser));
-      } catch {
-        // ignore malformed JSON
       }
+    } catch (err) {
+      console.error('Failed to parse userInfo:', err);
     }
   }, []);
 
-  // Once userInfo is loaded, determine or load proceed
+  // Get hotel ID from multiple sources
+  const getHotelId = (): number | null => {
+    try {
+      const user = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const property = JSON.parse(localStorage.getItem('propertyData') || '{}');
+      return user.hotel || property.property || Number(Cookies.get('hotel')) || null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Decide step logic
   useEffect(() => {
-    if (!userInfo.email && !userInfo.hotel) {
-      // still loading userInfo
-      return;
-    }
-    const key = getProceedKey();
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      setProceed(parseInt(saved, 10));
-    } else {
-      determineStep();
-    }
+    const decideStep = async () => {
+      if (!userInfo.email && !userInfo.hotel) return;
+
+      const key = `proceed_${userInfo.email || userInfo.hotel}`;
+      const savedStep = localStorage.getItem(key);
+
+      if (savedStep !== null) {
+        setProceed(parseInt(savedStep, 10));
+        return;
+      }
+
+      try {
+        const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
+        if (Array.isArray(propertyData.general_facilities) && propertyData.general_facilities.length > 0) {
+          setProceed(1);
+          return;
+        }
+
+        const hotelId = getHotelId();
+        if (hotelId) {
+          const res = await fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`, {
+            cache: 'no-store',
+          });
+          const details = await res.json();
+          if (Array.isArray(details) && details.length > 0) {
+            setProceed(2);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error determining registration step:', error);
+      }
+
+      setProceed(0);
+    };
+
+    decideStep();
   }, [userInfo]);
 
-  // Persist proceed to user-specific key
+  // Persist proceed to localStorage
   useEffect(() => {
     if (proceed !== null && (userInfo.email || userInfo.hotel)) {
-      localStorage.setItem(getProceedKey(), proceed.toString());
+      const key = `proceed_${userInfo.email || userInfo.hotel}`;
+      localStorage.setItem(key, proceed.toString());
     }
   }, [proceed, userInfo]);
 
-  // Logic to decide which step to show
-  const determineStep = async () => {
-    // Step 1 check
-    const pd = JSON.parse(localStorage.getItem('propertyData') || '{}');
-    if (Array.isArray(pd.general_facilities) && pd.general_facilities.length > 0) {
-      setProceed(1);
-      return;
-    }
-
-    // Use hotel ID from cookie or userInfo
-    const hotelId = Number(Cookies.get('hotel') || pd.property || userInfo.hotel);
-    if (hotelId) {
-      try {
-        const res = await fetch(
-          `https://dev.kacc.mn/api/property-details/?property=${hotelId}`,
-          { cache: 'no-store' }
-        );
-        const details = await res.json();
-        if (Array.isArray(details) && details.length > 0) {
-          setProceed(2);
-          return;
-        }
-      } catch {
-        // fetch failed; fallback
-      }
-    }
-
-    // Default to step 0
-    setProceed(0);
-  };
-
-  if (proceed === null) {
-    return <div>Loading…</div>;
-  }
+  // Wait for decision
+  if (proceed === null) return <div>Loading…</div>;
 
   return (
     <div className="p-8">
       <h2 className="text-xl">
         {t('Hi')}, {t('Welcome')} {userInfo.name || ''}!
+        {userInfo.position && <span> Your position: {userInfo.position}</span>}
       </h2>
       {userInfo.email && <p className="mb-6 text-gray-600">{userInfo.email}</p>}
 

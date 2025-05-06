@@ -209,14 +209,15 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
  
 
     try {
-      const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}') || {};
+      const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
 
       const token= Cookies.get('token');
-      const hotel1= Cookies.get('hotel');
+      const hotel = Cookies.get('hotel');
+      const hotel1= propertyData.property;
    
       const transformedData = {
         token: token || '',
-        hotel: hotel1 || 0,
+        hotel: hotel,
         room_number: 0,
         room_type: Number(formData.room_type),
         room_category: Number(formData.room_category),
@@ -321,7 +322,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
         <option key={type.id} value={type.id}>{type.name}</option>
       ))}
     </select>
-    {errors.room_type && <span className="text-red-500">{errors.room_type.message}</span>}
+    {errors.room_type && <span className="text-red">{errors.room_type.message}</span>}
   </div>
 
 <div className="mb-4 w-[45%]"> 
@@ -331,7 +332,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
         <option key={type.id} value={type.id}>{type.name}</option>
       ))}
     </select>
-    {errors.room_category && <span className="text-red-500">{errors.room_category.message}</span>}
+    {errors.room_category && <span className="text-red">{errors.room_category.message}</span>}
   </div>
   </section>
 
@@ -339,7 +340,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
   <div className="mb-4 w-[45%] rounded-[10px]">
     <label>Room Size (sqm)</label>
     <input type="string" step="0.1" {...register('room_size')} className="border rounded-sd p-2 w-full" />
-    {errors.room_size && <span className="text-red-500">{errors.room_size.message}</span>}
+    {errors.room_size && <span className="text-red">{errors.room_size.message}</span>}
   </div>
 
   <div className="w-[45%] rounded-[10px]"> Өрөөнд орох боломжтой хүний тоог оруулна уу?</div>
@@ -356,7 +357,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
         <option key={type.id} value={type.id}>{type.name}</option>
       ))}
     </select>
-    {errors.bed_type && <span className="text-red-500">{errors.bed_type.message}</span>}
+    {errors.bed_type && <span className="text-red">{errors.bed_type.message}</span>}
   </div>
  
 
@@ -383,7 +384,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       <span className="peer-checked:bg-blue-500 peer-checked:text-white border border-gray-300 px-2 py-1 rounded-lg transition duration-300">Үгүй</span>
     </label>
   </div>
-  {errors.is_Bathroom && <span className="text-red-500">{errors.is_Bathroom.message}</span>}
+  {errors.is_Bathroom && <span className="text-red">{errors.is_Bathroom.message}</span>}
 </div>
 
 
@@ -407,7 +408,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
                    className="border p-2 w-full rounded-[15px]"
                  />
                  {errors.entries?.[index]?.images && (
-                   <div className="text-red-500 text-sm">{errors.entries[index]?.images?.message}</div>
+                   <div className="text-red text-sm">{errors.entries[index]?.images?.message}</div>
                  )}
                </section>
    
@@ -419,7 +420,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
                    className="border p-2 w-full rounded-[15px]"
                  />
                  {errors.entries?.[index]?.descriptions && (
-                   <div className="text-red-500 text-sm">{errors.entries[index]?.descriptions?.message}</div>
+                   <div className="text-red text-sm">{errors.entries[index]?.descriptions?.message}</div>
                  )}
                   {watchedEntries?.[index]?.images && (
         <img
@@ -433,7 +434,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
                <button
                  type="button"
                  onClick={() => remove(index)}
-                 className="flex items-center justify-center w-full text-red-500 border border-red-500 rounded-lg p-2 mt-2"
+                 className="flex items-center justify-center w-full text-red border border-red-500 rounded-lg p-2 mt-2"
                >
                  <FaTrash className="mr-2" /> Remove
                </button>
@@ -456,13 +457,13 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
   <div className="mb-4 w-[45%]">
     <label>Number of Rooms</label>
     <input type="number" min="0" placeholder='0'  {...register('number_of_rooms')} className="border rounded-sd p-2 w-16 block" />
-    {errors.number_of_rooms && <span className="text-red-500">{errors.number_of_rooms.message}</span>}
+    {errors.number_of_rooms && <span className="text-red">{errors.number_of_rooms.message}</span>}
   </div>
 
   <div className="mb-4 w-[45%]">
     <label>Number of Rooms to Sell</label>
     <input type="number" min="0"  placeholder='0' {...register('number_of_rooms_to_sell')} className="border p-2 rounded-sd w-16 block" />
-    {errors.number_of_rooms_to_sell && <span className="text-red-500">{errors.number_of_rooms_to_sell.message}</span>}
+    {errors.number_of_rooms_to_sell && <span className="text-red">{errors.number_of_rooms_to_sell.message}</span>}
   </div>
 
   </section>
@@ -476,7 +477,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       className="border p-2 w-full rounded-sd"
       placeholder="E.g. 342, 343"
     />
-        {errors.RoomNo && <span className="text-red-500">{errors.RoomNo.message}</span>}
+        {errors.RoomNo && <span className="text-red">{errors.RoomNo.message}</span>}
   </div>
 
   </section>
@@ -484,7 +485,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
   {/* <div className="mb-4 ">
     <label>Room Number</label>
     <input type="text" {...register('room_number')} className="border p-2 w-full" />
-    {errors.room_number && <span className="text-red-500">{errors.room_number.message}</span>}
+    {errors.room_number && <span className="text-red">{errors.room_number.message}</span>}
   </div> */}
 
 
@@ -529,7 +530,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
     </label>
   </div>
 
-  {errors.smoking_allowed && <span className="text-red-500 block mt-1">{errors.smoking_allowed.message}</span>}
+  {errors.smoking_allowed && <span className="text-red block mt-1">{errors.smoking_allowed.message}</span>}
 </div>
 
 
@@ -557,7 +558,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
         </label>
       ))}
     </div>
-    {errors.room_Facilities && <span className="text-red-500">{errors.room_Facilities.message}</span>}
+    {errors.room_Facilities && <span className="text-red">{errors.room_Facilities.message}</span>}
   </div>
 
   {/* Bathroom Items */}
@@ -571,7 +572,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
         </label>
       ))}
     </div>
-    {errors.bathroom_Items && <span className="text-red-500">{errors.bathroom_Items.message}</span>}
+    {errors.bathroom_Items && <span className="text-red">{errors.bathroom_Items.message}</span>}
   </div>
 </section>
 
@@ -599,7 +600,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       </div>
     ))}
   </div>
-  {errors.free_Toiletries && <span className="text-red-500">{errors.free_Toiletries.message}</span>}
+  {errors.free_Toiletries && <span className="text-red">{errors.free_Toiletries.message}</span>}
 </div>
 
 
@@ -631,7 +632,7 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       </div>
     ))}
   </div>
-  {errors.outdoor_And_View && <span className="text-red-500">{errors.outdoor_And_View.message}</span>}
+  {errors.outdoor_And_View && <span className="text-red">{errors.outdoor_And_View.message}</span>}
 </div>
 
 <div className="mb-4">
@@ -660,12 +661,12 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       </div>
     ))}
   </div>
-  {errors.food_And_Drink && <span className="text-red-500">{errors.food_And_Drink.message}</span>}
+  {errors.food_And_Drink && <span className="text-red">{errors.food_And_Drink.message}</span>}
 </div>
 <div className="mb-4">
     <label>Room Description</label>
     <textarea {...register('room_Description')} className="border p-2 w-full"></textarea>
-    {errors.room_Description && <span className="text-red-500">{errors.room_Description.message}</span>}
+    {errors.room_Description && <span className="text-red">{errors.room_Description.message}</span>}
   </div>
 
 

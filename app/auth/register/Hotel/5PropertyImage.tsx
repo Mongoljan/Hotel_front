@@ -111,7 +111,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                   className="border p-2 w-full rounded-[15px]"
                 />
                 {errors.entries?.[index]?.images && (
-                  <div className="text-red-500 text-sm">
+                  <div className="text-red text-sm">
                     {errors.entries[index]?.images?.message}
                   </div>
                 )}
@@ -132,7 +132,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                   className="border p-2 w-full rounded-[15px]"
                 />
                 {errors.entries?.[index]?.descriptions && (
-                  <div className="text-red-500 text-sm">
+                  <div className="text-red text-sm">
                     {errors.entries[index]?.descriptions?.message}
                   </div>
                 )}
@@ -141,7 +141,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
               <button
                 type="button"
                 onClick={() => remove(index)}
-                className="flex items-center justify-center w-full text-red-500 border border-red-500 rounded-lg p-2 mt-2"
+                className="flex items-center justify-center w-full text-red border border-red-500 rounded-lg p-2 mt-2"
               >
                 <FaTrash className="mr-2" />
                 {t("3")}

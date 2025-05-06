@@ -38,6 +38,13 @@ export default  function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar
       Cookies.remove(cookieName);  // Remove each cookie
     });
 
+  
+    // 2. Clear all localStorage
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+    }
+  
+
     window.location.href = '/auth/login';  // Redirect to sign-in page (or your desired route)
   };
 

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { schemaLogin } from '../../schema'; // adjust path if needed
 import { zodResolver } from '@hookform/resolvers/zod';
 import { HiEye, HiEyeSlash } from 'react-icons/hi2';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ToastContainer, toast } from 'react-toastify';
@@ -27,6 +27,10 @@ export default function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({ resolver: zodResolver(schemaLogin) });
 
+  useEffect(() => {
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('propertyData');
+  }, []);
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     const result = await loginAction(data);
 console.log("here is token:",Cookies.get("token"));
@@ -55,7 +59,7 @@ console.log("here is token:",Cookies.get("token"));
           {...register('email')}
           className="border p-4 w-full mb-6 h-[45px] rounded-[15px]"
         />
-        {errors.email && <div className="text-red-500">{errors.email.message}</div>}
+        {errors.email && <div className="text-red">{errors.email.message}</div>}
 
         <div className="text-black">{t('password')}</div>
         <div className="relative">
@@ -73,7 +77,7 @@ console.log("here is token:",Cookies.get("token"));
           </button>
         </div>
 
-        {errors.password && <div className="text-red-500">{errors.password.message}</div>}
+        {errors.password && <div className="text-red">{errors.password.message}</div>}
 
         <div className="flex justify-between text-black mb-4">
           <Link href="/auth/resetpassword" className="hover:text-blue-400">{t('remember')}</Link>

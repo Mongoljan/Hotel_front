@@ -118,7 +118,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
               <option key={province.id} value={province.id}>{province.name}</option>
             ))}
           </select>
-          {errors.province_city && <div className="text-red-500 text-sm">{errors.province_city.message}</div>}
+          {errors.province_city && <div className="text-red text-sm">{errors.province_city.message}</div>}
         </div>
 
         <div className="mb-4">
@@ -128,7 +128,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
               <option key={city.id} value={city.id}>{city.name}</option>
             ))}
           </select>
-          {errors.city && <div className="text-red-500 text-sm">{errors.city.message}</div>}
+          {errors.city && <div className="text-red text-sm">{errors.city.message}</div>}
         </div>
 
         <div className="mb-4">
@@ -138,7 +138,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
               <option key={soum.id} value={soum.id}>{soum.name}</option>
             ))}
           </select>
-          {errors.soum && <div className="text-red-500 text-sm">{errors.soum.message}</div>}
+          {errors.soum && <div className="text-red text-sm">{errors.soum.message}</div>}
         </div>
 
         <div className="mb-4">
@@ -148,7 +148,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
               <option key={district.id} value={district.id}>{district.name}</option>
             ))}
           </select>
-          {errors.district && <div className="text-red-500 text-sm">{errors.district.message}</div>}
+          {errors.district && <div className="text-red text-sm">{errors.district.message}</div>}
         </div>
 
         <div className="mb-4">
@@ -158,7 +158,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
             {...register('zipCode')}
             className="border p-2 w-full h-[45px] rounded-[15px]"
           />
-          {errors.zipCode && <div className="text-red-500 text-sm">{errors.zipCode.message}</div>}
+          {errors.zipCode && <div className="text-red text-sm">{errors.zipCode.message}</div>}
         </div>
 
         <div className="mb-4">
@@ -168,7 +168,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
             {...register('total_floor_number')}
             className="border p-2 w-full h-[45px] rounded-[15px]"
           />
-          {errors.total_floor_number && <div className="text-red-500 text-sm">{errors.total_floor_number.message}</div>}
+          {errors.total_floor_number && <div className="text-red text-sm">{errors.total_floor_number.message}</div>}
         </div>
 
         <div className="flex gap-x-4">
