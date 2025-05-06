@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 interface PropertyPhoto {
   id: number;
@@ -58,6 +59,19 @@ interface BasicInfo {
   star_rating: number;
 }
 
+interface PropertyBaseInfo {
+  pk: number;
+  register: string;
+  CompanyName: string;
+  PropertyName: string;
+  location: string;
+  property_type: number;
+  phone: string;
+  mail: string;
+  is_approved: boolean;
+  created_at: string;
+}
+
 interface ProceedProps {
   proceed: number;
   setProceed: (value: number) => void;
@@ -68,9 +82,12 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
   const [propertyImages, setPropertyImages] = useState<PropertyPhoto[]>([]);
+  const [imageIndex, setImageIndex] = useState(0);
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
+  const [propertyBaseInfo, setPropertyBaseInfo] = useState<PropertyBaseInfo | null>(null);
+  const [propertyTypes, setPropertyTypes] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<PropertyPhoto | null>(null);
 
   useEffect(() => {
@@ -89,56 +106,59 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         const cachedPolicy = localStorage.getItem('propertyPolicy');
         const cachedAddress = localStorage.getItem('propertyAddress');
         const cachedBasic = localStorage.getItem('propertyBasicInfo');
+        const cachedBaseInfo = localStorage.getItem('propertyBaseInfo');
 
-        if (cachedDetail && cachedPolicy && cachedAddress && cachedBasic) {
-          const detail = JSON.parse(cachedDetail) as PropertyDetail;
-          const policy = JSON.parse(cachedPolicy) as PropertyPolicy;
-          const addr = JSON.parse(cachedAddress) as Address;
-          const basic = JSON.parse(cachedBasic) as BasicInfo;
+        if (cachedDetail && cachedPolicy && cachedAddress && cachedBasic && cachedBaseInfo) {
+          setPropertyDetail(JSON.parse(cachedDetail));
+          setPropertyImages(JSON.parse(cachedDetail).property_photos);
+          setPropertyPolicy(JSON.parse(cachedPolicy));
+          setAddress(JSON.parse(cachedAddress));
+          setBasicInfo(JSON.parse(cachedBasic));
+          setPropertyBaseInfo(JSON.parse(cachedBaseInfo));
+        } else {
+          const baseInfoRes = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`);
+          const baseInfo = await baseInfoRes.json();
+          setPropertyBaseInfo(baseInfo);
+          localStorage.setItem('propertyBaseInfo', JSON.stringify(baseInfo));
 
-          setPropertyDetail(detail);
-          setPropertyImages(detail.property_photos);
+          const detailRes = await fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`, {
+            cache: 'no-store',
+          });
+          const details: PropertyDetail[] = await detailRes.json();
+          const matchedDetail = details?.[0];
+          if (!matchedDetail) {
+            setProceed(0);
+            return;
+          }
+
+          setPropertyDetail(matchedDetail);
+          setPropertyImages(matchedDetail.property_photos);
+          localStorage.setItem('propertyDetail', JSON.stringify(matchedDetail));
+
+          const [policyRes, addressRes, basicInfoRes] = await Promise.all([
+            fetch(`https://dev.kacc.mn/api/property-policies/${matchedDetail.propertyPolicies}/`),
+            fetch(`https://dev.kacc.mn/api/confirm-address/${matchedDetail.confirmAddress}/`),
+            fetch(`https://dev.kacc.mn/api/property-basic-info/${matchedDetail.propertyBasicInfo}/`),
+          ]);
+
+          const [policy, addressData, basicInfoData] = await Promise.all([
+            policyRes.json(),
+            addressRes.json(),
+            basicInfoRes.json(),
+          ]);
+
           setPropertyPolicy(policy);
-          setAddress(addr);
-          setBasicInfo(basic);
-          return;
+          setAddress(addressData);
+          setBasicInfo(basicInfoData);
+
+          localStorage.setItem('propertyPolicy', JSON.stringify(policy));
+          localStorage.setItem('propertyAddress', JSON.stringify(addressData));
+          localStorage.setItem('propertyBasicInfo', JSON.stringify(basicInfoData));
         }
 
-        // Fetch fresh data if not cached
-        const detailRes = await fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`, {
-          cache: 'no-store',
-        });
-        const details: PropertyDetail[] = await detailRes.json();
-        const matchedDetail = details?.[0];
-
-        if (!matchedDetail) {
-          setProceed(0);
-          return;
-        }
-
-        setPropertyDetail(matchedDetail);
-        setPropertyImages(matchedDetail.property_photos);
-        localStorage.setItem('propertyDetail', JSON.stringify(matchedDetail));
-
-        const [policyRes, addressRes, basicInfoRes] = await Promise.all([
-          fetch(`https://dev.kacc.mn/api/property-policies/${matchedDetail.propertyPolicies}/`),
-          fetch(`https://dev.kacc.mn/api/confirm-address/${matchedDetail.confirmAddress}/`),
-          fetch(`https://dev.kacc.mn/api/property-basic-info/${matchedDetail.propertyBasicInfo}/`)
-        ]);
-
-        const [policy, addressData, basicInfoData] = await Promise.all([
-          policyRes.json(),
-          addressRes.json(),
-          basicInfoRes.json()
-        ]);
-
-        setPropertyPolicy(policy);
-        setAddress(addressData);
-        setBasicInfo(basicInfoData);
-
-        localStorage.setItem('propertyPolicy', JSON.stringify(policy));
-        localStorage.setItem('propertyAddress', JSON.stringify(addressData));
-        localStorage.setItem('propertyBasicInfo', JSON.stringify(basicInfoData));
+        const combinedDataRes = await fetch("https://dev.kacc.mn/api/combined-data/");
+        const combinedData = await combinedDataRes.json();
+        setPropertyTypes(combinedData.property_types || []);
       } catch (error) {
         console.error("Error loading property data:", error);
         setProceed(0);
@@ -148,26 +168,85 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     loadData();
   }, [setProceed]);
 
+  const getPropertyTypeName = (id: number): string => {
+    const type = propertyTypes.find(pt => pt.id === id);
+    return type ? type.name_mn : t("loading");
+  };
+
+  const goPrev = () => {
+    setImageIndex((prev) => (prev === 0 ? propertyImages.length - 1 : prev - 1));
+  };
+
+  const goNext = () => {
+    setImageIndex((prev) => (prev === propertyImages.length - 1 ? 0 : prev + 1));
+  };
+
   if (!propertyDetail) {
     return <div>{t("8")}</div>;
   }
 
   return (
     <div className="text-black">
-      <h1 className="text-2xl font-bold mb-4">{t("title")}</h1>
+      <div className="flex gap-x-10 flex-wrap">
+        <div className="w-full max-w-2xl mb-6 relative">
+          {propertyImages.length > 0 && (
+            <div className="relative bg-white rounded-xl overflow-hidden shadow-md">
+              <img
+                src={propertyImages[imageIndex].image}
+                alt={propertyImages[imageIndex].description}
+                className="w-full h-auto object-contain max-h-[300px]"
+              />
+              {propertyImages.length > 1 && (
+                <div className="absolute inset-0 flex items-center justify-between px-4">
+                  <button onClick={goPrev} className="text-white text-xl bg-black/50 rounded-full p-2">
+                    <FaChevronLeft />
+                  </button>
+                  <button onClick={goNext} className="text-white text-xl bg-black/50 rounded-full p-2">
+                    <FaChevronRight />
+                  </button>
+                </div>
+              )}
+              <div className="px-4 py-2">
+                <p className="text-sm text-gray-800 text-center">{propertyImages[imageIndex].description}</p>
+              </div>
+            </div>
+          )}
+        </div>
 
-      {basicInfo && (
-        <>
-          <div className="mb-4">
-            <p className="font-semibold">{t("1")}:</p>
-            <p>{basicInfo.property_name_en}</p>
-          </div>
-          <div className="mb-4">
-            <p className="font-semibold">{t("9")}:</p>
-            <p>{basicInfo.property_name_mn}</p>
-          </div>
-        </>
-      )}
+        <div className="w-full max-w-md">
+          {basicInfo && (
+            <>
+              <p className="text-primary text-2xl font-semibold">{basicInfo.property_name_mn}</p>
+              <p className="text-soft">{basicInfo.property_name_en}</p>
+
+              <div className="flex justify-between mt-2">
+                <p className="text-muted">Үл хөдлөх хөрөнгийн төрөл:</p>
+                <p>{propertyBaseInfo && getPropertyTypeName(propertyBaseInfo.property_type)}</p>
+              </div>
+
+              <div className="flex justify-between mt-2">
+                <p className="text-muted">Үйл ажиллагаа эхэлсэн огноо:</p>
+                <p>{basicInfo.start_date}</p>
+              </div>
+
+              <div className="flex justify-between mt-2">
+                <p className="text-muted">Буудлын нийт өрөөний тоо:</p>
+                <p>{basicInfo.total_hotel_rooms}</p>
+              </div>
+
+              <div className="flex justify-between mt-2">
+                <p className="text-muted">Хүүхэд үйлчлүүлэх боломжтой эсэх:</p>
+                <p>{propertyPolicy?.allow_children ? <span className="text-green-500">Тийм</span> : <span className="text-red-500">Үгүй</span>}</p>
+              </div>
+
+              <div className="flex justify-between mt-2">
+                <p className="text-muted">Зогсоолтой эсэх:</p>
+                <p>{propertyDetail?.parking_situation}</p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
       {address && (
         <div className="mb-4">
@@ -197,57 +276,16 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         </a>
       </div>
 
-      <div className="mb-4">
-        <p className="font-semibold">{t("7")}:</p>
-        <p>{propertyDetail.parking_situation}</p>
-      </div>
-
-      <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {propertyImages.map(photo => (
-          <div
-            key={photo.id}
-            className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-            onClick={() => setSelectedPhoto(photo)}
-          >
-            <img
-              src={photo.image}
-              alt={photo.description}
-              className="w-full h-auto object-contain max-h-[300px]"
-            />
-            <div className="px-4 py-2">
-              <p className="text-sm text-gray-800 text-center">{photo.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {selectedPhoto && (
-        <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center p-4"
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <div
-            className="relative max-w-5xl w-full max-h-[90vh] overflow-auto bg-white rounded-xl shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setSelectedPhoto(null)}
-              className="absolute top-3 right-3 text-gray-600 hover:text-black text-3xl font-bold z-50"
-            >
-              &times;
-            </button>
-            <img
-              src={selectedPhoto.image}
-              alt={selectedPhoto.description}
-              className="w-full h-auto object-contain rounded-t-xl"
-              style={{ maxHeight: '80vh' }}
-            />
-            {selectedPhoto.description && (
-              <div className="p-4 text-center text-gray-800 text-sm">
-                {selectedPhoto.description}
-              </div>
-            )}
-          </div>
+      {propertyBaseInfo && (
+        <div className="mb-4 space-y-1">
+          <p className="font-semibold">{t("10")}:</p>
+          <p>{propertyBaseInfo.CompanyName}</p>
+          <p><span className="font-semibold">{t("11")}:</span> {propertyBaseInfo.PropertyName}</p>
+          <p><span className="font-semibold">{t("12")}:</span> {propertyBaseInfo.location}</p>
+          <p><span className="font-semibold">{t("13")}:</span> {propertyBaseInfo.phone}</p>
+          <p><span className="font-semibold">{t("14")}:</span> {propertyBaseInfo.mail}</p>
+          <p><span className="font-semibold">{t("15")}:</span> {propertyBaseInfo.register}</p>
+          <p><span className="font-semibold">{t("16")}:</span> {getPropertyTypeName(propertyBaseInfo.property_type)}</p>
         </div>
       )}
     </div>

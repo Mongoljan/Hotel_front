@@ -96,11 +96,11 @@ export default function RegisterHotel() {
 
   return (
     <div className="p-8">
-      <h2 className="text-xl">
+      {/* <h2 className="text-xl">
         {t('Hi')}, {t('Welcome')} {userInfo.name || ''}!
         {userInfo.position && <span> Your position: {userInfo.position}</span>}
       </h2>
-      {userInfo.email && <p className="mb-6 text-gray-600">{userInfo.email}</p>}
+      {userInfo.email && <p className="mb-6 text-gray-600">{userInfo.email}</p>} */}
 
       {proceed === 0 && <Proceed proceed={proceed} setProceed={setProceed} />}
       {proceed === 1 && <RegisterPage proceed={proceed} setProceed={setProceed} />}

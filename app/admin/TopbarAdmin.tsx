@@ -4,6 +4,7 @@ import Cookies from "js-cookie";
 import { HiArrowRightOnRectangle } from "react-icons/hi2";  // Import js-cookie
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslations } from 'next-intl';
+import UserProfileToggle from "@/components/UserProfileToggle";
 // import LanguageToggle from "../components/languageToggle";
 interface Topbar{
   sign_in:string;
@@ -55,30 +56,10 @@ export default  function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar
 >
 
 
-        <div className="mr-2">
+        <div className="mr-2 flex">
        {/* <LanguageToggle/> */}
-       <div className=" text-black font-semibold text-[24px]">
-        Буудлын админ 
-       </div>
-       </div>
-       <div className="flex">
-        <div className="flex gap-2 items-center">
-          <button
-            onClick={handleLogout}  // Attach the logout handler
-            className="rounded-sm bg-white border border-solid font-semibold text-xs border-primary hover:border-blue-400 transition-colors flex items-center justify-center hover:blue-100  sm:text-base h-7 sm:h-8 px-1 sm:px-1 sm:min-w-36 text-black  hover:bg-background"
-          >
-            {t("signOut")}
-            <HiArrowRightOnRectangle className="ml-2 text-[24px]" />
-          </button>
-          {/* <Link
-            className="rounded-sm border border-solid border-blue-500 transition-colors flex items-center justify-center hover:bg-blue-500 hover:border-transparent text-xs sm:text-base h-7 sm:h-8 px-2 sm:px-2 sm:min-w-36 text-blue-500 hover:text-white"
-            href="/auth/register"
-          >
-         sign up
-          </Link> */}
-            <LanguageSwitcher/>
-        </div>
-        <button onClick={toggleSidebar} className="flex ml-4 flex-col justify-center items-center mr-4">
+    
+       <button onClick={toggleSidebar} className="flex ml-4 flex-col justify-center items-center mr-4">
           <span
             className={`bg-black block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "rotate-45 translate-y-1" : "-translate-y-0.5"}`}
           ></span>
@@ -89,6 +70,32 @@ export default  function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar
             className={`bg-black block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "-rotate-45 -translate-y-1" : "translate-y-0.5"}`}
           ></span>
         </button>
+        <div className=" text-black font-semibold text-[24px]">
+        Буудлын админ 
+       </div>
+       
+       </div>
+       <div className="flex gap-x-4">
+        <div className="flex gap-2 items-center">
+          {/* <button
+            onClick={handleLogout}  // Attach the logout handler
+            className="rounded-sm bg-white border border-solid font-semibold text-xs border-primary hover:border-blue-400 transition-colors flex items-center justify-center hover:blue-100  sm:text-base h-7 sm:h-8 px-1 sm:px-1 sm:min-w-36 text-black  hover:bg-background"
+          >
+            {t("signOut")}
+            <HiArrowRightOnRectangle className="ml-2 text-[24px]" />
+          </button> */}
+          {/* <Link
+            className="rounded-sm border border-solid border-blue-500 transition-colors flex items-center justify-center hover:bg-blue-500 hover:border-transparent text-xs sm:text-base h-7 sm:h-8 px-2 sm:px-2 sm:min-w-36 text-blue-500 hover:text-white"
+            href="/auth/register"
+          >
+         sign up
+          </Link> */}
+            <LanguageSwitcher/>
+        </div>
+     
+        <div className="flex gap-2 items-center">
+        <UserProfileToggle/>
+        </div>
       </div>
       </div>
     </div>

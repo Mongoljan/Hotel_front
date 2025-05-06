@@ -29,11 +29,19 @@ export default function Sidebar() {
     // { href: "/admin/register", icon: <IoPersonOutline />, label: "Register staff" },
     // { href: "/admin/register_hotel", icon: <LuHotel />, label: "Буудлын бүртгэл" },
     {
-      label: t("rooms"),
+      label: "Тохиргоо",
       icon: <MdOutlineBedroomChild />,
       subMenu: [
-        { href: "/admin/room", icon: <MdOutlineAddBox />, label: t("addRooms") },
-        { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: t("roomPrice") },
+        { href: "/admin/room", icon: <MdOutlineAddBox />, label: "Өрөө" },
+        { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: "Үнэ" },
+        { href: "", icon: <MdOutlineListAlt />, label: "Үнэ" },
+        { href: "", icon: <MdOutlineListAlt />, label: "Үйлчилгээ" },
+        { href: "", icon: <MdOutlineListAlt />, label: "Гэрээ байгуулах" },
+        { href: "", icon: <MdOutlineListAlt />, label: "Нөхцөл бодлого" },
+        { href: "", icon: <MdOutlineListAlt />, label: "Админ эрх" },
+        { href: "", icon: <MdOutlineListAlt />, label: "Буудлын профайл" },
+        { href: "", icon: <MdOutlineListAlt />, label: "Хөнгөлөлт" },
+        { href: "", icon: <MdOutlineListAlt />, label: "Захиалах суваг" },
         // { href: "/admin/room/categories", icon: <MdOutlineCategory />, label: "Room Categories" },
       ],
     },
@@ -55,7 +63,7 @@ export default function Sidebar() {
                 >
                   <div className="flex items-center">
                     <div className="text-lg">{item.icon}</div>
-                    <span className="ml-2 text-[14px]">{item.label}</span>
+                    <span className="ml-3 text-[14px]">{item.label}</span>
                   </div>
                   <div className="text-lg">
                     {isRoomMenuOpen ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
@@ -75,8 +83,8 @@ export default function Sidebar() {
                             : "hover:bg-background"
                         }`}
                       >
-                        <div className="text-lg mr-2">{subItem.icon}</div>
-                        <span className="text-[14px]">{subItem.label}</span>
+                        <div className="text-xl mr-3  text-dim">{subItem.icon}</div>
+                        <span className="text-[14px] text-dim">{subItem.label}</span>
                       </Link>
                     ))}
                   </div>
