@@ -214,10 +214,12 @@ export default function RegisterRoom({ isOpen, onClose, isRoomAdded, setIsRoomAd
       const token= Cookies.get('token');
       const hotel = Cookies.get('hotel');
       const hotel1= propertyData.property;
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+
    
       const transformedData = {
-        token: token || '',
-        hotel: hotel,
+        token: token ,
+        hotel: userInfo?.hotel,
         room_number: 0,
         room_type: Number(formData.room_type),
         room_category: Number(formData.room_category),

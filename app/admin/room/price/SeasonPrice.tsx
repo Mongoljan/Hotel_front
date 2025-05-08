@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Cookies from "js-cookie";
 import {
-  DataGrid, GridColDef, GridValidRowModel
+  DataGrid, GridColDef, GridToolbar, GridValidRowModel
 } from "@mui/x-data-grid";
 import {
   CircularProgress, IconButton, Dialog, DialogTitle,
@@ -79,6 +79,7 @@ export default function RoomManagement() {
   const [seasonalPrices, setSeasonalPrices] = useState<SeasonalPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+      const [tableWidth, setTableWidth] = useState(window.innerWidth * 0.7);
 
   const [seasonModalOpen, setSeasonModalOpen] = useState(false);
   const [seasonForm, setSeasonForm] = useState({
@@ -266,20 +267,46 @@ export default function RoomManagement() {
   return (
     <>
       <div className="flex justify-between mb-4">
-        <h1 className="text-lg font-semibold">Room Management</h1>
+       
+      </div>
+
+      <div
+         style={{ width: tableWidth , height: 500 }} >
+          
+      <>
+      
+  <div className="mb-2 font-semibold text-sm text-muted">
+    {/* Total: {rows.length} rows */}
+  </div>
+  <div className="flex justify-between mb-4">
+ <h1 className="text-lg font-semibold">Seasonal prices</h1>
         <Button variant="contained" color="primary" onClick={() => setSeasonModalOpen(true)}>
           + Add Seasonal Price
         </Button>
-      </div>
+        </div>
+  <DataGrid
+   className="overflow-y-auto"
+    rows={rows}
+    columns={columns}
+    getRowId={(row) => row.id}
+    autoPageSize={false}
+    pagination
+    pageSizeOptions={[5, 10, 20, 50]}
+    slots={{ toolbar: GridToolbar }}
+    slotProps={{
+      toolbar: {
+        showQuickFilter: true,
+        quickFilterProps: { debounceMs: 300 },
+      },
+    }}
+    sx={{
+      // border: "2px solid #FACC15", // Tailwind yellow-400
+      padding:"10px",
+      borderRadius: 2,
+    }}
+  />
+</>
 
-      <div style={{ width: "100%", height: 500 }}>
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <CircularProgress />
-          </div>
-        ) : (
-          <DataGrid rows={rows} columns={columns} getRowId={(row) => row.id} pageSizeOptions={[5, 10]} autoPageSize />
-        )}
       </div>
 
       <Dialog open={seasonModalOpen} onClose={() => setSeasonModalOpen(false)}>

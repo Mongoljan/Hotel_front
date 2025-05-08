@@ -51,7 +51,7 @@ export default function UserProfileToggle() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="/user.png" alt="User" />
+            {/* <AvatarImage src="/user.png" alt="User" /> */}
             <AvatarFallback className="border-primary opaicty-[50] border-[2px] bg-white text-[16px]">{userInfo.name?.[0] || "U"}</AvatarFallback>
           </Avatar>
         </Button>

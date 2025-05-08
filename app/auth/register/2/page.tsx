@@ -14,6 +14,8 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { schemaRegistrationEmployee2 } from '@/app/schema';
 import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
+import { registerEmployeeAction } from './RegisterEmployeeAction';
+
 
 type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
 
@@ -56,56 +58,27 @@ export default function RegisterEmployee() {
   };
 
   // Your main submit handler
-  const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    try {
-      const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-      const hotel = propertyData?.property;
+const onSubmit: SubmitHandler<FormFields> = async (data) => {
+  const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
+  const hotel = propertyData?.property;
 
-      const requestBody = {
-        name: data.contact_person_name,
-        position: data.position,
-        contact_number: data.contact_number,
-        email: data.email,
-        password: data.password,
-        user_type: data.user_type,
-        hotel,
-      };
+  const result = await registerEmployeeAction({
+    ...data,
+    hotel,
+  });
 
-      const response = await fetch('https://dev.kacc.mn/api/EmployeeRegister/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
+  if (result.success) {
+    toast.success('Ажилтны бүртгэл амжилттай! Та бүртгэлээрээ нэвтрэн орно уу.');
+    Object.keys(Cookies.get()).forEach((cookieName) => {
+      Cookies.remove(cookieName);
+    });
+    localStorage.clear();
+    router.push('/auth/login');
+  } else {
+    toast.error(result.error || 'Бүртгэл амжилтгүй боллоо.');
+  }
+};
 
-      if (response.ok) {
-        const resData = await response.json();
-        // Save new user info
-        const userInfo = {
-          hotel,
-          name: data.contact_person_name,
-          position: data.position,
-          contact_number: data.contact_number,
-          email: data.email,
-        };
-        localStorage.removeItem('userInfo');
-        localStorage.setItem('userInfo', JSON.stringify(userInfo));
-        Cookies.set('token', resData.token);
-
-        toast.success('Ажилтны бүртгэл амжилттай!');
-        router.push('/admin/hotel');
-      } else {
-        const errorData = await response.json();
-        const msg = Array.isArray(errorData.register)
-          ? errorData.register.join(', ')
-          : errorData.detail || 'Бүртгэл амжилтгүй боллоо.';
-        console.error('Registration failed:', errorData);
-        toast.error(msg);
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Алдаа гарлаа, дахин оролдоно уу.');
-    }
-  };
 
   return (
     <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">

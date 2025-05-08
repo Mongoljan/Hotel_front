@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Cookies from "js-cookie";
 import {
-  DataGrid, GridColDef, GridValidRowModel
+  DataGrid, GridColDef, GridToolbar, GridValidRowModel
 } from "@mui/x-data-grid";
 import {
   CircularProgress,
@@ -49,6 +49,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
   const [lookup, setLookup] = useState<AllData>({ room_types: [], room_category: [] });
   const [loading, setLoading] = useState<boolean>(true);
   const [openAdd, setOpenAdd] = useState(false);
+    const [tableWidth, setTableWidth] = useState(window.innerWidth * 0.7);
   const [form, setForm] = useState({
     room_type: 0,
     room_category: 0,
@@ -181,29 +182,56 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
   return (
     <>
       <div className="w-full">
-        <div className="flex justify-between mb-4">
+
+       
+        <div
+       
+         style={{ width: tableWidth , height: 500 }}
+         >
+                  <div className="flex justify-between mb-4">
           <h1 className="text-lg font-semibold">Өрөөний үнэ</h1>
           <Button onClick={() => setOpenAdd(true)} variant="contained" color="primary">
             + Өрөөний үнэ нэмэх
           </Button>
         </div>
-        <div className="overflow-auto" style={{ width: '100%', height: 500 }}>
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <CircularProgress />
-            </div>
-          ) : (
-            <DataGrid
-              rows={rows}
-              columns={columns}
-              getRowId={r => r.id}
-              pageSizeOptions={[5, 10, 20]}
-              autoPageSize
-            />
-          )}
-        </div>
+  {loading ? (
+    <div className="flex items-center justify-center h-full">
+      <CircularProgress />
+    </div>
+  ) : (
+    <>
+      <div className="mb-2 font-semibold ">
+        Room prices({rows.length})
       </div>
 
+      <DataGrid
+        className="overflow-y-auto" 
+        rows={rows}
+        columns={columns}
+        getRowId={(r) => r.id}
+        // autoPageSize={false}
+        
+        pageSizeOptions={[5, 10, 20, 50]}
+        pagination
+        slots={{ toolbar: GridToolbar }}
+        slotProps={{
+          toolbar: {
+            showQuickFilter: true,
+            quickFilterProps: { debounceMs: 300 },
+          },
+        }}
+        sx={{
+          // border: '2px solid #FACC15',
+          padding:"10px",
+          borderRadius: 2,
+        }}
+      />
+    </>
+  )}
+</div>
+
+        </div>
+    
       <Dialog open={openAdd} onClose={() => setOpenAdd(false)}>
         <DialogTitle>Нэмэх Үнийн Мэдээлэл</DialogTitle>
         <DialogContent>

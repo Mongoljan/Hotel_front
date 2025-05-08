@@ -78,8 +78,7 @@ interface ProceedProps {
 }
 
 export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
-  const t = useTranslations("SixStepInfo");
-
+  const t = useTranslations('SixStepInfo');
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
   const [propertyImages, setPropertyImages] = useState<PropertyPhoto[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
@@ -88,18 +87,13 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
   const [propertyBaseInfo, setPropertyBaseInfo] = useState<PropertyBaseInfo | null>(null);
   const [propertyTypes, setPropertyTypes] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
-  const [selectedPhoto, setSelectedPhoto] = useState<PropertyPhoto | null>(null);
 
   useEffect(() => {
     async function loadData() {
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
       const hotelId = userInfo.hotel || propertyData.property || Number(Cookies.get('hotel'));
-
-      if (!hotelId) {
-        setProceed(0);
-        return;
-      }
+      if (!hotelId) return setProceed(0);
 
       try {
         const cachedDetail = localStorage.getItem('propertyDetail');
@@ -109,58 +103,43 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         const cachedBaseInfo = localStorage.getItem('propertyBaseInfo');
 
         if (cachedDetail && cachedPolicy && cachedAddress && cachedBasic && cachedBaseInfo) {
-          setPropertyDetail(JSON.parse(cachedDetail));
-          setPropertyImages(JSON.parse(cachedDetail).property_photos);
+          const parsedDetail = JSON.parse(cachedDetail);
+          setPropertyDetail(parsedDetail);
+          setPropertyImages(parsedDetail.property_photos);
           setPropertyPolicy(JSON.parse(cachedPolicy));
           setAddress(JSON.parse(cachedAddress));
           setBasicInfo(JSON.parse(cachedBasic));
           setPropertyBaseInfo(JSON.parse(cachedBaseInfo));
         } else {
-          const baseInfoRes = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`);
-          const baseInfo = await baseInfoRes.json();
-          setPropertyBaseInfo(baseInfo);
-          localStorage.setItem('propertyBaseInfo', JSON.stringify(baseInfo));
-
-          const detailRes = await fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`, {
-            cache: 'no-store',
-          });
-          const details: PropertyDetail[] = await detailRes.json();
+          const baseInfo = await (await fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`)).json();
+          const details = await (await fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`)).json();
           const matchedDetail = details?.[0];
-          if (!matchedDetail) {
-            setProceed(0);
-            return;
-          }
+          if (!matchedDetail) return setProceed(0);
+
+          const [policy, addressData, basicInfoData] = await Promise.all([
+            (await fetch(`https://dev.kacc.mn/api/property-policies/${matchedDetail.propertyPolicies}/`)).json(),
+            (await fetch(`https://dev.kacc.mn/api/confirm-address/${matchedDetail.confirmAddress}/`)).json(),
+            (await fetch(`https://dev.kacc.mn/api/property-basic-info/${matchedDetail.propertyBasicInfo}/`)).json(),
+          ]);
 
           setPropertyDetail(matchedDetail);
           setPropertyImages(matchedDetail.property_photos);
-          localStorage.setItem('propertyDetail', JSON.stringify(matchedDetail));
-
-          const [policyRes, addressRes, basicInfoRes] = await Promise.all([
-            fetch(`https://dev.kacc.mn/api/property-policies/${matchedDetail.propertyPolicies}/`),
-            fetch(`https://dev.kacc.mn/api/confirm-address/${matchedDetail.confirmAddress}/`),
-            fetch(`https://dev.kacc.mn/api/property-basic-info/${matchedDetail.propertyBasicInfo}/`),
-          ]);
-
-          const [policy, addressData, basicInfoData] = await Promise.all([
-            policyRes.json(),
-            addressRes.json(),
-            basicInfoRes.json(),
-          ]);
-
           setPropertyPolicy(policy);
           setAddress(addressData);
           setBasicInfo(basicInfoData);
+          setPropertyBaseInfo(baseInfo);
 
+          localStorage.setItem('propertyDetail', JSON.stringify(matchedDetail));
           localStorage.setItem('propertyPolicy', JSON.stringify(policy));
           localStorage.setItem('propertyAddress', JSON.stringify(addressData));
           localStorage.setItem('propertyBasicInfo', JSON.stringify(basicInfoData));
+          localStorage.setItem('propertyBaseInfo', JSON.stringify(baseInfo));
         }
 
-        const combinedDataRes = await fetch("https://dev.kacc.mn/api/combined-data/");
-        const combinedData = await combinedDataRes.json();
+        const combinedData = await (await fetch('https://dev.kacc.mn/api/combined-data/')).json();
         setPropertyTypes(combinedData.property_types || []);
-      } catch (error) {
-        console.error("Error loading property data:", error);
+      } catch (err) {
+        console.error(err);
         setProceed(0);
       }
     }
@@ -168,126 +147,112 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     loadData();
   }, [setProceed]);
 
-  const getPropertyTypeName = (id: number): string => {
-    const type = propertyTypes.find(pt => pt.id === id);
-    return type ? type.name_mn : t("loading");
-  };
+  const getPropertyTypeName = (id: number) => propertyTypes.find(pt => pt.id === id)?.name_mn || t('loading');
+  const goPrev = () => setImageIndex(prev => (prev === 0 ? propertyImages.length - 1 : prev - 1));
+  const goNext = () => setImageIndex(prev => (prev === propertyImages.length - 1 ? 0 : prev + 1));
+  const formatTime = (t: string) => t?.slice(0, 5);
 
-  const goPrev = () => {
-    setImageIndex((prev) => (prev === 0 ? propertyImages.length - 1 : prev - 1));
-  };
-
-  const goNext = () => {
-    setImageIndex((prev) => (prev === propertyImages.length - 1 ? 0 : prev + 1));
-  };
-
-  if (!propertyDetail) {
-    return <div>{t("8")}</div>;
-  }
+  if (!propertyDetail) return <div>{t('8')}</div>;
 
   return (
-    <div className="text-black">
-      <div className="flex gap-x-10 flex-wrap">
-        <div className="w-full max-w-2xl mb-6 relative">
+    <div className="">
+      <div className="flex justify-between mb-10">
+        <p className="text-2xl text-black font-semibold">Үндсэн мэдээлэл</p>
+        <p>Хүсэлт хүлээгдэж байгаа (API тавигдах)</p>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-6 items-stretch min-h-[300px]">
+        <div className="w-full md:w-2/5 h-full">
           {propertyImages.length > 0 && (
-            <div className="relative bg-white rounded-xl overflow-hidden shadow-md">
-              <img
-                src={propertyImages[imageIndex].image}
-                alt={propertyImages[imageIndex].description}
-                className="w-full h-auto object-contain max-h-[300px]"
-              />
+            <div className="relative bg-white rounded-xl overflow-hidden shadow-md h-full flex flex-col justify-between">
+              <img src={propertyImages[imageIndex].image} alt={propertyImages[imageIndex].description} className="w-full object-cover h-[250px]" />
               {propertyImages.length > 1 && (
                 <div className="absolute inset-0 flex items-center justify-between px-4">
-                  <button onClick={goPrev} className="text-white text-xl bg-black/50 rounded-full p-2">
-                    <FaChevronLeft />
-                  </button>
-                  <button onClick={goNext} className="text-white text-xl bg-black/50 rounded-full p-2">
-                    <FaChevronRight />
-                  </button>
+                  <button onClick={goPrev} className="text-white text-xl bg-black/50 rounded-full p-2"><FaChevronLeft /></button>
+                  <button onClick={goNext} className="text-white text-xl bg-black/50 rounded-full p-2"><FaChevronRight /></button>
                 </div>
               )}
-              <div className="px-4 py-2">
-                <p className="text-sm text-gray-800 text-center">{propertyImages[imageIndex].description}</p>
-              </div>
+              <p className="text-sm text-center text-gray-800 py-2">{propertyImages[imageIndex].description}</p>
             </div>
           )}
         </div>
 
-        <div className="w-full max-w-md">
+        <div className="w-full md:w-3/5 h-full flex flex-col justify-between">
           {basicInfo && (
-            <>
+            <div className="mb-2">
               <p className="text-primary text-2xl font-semibold">{basicInfo.property_name_mn}</p>
-              <p className="text-soft">{basicInfo.property_name_en}</p>
-
-              <div className="flex justify-between mt-2">
-                <p className="text-muted">Үл хөдлөх хөрөнгийн төрөл:</p>
-                <p>{propertyBaseInfo && getPropertyTypeName(propertyBaseInfo.property_type)}</p>
-              </div>
-
-              <div className="flex justify-between mt-2">
-                <p className="text-muted">Үйл ажиллагаа эхэлсэн огноо:</p>
-                <p>{basicInfo.start_date}</p>
-              </div>
-
-              <div className="flex justify-between mt-2">
-                <p className="text-muted">Буудлын нийт өрөөний тоо:</p>
-                <p>{basicInfo.total_hotel_rooms}</p>
-              </div>
-
-              <div className="flex justify-between mt-2">
-                <p className="text-muted">Хүүхэд үйлчлүүлэх боломжтой эсэх:</p>
-                <p>{propertyPolicy?.allow_children ? <span className="text-green-500">Тийм</span> : <span className="text-red-500">Үгүй</span>}</p>
-              </div>
-
-              <div className="flex justify-between mt-2">
-                <p className="text-muted">Зогсоолтой эсэх:</p>
-                <p>{propertyDetail?.parking_situation}</p>
-              </div>
-            </>
+              <p className="text-soft -translate-y-1">{basicInfo.property_name_en}</p>
+            </div>
           )}
+          <div className="border border-cloud rounded-[15px] p-4 space-y-4 h-full">
+            <InfoRow label="Үл хөдлөх хөрөнгийн төрөл" value={getPropertyTypeName(propertyBaseInfo?.property_type ?? 0)} />
+            <InfoRow label="Үйл ажиллагаа эхэлсэн огноо" value={basicInfo?.start_date} />
+            <InfoRow label="Буудлын нийт өрөөний тоо" value={basicInfo?.total_hotel_rooms} />
+            <InfoRow label="Хүүхэд үйлчлүүлэх боломжтой эсэх" value={propertyPolicy?.allow_children} isBoolean />
+            <InfoRow label="Зогсоолтой эсэх" value={propertyDetail?.parking_situation} />
+          </div>
         </div>
       </div>
 
-      {address && (
-        <div className="mb-4">
-          <p className="font-semibold">{t("2")}:</p>
-          <p>{address.zipCode}</p>
-        </div>
-      )}
+      <div className="my-10">
+        <div className="text-black font-semibold mb-4">Бидний тухай</div>
+        <textarea className="border-[1px] border-cloud border-solid rounded-[15px] w-full min-h-[200px]" />
+      </div>
 
+      <div className="text-black font-semibold mb-4">Дотоод журам</div>
       {propertyPolicy && (
         <div className="mb-4">
-          <p className="font-semibold">{t("3")}:</p>
-          <p>{propertyPolicy.check_in_from} – {propertyPolicy.check_in_until}</p>
-          <p className="font-semibold">{t("4")}:</p>
-          <p>{propertyPolicy.check_out_from} – {propertyPolicy.check_out_until}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-2">
+            <div>
+              <p className=" mb-2">{t('3')}:</p>
+              <p className="flex items-center gap-2">
+                <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">{formatTime(propertyPolicy.check_in_from)}</div>
+                <span>–</span>
+                <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">{formatTime(propertyPolicy.check_in_until)}</div>
+              </p>
+            </div>
+            <div>
+              <p className=" mb-2">{t('4')}:</p>
+              <p className="flex items-center gap-2">
+                <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">{formatTime(propertyPolicy.check_out_from)}</div>
+                <span>–</span>
+                <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">{formatTime(propertyPolicy.check_out_until)}</div>
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-2 mt-6">
+            <div>
+              <div className="mb-2">Цуцлах боломжтой хугацаа</div>
+              <div className="text-muted">тухайн өдрийн {formatTime(propertyPolicy.cancellation_fee.cancel_time)} цагаас өмнө</div>
+              <div className="text-muted">тухайн өдрийн {formatTime(propertyPolicy.cancellation_fee.cancel_time)} цагаас дараа</div>
+            </div>
+            <div>
+              <div className=" mb-2">Цуцлалтын шимтгэл</div>
+              <div className=" border border-soft py-1 w-[100px] text-center rounded-[10px] mb-2">{propertyPolicy.cancellation_fee.before_fee}%</div>
+              <div className=" border border-soft w-[100px] py-1 text-center rounded-[10px]">{propertyPolicy.cancellation_fee.after_fee}%</div>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="mb-4">
-        <p className="font-semibold">{t("5")}:</p>
-        <a
-          href={propertyDetail.google_map}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500"
-        >
-          {t("6")}
+      <div className="mt-4">
+        <p className="font-semibold">{t('5')}:</p>
+        <a href={propertyDetail.google_map} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+          {t('6')}
         </a>
       </div>
-
-      {propertyBaseInfo && (
-        <div className="mb-4 space-y-1">
-          <p className="font-semibold">{t("10")}:</p>
-          <p>{propertyBaseInfo.CompanyName}</p>
-          <p><span className="font-semibold">{t("11")}:</span> {propertyBaseInfo.PropertyName}</p>
-          <p><span className="font-semibold">{t("12")}:</span> {propertyBaseInfo.location}</p>
-          <p><span className="font-semibold">{t("13")}:</span> {propertyBaseInfo.phone}</p>
-          <p><span className="font-semibold">{t("14")}:</span> {propertyBaseInfo.mail}</p>
-          <p><span className="font-semibold">{t("15")}:</span> {propertyBaseInfo.register}</p>
-          <p><span className="font-semibold">{t("16")}:</span> {getPropertyTypeName(propertyBaseInfo.property_type)}</p>
-        </div>
-      )}
     </div>
   );
 }
+
+const InfoRow = ({ label, value, isBoolean = false }: { label: string; value: string | number | boolean | null | undefined; isBoolean?: boolean }) => (
+  <div className="flex justify-between">
+    <p className="text-muted">{label}:</p>
+    {isBoolean && typeof value === 'boolean' ? (
+      <span className={value ? 'text-green-500' : 'text-red-500'}>{value ? 'Тийм' : 'Үгүй'}</span>
+    ) : (
+      <p>{value ?? '-'}</p>
+    )}
+  </div>
+);

@@ -95,7 +95,7 @@ export default function RegisterHotel() {
   if (proceed === null) return <div>Loading…</div>;
 
   return (
-    <div className="p-8">
+    <div className="p-12">
       {/* <h2 className="text-xl">
         {t('Hi')}, {t('Welcome')} {userInfo.name || ''}!
         {userInfo.position && <span> Your position: {userInfo.position}</span>}

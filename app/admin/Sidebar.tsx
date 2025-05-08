@@ -13,6 +13,10 @@ import {
 import { IoPersonOutline } from "react-icons/io5";
 import { LuHotel } from "react-icons/lu";
 import { useTranslations } from 'next-intl';
+import { IoIosSettings, IoIosChatboxes } from "react-icons/io";
+import { LuReceipt } from "react-icons/lu";
+import { GiLockedDoor } from "react-icons/gi";
+import { BsCardChecklist } from "react-icons/bs";
 
 export default function Sidebar() {
   const t = useTranslations('Sidebar');
@@ -25,16 +29,18 @@ export default function Sidebar() {
 
   const pathname = usePathname();
   const navItems = [
-    { href: "/admin/hotel",  icon: <LuHotel />, label: t("hotelManagement")},
-    // { href: "/admin/register", icon: <IoPersonOutline />, label: "Register staff" },
-    // { href: "/admin/register_hotel", icon: <LuHotel />, label: "Буудлын бүртгэл" },
+    { href: "",  icon: <MdOutlineSpaceDashboard/>, label: "Dashboard"},
+    { href: "", icon: <BsCardChecklist />, label: "Захиалгын жагсаалт" },
+    { href: "", icon: <GiLockedDoor />, label: "Өрөө блок" },
+    { href: "", icon: <LuReceipt />, label: "Төлбөр тооцоо" },
+    { href: "", icon: <IoIosChatboxes />, label: "Асуулт хариулт" },
     {
       label: "Тохиргоо",
-      icon: <MdOutlineBedroomChild />,
+      icon: <IoIosSettings />,
       subMenu: [
+        { href: "/admin/hotel",  icon: <LuHotel />, label: t("hotelManagement")},
         { href: "/admin/room", icon: <MdOutlineAddBox />, label: "Өрөө" },
         { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: "Үнэ" },
-        { href: "", icon: <MdOutlineListAlt />, label: "Үнэ" },
         { href: "", icon: <MdOutlineListAlt />, label: "Үйлчилгээ" },
         { href: "", icon: <MdOutlineListAlt />, label: "Гэрээ байгуулах" },
         { href: "", icon: <MdOutlineListAlt />, label: "Нөхцөл бодлого" },
@@ -62,10 +68,10 @@ export default function Sidebar() {
                   }`}
                 >
                   <div className="flex items-center">
-                    <div className="text-lg">{item.icon}</div>
-                    <span className="ml-3 text-[14px]">{item.label}</span>
+                    <div className="text-xl text-primary">{item.icon}</div>
+                    <span className="ml-1 text-[14px]">{item.label}</span>
                   </div>
-                  <div className="text-lg">
+                  <div className="text-xl">
                     {isRoomMenuOpen ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
                   </div>
                 </button>
@@ -83,7 +89,7 @@ export default function Sidebar() {
                             : "hover:bg-background"
                         }`}
                       >
-                        <div className="text-xl mr-3  text-dim">{subItem.icon}</div>
+                        {/* <div className="text-xl mr-3  text-dim">{subItem.icon}</div> */}
                         <span className="text-[14px] text-dim">{subItem.label}</span>
                       </Link>
                     ))}
@@ -101,7 +107,7 @@ export default function Sidebar() {
                     : "hover:bg-background"
                 }`}
               >
-                <div className="text-lg">{item.icon}</div>
+                <div className="text-xl text-primary">{item.icon}</div>
                 <span className="ml-2 text-[14px]">{item.label}</span>
               </Link>
             )}

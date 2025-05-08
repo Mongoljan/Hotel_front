@@ -11,6 +11,7 @@ const config: Config = {
   	extend: {
   		colors: {
 		dim: '#444950',
+		cloud:'#D1D5DB',
 			soft: '#9DA4B0',
 			'bg-3': '#98C3F8',
 			'bg-2': '#BFDBFE',
