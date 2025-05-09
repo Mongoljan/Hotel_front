@@ -1,33 +1,37 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+// middleware.ts
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get("token")?.value;
-  const isApproved = req.cookies.get("isApproved")?.value === "true";
-  const { pathname } = req.nextUrl;
+  const token = req.cookies.get('token')?.value
+  const userApproved = req.cookies.get('user_approved')?.value === 'true'
+  const hotelApproved = req.cookies.get('isApproved')?.value === 'true'
+  const { pathname } = req.nextUrl
 
-  // Redirect authenticated users visiting root "/" to /admin/hotel
-  if (token && pathname === "/") {
-    return NextResponse.redirect(new URL("/admin/hotel", req.url));
+  // 1. If at root "/" and logged in, send to /admin/hotel
+  if (pathname === '/' && token) {
+    return NextResponse.redirect(new URL('/admin/hotel', req.url))
   }
 
-  const isAdminRoute = pathname.startsWith("/admin");
-
-  // If unauthenticated and tries to access /admin, redirect to login
-  if (isAdminRoute && !token) {
-    return NextResponse.redirect(new URL("/auth/login", req.url));
+  // 2. Protect /admin/*: not logged in → login
+  if (pathname.startsWith('/admin') && !token) {
+    return NextResponse.redirect(new URL('/auth/login', req.url))
   }
 
-  // If authenticated but not approved, block all except /admin/hotel
-  if (isAdminRoute && token && !isApproved && pathname !== "/admin/hotel") {
-    return NextResponse.redirect(new URL("/admin/hotel", req.url));
+  // 3. If logged in but EITHER user or hotel isn't approved → lock to /admin/hotel
+  if (
+    pathname.startsWith('/admin') &&
+    token &&
+    (!userApproved || !hotelApproved) &&
+    pathname !== '/admin/hotel'
+  ) {
+    return NextResponse.redirect(new URL('/admin/hotel', req.url))
   }
 
-  return NextResponse.next();
+  // 4. Otherwise allow
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|auth/login).*)',
-  ],
-};
+  matcher: ['/', '/admin/:path*'],
+}

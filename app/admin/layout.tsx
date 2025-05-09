@@ -1,4 +1,5 @@
-// import { getDictionary } from "../dictionaries";
+// app/[lang]/(admin)/layout.tsx
+import { cookies } from "next/headers";
 import MainLayout from "./admin_layout";
 import type { Metadata } from "next";
 
@@ -16,10 +17,11 @@ export default async function AdminLayout({
   children,
   params: { lang },
 }: Readonly<Props>) {
-  // const dict = await getDictionary(lang);
+  const cookieStore = cookies();
+  const userApproved = cookieStore.get("user_approved")?.value === "true";
 
   return (
-    <MainLayout  >
+    <MainLayout userApproved={userApproved}>
       {children}
     </MainLayout>
   );

@@ -8,10 +8,10 @@ import { z } from 'zod';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { HiEye, HiEyeSlash } from 'react-icons/hi2';
-import PhoneInput from "react-phone-input-2";
+import PhoneInput from 'react-phone-input-2';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { useTranslations } from 'next-intl';
 
 interface Hotel {
@@ -27,224 +27,202 @@ interface Hotel {
   created_at: string;
 }
 
-type Location = {
-  lat: number;
-  lng: number;
-};
-interface ProceedProps{
-    proceed: number;
-    setProceed : (value: number) => void;
-}
+type Location = { lat: number; lng: number };
 
-const DefaultLocation: Location = { lat: 47.918873, lng: 106.917017 }; // Example: Ulaanbaatar
-const DefaultZoom = 10;
+interface ProceedProps {
+  proceed: number;
+  setProceed: (value: number) => void;
+  setView: (view: 'proceed' | 'register') => void;
+}
 
 type FormFields = z.infer<typeof schemaRegistration>;
 
-export default function Proceed({proceed, setProceed} : ProceedProps) {
-  const t = useTranslations("Proceed");
-    const [hotel, setHotel] = useState<Hotel | null>(null);
-    const [loading, setLoading] = useState(true);
-  
-    const getHotelId = (): string | null => {
-      try {
-        const propertyData = JSON.parse(localStorage.getItem("userInfo") || "{}");
-        return propertyData?.hotel || null;
-      } catch (error) {
-        console.error("Error parsing hotel ID:", error);
-        return null;
-      }
-    };
+export default function Proceed({ proceed, setProceed, setView }: ProceedProps) {
+  const t = useTranslations('Proceed');
   const router = useRouter();
-  const [location, setLocation] = useState<Location>(DefaultLocation);
-  const [zoom, setZoom] = useState(DefaultZoom);
 
+  const [hotel, setHotel] = useState<Hotel | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [location, setLocation] = useState<Location>({ lat: 47.918873, lng: 106.917017 });
+  const [zoom, setZoom] = useState(10);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
-    useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
 
-  const modalRef = useRef<HTMLDialogElement>(null);
-
-  // Handle form validation and submission using react-hook-form
   const {
     register,
     handleSubmit,
-    setError,
-    setValue,
-    getValues,
     formState: { errors, isSubmitting },
-  } = useForm<FormFields>({
-    resolver: zodResolver(schemaRegistration),
-  });
+  } = useForm<FormFields>({ resolver: zodResolver(schemaRegistration) });
+
+  const getHotelId = (): string | null => {
+    try {
+      const u = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      return u.hotel || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const fetchHotel = async () => {
+    try {
+      const id = getHotelId();
+      if (!id) throw new Error('Hotel ID not found');
+      const res = await fetch(`https://dev.kacc.mn/api/properties/${id}`);
+      if (!res.ok) throw new Error('Failed to fetch hotel');
+      const data: Hotel = await res.json();
+      setHotel(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedLocation = localStorage.getItem('mapLocation');
-      if (savedLocation) {
-        setLocation(JSON.parse(savedLocation));
-      }
-
-      const savedZoom = localStorage.getItem('mapZoom');
-      if (savedZoom) {
-        setZoom(JSON.parse(savedZoom));
-      }
-    }
+    fetchHotel();
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mapLocation', JSON.stringify(location));
-      localStorage.setItem('mapZoom', JSON.stringify(zoom));
+    if (!loading && hotel && !hotel.is_approved) {
+      const intervalId = setInterval(fetchHotel, 5000);
+      return () => clearInterval(intervalId);
     }
+  }, [loading, hotel]);
+
+  useEffect(() => {
+    const savedLoc = localStorage.getItem('mapLocation');
+    const savedZoom = localStorage.getItem('mapZoom');
+    if (savedLoc) setLocation(JSON.parse(savedLoc));
+    if (savedZoom) setZoom(JSON.parse(savedZoom));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('mapLocation', JSON.stringify(location));
+    localStorage.setItem('mapZoom', JSON.stringify(zoom));
   }, [location, zoom]);
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     try {
-      const requestBody = {
-        owner_pk: 0, // Fixed value for owner registration
-        owner_token: "", // Fixed empty value for owner_token
-        user_type: 2, // Fixed value for user_type
-
-        // Values from the form
+      const body = {
+        owner_pk: 0,
+        owner_token: '',
+        user_type: 2,
         user_name: data.contact_person_name,
-        hotel_name: data.hotel_name, // Hotel name (only for owners)
-        hotel_address: data.address_location, // Hotel address (only for owners)
+        hotel_name: data.hotel_name,
+        hotel_address: data.address_location,
         user_pass: data.password,
         user_mail: data.email,
         user_phone: data.contact_number,
       };
 
-
-      const response = await fetch(
+      const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/register/`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
         }
       );
 
-      if (response.ok) {
+      if (res.ok) {
+        toast.success('Registration submitted! Approval is pending. You can log in once approved.');
         router.push('/auth/login');
-              toast.success('Registration successful! Your registration approval is pending. Log in with our credientials');
       } else {
-        const errorData = await response.json();
-        
-        // Display dynamic error messages from the API
-        if (errorData.email && errorData.email.length > 0) {
-          toast.error(errorData.email[0]); // Display the first email error message
-        } else if (errorData.password && errorData.password.length > 0) {
-          toast.error(errorData.password[0]); // Display the first password error message
-        } else {
-          toast.error('Registration failed. Please check your input.');
-        }
+        const err = await res.json();
+        const msg =
+          err.email?.[0] ||
+          err.password?.[0] ||
+          'Registration failed, please check your input.';
+        toast.error(msg);
       }
-    } catch (error) {
-      toast.error('An unexpected error occurred during registration');
-      console.error('Error during registration:', error);
+    } catch (e) {
+      console.error(e);
+      toast.error('Unexpected error during registration.');
     }
   };
 
   const handleCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocation({ lat: latitude, lng: longitude });
-          setZoom(15);
-        },
-        () => {
-          alert('Error getting your location');
-        }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
+    if (!navigator.geolocation) {
+      alert('Geolocation not supported');
+      return;
     }
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setLocation({ lat: coords.latitude, lng: coords.longitude });
+        setZoom(15);
+      },
+      () => alert('Unable to get location')
+    );
   };
-  useEffect(() => {
-      const fetchHotel = async () => {
-        try {
-          const hotelId = getHotelId();
-          if (!hotelId) throw new Error("Hotel ID not found in localStorage");
-  
-          const response = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}`);
-          if (!response.ok) throw new Error("Failed to fetch hotel data");
-  
-          const data = await response.json();
-          setHotel(data);
-        } catch (error) {
-          console.error("Error fetching hotel info:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-  
-      fetchHotel();
-    }, []);
-  
 
   return (
-    <div className="flex    items-center  h-full py-[50px]  rounded-[12px]">
-      <ToastContainer />
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
-      >
-        <h2 className="text-[24px] font-bold mx-auto text-center text-black mb-10">{t("title")}</h2>
+    <div className="flex items-left h-full py-12">
+      <div className="w-full max-w-[450px] ">
+        <ToastContainer />
+        <h2 className="text-2xl font-bold mb-4">{t('title')}</h2>
 
-        
-  
-<section>
-
-  <h2 className="text-2xl font-bold text-center text-gray-800">{hotel?.PropertyName}</h2>
-
-  <div className="w-[200px] text-soft">
-  <Info label={t("1")} value={hotel?.CompanyName || ""} />
-</div>
-<Info label={t("2")} value={hotel?.phone|| ""} />
-<Info label={t("3")} value={hotel?.mail|| ""} />
-<Info label={t("4")} value={hotel?.is_approved ? "Yes" : "No"} />
-</section>
-
-
-<div className="flex gap-x-4">
-{/* <Link
-            href={"/auth/register/2"}
-          className="w-full flex justify-center  mt-[35px] text-black py-3 hover:bg-bg px-4  border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-      
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="bg-white p-8 mb-10 border border-primary rounded-[15px] shadow-sm"
         >
-      <div className="flex ">  <FaArrowLeft className="self-center mx-1" />   Буцах</div> 
-    
-        
-          </Link> */}
-        <button
-  onClick={() => {
-    if (hotel?.is_approved) setProceed(1);
-  }}
-  disabled={!hotel?.is_approved}
-  className={`w-full flex justify-center mt-[35px] text-black py-3 px-4 border-[1px] border-solid font-semibold rounded-[15px] 
-    ${hotel?.is_approved ? 'hover:bg-bg border-primary' : 'cursor-not-allowed bg-gray-200 border-gray-300 text-gray-400'}
-  `}
->
-  <div className="flex">
-    {t("5")}
-    <FaArrowRight className="self-center mx-1" />
-  </div>
-</button>
+          <section className="mb-6 text-center">
+            <h3 className="text-xl font-semibold">
+              {hotel?.PropertyName || '…'}
+            </h3>
+          </section>
 
-        </div>
-      </form>
+          <div className="space-y-4 mb-6">
+            <Info label={t('1')} value={hotel?.CompanyName || '-'} />
+            <Info label={t('2')} value={hotel?.phone || '-'} />
+            <Info label={t('3')} value={hotel?.mail || '-'} />
+            <Info
+              label={t('4')}
+              value={hotel?.is_approved ? 'Тийм' : 'Үгүй'}
+              valueClassName={
+                hotel?.is_approved ? 'text-green-600' : 'text-red-600'
+              }
+            />
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                if (hotel?.is_approved) {
+                  setProceed(1);
+                  setView('register');
+                }
+              }}
+              disabled={!hotel?.is_approved}
+              className={`
+                flex-1 py-3 rounded-lg font-semibold
+                ${hotel?.is_approved
+                  ? 'bg-primary text-white hover:bg-primary-dark'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'}
+              `}
+            >
+              {t('5')} <FaArrowRight className="inline ml-2" />
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+// Info component
+
+interface InfoProps {
+  label: string;
+  value: string;
+  valueClassName?: string;
+}
+
+export function Info({ label, value, valueClassName = '' }: InfoProps) {
   return (
     <div>
       <p className="text-sm text-gray-500">{label}:</p>
-      <p className="font-medium">{value || "-"}</p>
+      <p className={`font-medium ${valueClassName}`}>{value}</p>
     </div>
   );
 }

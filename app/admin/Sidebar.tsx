@@ -18,7 +18,7 @@ import { LuReceipt } from "react-icons/lu";
 import { GiLockedDoor } from "react-icons/gi";
 import { BsCardChecklist } from "react-icons/bs";
 
-export default function Sidebar({ isApproved }: { isApproved: boolean }) {
+export default function Sidebar({ isApproved,   userApproved }: { isApproved: boolean, userApproved:boolean }) {
   const t = useTranslations('Sidebar');
   const [isRoomMenuOpen, setRoomMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -30,7 +30,7 @@ export default function Sidebar({ isApproved }: { isApproved: boolean }) {
   };
   console.log(isApproved);
 
-  const navItems = isApproved
+  const navItems = (isApproved && userApproved)
     ? [
         { href: "", icon: <MdOutlineSpaceDashboard />, label: "Dashboard" },
         { href: "", icon: <BsCardChecklist />, label: "Захиалгын жагсаалт" },

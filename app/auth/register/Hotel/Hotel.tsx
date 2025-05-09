@@ -14,15 +14,16 @@ import { useRouter } from 'next/navigation';
 
 interface ProceedProps{
   proceed: number;
-  setProceed : (value: number) => void;
+  setProceed: (value: number) => void;
+  setView: (view: 'proceed' | 'register') => void;
 }
-export default function RegisterPage({proceed, setProceed} : ProceedProps) {
+
+export default function RegisterPage({ proceed, setProceed, setView }: ProceedProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 6;
   const router = useRouter();
-  const transitionDelay = 2000; // ✅ Delay in milliseconds (1 second)
+  const transitionDelay = 2000;
 
-  // ✅ Load the current step from localStorage on mount
   useEffect(() => {
     const savedStep = localStorage.getItem('currentStep');
     if (savedStep) {
@@ -30,24 +31,21 @@ export default function RegisterPage({proceed, setProceed} : ProceedProps) {
     }
   }, []);
 
-  // ✅ Handle step change with delay
   const handleStepChange = (step: number, message?: string) => {
-    if (message) {
-      toast.success(message); // ✅ Show toast message
-    }
+    if (message) toast.success(message);
     setTimeout(() => {
       setCurrentStep(step);
       localStorage.setItem('currentStep', step.toString());
-    }, transitionDelay); // ✅ Add delay before transitioning
+    }, transitionDelay);
   };
-    useEffect(() => {
-    console.log("Proceed value changed:", proceed);
-    // You can add other logic here based on proceed value
+
+  useEffect(() => {
+    console.log('Proceed value changed:', proceed);
   }, [proceed]);
 
   const handleBack = (step: number) => {
     if (step === 1) {
-      router.push('/auth/register/3');
+      setView('proceed');
     } else {
       handleStepChange(step - 1, 'Moved to the previous step');
     }
@@ -60,7 +58,7 @@ export default function RegisterPage({proceed, setProceed} : ProceedProps) {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <RegisterHotel1 onNext={() => handleNext(2)} onBack={() => setProceed(0)} />;
+        return <RegisterHotel1 onNext={() => handleNext(2)} onBack={() => handleBack(1)} />;
       case 2:
         return <RegisterHotel2 onNext={() => handleNext(3)} onBack={() => handleBack(2)} />;
       case 3:
@@ -72,12 +70,12 @@ export default function RegisterPage({proceed, setProceed} : ProceedProps) {
       case 6:
         return (
           <RegisterHotel6
-          proceed={proceed}
-          setProceed={setProceed}
+            proceed={proceed}
+            setProceed={setProceed}
             onNext={() => {
               toast.success('Registration completed!');
               setTimeout(() => {
-                localStorage.removeItem('currentStep'); // ✅ Clear saved step after completion
+                localStorage.removeItem('currentStep');
                 router.push('/admin/hotel');
               }, transitionDelay);
             }}

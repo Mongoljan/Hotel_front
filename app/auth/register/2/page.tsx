@@ -16,7 +16,6 @@ import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
 import { registerEmployeeAction } from './RegisterEmployeeAction';
 
-
 type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
 
 export default function RegisterEmployee() {
@@ -24,7 +23,6 @@ export default function RegisterEmployee() {
   const router = useRouter();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
-  const [userTypes, setUserTypes] = useState<{ pk: number; name: string }[]>([]);
 
   const {
     register,
@@ -36,49 +34,36 @@ export default function RegisterEmployee() {
     resolver: zodResolver(schemaRegistrationEmployee2),
   });
 
-  // Load user-type options
+  // Set user_type to 2 automatically
   useEffect(() => {
-    const fetchUserTypes = async () => {
-      try {
-        const res = await fetch('https://dev.kacc.mn/api/user-type/');
-        const data = await res.json();
-        setUserTypes(data);
-      } catch (err) {
-        console.error('Failed to fetch user types:', err);
-        toast.error('Хэрэглэгчийн төрөл ачаалагдсангүй.');
-      }
-    };
-    fetchUserTypes();
-  }, []);
+    setValue('user_type', 2);
+  }, [setValue]);
 
-  // Called when Zod validation fails
   const onError = (formErrors: typeof errors) => {
     console.log('Validation errors:', formErrors);
     toast.error('Формыг бүрэн бөглөнө үү!');
   };
 
-  // Your main submit handler
-const onSubmit: SubmitHandler<FormFields> = async (data) => {
-  const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-  const hotel = propertyData?.property;
+  const onSubmit: SubmitHandler<FormFields> = async (data) => {
+    const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    const hotel = propertyData?.property;
 
-  const result = await registerEmployeeAction({
-    ...data,
-    hotel,
-  });
-
-  if (result.success) {
-    toast.success('Ажилтны бүртгэл амжилттай! Та бүртгэлээрээ нэвтрэн орно уу.');
-    Object.keys(Cookies.get()).forEach((cookieName) => {
-      Cookies.remove(cookieName);
+    const result = await registerEmployeeAction({
+      ...data,
+      hotel,
     });
-    localStorage.clear();
-    router.push('/auth/login');
-  } else {
-    toast.error(result.error || 'Бүртгэл амжилтгүй боллоо.');
-  }
-};
 
+    if (result.success) {
+      toast.success('Ажилтны бүртгэл амжилттай! Та бүртгэлээрээ нэвтрэн орно уу.');
+      Object.keys(Cookies.get()).forEach((cookieName) => {
+        Cookies.remove(cookieName);
+      });
+      localStorage.clear();
+      router.push('/auth/login');
+    } else {
+      toast.error(result.error || 'Бүртгэл амжилтгүй боллоо.');
+    }
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">
@@ -113,26 +98,6 @@ const onSubmit: SubmitHandler<FormFields> = async (data) => {
           <p className="text-red-500 text-sm">{errors.position.message}</p>
         )}
 
-        {/* User Type */}
-        <label className="text-black">{t('user_type')}</label>
-        <select
-          {...register('user_type', { valueAsNumber: true })}
-          defaultValue=""
-          className="border border-soft p-2 w-full mb-2 h-[45px] rounded-[15px]"
-        >
-          <option value="" disabled>
-            -- Хэрэглэгчийн төрөл сонгоно уу --
-          </option>
-          {userTypes.map((type) => (
-            <option key={type.pk} value={type.pk}>
-              {type.name}
-            </option>
-          ))}
-        </select>
-        {errors.user_type && (
-          <p className="text-red-500 text-sm">{errors.user_type.message}</p>
-        )}
-
         {/* Phone */}
         <label className="text-black">{t('phone_number')}</label>
         <PhoneInput
@@ -141,8 +106,7 @@ const onSubmit: SubmitHandler<FormFields> = async (data) => {
           disableSearchIcon
           value={getValues('contact_number')}
           onChange={(phone) => setValue('contact_number', phone)}
-       
-           inputClass="border p-2 w-full h-[45px] rounded-[15px]"
+          inputClass="border p-2 w-full h-[45px] rounded-[15px]"
         />
         {errors.contact_number && (
           <p className="text-red-500 text-sm">{errors.contact_number.message}</p>

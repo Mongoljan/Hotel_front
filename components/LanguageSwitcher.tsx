@@ -21,10 +21,10 @@ export default function LanguageSwitcher() {
     <div className="relative group">
       <button
         onClick={() => switchLanguage(locale === "mn" ? "en" : "mn")}
-        className="relative flex items-center justify-center w-10 h-10 rounded-full  hover:bg-bg transition"
+        className="relative flex items-center justify-center w-12 h-12 rounded-full  hover:bg-bg transition"
       >
         <FaGlobe
-          className={`text-xl transition-transform text-primary ${
+          className={`text-3xl transition-transform text-primary ${
             isSpinning ? "animate-spin" : ""
           }`}
         />

@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
@@ -19,11 +19,11 @@ interface UserInfo {
   email?: string;
   hotel?: number;
   position?: string;
-  contact_number?:string;
-  id?:number;
+  contact_number?: string;
+  id?: number;
 }
 
-export default function UserProfileToggle() {
+export default function UserProfileToggle({ userApproved }: { userApproved: boolean }) {
   const [userInfo, setUserInfo] = useState<UserInfo>({});
   const router = useRouter();
 
@@ -51,13 +51,28 @@ export default function UserProfileToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            {/* <AvatarImage src="/user.png" alt="User" /> */}
-            <AvatarFallback className="border-primary  border-[2px] bg-white text-black  text-[16px]">{userInfo.name?.[0] || "U"}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
+  <div className="relative h-9 w-9">
+    <Button variant="ghost" className="h-9 w-9 rounded-full p-0">
+      <Avatar className="h-9 w-9">
+        <AvatarFallback className="border-primary font-bold border-[2px] bg-white text-black text-[18px]">
+          {userInfo.name?.[0] || "U"}
+        </AvatarFallback>
+      </Avatar>
+    </Button>
+
+    {/* Badge outside the button */}
+    {!userApproved && (
+      <div
+        title="Хэрэглэгч баталгаажаагүй"
+        className="absolute -top-[5px]  -right-[2px] bg-red text-white text-[14px] font-bold px-[6px] py-[1px] rounded-full shadow-sm leading-none z-10"
+      >
+        !
+      </div>
+    )}
+  </div>
+</DropdownMenuTrigger>
+
+
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
@@ -66,28 +81,36 @@ export default function UserProfileToggle() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-          <DropdownMenuLabel className="font-normal">
+
+        <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium text-muted leading-none">{"Албан тушаал"}</p>
+            <p className="leading-none font-semibold text-sm">
+              {userApproved ? (
+                <span className="text-green-600">Хэрэглэгч баталгаажсан</span>
+              ) : (
+                <span className="text-red">! Хэрэглэгч баталгаажаагүй</span>
+              )}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">Албан тушаал</p>
             <p className="text-xs leading-none text-muted truncate">{userInfo.position}</p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium text-muted leading-none">{""}</p>
-            <p className="text-xs leading-none text-muted truncate">{userInfo.id}</p>
-          </div>
-        </DropdownMenuLabel>
-        {/* <DropdownMenuItem>{userInfo.position}</DropdownMenuItem> */}
-        <DropdownMenuItem> <div className="text-muted">{userInfo.email}</div></DropdownMenuItem>
-        <DropdownMenuItem> <div className="text-muted">{userInfo.contact_number}</div></DropdownMenuItem>
-        {/* <DropdownMenuItem>Settings</DropdownMenuItem>
-        <DropdownMenuItem>New Team</DropdownMenuItem> */}
-        
+
+        <DropdownMenuItem>
+          <div className="text-muted">{userInfo.email}</div>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <div className="text-muted">{userInfo.contact_number}</div>
+        </DropdownMenuItem>
+
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>Гарах</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-

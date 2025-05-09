@@ -72,7 +72,7 @@ export default function RegisterPage() {
       const data = await response.json();
       if (data.found && data.name) {
         setValue("CompanyName", data.name);
-        toast.success("Company name autofilled!");
+        toast.success(`РД: ${trimmedRegNo} -тай компани олдлоо!`);
       } else {
         toast.error("Company not found.");
       }
@@ -168,16 +168,27 @@ export default function RegisterPage() {
             {errors.register && <div className="text-red">{errors.register.message}</div>}
           </div>
 
-          <div className="w-full">
-            <div className="text-black">{t("company_name")}</div>
-            <input
-              type="text"
-              {...register('CompanyName')}
-              className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-              required
-            />
-            {errors.CompanyName && <div className="text-red">{errors.CompanyName.message}</div>}
-          </div>
+          <div className="w-full group relative">
+  <div className="text-black">{t("company_name")}</div>
+  
+  <input
+    type="text"
+    {...register('CompanyName')}
+    className="border p-2 w-full text-soft mb-4 h-[45px] rounded-[15px]"
+    required
+    disabled
+  />
+
+  {/* Tooltip shown on hover */}
+  <div className="absolute left-0 -top-8 opacity-0 -translate-y-[100px] group-hover:opacity-100 transition bg-gray-700 text-white px-3 py-2 rounded-[15px] shadow-md pointer-events-none">
+    Хажууд байрлах товч дээр дарснаар ebarimt-аас таны компаний нэрийг оруулсан РД-аар хайх болно
+  </div>
+
+  {errors.CompanyName && (
+    <div className="text-red">{errors.CompanyName.message}</div>
+  )}
+</div>
+
         </section>
 
         <section>

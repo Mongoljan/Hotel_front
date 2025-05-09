@@ -27,6 +27,7 @@ export async function loginAction(formData: {
       contact_number: data.contact_number,
       email: data.email,
       id: data.id,
+      approved: data.approved,
     };
 
     const hotelId = data.hotel;
@@ -48,6 +49,7 @@ export async function loginAction(formData: {
     cookies().set('hotel', String(hotelId), options);
     cookies().set('userName', data.name, { ...options, httpOnly: true });
     cookies().set('userEmail', data.email, { ...options, httpOnly: true });
+    cookies().set('user_approved',data.approved, { ...options, httpOnly: true } )
 
     // ✅ Store approval status securely
     cookies().set('isApproved', String(isApproved), {

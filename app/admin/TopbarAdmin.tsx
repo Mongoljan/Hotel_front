@@ -1,102 +1,109 @@
+'use client';
+
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";  // Import from next/navigation
+import { usePathname, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import { HiArrowRightOnRectangle } from "react-icons/hi2";  // Import js-cookie
+import { HiArrowRightOnRectangle } from "react-icons/hi2";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslations } from 'next-intl';
 import UserProfileToggle from "@/components/UserProfileToggle";
-// import LanguageToggle from "../components/languageToggle";
-interface Topbar{
-  sign_in:string;
-  sign_out:string;
-  sign_up:string;
+
+interface Topbar {
+  sign_in: string;
+  sign_out: string;
+  sign_up: string;
 }
 
-interface HeaderDictionary {
-  topbar: Topbar;
-  title: string; // Adjust based on the actual structure of your dictionary
+interface HotelInfo {
+  CompanyName: string;
+  PropertyName: string;
+  is_approved: boolean;
 }
 
-export default  function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar: () => void; sideBarOpen: boolean;}) {
-  const pathname = usePathname();  // Get current path using usePathname
-  const router = useRouter();      // Get router for navigation
-  const t =  useTranslations('Topbar');
+export default function Topbar({
+  toggleSidebar,
+  sideBarOpen,
+  userApproved,
+  isApproved,
+  hotelInfo,
+}: {
+  toggleSidebar: () => void;
+  sideBarOpen: boolean;
+  userApproved: boolean;
+  isApproved: boolean;
+  hotelInfo: HotelInfo | null;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const t = useTranslations('Topbar');
 
-  // Function to change the language in the current route
   const changeLanguage = (newLang: string) => {
     const segments = pathname.split('/').filter(Boolean);
     if (['en', 'mn'].includes(segments[0])) {
-      segments[0] = newLang;  // Replace existing language
+      segments[0] = newLang;
     } else {
-      segments.unshift(newLang);  // Add new language at the start
+      segments.unshift(newLang);
     }
     router.push(`/${segments.join('/')}`);
   };
 
-  // Logout handler
   const handleLogout = () => {
     Object.keys(Cookies.get()).forEach(cookieName => {
-      Cookies.remove(cookieName);  // Remove each cookie
+      Cookies.remove(cookieName);
     });
-
-  
-    // 2. Clear all localStorage
     if (typeof window !== "undefined") {
       localStorage.clear();
     }
-  
-
-    window.location.href = '/auth/login';  // Redirect to sign-in page (or your desired route)
+    window.location.href = '/auth/login';
   };
 
   return (
-    <div className=" ">
-<div
-  className="  h-[50px] backdrop-blur-md   opaicty-[50] border-b-[1px] border-primary border-opacity-30 bg-white px-[50px] text-black flex justify-between items-center"
->
-
-
+    <div className="">
+      <div className="h-[50px] backdrop-blur-md opacity-[50] border-b-[1px] border-primary border-opacity-30 bg-white px-[50px] text-black flex justify-between items-center">
+        {/* Left Side */}
         <div className="mr-2 flex">
-       {/* <LanguageToggle/> */}
-    
-       <button onClick={toggleSidebar} className="flex ml-4 flex-col justify-center items-center mr-4">
-          <span
-            className={`bg-black block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "rotate-45 translate-y-1" : "-translate-y-0.5"}`}
-          ></span>
-          <span
-            className={`bg-black block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${sideBarOpen ? "opacity-0" : "opacity-100"}`}
-          ></span>
-          <span
-            className={`bg-black block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "-rotate-45 -translate-y-1" : "translate-y-0.5"}`}
-          ></span>
-        </button>
-        <div className=" text-black font-semibold text-xl">
-        Буудлын админ хуудас
-       </div>
-       
-       </div>
-       <div className="flex gap-x-4">
-        <div className="flex gap-2 items-center">
-          {/* <button
-            onClick={handleLogout}  // Attach the logout handler
-            className="rounded-sm bg-white border border-solid font-semibold text-xs border-primary hover:border-blue-400 transition-colors flex items-center justify-center hover:blue-100  sm:text-base h-7 sm:h-8 px-1 sm:px-1 sm:min-w-36 text-black  hover:bg-background"
-          >
-            {t("signOut")}
-            <HiArrowRightOnRectangle className="ml-2 text-[24px]" />
-          </button> */}
-          {/* <Link
-            className="rounded-sm border border-solid border-blue-500 transition-colors flex items-center justify-center hover:bg-blue-500 hover:border-transparent text-xs sm:text-base h-7 sm:h-8 px-2 sm:px-2 sm:min-w-36 text-blue-500 hover:text-white"
-            href="/auth/register"
-          >
-         sign up
-          </Link> */}
-            <LanguageSwitcher/>
+          <button onClick={toggleSidebar} className="flex ml-4 flex-col justify-center items-center mr-4">
+            <span className={`bg-black block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "rotate-45 translate-y-1" : "-translate-y-0.5"}`} />
+            <span className={`bg-black block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${sideBarOpen ? "opacity-0" : "opacity-100"}`} />
+            <span className={`bg-black block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "-rotate-45 -translate-y-1" : "translate-y-0.5"}`} />
+          </button>
+          <div className="text-black font-semibold text-xl">
+            Буудлын админ хуудас
+          </div>
         </div>
-     
-        <div className="flex gap-2 items-center">
-        <UserProfileToggle/>
+
+        {/* Right Side */}
+        <div className="flex gap-x-4 items-center">
+          {/* Hotel Info */}
+          {hotelInfo && (
+            <div className="text-right hidden sm:flex sm:gap-x-4 items-center">
+              <div>
+                <p className="leading-tight font-medium text-black">{hotelInfo.CompanyName}</p>
+                <p className="text-sm text-soft leading-tight">{hotelInfo.PropertyName}</p>
+              </div>
+              {/* <div className="flex items-center gap-1 my-auto">
+                {hotelInfo.is_approved ? (
+                  <span className="px-2 rounded-full bg-green-100 text-green-600 border border-green-300 text-sm">
+                    Баталгаажсан
+                  </span>
+                ) : (
+                  <div
+                    title="Баталгаажаагүй хэрэглэгч"
+                    className="w-[22px] h-[22px] flex items-center justify-center text-[13px] font-bold rounded-full bg-red text-white shadow-sm"
+                  >
+                    !
+                  </div>
+                )}
+              </div> */}
+            </div>
+          )}
+
+          {/* Language + Profile */}
+          <div className="flex gap-2 items-center">
+            <LanguageSwitcher />
+            <UserProfileToggle userApproved={userApproved} />
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );
