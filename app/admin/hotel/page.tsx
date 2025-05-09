@@ -112,9 +112,10 @@ export default function RegisterHotel() {
 
   return (
     <div className="p-12">
-      {view === 'proceed' && (
-        <StepIndicator steps={steps} currentStep={stepStatus} />
-      )}
+{view === 'proceed' && proceed !== 2 && (
+  <StepIndicator steps={steps} currentStep={stepStatus} />
+)}
+
 
       {/* Toggle buttons after approval */}
       {/* {hotelApproved && proceed < 2 && (
