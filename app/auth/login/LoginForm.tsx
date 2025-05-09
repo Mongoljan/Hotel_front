@@ -2,10 +2,10 @@
 
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
-import { schemaLogin } from '../../schema'; // adjust path if needed
+import { schemaLogin } from '../../schema'; // Adjust path if needed
 import { zodResolver } from '@hookform/resolvers/zod';
 import { HiEye, HiEyeSlash } from 'react-icons/hi2';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ToastContainer, toast } from 'react-toastify';
@@ -27,13 +27,9 @@ export default function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({ resolver: zodResolver(schemaLogin) });
 
-  useEffect(() => {
-    localStorage.removeItem('userInfo');
-    localStorage.removeItem('propertyData');
-  }, []);
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     const result = await loginAction(data);
-console.log("here is token:",Cookies.get("token"));
+    console.log("here is token:", Cookies.get("token"));
 
     if ('error' in result) {
       toast.error(result.error);
@@ -86,7 +82,7 @@ console.log("here is token:",Cookies.get("token"));
 
         <button
           type="submit"
-          className="w-full bg-primary text-white py-2 px-4 rounded-[15px] hover:bg-bg"
+          className="w-full border-primary border-solid border-[1px] hover:bg-bg-2 text-black py-2 px-4 rounded-[15px]"
           disabled={isSubmitting}
         >
           {isSubmitting ? t('wait') : t('signIn')}

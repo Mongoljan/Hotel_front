@@ -70,8 +70,8 @@ export default  function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar
             className={`bg-black block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "-rotate-45 -translate-y-1" : "translate-y-0.5"}`}
           ></span>
         </button>
-        <div className=" text-black font-semibold text-[24px]">
-        Буудлын админ 
+        <div className=" text-black font-semibold text-xl">
+        Буудлын админ хуудас
        </div>
        
        </div>

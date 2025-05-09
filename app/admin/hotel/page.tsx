@@ -36,7 +36,7 @@ export default function RegisterHotel() {
     try {
       const user = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const property = JSON.parse(localStorage.getItem('propertyData') || '{}');
-      return user.hotel || property.property || Number(Cookies.get('hotel')) || null;
+      return  Number(Cookies.get('hotel')) ;
     } catch {
       return null;
     }

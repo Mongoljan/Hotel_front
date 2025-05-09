@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import AboutHotel from './AboutHotel';
 
 interface PropertyPhoto {
   id: number;
@@ -82,6 +83,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
   const [propertyImages, setPropertyImages] = useState<PropertyPhoto[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
+  const [Menu, setMenu]= useState(0);
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
@@ -156,7 +158,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
   return (
     <div className="">
-      <div className="flex justify-between mb-10">
+      <div className="flex justify-between mb-6">
         <p className="text-2xl text-black font-semibold">Үндсэн мэдээлэл</p>
         <p>Хүсэлт хүлээгдэж байгаа (API тавигдах)</p>
       </div>
@@ -164,7 +166,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       <div className="flex flex-col md:flex-row gap-6 items-stretch min-h-[300px]">
         <div className="w-full md:w-2/5 h-full">
           {propertyImages.length > 0 && (
-            <div className="relative bg-white rounded-xl overflow-hidden shadow-md h-full flex flex-col justify-between">
+            <div className="relative bg-white rounded-xl overflow-hidden border-cloud border-solid border-[1px] h-full flex flex-col justify-between">
               <img src={propertyImages[imageIndex].image} alt={propertyImages[imageIndex].description} className="w-full object-cover h-[250px]" />
               {propertyImages.length > 1 && (
                 <div className="absolute inset-0 flex items-center justify-between px-4">
@@ -193,55 +195,31 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           </div>
         </div>
       </div>
+      <div className="flex max-w-[700px] justify-between text-black text-[17px] mt-3 font-semibold mb-4">
+  {['Бидний тухай', 'Байршил', 'Үйлчилгээ', 'Түгээмэл асуулт, хариулт'].map((label, index) => (
+    <button
+      key={index}
+      className={Menu === index ? 'text-primary ' : ''}
+      onClick={() => setMenu(index)}
+    >
+      {index + 1}.{label}
+    </button>
+  ))}
+</div>
+{Menu === 0 && (
+  <AboutHotel
+    image={propertyImages[imageIndex] || null}
+    basicInfo={basicInfo}
+    propertyPolicy={propertyPolicy}
+    propertyBaseInfo={propertyBaseInfo}
+    propertyDetail={propertyDetail}
+    getPropertyTypeName={getPropertyTypeName}
+    formatTime={formatTime}
+  />
+)}
 
-      <div className="my-10">
-        <div className="text-black font-semibold mb-4">Бидний тухай</div>
-        <textarea className="border-[1px] border-cloud border-solid rounded-[15px] w-full min-h-[200px]" />
-      </div>
 
-      <div className="text-black font-semibold mb-4">Дотоод журам</div>
-      {propertyPolicy && (
-        <div className="mb-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-2">
-            <div>
-              <p className=" mb-2">{t('3')}:</p>
-              <p className="flex items-center gap-2">
-                <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">{formatTime(propertyPolicy.check_in_from)}</div>
-                <span>–</span>
-                <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">{formatTime(propertyPolicy.check_in_until)}</div>
-              </p>
-            </div>
-            <div>
-              <p className=" mb-2">{t('4')}:</p>
-              <p className="flex items-center gap-2">
-                <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">{formatTime(propertyPolicy.check_out_from)}</div>
-                <span>–</span>
-                <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">{formatTime(propertyPolicy.check_out_until)}</div>
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-2 mt-6">
-            <div>
-              <div className="mb-2">Цуцлах боломжтой хугацаа</div>
-              <div className="text-muted">тухайн өдрийн {formatTime(propertyPolicy.cancellation_fee.cancel_time)} цагаас өмнө</div>
-              <div className="text-muted">тухайн өдрийн {formatTime(propertyPolicy.cancellation_fee.cancel_time)} цагаас дараа</div>
-            </div>
-            <div>
-              <div className=" mb-2">Цуцлалтын шимтгэл</div>
-              <div className=" border border-soft py-1 w-[100px] text-center rounded-[10px] mb-2">{propertyPolicy.cancellation_fee.before_fee}%</div>
-              <div className=" border border-soft w-[100px] py-1 text-center rounded-[10px]">{propertyPolicy.cancellation_fee.after_fee}%</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="mt-4">
-        <p className="font-semibold">{t('5')}:</p>
-        <a href={propertyDetail.google_map} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-          {t('6')}
-        </a>
-      </div>
+      
     </div>
   );
 }
