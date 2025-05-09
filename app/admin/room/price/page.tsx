@@ -12,7 +12,7 @@ export default function RoomManagement() {
  
 
   return (
-    <div className="p-6">
+    <div className="p-10">
      <RoomPriceList isRoomAdded={isRoomAdded} setIsRoomAdded={setIsRoomAdded }/>
      <div className="py-10"></div>
      <SeasonPrice />

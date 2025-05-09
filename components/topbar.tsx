@@ -10,7 +10,7 @@ export default async function Topbar() {
     return(
 
         <>
-        <div className="h-[50px] border-b-[1px]  bg-white px-[50px] text-black ">
+        <div className="h-[50px] border-b-[1px]   bg-white px-[50px] text-black ">
 
         <div className="flex gap-4 items-center justify-end h-full ">
           <Link

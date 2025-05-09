@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { WavyBackground } from "../../components/ui/wavy-background";
 import "../globals.css";
 import Topbar from "./TopbarAuth";
 const geistSans = localFont({
@@ -32,6 +33,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Topbar/>
+        {/* <WavyBackground className="max-w-4xl mx-auto pb-40"> */}
         
   
       
@@ -39,6 +41,7 @@ export default function RootLayout({
         {/* <UserProvider> */}
 
         {children}
+        {/* </WavyBackground> */}
         {/* </UserProvider> */}
       </body>
     </html>

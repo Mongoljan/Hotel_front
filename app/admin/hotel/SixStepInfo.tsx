@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaRegCheckCircle } from "react-icons/fa";
 import AboutHotel from './AboutHotel';
 
 interface PropertyPhoto {
@@ -83,7 +84,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
   const [propertyImages, setPropertyImages] = useState<PropertyPhoto[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
-  const [Menu, setMenu]= useState(0);
+  const [Menu, setMenu] = useState(0);
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
@@ -157,17 +158,29 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   if (!propertyDetail) return <div>{t('8')}</div>;
 
   return (
-    <div className="">
+    <div>
       <div className="flex justify-between mb-6">
-        <p className="text-2xl text-black font-semibold">Үндсэн мэдээлэл</p>
-        <p>Хүсэлт хүлээгдэж байгаа (API тавигдах)</p>
+        <p className="text-lg text-black font-semibold">Үндсэн мэдээлэл</p>
+        {propertyBaseInfo?.is_approved ? (
+          <div className="text-green-500 flex gap-x-1 text-[18px]">
+            Баталгаажсан <FaRegCheckCircle className="text-xl mt-[4px]" />
+          </div>
+        ) : (
+          <div className="text-red">Баталгаажаагүй</div>
+        )}
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6 items-stretch min-h-[300px]">
-        <div className="w-full md:w-2/5 h-full">
+      {/* Layout */}
+      <div className="flex flex-col md:flex-row gap-6 items-start min-h-[300px]">
+        {/* Left: Image */}
+        <div className="w-full md:w-2/5">
           {propertyImages.length > 0 && (
-            <div className="relative bg-white rounded-xl overflow-hidden border-cloud border-solid border-[1px] h-full flex flex-col justify-between">
-              <img src={propertyImages[imageIndex].image} alt={propertyImages[imageIndex].description} className="w-full object-cover h-[250px]" />
+            <div className="relative bg-white rounded-xl overflow-hidden border border-cloud">
+              <img
+                src={propertyImages[imageIndex].image}
+                alt={propertyImages[imageIndex].description}
+                className="w-full object-cover h-[250px]"
+              />
               {propertyImages.length > 1 && (
                 <div className="absolute inset-0 flex items-center justify-between px-4">
                   <button onClick={goPrev} className="text-white text-xl bg-black/50 rounded-full p-2"><FaChevronLeft /></button>
@@ -179,14 +192,18 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           )}
         </div>
 
-        <div className="w-full md:w-3/5 h-full flex flex-col justify-between">
-          {basicInfo && (
-            <div className="mb-2">
-              <p className="text-primary text-2xl font-semibold">{basicInfo.property_name_mn}</p>
-              <p className="text-soft -translate-y-1">{basicInfo.property_name_en}</p>
-            </div>
-          )}
-          <div className="border border-cloud rounded-[15px] p-4 space-y-4 h-full">
+        {/* Right: Info Box */}
+        <div className="w-full md:w-3/5 flex flex-col">
+          <div className="mb-2 min-h-[50px]">
+            {basicInfo && (
+              <>
+                <p className="text-primary text-2xl font-semibold">{basicInfo.property_name_mn}</p>
+                <p className="text-soft -translate-y-1">{basicInfo.property_name_en}</p>
+              </>
+            )}
+          </div>
+
+          <div className="border border-cloud rounded-[15px] p-4 space-y-4">
             <InfoRow label="Үл хөдлөх хөрөнгийн төрөл" value={getPropertyTypeName(propertyBaseInfo?.property_type ?? 0)} />
             <InfoRow label="Үйл ажиллагаа эхэлсэн огноо" value={basicInfo?.start_date} />
             <InfoRow label="Буудлын нийт өрөөний тоо" value={basicInfo?.total_hotel_rooms} />
@@ -195,31 +212,27 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           </div>
         </div>
       </div>
+
+      {/* Bottom Menu */}
       <div className="flex max-w-[700px] justify-between text-black text-[17px] mt-3 font-semibold mb-4">
-  {['Бидний тухай', 'Байршил', 'Үйлчилгээ', 'Түгээмэл асуулт, хариулт'].map((label, index) => (
-    <button
-      key={index}
-      className={Menu === index ? 'text-primary ' : ''}
-      onClick={() => setMenu(index)}
-    >
-      {index + 1}.{label}
-    </button>
-  ))}
-</div>
-{Menu === 0 && (
-  <AboutHotel
-    image={propertyImages[imageIndex] || null}
-    basicInfo={basicInfo}
-    propertyPolicy={propertyPolicy}
-    propertyBaseInfo={propertyBaseInfo}
-    propertyDetail={propertyDetail}
-    getPropertyTypeName={getPropertyTypeName}
-    formatTime={formatTime}
-  />
-)}
+        {['Бидний тухай', 'Байршил', 'Үйлчилгээ', 'Түгээмэл асуулт, хариулт'].map((label, index) => (
+          <button key={index} className={Menu === index ? 'text-primary' : ''} onClick={() => setMenu(index)}>
+            {index + 1}.{label}
+          </button>
+        ))}
+      </div>
 
-
-      
+      {Menu === 0 && (
+        <AboutHotel
+          image={propertyImages[imageIndex] || null}
+          basicInfo={basicInfo}
+          propertyPolicy={propertyPolicy}
+          propertyBaseInfo={propertyBaseInfo}
+          propertyDetail={propertyDetail}
+          getPropertyTypeName={getPropertyTypeName}
+          formatTime={formatTime}
+        />
+      )}
     </div>
   );
 }

@@ -111,7 +111,7 @@ export default function RegisterHotel() {
   ];
 
   return (
-    <div className="p-12">
+    <div className="p-10">
 {view === 'proceed' && proceed !== 2 && (
   <StepIndicator steps={steps} currentStep={stepStatus} />
 )}
