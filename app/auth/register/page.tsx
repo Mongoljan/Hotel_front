@@ -17,7 +17,7 @@ import { FaArrowAltCircleRight } from "react-icons/fa";
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const API_CREATE_PROPERTY = 'https://dev.kacc.mn/api/properties/create/';
-const EBARIMT_API = 'https://info.ebarimt.mn/rest/merchant/info?';
+const EBARIMT_API = 'https://info.ebarimt.mn/rest/merchant/info?id=';
 
 interface PropertyType {
   id: number;
