@@ -219,15 +219,21 @@ export default function Proceed({proceed, setProceed} : ProceedProps) {
     
         
           </Link> */}
-          <button
-            onClick={()=>setProceed(1)}
-          className="w-full flex justify-center  mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-     
-        >
-     <div className="flex">   {t("5")}
-          <FaArrowRight className=" self-center mx-1" />
-          </div> 
-        </button>
+        <button
+  onClick={() => {
+    if (hotel?.is_approved) setProceed(1);
+  }}
+  disabled={!hotel?.is_approved}
+  className={`w-full flex justify-center mt-[35px] text-black py-3 px-4 border-[1px] border-solid font-semibold rounded-[15px] 
+    ${hotel?.is_approved ? 'hover:bg-bg border-primary' : 'cursor-not-allowed bg-gray-200 border-gray-300 text-gray-400'}
+  `}
+>
+  <div className="flex">
+    {t("5")}
+    <FaArrowRight className="self-center mx-1" />
+  </div>
+</button>
+
         </div>
       </form>
     </div>

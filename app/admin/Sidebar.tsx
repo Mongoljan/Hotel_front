@@ -18,40 +18,51 @@ import { LuReceipt } from "react-icons/lu";
 import { GiLockedDoor } from "react-icons/gi";
 import { BsCardChecklist } from "react-icons/bs";
 
-export default function Sidebar() {
+export default function Sidebar({ isApproved }: { isApproved: boolean }) {
   const t = useTranslations('Sidebar');
-  const [isHotelMenuOpen, setHotelMenuOpen] = useState(false);
-  const [isRoomMenuOpen, setRoomMenuOpen] = useState(false); // State for Room Submenu
-
-  const toggleRoomMenu = () => {
-    setRoomMenuOpen(!isRoomMenuOpen);
-  };
-
+  const [isRoomMenuOpen, setRoomMenuOpen] = useState(false);
   const pathname = usePathname();
-  const navItems = [
-    { href: "",  icon: <MdOutlineSpaceDashboard/>, label: "Dashboard"},
-    { href: "", icon: <BsCardChecklist />, label: "Захиалгын жагсаалт" },
-    { href: "", icon: <GiLockedDoor />, label: "Өрөө блок" },
-    { href: "", icon: <LuReceipt />, label: "Төлбөр тооцоо" },
-    { href: "", icon: <IoIosChatboxes />, label: "Асуулт хариулт" },
-    {
-      label: "Тохиргоо",
-      icon: <IoIosSettings />,
-      subMenu: [
-        { href: "/admin/hotel",  icon: <LuHotel />, label: t("hotelManagement")},
-        { href: "/admin/room", icon: <MdOutlineAddBox />, label: "Өрөө" },
-        { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: "Үнэ" },
-        { href: "", icon: <MdOutlineListAlt />, label: "Үйлчилгээ" },
-        { href: "", icon: <MdOutlineListAlt />, label: "Гэрээ байгуулах" },
-        { href: "", icon: <MdOutlineListAlt />, label: "Нөхцөл бодлого" },
-        { href: "", icon: <MdOutlineListAlt />, label: "Админ эрх" },
-        { href: "", icon: <MdOutlineListAlt />, label: "Буудлын профайл" },
-        { href: "", icon: <MdOutlineListAlt />, label: "Хөнгөлөлт" },
-        { href: "", icon: <MdOutlineListAlt />, label: "Захиалах суваг" },
-        // { href: "/admin/room/categories", icon: <MdOutlineCategory />, label: "Room Categories" },
-      ],
-    },
-  ];
+
+  const hotelRegistrationItem = {
+    href: "/admin/hotel",
+    icon: <LuHotel />,
+    label: t("hotelManagement"),
+  };
+  console.log(isApproved);
+
+  const navItems = isApproved
+    ? [
+        { href: "", icon: <MdOutlineSpaceDashboard />, label: "Dashboard" },
+        { href: "", icon: <BsCardChecklist />, label: "Захиалгын жагсаалт" },
+        { href: "", icon: <GiLockedDoor />, label: "Өрөө блок" },
+        { href: "", icon: <LuReceipt />, label: "Төлбөр тооцоо" },
+        { href: "", icon: <IoIosChatboxes />, label: "Асуулт хариулт" },
+        {
+          label: "Тохиргоо",
+          icon: <IoIosSettings />,
+          subMenu: [
+            hotelRegistrationItem,
+            { href: "/admin/room", icon: <MdOutlineAddBox />, label: "Өрөө" },
+            { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: "Үнэ" },
+            { href: "", icon: <MdOutlineListAlt />, label: "Үйлчилгээ" },
+            { href: "", icon: <MdOutlineListAlt />, label: "Гэрээ байгуулах" },
+            { href: "", icon: <MdOutlineListAlt />, label: "Нөхцөл бодлого" },
+            { href: "", icon: <MdOutlineListAlt />, label: "Админ эрх" },
+            { href: "", icon: <MdOutlineListAlt />, label: "Буудлын профайл" },
+            { href: "", icon: <MdOutlineListAlt />, label: "Хөнгөлөлт" },
+            { href: "", icon: <MdOutlineListAlt />, label: "Захиалах суваг" },
+          ],
+        },
+      ]
+    : [
+        {
+          label: "Тохиргоо",
+          icon: <IoIosSettings />,
+          subMenu: [hotelRegistrationItem],
+        },
+      ];
+
+  const toggleRoomMenu = () => setRoomMenuOpen(!isRoomMenuOpen);
 
   return (
     <div className="p-2 h-full pt-[100px] bg-white text-sidebar-accent-foreground border-primary border-solid border-[1px] border-opacity-30">
@@ -59,7 +70,6 @@ export default function Sidebar() {
         {navItems.map((item) => (
           <div key={item.label}>
             {item.subMenu ? (
-              // If submenu exists, render a collapsible item
               <div>
                 <button
                   onClick={toggleRoomMenu}
@@ -76,7 +86,6 @@ export default function Sidebar() {
                   </div>
                 </button>
 
-                {/* Submenu */}
                 {isRoomMenuOpen && (
                   <div className="ml-8 mt-2 flex flex-col gap-2">
                     {item.subMenu.map((subItem) => (
@@ -89,7 +98,6 @@ export default function Sidebar() {
                             : "hover:bg-background"
                         }`}
                       >
-                        {/* <div className="text-xl mr-3  text-dim">{subItem.icon}</div> */}
                         <span className="text-[14px] text-dim">{subItem.label}</span>
                       </Link>
                     ))}
@@ -97,7 +105,6 @@ export default function Sidebar() {
                 )}
               </div>
             ) : (
-              // Regular Menu Item
               <Link
                 key={item.href}
                 href={item.href}

@@ -20,6 +20,7 @@ interface UserInfo {
   hotel?: number;
   position?: string;
   contact_number?:string;
+  id?:number;
 }
 
 export default function UserProfileToggle() {
@@ -69,6 +70,12 @@ export default function UserProfileToggle() {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium text-muted leading-none">{"Албан тушаал"}</p>
             <p className="text-xs leading-none text-muted truncate">{userInfo.position}</p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium text-muted leading-none">{""}</p>
+            <p className="text-xs leading-none text-muted truncate">{userInfo.id}</p>
           </div>
         </DropdownMenuLabel>
         {/* <DropdownMenuItem>{userInfo.position}</DropdownMenuItem> */}

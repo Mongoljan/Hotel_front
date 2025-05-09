@@ -26,36 +26,34 @@ export async function loginAction(formData: {
       position: data.position,
       contact_number: data.contact_number,
       email: data.email,
+      id: data.id,
     };
 
-    cookies().set('token', data.token, {
-      // httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 30,
-      path: '/',
-    });
-    cookies().set('hotel', data.hotel, {
-      // httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 30,
-      path: '/',
-    });
-    cookies().set('userName', data.name, {
-      httpOnly: true,
-      sameSite: 'strict',
-      maxAge: 60 * 30,
-      path: '/',
-    });
+    const hotelId = data.hotel;
 
-    cookies().set('userEmail', data.email, {
-      httpOnly: true,
-      sameSite: 'strict',
+    // 🔐 Fetch approval status of the hotel
+    const hotelRes = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}`);
+    const hotelData = await hotelRes.json();
+    const isApproved = hotelData?.is_approved === true;
+
+    // ✅ Set cookies (secure + some httpOnly)
+    const options = {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict' as const,
       maxAge: 60 * 30,
       path: '/',
+    };
+
+    cookies().set('token', data.token, options);
+    cookies().set('hotel', String(hotelId), options);
+    cookies().set('userName', data.name, { ...options, httpOnly: true });
+    cookies().set('userEmail', data.email, { ...options, httpOnly: true });
+
+    // ✅ Store approval status securely
+    cookies().set('isApproved', String(isApproved), {
+      ...options,
+      httpOnly: true,
     });
-    
 
     return { success: true, userInfo };
   } catch (err) {
