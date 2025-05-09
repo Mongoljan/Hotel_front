@@ -5,8 +5,8 @@ export function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
   const { pathname } = req.nextUrl;
 
-  // If user is authenticated and visits "/", redirect to /admin/page
-  if (token && (pathname === "/" || pathname === "/auth/login")) {
+  // If user is authenticated and visits "/", redirect to /admin/hotel
+  if (token && pathname === "/") {
     return NextResponse.redirect(new URL("/admin/hotel", req.url));
   }
 
@@ -14,6 +14,7 @@ export function middleware(req: NextRequest) {
   const isProtectedRoute =
     pathname.startsWith("/admin") ||
     pathname.startsWith("/superadmin") ||
+    pathname.startsWith("/") ||
     pathname.startsWith("/user");
 
   if (isProtectedRoute && !token) {
@@ -24,7 +25,16 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// Apply middleware to relevant routes
 export const config = {
-  matcher: ["/", "/auth/login", "/admin/:path*", "/superadmin/:path*", "/user/:path*"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - auth/login (login page)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|auth/login).*)',
+  ],
 };
