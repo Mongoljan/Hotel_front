@@ -10,7 +10,11 @@ interface StepIndicatorProps {
 export default function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
   return (
     <div className="mb-8 max-w-[800px]">
+       <div className="text-[18px]  mb-4 font-semibold"> 
+          Property бүртгэлийн хүсэлт
+        </div>
       <div className="flex items-center justify-between">
+       
         {steps.map((label, idx) => {
           const stepNum = idx + 1;
           const isCompleted = stepNum < currentStep;

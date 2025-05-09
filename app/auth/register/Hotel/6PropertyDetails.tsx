@@ -68,7 +68,7 @@ const locale = useLocale();
         propertyPolicies: propertyData.propertyPolicies,
         google_map: formData.google_map,
         parking_situation: formData.parking_situation,
-        property: propertyData.property,
+        property: hotel.hotel,
         general_facilities: formData.general_facilities.map(Number),
         property_photos: propertyData.property_photos,
       };

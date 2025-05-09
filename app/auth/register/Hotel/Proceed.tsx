@@ -185,24 +185,33 @@ export default function Proceed({ proceed, setProceed, setView }: ProceedProps) 
           </div>
 
           <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() => {
-                if (hotel?.is_approved) {
-                  setProceed(1);
-                  setView('register');
-                }
-              }}
-              disabled={!hotel?.is_approved}
-              className={`
-                flex-1 py-3 rounded-lg font-semibold
-                ${hotel?.is_approved
-                  ? 'bg-primary text-white hover:bg-primary-dark'
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'}
-              `}
-            >
-              {t('5')} <FaArrowRight className="inline ml-2" />
-            </button>
+          <div className="relative group w-full">
+  <button
+    type="button"
+    onClick={() => {
+      if (hotel?.is_approved) {
+        setProceed(1);
+        setView('register');
+      }
+    }}
+    disabled={!hotel?.is_approved}
+    className={`
+      w-full py-3 rounded-lg font-semibold transition
+      ${hotel?.is_approved
+        ? 'bg-primary text-white hover:bg-primary-dark'
+        : 'bg-gray-200 text-gray-500 cursor-not-allowed'}
+    `}
+  >
+    {t('5')} <FaArrowRight className="inline ml-2" />
+  </button>
+
+  {!hotel?.is_approved && (
+    <div className="absolute top-full mt-2 left-0 w-full bg-white border border-gray-300 text-sm text-gray-700 rounded-lg px-4 py-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+      {t('tooltip_wait_approval')}
+    </div>
+  )}
+</div>
+
           </div>
         </form>
       </div>

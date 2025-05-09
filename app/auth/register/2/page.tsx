@@ -52,15 +52,18 @@ export default function RegisterEmployee() {
       ...data,
       hotel,
     });
-
     if (result.success) {
-      toast.success('Ажилтны бүртгэл амжилттай! Та бүртгэлээрээ нэвтрэн орно уу.');
-      Object.keys(Cookies.get()).forEach((cookieName) => {
-        Cookies.remove(cookieName);
-      });
-      localStorage.clear();
-      router.push('/auth/login');
-    } else {
+      toast.success('Таны бүртгэл амжилттай үүслээ. Та үүсгэсэн бүртгэлээрээ нэвтрэн орно уу?');
+    
+      setTimeout(() => {
+        Object.keys(Cookies.get()).forEach((cookieName) => {
+          Cookies.remove(cookieName);
+        });
+        localStorage.clear();
+        router.push('/auth/login');
+      }, 1500);
+    }
+     else {
       toast.error(result.error || 'Бүртгэл амжилтгүй боллоо.');
     }
   };

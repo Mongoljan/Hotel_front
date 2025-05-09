@@ -20,7 +20,8 @@ type Props = {
 };
 
 export default function RegisterHotel3({ onNext, onBack }: Props) {
-  const t = useTranslations("4PropertyPolicies")
+  const t = useTranslations("4PropertyPolicies");
+
   const {
     register,
     handleSubmit,
@@ -156,68 +157,41 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         </section>
 
         <section className="mb-4">
-          <label className="text-black">{t("10")} (%)</label>
-          <input type="number" {...register('breakfast_policy')} className="border p-2 w-full rounded-[15px]" />
+          <label className="text-black">{t("10")}</label>
+          <select {...register('breakfast_policy')} className="border p-2 w-full rounded-[15px]">
+            <option value="">{t("16")}</option>
+            <option value="no">{t("17")}</option>
+            <option value="free">{t("18")}</option>
+            <option value="paid">{t("19")}</option>
+          </select>
           {errors.breakfast_policy && <div className="text-red text-sm">{errors.breakfast_policy.message}</div>}
         </section>
 
         <section className="flex gap-4 mb-4">
           <div className="w-1/2">
-          <label className="text-black">{t("11")}</label>
-        <div className=" flex items-center">
-      
-  {/* Hidden checkbox that acts as the real form input */}
-  <input
-    type="checkbox"
-    id="allowChildren"
-    {...register("allow_children")}
-    className="hidden peer"
-  />
-
-  {/* Label styled as a button, changes appearance when peer (the input) is checked */}
-  <label
-    htmlFor="allowChildren"
-    className="
-      px-4 py-2
-      border border-gray-300
-      rounded-lg
-      cursor-pointer
-      select-none
-      transition
-      peer-checked:bg-blue-600
-      peer-checked:border-blue-600
-      peer-checked:text-white
-      peer-hover:bg-gray-100
-    "
-  >
-    {t("15")}
-  </label>
-</div>
-</div>
-
+            <label className="text-black">{t("11")}</label>
+            <div className="flex items-center">
+              <input type="checkbox" id="allowChildren" {...register("allow_children")} className="hidden peer" />
+              <label
+                htmlFor="allowChildren"
+                className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer select-none transition peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white peer-hover:bg-gray-100"
+              >
+                {t("15")}
+              </label>
+            </div>
+          </div>
 
           <div className="w-1/2">
             <label className="text-black">{t("12")}</label>
-            <div className=" flex items-center">
-            <input type="checkbox" id="allowPets" {...register('allow_pets')} className="hidden peer" />
-            <label
-    htmlFor="allowPets"
-    className="
-      px-4 py-2
-      border border-gray-300
-      rounded-lg
-      cursor-pointer
-      select-none
-      transition
-      peer-checked:bg-blue-600
-      peer-checked:border-blue-600
-      peer-checked:text-white
-      peer-hover:bg-gray-100
-    "
-  >
-    {t("15")}
-  </label>
-  </div>
+            <div className="flex items-center">
+              <input type="checkbox" id="allowPets" {...register('allow_pets')} className="hidden peer" />
+              <label
+                htmlFor="allowPets"
+                className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer select-none transition peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white peer-hover:bg-gray-100"
+              >
+                {t("15")}
+              </label>
+            </div>
           </div>
         </section>
 
@@ -234,7 +208,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             disabled={isSubmitting}
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
-           {t("14")} <FaArrowRight className="self-center mx-1" />
+            {t("14")} <FaArrowRight className="self-center mx-1" />
           </button>
         </div>
       </form>
