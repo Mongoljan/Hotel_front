@@ -27,15 +27,28 @@ export default function Layout({
   const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [hotelInfo, setHotelInfo] = useState<HotelInfo | null>(null);
+  const [forceHideSidebar, setForceHideSidebar] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
 
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const hotelId = userInfo?.hotel;
+    const email = userInfo?.email;
+
+    // 👇 Construct the key and read `proceed` value
+    if (email) {
+      const proceedKey = `proceed_${email}`;
+      const storedValue = localStorage.getItem(proceedKey);
+
+      if (storedValue !== "2") {
+        setForceHideSidebar(true);
+        setSidebarVisible(false); // Hide immediately
+      }
+    }
+
     const fetchHotelInfo = async () => {
       try {
-        const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-        const hotelId = userInfo?.hotel;
-
         if (!hotelId) return;
 
         const res = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}`);
@@ -51,34 +64,44 @@ export default function Layout({
     fetchHotelInfo();
   }, []);
 
-  const toggleSidebar = () => setSidebarVisible(!isSidebarVisible);
+  const toggleSidebar = () => {
+    if (!forceHideSidebar) {
+      setSidebarVisible(!isSidebarVisible);
+    }
+  };
 
   if (!isMounted) return null;
 
   return (
     <>
       <div className="fixed top-0 left-0 z-[100] right-0">
-      <Topbar
-  toggleSidebar={toggleSidebar}
-  sideBarOpen={isSidebarVisible}
-  userApproved={userApproved}
-  isApproved={hotelInfo?.is_approved === true}
-  hotelInfo={hotelInfo}
-/>
-
+        <Topbar
+          toggleSidebar={toggleSidebar}
+          sideBarOpen={isSidebarVisible}
+          userApproved={userApproved}
+          isApproved={hotelInfo?.is_approved === true}
+          hotelInfo={hotelInfo}
+          forceHideSidebar={forceHideSidebar}
+        />
       </div>
+
       <div className="relative flex">
-        <div
-          className={`fixed top-0 left-0 transition-transform duration-500 ease-in-out transform bg-gray-100 shadow-lg w-60 h-screen ${
-            isSidebarVisible ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <Sidebar isApproved={hotelInfo?.is_approved === true} userApproved={userApproved} />
-        </div>
+        {!forceHideSidebar && (
+          <div
+            className={`fixed top-0 left-0 transition-transform duration-500 ease-in-out transform bg-gray-100 shadow-lg w-60 h-screen ${
+              isSidebarVisible ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <Sidebar
+              isApproved={hotelInfo?.is_approved === true}
+              userApproved={userApproved}
+            />
+          </div>
+        )}
 
         <div
           className={`flex-grow mt-[50px] bg-white transition-all duration-700 ease-in-out ${
-            isSidebarVisible ? "ml-60" : "ml-0"
+            !forceHideSidebar && isSidebarVisible ? "ml-60" : "ml-0"
           }`}
         >
           {children}

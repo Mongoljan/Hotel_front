@@ -43,7 +43,7 @@ interface CombinedData {
 type FormFields = z.infer<typeof schemaHotelSteps2>;
 
 export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void; onBack: () => void; }) {
-  const t = useTranslations("2ConfirmAddress")
+  const t = useTranslations("2ConfirmAddress");
   const [combinedData, setCombinedData] = useState<CombinedData>({
     province: [],
     city: [],
@@ -103,7 +103,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen h-full  rounded-[12px]">
+    <div className="flex justify-center items-center min-h-screen h-full rounded-[12px]">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -113,7 +113,8 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
         <div className="mb-4">
           <label className="text-black">Province</label>
-          <select {...register('province_city')} className="border p-2 w-full h-[45px] rounded-[15px]">
+          <select {...register('province_city')} defaultValue="" className="border p-2 w-full h-[45px] rounded-[15px]">
+            <option value="" disabled>-- Select Province --</option>
             {combinedData.province.map((province) => (
               <option key={province.id} value={province.id}>{province.name}</option>
             ))}
@@ -123,7 +124,8 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
         <div className="mb-4">
           <label className="text-black">City</label>
-          <select {...register('city')} className="border p-2 w-full h-[45px] rounded-[15px]">
+          <select {...register('city')} defaultValue="" className="border p-2 w-full h-[45px] rounded-[15px]">
+            <option value="" disabled>-- Select City --</option>
             {combinedData.city.map((city) => (
               <option key={city.id} value={city.id}>{city.name}</option>
             ))}
@@ -133,7 +135,8 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
         <div className="mb-4">
           <label className="text-black">Soum</label>
-          <select {...register('soum')} className="border p-2 w-full h-[45px] rounded-[15px]">
+          <select {...register('soum')} defaultValue="" className="border p-2 w-full h-[45px] rounded-[15px]">
+            <option value="" disabled>-- Select Soum --</option>
             {combinedData.soum.map((soum) => (
               <option key={soum.id} value={soum.id}>{soum.name}</option>
             ))}
@@ -143,7 +146,8 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
         <div className="mb-4">
           <label className="text-black">District</label>
-          <select {...register('district')} className="border p-2 w-full h-[45px] rounded-[15px]">
+          <select {...register('district')} defaultValue="" className="border p-2 w-full h-[45px] rounded-[15px]">
+            <option value="" disabled>-- Select District --</option>
             {combinedData.district.map((district) => (
               <option key={district.id} value={district.id}>{district.name}</option>
             ))}

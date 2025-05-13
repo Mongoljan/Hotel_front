@@ -156,8 +156,8 @@ export default function Proceed({ proceed, setProceed, setView }: ProceedProps) 
   };
 
   return (
-    <div className="flex items-left h-full py-12">
-      <div className="w-full max-w-[450px] ">
+    <div className="flex items-left h-full py-12 ">
+      <div className="w-full max-w-[450px] mx-auto ">
         <ToastContainer />
         <h2 className="text-2xl font-bold mb-4">{t('title')}</h2>
 
@@ -176,8 +176,8 @@ export default function Proceed({ proceed, setProceed, setView }: ProceedProps) 
             <Info label={t('2')} value={hotel?.phone || '-'} />
             <Info label={t('3')} value={hotel?.mail || '-'} />
             <Info
-              label={t('4')}
-              value={hotel?.is_approved ? 'Тийм' : 'Үгүй'}
+              label='Төлөв'
+              value={hotel?.is_approved ? 'Баталгаажсан' : 'Баталгаажаагүй'}
               valueClassName={
                 hotel?.is_approved ? 'text-green-600' : 'text-red-600'
               }

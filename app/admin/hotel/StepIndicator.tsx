@@ -9,7 +9,8 @@ interface StepIndicatorProps {
 
 export default function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
   return (
-    <div className="mb-8 max-w-[800px]">
+    <div className="w-full ">
+    <div className="mb-8 max-w-[800px] mx-auto">
        <div className="text-[18px]  mb-4 font-semibold"> 
           Property бүртгэлийн хүсэлт
         </div>
@@ -45,6 +46,7 @@ export default function StepIndicator({ steps, currentStep }: StepIndicatorProps
           );
         })}
       </div>
+    </div>
     </div>
   );
 }

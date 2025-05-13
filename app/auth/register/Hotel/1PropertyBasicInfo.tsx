@@ -135,7 +135,11 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         {errors.star_rating && <div className="text-red">{errors.star_rating.message}</div>}
 
         <div className="text-black">{t('5')}?</div>
-        <input type="checkbox" {...register('part_of_group')} />
+<label className="flex items-center gap-2">
+  <input type="checkbox" aria-label="yes" {...register('part_of_group')} />
+  <span>Тийм</span>
+</label>
+
 
         <div className="text-black">{t('6')}</div>
         <input
@@ -158,7 +162,12 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         {errors.available_rooms && <div className="text-red">{errors.available_rooms.message}</div>}
 
         <div className="text-black">{t('8')}</div>
-        <input type="checkbox" {...register('sales_room_limitation')} />
+        <label>
+        <input type="checkbox" {...register('sales_room_limitation')}/ >
+        <span>
+          Тийм
+        </span>
+</label>
 
         <div className="text-black">{t('9')}</div>
         <select

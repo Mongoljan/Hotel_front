@@ -26,12 +26,14 @@ export default function Topbar({
   userApproved,
   isApproved,
   hotelInfo,
+  forceHideSidebar
 }: {
   toggleSidebar: () => void;
   sideBarOpen: boolean;
   userApproved: boolean;
   isApproved: boolean;
   hotelInfo: HotelInfo | null;
+  forceHideSidebar : boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -61,12 +63,15 @@ export default function Topbar({
     <div className="">
       <div className="h-[50px] backdrop-blur-md opacity-[50] border-b-[1px] border-primary border-opacity-30 bg-white px-[50px] text-black flex justify-between items-center">
         {/* Left Side */}
+       
         <div className="mr-2 flex">
+             {!forceHideSidebar && (
           <button onClick={toggleSidebar} className="flex ml-4 flex-col justify-center items-center mr-4">
             <span className={`bg-primary block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "rotate-45 translate-y-1" : "-translate-y-0.5"}`} />
             <span className={`bg-primary block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${sideBarOpen ? "opacity-0" : "opacity-100"}`} />
             <span className={`bg-primary block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "-rotate-45 -translate-y-1" : "translate-y-0.5"}`} />
           </button>
+          )}
           <div className="text-black font-semibold text-xl">
             Буудлын админ
           </div>

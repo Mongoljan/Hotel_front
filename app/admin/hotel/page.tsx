@@ -105,15 +105,19 @@ export default function RegisterHotel() {
 
   const steps = [
     'Хүсэлт илгээсэн',
-    'Хүсэлт шалгагдаж байгаа',
-    'Зөвшөөрөгдсөн',
+    'Хүлээгдэж байгаа',
+    'Баталгаажсан',
     'Дэлгэрэнгүй мэдээлэл оруулах',
   ];
 
   return (
     <div className="p-10">
 {view === 'proceed' && proceed !== 2 && (
+  <div className="w-full ">
+  <div className="">
   <StepIndicator steps={steps} currentStep={stepStatus} />
+  </div>
+  </div>
 )}
 
 

@@ -9,11 +9,11 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { FaArrowAltCircleRight } from "react-icons/fa";
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { useTranslations } from "next-intl";
+import { useTranslations } from 'next-intl';
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const EBARIMT_API = 'https://info.ebarimt.mn/rest/merchant/info?regno=';
@@ -31,8 +31,6 @@ export default function RegisterPage() {
   const router = useRouter();
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [loadingCompany, setLoadingCompany] = useState(false);
-
-  // ✅ Load defaults from localStorage
   const saved = typeof window !== "undefined" ? localStorage.getItem("hotelFormData") : null;
   const parsedDefaults: Partial<FormFields> = saved ? JSON.parse(saved) : {};
   const [regNo, setRegNo] = useState(parsedDefaults.register || '');
@@ -42,6 +40,7 @@ export default function RegisterPage() {
     handleSubmit,
     setValue,
     getValues,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
     resolver: zodResolver(schemaHotelRegistration2),
@@ -60,9 +59,15 @@ export default function RegisterPage() {
         console.error("Error fetching combined data:", error);
       }
     };
-
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const subscription = watch((value) => {
+      localStorage.setItem('hotelFormData', JSON.stringify(value));
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const fetchCompanyName = async () => {
     const trimmedRegNo = regNo.trim();
@@ -97,6 +102,9 @@ export default function RegisterPage() {
     }, 1000);
   };
 
+  const inputStyle = (hasError: boolean) =>
+    `border ${hasError ? 'border-red' : 'border-soft'} p-2 w-full mb-4 h-[45px] rounded-[15px]`;
+
   return (
     <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">
       <ToastContainer />
@@ -118,19 +126,19 @@ export default function RegisterPage() {
                   setRegNo(value);
                   setValue('register', value);
                 }}
-                className="border p-2 w-full h-[45px] rounded-[15px]"
+                className={inputStyle(!!errors.register)}
                 required
               />
               <button
                 type="button"
                 onClick={fetchCompanyName}
                 disabled={loadingCompany}
-                className="text-sm border w-[50px] px-3 py-2 rounded-[10px] hover:bg-bg"
+                className="text-3xl hover:text-primary -translate-y-2 place-items-center w-[50px] px-3 py-2 "
               >
                 {loadingCompany ? "..." : <FaArrowAltCircleRight />}
               </button>
             </div>
-            {errors.register && <div className="text-red">{errors.register.message}</div>}
+            {errors.register && <div className="text-red text-sm">{errors.register.message}</div>}
           </div>
 
           <div className="w-full group relative">
@@ -138,14 +146,14 @@ export default function RegisterPage() {
             <input
               type="text"
               {...register('CompanyName')}
-              className="border p-2 w-full text-soft mb-4 h-[45px] rounded-[15px]"
+              className={`${inputStyle(!!errors.CompanyName)} text-soft`}
               required
               disabled
             />
             <div className="absolute left-0 -top-8 opacity-0 -translate-y-[100px] group-hover:opacity-100 transition bg-gray-700 text-white px-3 py-2 rounded-[15px] shadow-md pointer-events-none">
               Хажууд байрлах товч дээр дарснаар ebarimt-аас таны компаний нэрийг оруулсан РД-аар хайх болно
             </div>
-            {errors.CompanyName && <div className="text-red">{errors.CompanyName.message}</div>}
+            {errors.CompanyName && <div className="text-red text-sm">{errors.CompanyName.message}</div>}
           </div>
         </section>
 
@@ -154,53 +162,54 @@ export default function RegisterPage() {
           <input
             type="text"
             {...register('PropertyName')}
-            className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+            className={inputStyle(!!errors.PropertyName)}
             required
           />
-          {errors.PropertyName && <div className="text-red">{errors.PropertyName.message}</div>}
+          {errors.PropertyName && <div className="text-red text-sm">{errors.PropertyName.message}</div>}
         </section>
 
-        <section className="flex gap-x-4">
-          <div>
-            <div className="text-black">{t("location")}</div>
-            <input
-              type="text"
-              {...register('location')}
-              className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-              required
-            />
-            {errors.location && <div className="text-red">{errors.location.message}</div>}
-          </div>
+        <section className="flex gap-x-4 justify-between ">
+         
 
-          <div>
+          <div className="">
             <div className="text-black">{t("hotel_type")}</div>
             <select
               {...register('property_type')}
-              className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+              className={inputStyle(!!errors.property_type)}
               required
             >
               <option value="">{t("select")}</option>
               {propertyTypes.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.name_mn}
-                </option>
+                <option key={type.id} value={type.id}>{type.name_mn}</option>
               ))}
             </select>
-            {errors.property_type && <div className="text-red">{errors.property_type.message}</div>}
+            {errors.property_type && <div className="text-red text-sm">{errors.property_type.message}</div>}
+          </div>
+           <div className=" min-w-[200px]">
+            <div className="text-black">{t("location")}</div>
+            <textarea
+              rows={3}
+              {...register('location')}
+              className={`${inputStyle(!!errors.location)} min-w-[220px] resize min-h-[60px]`}
+              required
+            />
+            {errors.location && <div className="text-red text-sm">{errors.location.message}</div>}
           </div>
         </section>
 
         <section>
           <div className="text-black">{t("phone_number")}</div>
-          <PhoneInput
-            country={'mn'}
-            enableSearch
-            disableSearchIcon
-            value={getValues('phone')}
-            onChange={(phone) => setValue('phone', phone)}
-            inputClass="border p-2 w-full h-[45px] rounded-[15px]"
-          />
-          {errors.phone && <div className="text-red">{errors.phone.message}</div>}
+          <div className={`${errors.phone ? 'border-red' : 'border-soft'} border rounded-[15px]`}>
+            <PhoneInput
+              country={'mn'}
+              enableSearch
+              disableSearchIcon
+              value={getValues('phone')}
+              onChange={(phone) => setValue('phone', phone)}
+              inputClass="!w-full !h-[43px] !border-none !rounded-[15px]"
+            />
+          </div>
+          {errors.phone && <div className="text-red text-sm">{errors.phone.message}</div>}
         </section>
 
         <section>
@@ -208,15 +217,15 @@ export default function RegisterPage() {
           <input
             type="email"
             {...register('mail')}
-            className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+            className={inputStyle(!!errors.mail)}
             required
           />
-          {errors.mail && <div className="text-red">{errors.mail.message}</div>}
+          {errors.mail && <div className="text-red text-sm">{errors.mail.message}</div>}
         </section>
 
         <div className="flex gap-x-4">
           <Link
-            href={"/auth/login"}
+            href="/auth/login"
             className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
             <div className="flex">
