@@ -36,16 +36,19 @@ export default function Layout({
     const hotelId = userInfo?.hotel;
     const email = userInfo?.email;
 
-    // 👇 Construct the key and read `proceed` value
-    if (email) {
-      const proceedKey = `proceed_${email}`;
-      const storedValue = localStorage.getItem(proceedKey);
+    const proceedKey = `proceed_${email}`;
 
+    const checkProceedValue = () => {
+      const storedValue = localStorage.getItem(proceedKey);
       if (storedValue !== "2") {
         setForceHideSidebar(true);
-        setSidebarVisible(false); // Hide immediately
+        setSidebarVisible(false);
+      } else {
+        setForceHideSidebar(false);
       }
-    }
+    };
+
+    checkProceedValue();
 
     const fetchHotelInfo = async () => {
       try {
@@ -62,6 +65,16 @@ export default function Layout({
     };
 
     fetchHotelInfo();
+
+    // 👇 Listen to localStorage changes (useful for multi-tab behavior)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === proceedKey) {
+        checkProceedValue();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const toggleSidebar = () => {
