@@ -10,13 +10,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
+import { FaArrowAltCircleRight } from "react-icons/fa";
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { useTranslations } from "next-intl";
-import { FaArrowAltCircleRight } from "react-icons/fa";
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
-const API_CREATE_PROPERTY = 'https://dev.kacc.mn/api/properties/create/';
 const EBARIMT_API = 'https://info.ebarimt.mn/rest/merchant/info?regno=';
 
 interface PropertyType {
@@ -32,15 +31,21 @@ export default function RegisterPage() {
   const router = useRouter();
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [loadingCompany, setLoadingCompany] = useState(false);
-  const [regNo, setRegNo] = useState('');
+
+  // ✅ Load defaults from localStorage
+  const saved = typeof window !== "undefined" ? localStorage.getItem("hotelFormData") : null;
+  const parsedDefaults: Partial<FormFields> = saved ? JSON.parse(saved) : {};
+  const [regNo, setRegNo] = useState(parsedDefaults.register || '');
 
   const {
     register,
     handleSubmit,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
     resolver: zodResolver(schemaHotelRegistration2),
+    defaultValues: parsedDefaults,
   });
 
   useEffect(() => {
@@ -49,7 +54,7 @@ export default function RegisterPage() {
         const response = await fetch(API_COMBINED_DATA);
         const data = await response.json();
         if (data.property_types) {
-          setPropertyTypes([...data.property_types]);
+          setPropertyTypes(data.property_types);
         }
       } catch (error) {
         console.error("Error fetching combined data:", error);
@@ -84,54 +89,13 @@ export default function RegisterPage() {
     }
   };
 
-  const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    try {
-      const response = await fetch(API_CREATE_PROPERTY, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-  
-      const responseData = await response.json();
-  
-      if (!response.ok) {
-        // Show a specific error if message is available
-        if (responseData?.message) {
-          toast.error(responseData);
-        } else if(responseData?.register) {
-          console.log(responseData?.register);
-          toast.error(responseData?.register[0]);
-        }else{
-          toast.error("Registration failed please report to sysadmin")
-        }
-        return;
-      }
-  
-      const propertyId = responseData.pk;
-  
-      const propertyData = {
-        propertyBasicInfo: 1,
-        confirmAddress: 1,
-        propertyPolicies: 1,
-        google_map: '',
-        parking_situation: 'free',
-        property: propertyId,
-        general_facilities: [],
-        property_photos: [],
-      };
-  
-      localStorage.setItem('propertyData', JSON.stringify(propertyData));
-  
-      toast.success('Registration successful!');
+  const onSubmit: SubmitHandler<FormFields> = (data) => {
+    localStorage.setItem('hotelFormData', JSON.stringify(data));
+    toast.success('Мэдээллийг хадгаллаа. Дараагийн алхам руу шилжиж байна...');
+    setTimeout(() => {
       router.push('/auth/register/2');
-    } catch (error) {
-      toast.error('An unexpected error occurred during registration');
-      console.error('Error during registration:', error);
-    }
+    }, 1000);
   };
-  
 
   return (
     <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">
@@ -150,8 +114,9 @@ export default function RegisterPage() {
                 type="text"
                 value={regNo}
                 onChange={(e) => {
-                  setRegNo(e.target.value);
-                  setValue('register', e.target.value);
+                  const value = e.target.value;
+                  setRegNo(value);
+                  setValue('register', value);
                 }}
                 className="border p-2 w-full h-[45px] rounded-[15px]"
                 required
@@ -169,26 +134,19 @@ export default function RegisterPage() {
           </div>
 
           <div className="w-full group relative">
-  <div className="text-black">{t("company_name")}</div>
-  
-  <input
-    type="text"
-    {...register('CompanyName')}
-    className="border p-2 w-full text-soft mb-4 h-[45px] rounded-[15px]"
-    required
-    disabled
-  />
-
-  {/* Tooltip shown on hover */}
-  <div className="absolute left-0 -top-8 opacity-0 -translate-y-[100px] group-hover:opacity-100 transition bg-gray-700 text-white px-3 py-2 rounded-[15px] shadow-md pointer-events-none">
-    Хажууд байрлах товч дээр дарснаар ebarimt-аас таны компаний нэрийг оруулсан РД-аар хайх болно
-  </div>
-
-  {errors.CompanyName && (
-    <div className="text-red">{errors.CompanyName.message}</div>
-  )}
-</div>
-
+            <div className="text-black">{t("company_name")}</div>
+            <input
+              type="text"
+              {...register('CompanyName')}
+              className="border p-2 w-full text-soft mb-4 h-[45px] rounded-[15px]"
+              required
+              disabled
+            />
+            <div className="absolute left-0 -top-8 opacity-0 -translate-y-[100px] group-hover:opacity-100 transition bg-gray-700 text-white px-3 py-2 rounded-[15px] shadow-md pointer-events-none">
+              Хажууд байрлах товч дээр дарснаар ebarimt-аас таны компаний нэрийг оруулсан РД-аар хайх болно
+            </div>
+            {errors.CompanyName && <div className="text-red">{errors.CompanyName.message}</div>}
+          </div>
         </section>
 
         <section>
@@ -237,7 +195,8 @@ export default function RegisterPage() {
           <PhoneInput
             country={'mn'}
             enableSearch
-          disableSearchIcon
+            disableSearchIcon
+            value={getValues('phone')}
             onChange={(phone) => setValue('phone', phone)}
             inputClass="border p-2 w-full h-[45px] rounded-[15px]"
           />

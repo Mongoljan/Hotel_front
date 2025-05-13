@@ -14,7 +14,7 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { schemaRegistrationEmployee2 } from '@/app/schema';
 import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
-import { registerEmployeeAction } from './RegisterEmployeeAction';
+import { registerHotelAndEmployeeAction } from '../registerHotelAndEmployeeAction';
 
 type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
 
@@ -24,17 +24,31 @@ export default function RegisterEmployee() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
 
+  // Load employeeFormData from localStorage
+  const saved = typeof window !== 'undefined' ? localStorage.getItem('employeeFormData') : null;
+  const parsedDefaults: Partial<FormFields> = saved ? JSON.parse(saved) : {};
+
   const {
     register,
     handleSubmit,
     setValue,
     getValues,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
     resolver: zodResolver(schemaRegistrationEmployee2),
+    defaultValues: parsedDefaults,
   });
 
-  // Set user_type to 2 automatically
+  // Auto-save on change
+  useEffect(() => {
+    const subscription = watch((value) => {
+      localStorage.setItem('employeeFormData', JSON.stringify(value));
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
+
+  // Set user_type to 2
   useEffect(() => {
     setValue('user_type', 2);
   }, [setValue]);
@@ -44,26 +58,26 @@ export default function RegisterEmployee() {
     toast.error('Формыг бүрэн бөглөнө үү!');
   };
 
-  const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-    const hotel = propertyData?.property;
+  const onSubmit: SubmitHandler<FormFields> = async (employeeData) => {
+    const hotelData = JSON.parse(localStorage.getItem('hotelFormData') || '{}');
 
-    const result = await registerEmployeeAction({
-      ...data,
-      hotel,
-    });
+    if (!hotelData || !hotelData.register) {
+      toast.error('Зочид буудлын мэдээлэл олдсонгүй. Та эхлээд бүртгэлээ бөглөнө үү.');
+      return;
+    }
+
+    const result = await registerHotelAndEmployeeAction(hotelData, employeeData);
+
     if (result.success) {
-      toast.success('Таны бүртгэл амжилттай үүслээ. Та үүсгэсэн бүртгэлээрээ нэвтрэн орно уу?');
-    
+      toast.success('Бүртгэл амжилттай. Нэвтрэх хуудас руу чиглүүлж байна...');
+
       setTimeout(() => {
-        Object.keys(Cookies.get()).forEach((cookieName) => {
-          Cookies.remove(cookieName);
-        });
-        localStorage.clear();
+        Object.keys(Cookies.get()).forEach((cookieName) => Cookies.remove(cookieName));
+        localStorage.removeItem('hotelFormData');
+        localStorage.removeItem('employeeFormData');
         router.push('/auth/login');
       }, 1500);
-    }
-     else {
+    } else {
       toast.error(result.error || 'Бүртгэл амжилтгүй боллоо.');
     }
   };
@@ -79,7 +93,6 @@ export default function RegisterEmployee() {
           {t('staff_info')}
         </h2>
 
-        {/* Name */}
         <label className="text-black">{t('name')}</label>
         <input
           type="text"
@@ -90,7 +103,6 @@ export default function RegisterEmployee() {
           <p className="text-red-500 text-sm">{errors.contact_person_name.message}</p>
         )}
 
-        {/* Position */}
         <label className="text-black">{t('title')}</label>
         <input
           type="text"
@@ -101,7 +113,6 @@ export default function RegisterEmployee() {
           <p className="text-red-500 text-sm">{errors.position.message}</p>
         )}
 
-        {/* Phone */}
         <label className="text-black">{t('phone_number')}</label>
         <PhoneInput
           country="mn"
@@ -115,7 +126,6 @@ export default function RegisterEmployee() {
           <p className="text-red-500 text-sm">{errors.contact_number.message}</p>
         )}
 
-        {/* Email */}
         <label className="text-black">{t('email')}</label>
         <input
           type="email"
@@ -124,7 +134,6 @@ export default function RegisterEmployee() {
         />
         {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
 
-        {/* Password */}
         <label className="text-black">{t('password')}</label>
         <div className="relative mb-2">
           <input
@@ -142,7 +151,6 @@ export default function RegisterEmployee() {
         </div>
         {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
 
-        {/* Confirm Password */}
         <label className="text-black">{t('password_again')}</label>
         <div className="relative mb-2">
           <input
@@ -162,7 +170,6 @@ export default function RegisterEmployee() {
           <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>
         )}
 
-        {/* Navigation */}
         <div className="flex gap-x-4">
           <Link
             href="/auth/register"
