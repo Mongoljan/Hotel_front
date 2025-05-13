@@ -157,8 +157,9 @@ export default function RegisterPage() {
           </div>
         </section>
 
-        <section>
-          <div className="text-black">{t("hotel_name")}</div>
+        <section className="flex gap-x-4 justify-between">
+          <div className="min-w-[220px]">
+          <div className="text-black">{t("hotel_name")} </div>
           <input
             type="text"
             {...register('PropertyName')}
@@ -166,11 +167,7 @@ export default function RegisterPage() {
             required
           />
           {errors.PropertyName && <div className="text-red text-sm">{errors.PropertyName.message}</div>}
-        </section>
-
-        <section className="flex gap-x-4 justify-between ">
-         
-
+          </div>
           <div className="">
             <div className="text-black">{t("hotel_type")}</div>
             <select
@@ -185,12 +182,18 @@ export default function RegisterPage() {
             </select>
             {errors.property_type && <div className="text-red text-sm">{errors.property_type.message}</div>}
           </div>
-           <div className=" min-w-[200px]">
+        </section>
+
+        <section className="flex  ">
+         
+
+          
+           <div className="w-full">
             <div className="text-black">{t("location")}</div>
             <textarea
               rows={3}
               {...register('location')}
-              className={`${inputStyle(!!errors.location)} min-w-[220px] resize min-h-[60px]`}
+              className={`${inputStyle(!!errors.location)}  resize min-h-[60px]`}
               required
             />
             {errors.location && <div className="text-red text-sm">{errors.location.message}</div>}
