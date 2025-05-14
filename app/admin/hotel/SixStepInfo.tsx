@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import { FaRegCheckCircle } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaRegCheckCircle } from 'react-icons/fa';
 import AboutHotel from './AboutHotel';
 
 interface PropertyPhoto {
@@ -103,18 +102,24 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         const cachedPolicy = localStorage.getItem('propertyPolicy');
         const cachedAddress = localStorage.getItem('propertyAddress');
         const cachedBasic = localStorage.getItem('propertyBasicInfo');
-        const cachedBaseInfo = localStorage.getItem('propertyBaseInfo');
 
-        if (cachedDetail && cachedPolicy && cachedAddress && cachedBasic && cachedBaseInfo) {
+        let baseInfo: PropertyBaseInfo | null = null;
+
+        // ✅ Always fetch property base info fresh
+        const baseRes = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`);
+        if (!baseRes.ok) throw new Error('Failed to fetch propertyBaseInfo');
+        baseInfo = await baseRes.json();
+        setPropertyBaseInfo(baseInfo);
+        localStorage.setItem('propertyBaseInfo', JSON.stringify(baseInfo));
+
+        if (cachedDetail && cachedPolicy && cachedAddress && cachedBasic) {
           const parsedDetail = JSON.parse(cachedDetail);
           setPropertyDetail(parsedDetail);
           setPropertyImages(parsedDetail.property_photos);
           setPropertyPolicy(JSON.parse(cachedPolicy));
           setAddress(JSON.parse(cachedAddress));
           setBasicInfo(JSON.parse(cachedBasic));
-          setPropertyBaseInfo(JSON.parse(cachedBaseInfo));
         } else {
-          const baseInfo = await (await fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`)).json();
           const details = await (await fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`)).json();
           const matchedDetail = details?.[0];
           if (!matchedDetail) return setProceed(0);
@@ -130,13 +135,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           setPropertyPolicy(policy);
           setAddress(addressData);
           setBasicInfo(basicInfoData);
-          setPropertyBaseInfo(baseInfo);
 
           localStorage.setItem('propertyDetail', JSON.stringify(matchedDetail));
           localStorage.setItem('propertyPolicy', JSON.stringify(policy));
           localStorage.setItem('propertyAddress', JSON.stringify(addressData));
           localStorage.setItem('propertyBasicInfo', JSON.stringify(basicInfoData));
-          localStorage.setItem('propertyBaseInfo', JSON.stringify(baseInfo));
         }
 
         const combinedData = await (await fetch('https://dev.kacc.mn/api/combined-data/')).json();
@@ -170,9 +173,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         )}
       </div>
 
-      {/* Layout */}
       <div className="flex flex-col md:flex-row gap-6 items-start min-h-[300px]">
-        {/* Left: Image */}
         <div className="w-full md:w-2/5">
           {propertyImages.length > 0 && (
             <div className="relative bg-white rounded-xl overflow-hidden border border-cloud">
@@ -192,7 +193,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           )}
         </div>
 
-        {/* Right: Info Box */}
         <div className="w-full md:w-3/5 flex flex-col">
           <div className="mb-2 min-h-[50px]">
             {basicInfo && (
@@ -213,7 +213,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         </div>
       </div>
 
-      {/* Bottom Menu */}
       <div className="flex max-w-[700px] justify-between text-black text-[17px] mt-3 font-semibold mb-4">
         {['Бидний тухай', 'Байршил', 'Үйлчилгээ', 'Түгээмэл асуулт, хариулт'].map((label, index) => (
           <button key={index} className={Menu === index ? 'text-primary' : ''} onClick={() => setMenu(index)}>
@@ -237,11 +236,19 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   );
 }
 
-const InfoRow = ({ label, value, isBoolean = false }: { label: string; value: string | number | boolean | null | undefined; isBoolean?: boolean }) => (
+const InfoRow = ({
+  label,
+  value,
+  isBoolean = false,
+}: {
+  label: string;
+  value: string | number | boolean | null | undefined;
+  isBoolean?: boolean;
+}) => (
   <div className="flex justify-between">
     <p className="text-muted">{label}:</p>
     {isBoolean && typeof value === 'boolean' ? (
-      <span className={value ? 'text-green-500' : 'text-red-500'}>{value ? 'Тийм' : 'Үгүй'}</span>
+      <span className={value ? 'text-green-500' : 'text-red'}>{value ? 'Тийм' : 'Үгүй'}</span>
     ) : (
       <p>{value ?? '-'}</p>
     )}

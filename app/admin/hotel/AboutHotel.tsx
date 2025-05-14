@@ -59,7 +59,7 @@ const InfoRow = ({
   <div className="flex justify-between">
     <p className="text-muted">{label}:</p>
     {isBoolean && typeof value === 'boolean' ? (
-      <span className={value ? 'text-green-500' : 'text-red-500'}>
+      <span className={value ? 'text-green-500' : 'text-red'}>
         {value ? 'Тийм' : 'Үгүй'}
       </span>
     ) : (

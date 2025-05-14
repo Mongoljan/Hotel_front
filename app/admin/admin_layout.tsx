@@ -24,39 +24,73 @@ export default function Layout({
   children: React.ReactNode;
   userApproved: boolean;
 }) {
-  const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [hotelInfo, setHotelInfo] = useState<HotelInfo | null>(null);
-  const [forceHideSidebar, setForceHideSidebar] = useState(false);
 
+  // ✅ Initially unknown state
+  const [isSidebarVisible, setSidebarVisible] = useState<boolean>(false);
+  const [forceHideSidebar, setForceHideSidebar] = useState<boolean>(false);
+useEffect(() => {
+  setIsMounted(true);
+
+  const tryUntilSet = () => {
+    const value = localStorage.getItem("proceed");
+
+    if (value === "2") {
+      setSidebarVisible(true);
+      setForceHideSidebar(false);
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  // try once immediately
+  if (tryUntilSet()) return;
+
+  // retry a few times (since RegisterHotel might set 'proceed' after a delay)
+  const intervalId = setInterval(() => {
+    if (tryUntilSet()) {
+      clearInterval(intervalId);
+    }
+  }, 200);
+
+  // stop after 3 seconds
+  setTimeout(() => clearInterval(intervalId), 3000);
+
+  return () => clearInterval(intervalId);
+}, []);
+
+
+  // ✅ Listen for localStorage changes (multi-tab updates)
   useEffect(() => {
-    setIsMounted(true);
-
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const hotelId = userInfo?.hotel;
-    const email = userInfo?.email;
-
-    const proceedKey = `proceed_${email}`;
-
-    const checkProceedValue = () => {
-      const storedValue = localStorage.getItem(proceedKey);
-      if (storedValue !== "2") {
-        setForceHideSidebar(true);
-        setSidebarVisible(false);
-      } else {
-        setForceHideSidebar(false);
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "proceed") {
+        const value = e.newValue;
+        if (value === "2") {
+          setSidebarVisible(true);
+          setForceHideSidebar(false);
+        } else {
+          setSidebarVisible(false);
+          setForceHideSidebar(true);
+        }
       }
     };
 
-    checkProceedValue();
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
+  // ✅ Fetch hotel info
+  useEffect(() => {
     const fetchHotelInfo = async () => {
       try {
+        const stored = localStorage.getItem("userInfo");
+        const hotelId = stored ? JSON.parse(stored)?.hotel : null;
         if (!hotelId) return;
 
         const res = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}`);
         if (!res.ok) throw new Error("Failed to fetch hotel info");
-
         const hotel = await res.json();
         setHotelInfo(hotel);
       } catch (err) {
@@ -65,21 +99,11 @@ export default function Layout({
     };
 
     fetchHotelInfo();
-
-    // 👇 Listen to localStorage changes (useful for multi-tab behavior)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === proceedKey) {
-        checkProceedValue();
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const toggleSidebar = () => {
     if (!forceHideSidebar) {
-      setSidebarVisible(!isSidebarVisible);
+      setSidebarVisible((prev) => !prev);
     }
   };
 

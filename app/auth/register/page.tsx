@@ -11,8 +11,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { FaArrowAltCircleRight } from "react-icons/fa";
-import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
+import { PatternFormat } from 'react-number-format';
 import { useTranslations } from 'next-intl';
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
@@ -95,6 +94,9 @@ export default function RegisterPage() {
   };
 
   const onSubmit: SubmitHandler<FormFields> = (data) => {
+    const phoneRaw = data.phone.replace(/\s/g, ''); // e.g., '9512 9418' → '95129418'
+    data.phone = `976${phoneRaw}`; // prepend country code
+
     localStorage.setItem('hotelFormData', JSON.stringify(data));
     toast.success('Мэдээллийг хадгаллаа. Дараагийн алхам руу шилжиж байна...');
     setTimeout(() => {
@@ -159,16 +161,16 @@ export default function RegisterPage() {
 
         <section className="flex gap-x-4 justify-between">
           <div className="min-w-[220px]">
-          <div className="text-black">{t("hotel_name")} </div>
-          <input
-            type="text"
-            {...register('PropertyName')}
-            className={inputStyle(!!errors.PropertyName)}
-            required
-          />
-          {errors.PropertyName && <div className="text-red text-sm">{errors.PropertyName.message}</div>}
+            <div className="text-black">{t("hotel_name")}</div>
+            <input
+              type="text"
+              {...register('PropertyName')}
+              className={inputStyle(!!errors.PropertyName)}
+              required
+            />
+            {errors.PropertyName && <div className="text-red text-sm">{errors.PropertyName.message}</div>}
           </div>
-          <div className="">
+          <div>
             <div className="text-black">{t("hotel_type")}</div>
             <select
               {...register('property_type')}
@@ -184,32 +186,33 @@ export default function RegisterPage() {
           </div>
         </section>
 
-        <section className="flex  ">
-         
-
-          
-           <div className="w-full">
-            <div className="text-black">{t("location")}</div>
-            <textarea
-              rows={3}
-              {...register('location')}
-              className={`${inputStyle(!!errors.location)}  resize min-h-[60px]`}
-              required
-            />
-            {errors.location && <div className="text-red text-sm">{errors.location.message}</div>}
-          </div>
+        <section>
+          <div className="text-black">{t("location")}</div>
+          <textarea
+            rows={3}
+            {...register('location')}
+            className={`${inputStyle(!!errors.location)} resize min-h-[60px]`}
+            required
+          />
+          {errors.location && <div className="text-red text-sm">{errors.location.message}</div>}
         </section>
 
+        {/* Phone number field */}
         <section>
           <div className="text-black">{t("phone_number")}</div>
-          <div className={`${errors.phone ? 'border-red' : 'border-soft'} border rounded-[15px]`}>
-            <PhoneInput
-              country={'mn'}
-              enableSearch
-              disableSearchIcon
-              value={getValues('phone')}
-              onChange={(phone) => setValue('phone', phone)}
-              inputClass="!w-full !h-[43px] !border-none !rounded-[15px]"
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500 h-full mb-4">+976</span>
+            <PatternFormat
+              format="#### ####"
+              allowEmptyFormatting
+              mask="_"
+              value={getValues('phone') || ''}
+              onValueChange={({ value }) => {
+                setValue('phone', value); // e.g., "95129418"
+              }}
+              className={inputStyle(!!errors.phone)}
+              placeholder="9512 9418"
+              required
             />
           </div>
           {errors.phone && <div className="text-red text-sm">{errors.phone.message}</div>}

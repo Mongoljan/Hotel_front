@@ -299,7 +299,7 @@ export const schemaRegistrationEmployee2 =z.object({
   contact_person_name: z.string().min(3, { message: "Холбоо барих хүний нэр" }),
   user_type: z.number().min(1, { message: "User type is required" }),
   // user_type_id: z.string(),
-  position: z.string(),
+  position: z.string().min(3, {message:"Албан тушаал оруулна уу?"} ),
   contact_number: z.string().min(3, { message: "Гар утасны дугаар багадаа 3 оронтой байна." }),
   password: z.string().min(8, {
     message: "The password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",

@@ -69,7 +69,7 @@ export default function LoginForm() {
             onClick={() => setIsPasswordVisible((prev) => !prev)}
             className="absolute right-3 top-2"
           >
-            {isPasswordVisible ? <HiEye size={20} className="mt-2" /> : <HiEyeSlash size={20} className="mt-2" />}
+            {isPasswordVisible ? <HiEye size={20} className="mt-2 my-auto -translate-y-[2px]" /> : <HiEyeSlash size={20} className="mt-2 -translate-y-[2px]" />}
           </button>
         </div>
 

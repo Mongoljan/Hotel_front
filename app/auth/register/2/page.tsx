@@ -7,10 +7,10 @@ import { z } from 'zod';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { HiEye, HiEyeSlash } from 'react-icons/hi2';
-import PhoneInput from 'react-phone-input-2';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
+import { PatternFormat } from 'react-number-format';
 import { schemaRegistrationEmployee2 } from '@/app/schema';
 import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
@@ -24,7 +24,6 @@ export default function RegisterEmployee() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
 
-  // Load employeeFormData from localStorage
   const saved = typeof window !== 'undefined' ? localStorage.getItem('employeeFormData') : null;
   const parsedDefaults: Partial<FormFields> = saved ? JSON.parse(saved) : {};
 
@@ -40,7 +39,10 @@ export default function RegisterEmployee() {
     defaultValues: parsedDefaults,
   });
 
-  // Auto-save on change
+  // ✅ Conditional input border class
+  const inputBorderClass = (hasError: boolean) =>
+    `border ${hasError ? 'border-red' : 'border-soft'} p-2 w-full h-[45px] rounded-[15px]`;
+
   useEffect(() => {
     const subscription = watch((value) => {
       localStorage.setItem('employeeFormData', JSON.stringify(value));
@@ -48,7 +50,6 @@ export default function RegisterEmployee() {
     return () => subscription.unsubscribe();
   }, [watch]);
 
-  // Set user_type to 2
   useEffect(() => {
     setValue('user_type', 2);
   }, [setValue]);
@@ -65,6 +66,9 @@ export default function RegisterEmployee() {
       toast.error('Зочид буудлын мэдээлэл олдсонгүй. Та эхлээд бүртгэлээ бөглөнө үү.');
       return;
     }
+
+    // ✅ Normalize phone number
+    employeeData.contact_number = `976${employeeData.contact_number.replace(/\s/g, '')}`;
 
     const result = await registerHotelAndEmployeeAction(hotelData, employeeData);
 
@@ -97,49 +101,56 @@ export default function RegisterEmployee() {
         <input
           type="text"
           {...register('contact_person_name')}
-          className="border border-soft p-2 w-full mb-2 h-[45px] rounded-[15px]"
+          className={inputBorderClass(!!errors.contact_person_name)}
         />
         {errors.contact_person_name && (
-          <p className="text-red-500 text-sm">{errors.contact_person_name.message}</p>
+          <p className="text-red text-sm">{errors.contact_person_name.message}</p>
         )}
 
         <label className="text-black">{t('title')}</label>
         <input
           type="text"
           {...register('position')}
-          className="border border-soft p-2 w-full mb-2 h-[45px] rounded-[15px]"
+          className={inputBorderClass(!!errors.position)}
         />
         {errors.position && (
-          <p className="text-red-500 text-sm">{errors.position.message}</p>
+          <p className="text-red text-sm">{errors.position.message}</p>
         )}
 
         <label className="text-black">{t('phone_number')}</label>
-        <PhoneInput
-          country="mn"
-          enableSearch
-          disableSearchIcon
-          value={getValues('contact_number')}
-          onChange={(phone) => setValue('contact_number', phone)}
-          inputClass="border p-2 w-full h-[45px] rounded-[15px]"
-        />
+        <div className="flex items-center gap-2">
+          <span className="text-gray-500">+976</span>
+          <PatternFormat
+            format="#### ####"
+            allowEmptyFormatting
+            mask="_"
+            value={getValues('contact_number') || ''}
+            onValueChange={({ value }) => {
+              setValue('contact_number', value); // raw: 95129418
+            }}
+            className={inputBorderClass(!!errors.contact_number)}
+            placeholder="9512 9418"
+            required
+          />
+        </div>
         {errors.contact_number && (
-          <p className="text-red-500 text-sm">{errors.contact_number.message}</p>
+          <p className="text-red text-sm">{errors.contact_number.message}</p>
         )}
 
         <label className="text-black">{t('email')}</label>
         <input
           type="email"
           {...register('email')}
-          className="border border-soft p-2 w-full mb-2 h-[45px] rounded-[15px]"
+          className={inputBorderClass(!!errors.email)}
         />
-        {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+        {errors.email && <p className="text-red text-sm">{errors.email.message}</p>}
 
         <label className="text-black">{t('password')}</label>
         <div className="relative mb-2">
           <input
             type={isPasswordVisible ? 'text' : 'password'}
             {...register('password')}
-            className="border border-soft p-2 w-full h-[45px] rounded-[15px]"
+            className={inputBorderClass(!!errors.password)}
           />
           <button
             type="button"
@@ -149,14 +160,14 @@ export default function RegisterEmployee() {
             {isPasswordVisible ? <HiEye size={20} /> : <HiEyeSlash size={20} />}
           </button>
         </div>
-        {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
+        {errors.password && <p className="text-red text-sm">{errors.password.message}</p>}
 
         <label className="text-black">{t('password_again')}</label>
         <div className="relative mb-2">
           <input
             type={isConfirmPasswordVisible ? 'text' : 'password'}
             {...register('confirmPassword')}
-            className="border border-soft p-2 w-full h-[45px] rounded-[15px]"
+            className={inputBorderClass(!!errors.confirmPassword)}
           />
           <button
             type="button"
@@ -167,7 +178,7 @@ export default function RegisterEmployee() {
           </button>
         </div>
         {errors.confirmPassword && (
-          <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>
+          <p className="text-red text-sm">{errors.confirmPassword.message}</p>
         )}
 
         <div className="flex gap-x-4">
