@@ -30,8 +30,13 @@ export default function RegisterPage() {
   const router = useRouter();
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [loadingCompany, setLoadingCompany] = useState(false);
+
+  // Restore saved values
   const saved = typeof window !== "undefined" ? localStorage.getItem("hotelFormData") : null;
   const parsedDefaults: Partial<FormFields> = saved ? JSON.parse(saved) : {};
+  if (parsedDefaults.phone?.startsWith("976")) {
+    parsedDefaults.phone = parsedDefaults.phone.slice(3);
+  }
   const [regNo, setRegNo] = useState(parsedDefaults.register || '');
 
   const {
@@ -94,10 +99,12 @@ export default function RegisterPage() {
   };
 
   const onSubmit: SubmitHandler<FormFields> = (data) => {
-    const phoneRaw = data.phone.replace(/\s/g, ''); // e.g., '9512 9418' → '95129418'
-    data.phone = `976${phoneRaw}`; // prepend country code
+    const phoneRaw = data.phone.replace(/\s/g, '');
+    const dataToSave = { ...data, phone: phoneRaw };
+    localStorage.setItem('hotelFormData', JSON.stringify(dataToSave));
 
-    localStorage.setItem('hotelFormData', JSON.stringify(data));
+    const submitData = { ...data, phone: `976${phoneRaw}` };
+
     toast.success('Мэдээллийг хадгаллаа. Дараагийн алхам руу шилжиж байна...');
     setTimeout(() => {
       router.push('/auth/register/2');
@@ -208,7 +215,7 @@ export default function RegisterPage() {
               mask="_"
               value={getValues('phone') || ''}
               onValueChange={({ value }) => {
-                setValue('phone', value); // e.g., "95129418"
+                setValue('phone', value);
               }}
               className={inputStyle(!!errors.phone)}
               placeholder="9512 9418"
