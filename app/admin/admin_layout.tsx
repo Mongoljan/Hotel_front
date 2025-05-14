@@ -26,43 +26,36 @@ export default function Layout({
 }) {
   const [isMounted, setIsMounted] = useState(false);
   const [hotelInfo, setHotelInfo] = useState<HotelInfo | null>(null);
-
-  // ✅ Initially unknown state
   const [isSidebarVisible, setSidebarVisible] = useState<boolean>(false);
-  const [forceHideSidebar, setForceHideSidebar] = useState<boolean>(false);
-useEffect(() => {
-  setIsMounted(true);
+  const [forceHideSidebar, setForceHideSidebar] = useState<boolean>(true);
 
-  const tryUntilSet = () => {
-    const value = localStorage.getItem("proceed");
+  useEffect(() => {
+    setIsMounted(true);
 
-    if (value === "2") {
-      setSidebarVisible(true);
-      setForceHideSidebar(false);
-      return true;
-    } else {
-      return false;
-    }
-  };
+    const tryUntilSet = () => {
+      const value = localStorage.getItem("proceed");
+      if (value === "2") {
+        setSidebarVisible(true);
+        setForceHideSidebar(false);
+        return true;
+      } else {
+        return false;
+      }
+    };
 
-  // try once immediately
-  if (tryUntilSet()) return;
+    if (tryUntilSet()) return;
 
-  // retry a few times (since RegisterHotel might set 'proceed' after a delay)
-  const intervalId = setInterval(() => {
-    if (tryUntilSet()) {
-      clearInterval(intervalId);
-    }
-  }, 200);
+    const intervalId = setInterval(() => {
+      if (tryUntilSet()) {
+        clearInterval(intervalId);
+      }
+    }, 200);
 
-  // stop after 3 seconds
-  setTimeout(() => clearInterval(intervalId), 3000);
+    setTimeout(() => clearInterval(intervalId), 3000);
 
-  return () => clearInterval(intervalId);
-}, []);
+    return () => clearInterval(intervalId);
+  }, []);
 
-
-  // ✅ Listen for localStorage changes (multi-tab updates)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "proceed") {
@@ -81,7 +74,6 @@ useEffect(() => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // ✅ Fetch hotel info
   useEffect(() => {
     const fetchHotelInfo = async () => {
       try {
@@ -106,6 +98,7 @@ useEffect(() => {
       setSidebarVisible((prev) => !prev);
     }
   };
+  console.log(forceHideSidebar);
 
   if (!isMounted) return null;
 

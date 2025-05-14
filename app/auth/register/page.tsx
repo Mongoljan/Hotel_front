@@ -148,11 +148,11 @@ export default function RegisterPage() {
             <input
               type="text"
               {...register('CompanyName')}
-              className={`${inputStyle(!!errors.CompanyName)} text-soft`}
+              className={`${inputStyle(!!errors.CompanyName)} bg-gray-100 border-opacity-10 text-soft`}
               required
               disabled
             />
-            <div className="absolute left-0 -top-8 opacity-0 -translate-y-[100px] group-hover:opacity-100 transition bg-gray-700 text-white px-3 py-2 rounded-[15px] shadow-md pointer-events-none">
+            <div className="absolute left-0 -top-8 opacity-0 -translate-y-[100px] group-hover:opacity-100 transition bg-gray-800 text-white px-3 py-2 rounded-[15px] shadow-md pointer-events-none">
               Хажууд байрлах товч дээр дарснаар ebarimt-аас таны компаний нэрийг оруулсан РД-аар хайх болно
             </div>
             {errors.CompanyName && <div className="text-red text-sm">{errors.CompanyName.message}</div>}
