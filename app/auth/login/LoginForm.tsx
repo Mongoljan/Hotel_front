@@ -29,7 +29,7 @@ export default function LoginForm() {
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     const result = await loginAction(data);
-    console.log("here is token:", Cookies.get("token"));
+    // console.log("here is token:", Cookies.get("token"));
 
     if ('error' in result) {
       toast.error(result.error);
@@ -55,7 +55,7 @@ export default function LoginForm() {
           {...register('email')}
           className="border p-4 w-full mb-6 h-[45px] rounded-[15px]"
         />
-        {errors.email && <div className="text-red">{errors.email.message}</div>}
+        {errors.email && <div className="text-red text-sm">{errors.email.message}</div>}
 
         <div className="text-black">{t('password')}</div>
         <div className="relative">
@@ -73,7 +73,7 @@ export default function LoginForm() {
           </button>
         </div>
 
-        {errors.password && <div className="text-red">{errors.password.message}</div>}
+        {errors.password && <div className="text-red text-sm">{errors.password.message}</div>}
 
         <div className="flex justify-between text-black mb-4">
           <Link href="/auth/resetpassword" className="hover:text-blue-400">{t('remember')}</Link>

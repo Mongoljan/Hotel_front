@@ -100,7 +100,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px] rounded-[15px] text-gray-600"
+        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px] md:max-w-[500px] rounded-[15px] text-gray-600"
       >
         <h2 className="text-[30px] font-bold text-center text-black mb-8">{t("title")}</h2>
 
@@ -127,9 +127,9 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
         </div>
 
         <div className="mb-4">
-          <label className="text-black">Soum</label>
+          <label className="text-black">Аймаг</label>
           <select {...register('soum')} defaultValue="" className="border p-2 w-full h-[45px] rounded-[15px]">
-            <option value="" disabled>-- Select Soum --</option>
+            <option value="" disabled>-- Аймаг сонгох --</option>
             {filteredSoum.map((soum) => (
               <option key={soum.id} value={soum.id}>{soum.name}</option>
             ))}

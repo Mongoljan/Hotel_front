@@ -84,90 +84,96 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen h-full rounded-[12px]">
+    <div className="flex justify-center items-center min-h-screen h-full rounded-[12px] mt-[30px]">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px] rounded-[15px] text-gray-600"
+        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px] md:max-w-[500px] rounded-[15px] text-gray-600"
       >
         <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">{t('title')}</h2>
+
 
         <div className="text-black">{t('1')}</div>
         <input
           type="text"
           {...register('property_name_mn')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
+          className="border p-2 w-full mb-5 h-[45px] rounded-[15px]"
+
         />
-        {errors.property_name_mn && <div className="text-red">{errors.property_name_mn.message}</div>}
+        {errors.property_name_mn && <div className="text-red text-sm">{errors.property_name_mn.message}</div>}
 
         <div className="text-black">{t('2')}</div>
         <input
           type="text"
           {...register('property_name_en')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
+          className="border p-2 w-full mb-5 h-[45px] rounded-[15px]"
+
         />
-        {errors.property_name_en && <div className="text-red">{errors.property_name_en.message}</div>}
+        {errors.property_name_en && <div className="text-red text-sm">{errors.property_name_en.message}</div>}
 
         <div className="text-black">{t('3')}</div>
         <input
           type="date"
           {...register('start_date')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
+          className="border p-2 w-full mb-5 h-[45px] rounded-[15px]"
+
         />
-        {errors.start_date && <div className="text-red">{errors.start_date.message}</div>}
+        {errors.start_date && <div className="text-red text-sm">{errors.start_date.message}</div>}
 
         <div className="text-black">{t('4')}</div>
         <select
           {...register('star_rating')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
-          required
+          className="border p-2 w-full mb-5 h-[45px] rounded-[15px]"
+         
         >
-          <option value="">Select</option>
+          <option value="">Сонгох</option>
           {ratings.map((rating) => (
             <option key={rating.id} value={rating.id}>
               {rating.rating}
             </option>
           ))}
         </select>
-        {errors.star_rating && <div className="text-red">{errors.star_rating.message}</div>}
+        {errors.star_rating && <div className="text-red text-sm">{errors.star_rating.message}</div>}
 
-        <div className="text-black">{t('5')}?</div>
-<label className="flex items-center gap-2">
+        <div className="text-black mb-2">{t('5')}?</div>
+<label className="flex items-center gap-2 mb-5">
   <input type="checkbox" aria-label="yes" {...register('part_of_group')} />
   <span>Тийм</span>
 </label>
 
-
+<section className="flex mb-5">
+  <div className='w-1/2 my-auto'>
         <div className="text-black">{t('6')}</div>
         <input
           type="number"
           {...register('total_hotel_rooms')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+          className="border p-2 w-1/2 mb-4 h-[45px] rounded-[15px]"
           min={1}
-          required
+     
         />
-        {errors.total_hotel_rooms && <div className="text-red">{errors.total_hotel_rooms.message}</div>}
-
+        {errors.total_hotel_rooms && <div className="text-red text-sm">{errors.total_hotel_rooms.message}</div>}
+</div>
+<div className="w-1/2 my-auto ">
         <div className="text-black">{t('7')}</div>
         <input
           type="number"
           {...register('available_rooms')}
-          className="border p-2 w-full mb-4 h-[45px] rounded-[15px]"
+          className="border p-2 w-1/2 mb-4 h-[45px] rounded-[15px] "
           min={0}
-          required
+        
         />
-        {errors.available_rooms && <div className="text-red">{errors.available_rooms.message}</div>}
-
-        <div className="text-black">{t('8')}</div>
-        <label>
-        <input type="checkbox" {...register('sales_room_limitation')}/ >
-        <span>
+        {errors.available_rooms && <div className="text-red text-sm">{errors.available_rooms.message}</div>}
+        </div> 
+</section>
+<div className="mb-5">
+        <div className="text-black mb-2">{t('8')}</div>
+        <label className="mb-5">
+        <input type="checkbox" {...register('sales_room_limitation')} />
+        <span className="ml-3 translate-y-2">
           Тийм
         </span>
 </label>
+</div>
 
         <div className="text-black">{t('9')}</div>
         <select
@@ -181,7 +187,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
             </option>
           ))}
         </select>
-        {errors.languages && <div className="text-red">{errors.languages.message}</div>}
+        {errors.languages && <div className="text-red text-sm">{errors.languages.message}</div>}
 
         <div className="flex gap-x-4">
           <button

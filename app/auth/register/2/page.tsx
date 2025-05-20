@@ -91,11 +91,12 @@ export default function RegisterEmployee() {
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit, onError)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:max-w-[440px] rounded-[15px] text-gray-600"
+        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[450px] md:max-w-[440px] rounded-[15px] text-gray-600"
       >
         <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">
           {t('staff_info')}
         </h2>
+        <section className="mb-5">
 
         <label className="text-black">{t('name')}</label>
         <input
@@ -104,9 +105,11 @@ export default function RegisterEmployee() {
           className={inputBorderClass(!!errors.contact_person_name)}
         />
         {errors.contact_person_name && (
-          <p className="text-red text-sm">{errors.contact_person_name.message}</p>
+          <p className="text-red text-xs">{errors.contact_person_name.message}</p>
         )}
+        </section>
 
+ <section className="mb-5">
         <label className="text-black">{t('title')}</label>
         <input
           type="text"
@@ -114,12 +117,14 @@ export default function RegisterEmployee() {
           className={inputBorderClass(!!errors.position)}
         />
         {errors.position && (
-          <p className="text-red text-sm">{errors.position.message}</p>
+          <p className="text-red text-xs">{errors.position.message}</p>
         )}
+        </section>
 
+ <section className="mb-5">
         <label className="text-black">{t('phone_number')}</label>
         <div className="flex items-center gap-2">
-          <span className="text-gray-500">+976</span>
+          {/* <span className="text-gray-500">+976</span> */}
           <PatternFormat
             format="#### ####"
             allowEmptyFormatting
@@ -134,17 +139,21 @@ export default function RegisterEmployee() {
           />
         </div>
         {errors.contact_number && (
-          <p className="text-red text-sm">{errors.contact_number.message}</p>
+          <p className="text-red text-xs">{errors.contact_number.message}</p>
         )}
+        </section>
 
+ <section className="mb-5">
         <label className="text-black">{t('email')}</label>
         <input
           type="email"
           {...register('email')}
           className={inputBorderClass(!!errors.email)}
         />
-        {errors.email && <p className="text-red text-sm">{errors.email.message}</p>}
+        {errors.email && <p className="text-red text-xs">{errors.email.message}</p>}
+        </section>
 
+ <section className="mb-5">
         <label className="text-black">{t('password')}</label>
         <div className="relative mb-2">
           <input
@@ -160,7 +169,8 @@ export default function RegisterEmployee() {
             {isPasswordVisible ? <HiEye size={20} /> : <HiEyeSlash size={20} />}
           </button>
         </div>
-        {errors.password && <p className="text-red text-sm">{errors.password.message}</p>}
+        {errors.password && <p className="text-red text-xs">{errors.password.message}</p>}
+        </section>
 
         <label className="text-black">{t('password_again')}</label>
         <div className="relative mb-2">
@@ -178,7 +188,7 @@ export default function RegisterEmployee() {
           </button>
         </div>
         {errors.confirmPassword && (
-          <p className="text-red text-sm">{errors.confirmPassword.message}</p>
+          <p className="text-red text-xs">{errors.confirmPassword.message}</p>
         )}
 
         <div className="flex gap-x-4">

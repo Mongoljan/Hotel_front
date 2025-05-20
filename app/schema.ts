@@ -44,7 +44,7 @@ email: z.string().email({ message:"schemas_emailformat"}),
 const urlValidation = z.string().url({ message: "Invalid URL format" });
 export const schemaLogin = z.object({
     email: z.string().email('И-мэйл хаяг зөв биш байна'),
-    password: z.string().min(1, { message: "schemas_enteremail"}),
+    password: z.string().min(1, { message: "Нууц үгээ оруулна уу?"}),
   });
 
 
@@ -185,16 +185,16 @@ export const schemaHotelRegistration2 = z.object({
 
   register: z 
   .string()
-  .min(7, { message:"Байгууллагын РД 7 оронтой байх ёстойг анхаарна уу?",})
-  .max(7, { message:"Байгууллагын РД 7 оронтой байх ёстойг анхаарна уу?",}),
+  .min(7, { message:"Байгууллагын РД заавал шаардлагатай ",})
+  .max(7, { message:"Байгууллагын РД заавал шаардлагатай ",}),
   CompanyName: z
-  .string(),
+  .string().min(7, { message:"ААН-н нэрийг оруулна уу?",}),
   PropertyName : z
-  .string(),
+  .string().min(3, {message:"Буудлын нэрийг оруулна уу?"}),
   location : z
-  .string(),
+  .string().min(3, {message:"Ta хаягаа бичиж оруулна уу?"}),
   property_type: z
-  .string(),
+  .string().min(1, {message:"Буудлын төрлийг сонгоно уу?"}),
   phone: z 
   .string()
   .min(8, {message:"Гар утасны дугаарыг оруулна уу? "}),
@@ -206,8 +206,20 @@ export const schemaHotelRegistration2 = z.object({
 })
 
 export const schemaHotelSteps1 = z.object({
-  property_name_mn: z.string().min(1, { message: "Монгол нэрийг оруулна уу" }),
-  property_name_en: z.string().min(1, { message: "Англи нэрийг оруулна уу" }),
+property_name_mn: z
+  .string()
+  .min(1, { message: "Монгол нэрийг оруулна уу." })
+  .regex(/^[А-Яа-яӨөҮүЁё0-9\s]+$/, {
+    message: "Зөвхөн кирилл үсэг болон тоо бичнэ үү.",
+  }),
+
+property_name_en: z
+  .string()
+  .min(1, { message: "Англи нэрийг оруулна уу." })
+  .regex(/^[A-Za-z0-9\s]+$/, {
+    message: "Зөвхөн латин үсэг болон тоо бичнэ үү.",
+  }),
+
   start_date: z.string().refine(
     (date) => !isNaN(Date.parse(date)),
     { message: "Эхлэх огноо буруу байна" }
@@ -222,12 +234,18 @@ export const schemaHotelSteps1 = z.object({
     .min(1, { message: "Нийт өрөөний тоо хамгийн багадаа 1 байх ёстой" }),
   available_rooms: z
     .string()
-    .min(0, { message: "Боломжит өрөөний тоо сөрөг байж болохгүй" }),
+    .min(1, { message: "Боломжит өрөөний тоог оруулна уу?" }),
   sales_room_limitation: z.boolean(),
   languages: z
     .array(z.string())
     .min(1, { message: "Хамгийн багадаа нэг хэл сонгоно уу" }),
-});
+}).refine(
+    (data) => parseInt(data.available_rooms) <= parseInt(data.total_hotel_rooms),
+    {
+      message: 'Боломжит өрөөний тоо нь нийт өрөөний тооноос их байж болохгүй.',
+      path: ['available_rooms'],
+    }
+  );;
 
 export const schemaHotelSteps2 = z.object({
   zipCode: z
@@ -295,25 +313,33 @@ export const schemaHotelSteps6 = z.object({
 });
 
 export const schemaRegistrationEmployee2 =z.object({
-  email: z.string().email({ message: "Email format is invalid" }).max(255, { message: "Email address cannot exceed 255 characters" }),
-  contact_person_name: z.string().min(3, { message: "Холбоо барих хүний нэр" }),
+  email: z.string().email({ message: "И-мэйлийн формат стандарт биш байна" }).max(255, { message: "255 -aaс дээш тэмдэгт агуулж болохгүй" }),
+  contact_person_name: z.string().min(3, { message: "Та өөрийн нэрээ заавал бичиж оруулна уу?" }),
   user_type: z.number().min(1, { message: "User type is required" }),
   // user_type_id: z.string(),
-  position: z.string().min(3, {message:"Албан тушаал оруулна уу?"} ),
-  contact_number: z.string().min(3, { message: "Гар утасны дугаар багадаа 3 оронтой байна." }),
-  password: z.string().min(8, {
-    message: "The password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
-  }).max(100, {
-    message: "Password cannot exceed 100 characters",
-  }).regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
-    .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
-    .regex(/\d/, { message: "Password must contain at least one number" })
-    .regex(/[@$!%*;?&#]/, { message: "Password must contain at least one special character" }),
-  confirmPassword: z.string().min(8, { message: "The password must be at least 8 characters long" }),
+  position: z.string().min(3, {message:"Та өөрийн албан тушаалаа бичнэ үү?"} ),
+  contact_number: z.string().min(8, { message: "Та холбогдох утасны дугаараа заавал оруулна уу?" }),
+password: z.string().min(8, {
+  message: "Нууц үг нь дор хаяж 8 тэмдэгтээс бүрдэх ёстой бөгөөд нэг том үсэг, нэг жижиг үсэг, нэг тоо, нэг тусгай тэмдэгт агуулсан байх шаардлагатай.",
+}).max(100, {
+  message: "Нууц үг нь 100 тэмдэгтээс хэтрэх ёсгүй.",
+}).regex(/[a-z]/, {
+  message: "Нууц үг нь дор хаяж нэг жижиг үсэг агуулсан байх шаардлагатай.",
+}).regex(/[A-Z]/, {
+  message: "Нууц үг нь дор хаяж нэг том үсэг агуулсан байх шаардлагатай.",
+}).regex(/\d/, {
+  message: "Нууц үг нь дор хаяж нэг тоо агуулсан байх шаардлагатай.",
+}).regex(/[@$!%*;?&#]/, {
+  message: "Нууц үг нь дор хаяж нэг тусгай тэмдэгт (@$!%*;?&# гэх мэт) агуулсан байх шаардлагатай.",
+}),
+confirmPassword: z.string().min(8, {
+  message: "Нууц үг нь дор хаяж 8 тэмдэгтээс бүрдэх ёстой.",
+}),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
+  message: "Нууц үг таарахгүй байна.",
   path: ["confirmPassword"],
 });
+
 
 
 

@@ -15,7 +15,9 @@ export async function loginAction(formData: {
 
     if (!response.ok) {
       const error = await response.json();
-      return { error: error.message || 'Login failed' };
+      console.log(error);
+      return { error: error.message || 'Нэвтрэлт амжилтгүй. Та нууц үг нэвтрэх нэрээ дахин шалгана уу?' };
+      
     }
 
     const data = await response.json();

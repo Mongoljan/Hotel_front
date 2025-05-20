@@ -67,11 +67,19 @@ export default function RegisterPage() {
   }, []);
 
   useEffect(() => {
-    const subscription = watch((value) => {
-      localStorage.setItem('hotelFormData', JSON.stringify(value));
+    if (propertyTypes.length > 0 && parsedDefaults.property_type) {
+      setValue('property_type', parsedDefaults.property_type);
+    }
+  }, [propertyTypes, setValue]);
+
+  useEffect(() => {
+    const subscription = watch((_, { name }) => {
+      if (name) {
+        localStorage.setItem('hotelFormData', JSON.stringify(getValues()));
+      }
     });
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, getValues]);
 
   const fetchCompanyName = async () => {
     const trimmedRegNo = regNo.trim();
@@ -88,7 +96,7 @@ export default function RegisterPage() {
         setValue("CompanyName", data.name);
         toast.success(`РД: ${trimmedRegNo} -тай компани олдлоо!`);
       } else {
-        toast.error("Company not found.");
+        toast.error(`РД: ${trimmedRegNo} -тай компани олдсонгүй!`);
       }
     } catch (error) {
       console.error("Error fetching company info:", error);
@@ -119,11 +127,11 @@ export default function RegisterPage() {
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px] rounded-[15px] text-gray-600"
+        className="bg-white   p-8 px-8 border-primary border-solid border-[1px] max-w-[500px] rounded-[15px] text-gray-600"
       >
         <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">{t("hotel_info")}</h2>
 
-        <section className="flex gap-x-4">
+        <section className="flex gap-x-4 mb-4 ">
           <div className="w-full">
             <div className="text-black">{t("company_Reg")}</div>
             <div className="flex gap-2 items-center">
@@ -136,7 +144,6 @@ export default function RegisterPage() {
                   setValue('register', value);
                 }}
                 className={inputStyle(!!errors.register)}
-                required
               />
               <button
                 type="button"
@@ -147,7 +154,7 @@ export default function RegisterPage() {
                 {loadingCompany ? "..." : <FaArrowAltCircleRight />}
               </button>
             </div>
-            {errors.register && <div className="text-red text-sm">{errors.register.message}</div>}
+            {errors.register && <div className="text-red text-xs">{errors.register.message}</div>}
           </div>
 
           <div className="w-full group relative">
@@ -156,59 +163,55 @@ export default function RegisterPage() {
               type="text"
               {...register('CompanyName')}
               className={`${inputStyle(!!errors.CompanyName)} bg-gray-100 border-opacity-10 text-soft`}
-              required
               disabled
             />
             <div className="absolute left-0 -top-8 opacity-0 -translate-y-[100px] group-hover:opacity-100 transition bg-gray-800 text-white px-3 py-2 rounded-[15px] shadow-md pointer-events-none">
               Хажууд байрлах товч дээр дарснаар ebarimt-аас таны компаний нэрийг оруулсан РД-аар хайх болно
             </div>
-            {errors.CompanyName && <div className="text-red text-sm">{errors.CompanyName.message}</div>}
+            {errors.CompanyName && <div className="text-red text-xs">{errors.CompanyName.message}</div>}
           </div>
         </section>
 
-        <section className="flex gap-x-4 justify-between">
-          <div className="min-w-[220px]">
+        <section className="flex gap-x-4 justify-between mb-4">
+          <div className="min-w-[220px] md:min-w-[270px]">
             <div className="text-black">{t("hotel_name")}</div>
             <input
               type="text"
               {...register('PropertyName')}
               className={inputStyle(!!errors.PropertyName)}
-              required
             />
-            {errors.PropertyName && <div className="text-red text-sm">{errors.PropertyName.message}</div>}
+            {errors.PropertyName && <div className="text-red text-xs">{errors.PropertyName.message}</div>}
           </div>
           <div>
             <div className="text-black">{t("hotel_type")}</div>
             <select
               {...register('property_type')}
               className={inputStyle(!!errors.property_type)}
-              required
             >
               <option value="">{t("select")}</option>
               {propertyTypes.map((type) => (
                 <option key={type.id} value={type.id}>{type.name_mn}</option>
               ))}
             </select>
-            {errors.property_type && <div className="text-red text-sm">{errors.property_type.message}</div>}
+            {errors.property_type && <div className="text-red text-xs">{errors.property_type.message}</div>}
           </div>
         </section>
 
-        <section>
+        <section className="mb-4">
           <div className="text-black">{t("location")}</div>
           <textarea
             rows={3}
             {...register('location')}
             className={`${inputStyle(!!errors.location)} resize min-h-[60px]`}
-            required
           />
-          {errors.location && <div className="text-red text-sm">{errors.location.message}</div>}
+          {errors.location && <div className="text-red text-xs">{errors.location.message}</div>}
         </section>
 
         {/* Phone number field */}
-        <section>
+        <section className="mb-4">
           <div className="text-black">{t("phone_number")}</div>
           <div className="flex items-center gap-2">
-            <span className="text-gray-500 h-full mb-4">+976</span>
+            {/* <span className="text-gray-500 h-full mb-4">+976</span> */}
             <PatternFormat
               format="#### ####"
               allowEmptyFormatting
@@ -219,10 +222,9 @@ export default function RegisterPage() {
               }}
               className={inputStyle(!!errors.phone)}
               placeholder="9512 9418"
-              required
             />
           </div>
-          {errors.phone && <div className="text-red text-sm">{errors.phone.message}</div>}
+          {errors.phone && <div className="text-red text-xs">{errors.phone.message}</div>}
         </section>
 
         <section>
@@ -231,9 +233,8 @@ export default function RegisterPage() {
             type="email"
             {...register('mail')}
             className={inputStyle(!!errors.mail)}
-            required
           />
-          {errors.mail && <div className="text-red text-sm">{errors.mail.message}</div>}
+          {errors.mail && <div className="text-red text-xs">{errors.mail.message}</div>}
         </section>
 
         <div className="flex gap-x-4">

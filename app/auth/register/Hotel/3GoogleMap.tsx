@@ -44,7 +44,7 @@ export default function RegisterHotel2({ onNext, onBack }: Props) {
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
+        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px]  md:max-w-[500px] rounded-[15px] text-gray-600"
       >
         <h2 className="text-2xl font-bold text-center mb-6">{t("title")}</h2>
 
