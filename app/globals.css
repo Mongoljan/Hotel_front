@@ -2,9 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
 
 @layer utilities {
   .text-balance {
@@ -15,6 +12,7 @@ body {
 @layer base {
   :root {
     --background: 215 78% 96%;
+      --font-commissioner: 'Commissioner', 'Helvetica Neue', 'Arial', sans-serif;
     --foreground: 240 10% 3.9%;
     --card: 210 70% 72%;
     --card-foreground: 240 10% 3.9%;
