@@ -11,7 +11,6 @@ import { FaArrowRight, FaArrowLeft } from 'react-icons/fa6';
 import { useTranslations } from 'next-intl';
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
-const API_CONFIRM_ADDRESS = 'https://dev.kacc.mn/api/confirm-address/';
 
 type FormFields = z.infer<typeof schemaHotelSteps2>;
 
@@ -27,6 +26,7 @@ interface CombinedData {
 
 export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const t = useTranslations("2ConfirmAddress");
+
   const [combinedData, setCombinedData] = useState<CombinedData>({
     province: [],
     soum: [],
@@ -34,7 +34,10 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
   });
 
   const [filteredSoum, setFilteredSoum] = useState<Soum[]>([]);
-  const [filteredDistrict, setFilteredDistrict] = useState<District[]>([]);
+  
+
+  const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+  const defaultValues = stored.step2 || {};
 
   const {
     register,
@@ -43,6 +46,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps2),
+    defaultValues,
   });
 
   const selectedProvinceId = watch('province_city');
@@ -64,35 +68,18 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
   useEffect(() => {
     const provinceId = Number(selectedProvinceId);
     const filteredSoumList = combinedData.soum.filter((s) => s.code === provinceId);
-    const filteredDistrictList = combinedData.district.filter((d) => d.code === provinceId);
+
     setFilteredSoum(filteredSoumList);
-    setFilteredDistrict(filteredDistrictList);
+
   }, [selectedProvinceId, combinedData]);
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    try {
-      const response = await fetch(API_CONFIRM_ADDRESS, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+    const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    propertyData.step2 = data;
+    localStorage.setItem('propertyData', JSON.stringify(propertyData));
 
-      if (response.ok) {
-        const responseData = await response.json();
-        const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-        propertyData.confirmAddress = responseData.id;
-        localStorage.setItem('propertyData', JSON.stringify(propertyData));
-
-        toast.success('Address confirmed successfully!');
-        onNext();
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || 'Address confirmation failed.');
-      }
-    } catch (error) {
-      console.error('Submission error:', error);
-      toast.error('An unexpected error occurred while confirming the address.');
-    }
+    toast.success('Хаягийн мэдээлэл хадгалагдлаа!');
+    onNext();
   };
 
   return (
@@ -105,9 +92,9 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
         <h2 className="text-[30px] font-bold text-center text-black mb-8">{t("title")}</h2>
 
         <div className="mb-4">
-          <label className="text-black">Province</label>
+          <label className="text-black">Хот/Аймаг</label>
           <select {...register('province_city')} defaultValue="" className="border p-2 w-full h-[45px] rounded-[15px]">
-            <option value="" disabled>-- Select Province --</option>
+            <option value="" disabled>-- Хот Аймаг сонгох --</option>
             {combinedData.province.map((province) => (
               <option key={province.id} value={province.id}>{province.name}</option>
             ))}
@@ -116,25 +103,20 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
         </div>
 
         <div className="mb-4">
-          <label className="text-black">District</label>
-          <select {...register('district')} defaultValue="" className="border p-2 w-full h-[45px] rounded-[15px]">
-            <option value="" disabled>-- Select District --</option>
-            {filteredDistrict.map((district) => (
-              <option key={district.id} value={district.id}>{district.name}</option>
-            ))}
-          </select>
-          {errors.district && <div className="text-red text-sm">{errors.district.message}</div>}
-        </div>
-
-        <div className="mb-4">
-          <label className="text-black">Аймаг</label>
+          <label className="text-black">Сум/Дүүрэг</label>
           <select {...register('soum')} defaultValue="" className="border p-2 w-full h-[45px] rounded-[15px]">
-            <option value="" disabled>-- Аймаг сонгох --</option>
+            <option value="" disabled>-- Сум/Дүүрэг сонгох --</option>
             {filteredSoum.map((soum) => (
               <option key={soum.id} value={soum.id}>{soum.name}</option>
             ))}
           </select>
           {errors.soum && <div className="text-red text-sm">{errors.soum.message}</div>}
+        </div>
+
+        <div className="mb-4">
+          <label className="text-black">Баг/Хороо</label>
+          <input type="text" {...register('district')} className="border p-2 w-full h-[45px] rounded-[15px]" />
+          {errors.district && <div className="text-red text-sm">{errors.district.message}</div>}
         </div>
 
         <div className="mb-4">
@@ -144,7 +126,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
         </div>
 
         <div className="mb-4">
-          <label className="text-black">Total Floor Number</label>
+          <label className="text-black">Давхрын тоо</label>
           <input type="number" {...register('total_floor_number')} className="border p-2 w-full h-[45px] rounded-[15px]" />
           {errors.total_floor_number && <div className="text-red text-sm">{errors.total_floor_number.message}</div>}
         </div>

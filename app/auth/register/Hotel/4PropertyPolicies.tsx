@@ -10,8 +10,6 @@ import { schemaHotelSteps3 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 
-const API_PROPERTY_POLICIES = 'https://dev.kacc.mn/api/property-policies/';
-
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
 type Props = {
@@ -22,15 +20,25 @@ type Props = {
 export default function RegisterHotel3({ onNext, onBack }: Props) {
   const t = useTranslations("4PropertyPolicies");
 
+  // Restore and flatten nested cancellation_fee structure
+  const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+  const defaultValues = stored.step4
+    ? {
+        ...stored.step4,
+        ...(stored.step4.cancellation_fee || {}),
+      }
+    : {};
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps3),
+    defaultValues,
   });
 
-  const onSubmit: SubmitHandler<FormFields> = async (data) => {
+  const onSubmit: SubmitHandler<FormFields> = (data) => {
     const formattedData = {
       cancellation_fee: {
         cancel_time: data.cancel_time,
@@ -48,37 +56,16 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
       allow_pets: data.allow_pets,
     };
 
-    try {
-      const response = await fetch(API_PROPERTY_POLICIES, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formattedData),
-      });
+    const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    propertyData.step4 = formattedData;
+    localStorage.setItem('propertyData', JSON.stringify(propertyData));
 
-      if (response.ok) {
-        const responseData = await response.json();
-        const propertyPoliciesId = responseData.id;
-
-        const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-        propertyData.propertyPolicies = propertyPoliciesId;
-        localStorage.setItem('propertyData', JSON.stringify(propertyData));
-
-        toast.success('Property policies saved successfully!');
-        onNext();
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || 'Saving property policies failed.');
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred while saving property policies.');
-      console.error('Error:', error);
-    }
+    toast.success('Property policy data saved!');
+    onNext();
   };
 
   return (
-    <div className="flex justify-center items-center ">
+    <div className="flex justify-center items-center">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -93,7 +80,6 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
               <input type="time" {...register('cancel_time')} className="border p-2 w-full rounded-[15px]" />
               {errors.cancel_time && <div className="text-red text-sm">{errors.cancel_time.message}</div>}
             </div>
-
             <div className="w-1/2">
               <label className="text-black">{t("2")} (%)</label>
               <input type="text" {...register('before_fee')} className="border p-2 w-full rounded-[15px]" />
@@ -109,7 +95,6 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
               <input type="text" {...register('after_fee')} className="border p-2 w-full rounded-[15px]" />
               {errors.after_fee && <div className="text-red text-sm">{errors.after_fee.message}</div>}
             </div>
-
             <div className="w-1/2">
               <label className="text-black">{t("4")} (%)</label>
               <input type="text" {...register('subsequent_days_percentage')} className="border p-2 w-full rounded-[15px]" />
@@ -131,7 +116,6 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
               <input type="time" {...register('check_in_from')} className="border p-2 w-full rounded-[15px]" />
               {errors.check_in_from && <div className="text-red text-sm">{errors.check_in_from.message}</div>}
             </div>
-
             <div className="w-1/2">
               <label className="text-black">{t("7")}</label>
               <input type="time" {...register('check_in_until')} className="border p-2 w-full rounded-[15px]" />
@@ -147,7 +131,6 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
               <input type="time" {...register('check_out_from')} className="border p-2 w-full rounded-[15px]" />
               {errors.check_out_from && <div className="text-red text-sm">{errors.check_out_from.message}</div>}
             </div>
-
             <div className="w-1/2">
               <label className="text-black">{t("9")}</label>
               <input type="time" {...register('check_out_until')} className="border p-2 w-full rounded-[15px]" />
@@ -172,10 +155,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             <label className="text-black">{t("11")}</label>
             <div className="flex items-center">
               <input type="checkbox" id="allowChildren" {...register("allow_children")} className="hidden peer" />
-              <label
-                htmlFor="allowChildren"
-                className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer select-none transition peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white peer-hover:bg-gray-100"
-              >
+              <label htmlFor="allowChildren" className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer select-none transition peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white peer-hover:bg-gray-100">
                 {t("15")}
               </label>
             </div>
@@ -185,10 +165,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             <label className="text-black">{t("12")}</label>
             <div className="flex items-center">
               <input type="checkbox" id="allowPets" {...register('allow_pets')} className="hidden peer" />
-              <label
-                htmlFor="allowPets"
-                className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer select-none transition peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white peer-hover:bg-gray-100"
-              >
+              <label htmlFor="allowPets" className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer select-none transition peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white peer-hover:bg-gray-100">
                 {t("15")}
               </label>
             </div>

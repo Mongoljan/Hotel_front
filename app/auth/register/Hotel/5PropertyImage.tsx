@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { ToastContainer, toast } from 'react-toastify';
@@ -9,8 +9,6 @@ import { FaArrowLeft, FaArrowRight, FaPlus, FaTrash } from 'react-icons/fa6';
 import { schemaHotelSteps5 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
-
-const API_PROPERTY_IMAGES = 'https://dev.kacc.mn/api/property-images/';
 
 type FormFields = z.infer<typeof schemaHotelSteps5>;
 
@@ -21,6 +19,12 @@ type Props = {
 
 export default function RegisterHotel5({ onNext, onBack }: Props) {
   const t = useTranslations("5PropertyImages");
+
+  const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+  const defaultValues: FormFields = stored.step5 || {
+    entries: [{ images: '', descriptions: '' }],
+  };
+
   const {
     register,
     control,
@@ -30,12 +34,9 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps5),
-    defaultValues: {
-      entries: [{ images: '', descriptions: '' }],
-    },
+    defaultValues,
   });
 
-  // watch entries so previews update immediately
   const watchedEntries = watch('entries');
 
   const { fields, append, remove } = useFieldArray({
@@ -49,44 +50,19 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64Image = reader.result as string;
-        // update the form value (and trigger validation/render)
         setValue(`entries.${index}.images`, base64Image, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    try {
-      const formattedData = data.entries.map(entry => ({
-        image: entry.images,
-        description: entry.descriptions,
-      }));
+  const onSubmit: SubmitHandler<FormFields> = (data) => {
+    const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    propertyData.step5 = data;
+    localStorage.setItem('propertyData', JSON.stringify(propertyData));
 
-      const response = await fetch(API_PROPERTY_IMAGES, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formattedData),
-      });
-
-      if (response.ok) {
-        const responseData = await response.json();
-        const propertyPhotos = responseData.map((item: any) => item.id);
-
-        const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-        propertyData.property_photos = propertyPhotos;
-        localStorage.setItem('propertyData', JSON.stringify(propertyData));
-
-        toast.success('Property images saved successfully!');
-        onNext();
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || 'Saving property images failed.');
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred while saving property images.');
-      console.error('Error:', error);
-    }
+    toast.success('Зураг, тайлбар хадгалагдлаа!');
+    onNext();
   };
 
   return (

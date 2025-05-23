@@ -205,47 +205,65 @@ export const schemaHotelRegistration2 = z.object({
 
 })
 
-export const schemaHotelSteps1 = z.object({
-property_name_mn: z
-  .string()
-  .min(1, { message: "Монгол нэрийг оруулна уу." })
-  .regex(/^[А-Яа-яӨөҮүЁё0-9\s]+$/, {
-    message: "Зөвхөн кирилл үсэг болон тоо бичнэ үү.",
-  }),
+export const schemaHotelSteps1 = z
+  .object({
+    property_name_mn: z
+      .string()
+      .min(1, { message: "Монгол нэрийг оруулна уу." })
+      .regex(/^[А-Яа-яӨөҮүЁё0-9\s]+$/, {
+        message: "Зөвхөн кирилл үсэг болон тоо бичнэ үү.",
+      }),
 
-property_name_en: z
-  .string()
-  .min(1, { message: "Англи нэрийг оруулна уу." })
-  .regex(/^[A-Za-z0-9\s]+$/, {
-    message: "Зөвхөн латин үсэг болон тоо бичнэ үү.",
-  }),
+    property_name_en: z
+      .string()
+      .min(1, { message: "Англи нэрийг оруулна уу." })
+      .regex(/^[A-Za-z0-9\s]+$/, {
+        message: "Зөвхөн латин үсэг болон тоо бичнэ үү.",
+      }),
 
-  start_date: z.string().refine(
-    (date) => !isNaN(Date.parse(date)),
-    { message: "Эхлэх огноо буруу байна" }
-  ),
-  star_rating: z
-    .string()
-    .min(1, { message: "Одны зэрэглэл хамгийн багадаа 1 байх ёстой" })
-    .max(5, { message: "Одны зэрэглэл хамгийн ихдээ 5 байх ёстой" }),
-  part_of_group: z.boolean(),
-  total_hotel_rooms: z
-    .string()
-    .min(1, { message: "Нийт өрөөний тоо хамгийн багадаа 1 байх ёстой" }),
-  available_rooms: z
-    .string()
-    .min(1, { message: "Боломжит өрөөний тоог оруулна уу?" }),
-  sales_room_limitation: z.boolean(),
-  languages: z
-    .array(z.string())
-    .min(1, { message: "Хамгийн багадаа нэг хэл сонгоно уу" }),
-}).refine(
+    start_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
+      message: "Эхлэх огноо буруу байна",
+    }),
+
+    star_rating: z
+      .string()
+      .min(1, { message: "Одны зэрэглэл хамгийн багадаа 1 байх ёстой" })
+      .max(5, { message: "Одны зэрэглэл хамгийн ихдээ 5 байх ёстой" }),
+
+    part_of_group: z.boolean(),
+
+    group_name: z.string().optional(),
+
+    total_hotel_rooms: z
+      .string()
+      .min(1, { message: "Нийт өрөөний тоо хамгийн багадаа 1 байх ёстой" }),
+
+    available_rooms: z
+      .string()
+      .min(1, { message: "Боломжит өрөөний тоог оруулна уу?" }),
+
+    sales_room_limitation: z.boolean(),
+
+    languages: z
+      .array(z.string())
+      .min(1, { message: "Хамгийн багадаа нэг хэл сонгоно уу" }),
+  })
+  .refine(
     (data) => parseInt(data.available_rooms) <= parseInt(data.total_hotel_rooms),
     {
-      message: 'Боломжит өрөөний тоо нь нийт өрөөний тооноос их байж болохгүй.',
-      path: ['available_rooms'],
+      message: "Боломжит өрөөний тоо нь нийт өрөөний тооноос их байж болохгүй.",
+      path: ["available_rooms"],
     }
-  );;
+  )
+  .superRefine((data, ctx) => {
+    if (data.part_of_group && (!data.group_name || data.group_name.trim() === '')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Бүлгийн нэрийг заавал оруулна уу.",
+        path: ["group_name"],
+      });
+    }
+  });
 
 export const schemaHotelSteps2 = z.object({
   zipCode: z
@@ -258,15 +276,15 @@ export const schemaHotelSteps2 = z.object({
   province_city: z
     .string()
     .min(1, { message: "Хот/аймгийн мэдээллийг оруулна уу" }),
-  city: z
-    .string()
-    .min(1, { message: "Хорооны мэдээллийг оруулна уу" }),
+  // city: z
+  //   .string()
+  //   .min(1, { message: "Хорооны мэдээллийг оруулна уу" }),
   soum: z
     .string()
     .min(1, { message: "Сум/дүүргийн мэдээллийг оруулна уу" }),
   district: z
     .string()
-    .min(1, { message: "Дүүргийн мэдээллийг оруулна уу" }),
+    .min(1, { message: "Баг/Хорооны мэдээллийг оруулна уу" }),
 });
 
 export const schemaHotelSteps3 = z.object({

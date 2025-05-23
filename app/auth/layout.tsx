@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+
 import { WavyBackground } from "../../components/ui/wavy-background";
 import "../globals.css";
 import Topbar from "./TopbarAuth";
-const geistSans = localFont({
-  src: "../fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+import { Commissioner } from "next/font/google";
+
+
+const commissioner = Commissioner({
+  subsets: ["latin"],
+  variable: "--font-commissioner",
+  display: "swap",
 });
-const geistMono = localFont({
-  src: "../fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -28,10 +27,8 @@ export default function RootLayout({
 
 {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="mn">
+<body className={`${commissioner.variable} antialiased font-sans`}>
         <Topbar/>
         {/* <WavyBackground className="max-w-4xl mx-auto pb-40"> */}
         

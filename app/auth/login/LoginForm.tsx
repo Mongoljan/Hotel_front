@@ -76,8 +76,8 @@ export default function LoginForm() {
         {errors.password && <div className="text-red text-sm">{errors.password.message}</div>}
 
         <div className="flex justify-between text-black mb-4">
-          <Link href="/auth/resetpassword" className="hover:text-blue-400">{t('remember')}</Link>
-          <Link href="/auth/resetpassword" className="hover:text-blue-400">{t('savePassword')}</Link>
+          <Link href="/auth/resetpassword" className="hover:text-blue-400 text-sm underline">{t('remember')}</Link>
+          <Link href="/auth/resetpassword" className="hover:text-blue-400 text-sm underline">{t('savePassword')}</Link>
         </div>
 
         <button

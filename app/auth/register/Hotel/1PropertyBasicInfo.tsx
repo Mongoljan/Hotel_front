@@ -11,7 +11,6 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { useTranslations } from 'next-intl';
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
-const API_PROPERTY_BASIC_INFO = 'https://dev.kacc.mn/api/property-basic-info/';
 
 interface LanguageType {
   id: number;
@@ -35,12 +34,19 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
   const [languages, setLanguages] = useState<LanguageType[]>([]);
   const [ratings, setRatings] = useState<RatingType[]>([]);
 
+  // Load stored values if available
+  const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+  const defaultValues = stored.step1 || {};
+
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps1),
+    defaultValues,
   });
 
   useEffect(() => {
@@ -58,29 +64,14 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
   }, []);
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    try {
-      const response = await fetch(API_PROPERTY_BASIC_INFO, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+    const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    localStorage.setItem(
+      'propertyData',
+      JSON.stringify({ ...stored, step1: data })
+    );
 
-      if (response.ok) {
-        const { id } = await response.json();
-        const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
-        stored.propertyBasicInfo = id;
-        localStorage.setItem('propertyData', JSON.stringify(stored));
-
-        toast.success(t('saveSuccess') || 'Basic information saved successfully!');
-        onNext();
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || t('saveError') || 'Saving basic information failed.');
-      }
-    } catch (error) {
-      toast.error(t('saveErrorUnexpected') || 'An unexpected error occurred while saving basic information');
-      console.error('Error:', error);
-    }
+    toast.success(t('saveSuccess') || 'Мэдээлэл хадгалагдлаа!');
+    onNext();
   };
 
   return (
@@ -92,13 +83,11 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       >
         <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">{t('title')}</h2>
 
-
         <div className="text-black">{t('1')}</div>
         <input
           type="text"
           {...register('property_name_mn')}
           className="border p-2 w-full mb-5 h-[45px] rounded-[15px]"
-
         />
         {errors.property_name_mn && <div className="text-red text-sm">{errors.property_name_mn.message}</div>}
 
@@ -107,7 +96,6 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
           type="text"
           {...register('property_name_en')}
           className="border p-2 w-full mb-5 h-[45px] rounded-[15px]"
-
         />
         {errors.property_name_en && <div className="text-red text-sm">{errors.property_name_en.message}</div>}
 
@@ -116,7 +104,6 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
           type="date"
           {...register('start_date')}
           className="border p-2 w-full mb-5 h-[45px] rounded-[15px]"
-
         />
         {errors.start_date && <div className="text-red text-sm">{errors.start_date.message}</div>}
 
@@ -124,7 +111,6 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         <select
           {...register('star_rating')}
           className="border p-2 w-full mb-5 h-[45px] rounded-[15px]"
-         
         >
           <option value="">Сонгох</option>
           {ratings.map((rating) => (
@@ -136,44 +122,53 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         {errors.star_rating && <div className="text-red text-sm">{errors.star_rating.message}</div>}
 
         <div className="text-black mb-2">{t('5')}?</div>
-<label className="flex items-center gap-2 mb-5">
-  <input type="checkbox" aria-label="yes" {...register('part_of_group')} />
-  <span>Тийм</span>
-</label>
+        <label className="flex items-center gap-2 mb-5">
+          <input type="checkbox" aria-label="yes" {...register('part_of_group')} />
+          <span>Тийм</span>
+        </label>
+        {watch('part_of_group') && (
+  <>
+    <div className="text-black">{t('groupName')}</div>
+    <input
+      type="text"
+      {...register('group_name')}
+      className="border p-2 w-full mb-5 h-[45px] rounded-[15px]"
+    />
+    {errors.group_name && <div className="text-red text-sm">{errors.group_name.message}</div>}
+  </>
+)}
 
-<section className="flex mb-5">
-  <div className='w-1/2 my-auto'>
-        <div className="text-black">{t('6')}</div>
-        <input
-          type="number"
-          {...register('total_hotel_rooms')}
-          className="border p-2 w-1/2 mb-4 h-[45px] rounded-[15px]"
-          min={1}
-     
-        />
-        {errors.total_hotel_rooms && <div className="text-red text-sm">{errors.total_hotel_rooms.message}</div>}
-</div>
-<div className="w-1/2 my-auto ">
-        <div className="text-black">{t('7')}</div>
-        <input
-          type="number"
-          {...register('available_rooms')}
-          className="border p-2 w-1/2 mb-4 h-[45px] rounded-[15px] "
-          min={0}
-        
-        />
-        {errors.available_rooms && <div className="text-red text-sm">{errors.available_rooms.message}</div>}
-        </div> 
-</section>
-<div className="mb-5">
-        <div className="text-black mb-2">{t('8')}</div>
-        <label className="mb-5">
-        <input type="checkbox" {...register('sales_room_limitation')} />
-        <span className="ml-3 translate-y-2">
-          Тийм
-        </span>
-</label>
-</div>
+
+        <section className="flex mb-5">
+          <div className='w-1/2 my-auto'>
+            <div className="text-black">{t('6')}</div>
+            <input
+              type="number"
+              {...register('total_hotel_rooms')}
+              className="border p-2 w-1/2 mb-4 h-[45px] rounded-[15px]"
+              min={1}
+            />
+            {errors.total_hotel_rooms && <div className="text-red text-sm">{errors.total_hotel_rooms.message}</div>}
+          </div>
+          <div className="w-1/2 my-auto">
+            <div className="text-black">{t('7')}</div>
+            <input
+              type="number"
+              {...register('available_rooms')}
+              className="border p-2 w-1/2 mb-4 h-[45px] rounded-[15px]"
+              min={0}
+            />
+            {errors.available_rooms && <div className="text-red text-sm">{errors.available_rooms.message}</div>}
+          </div>
+        </section>
+
+        <div className="mb-5">
+          <div className="text-black mb-2">{t('8')}</div>
+          <label className="mb-5">
+            <input type="checkbox" {...register('sales_room_limitation')} />
+            <span className="ml-3 translate-y-2">Тийм</span>
+          </label>
+        </div>
 
         <div className="text-black">{t('9')}</div>
         <select
