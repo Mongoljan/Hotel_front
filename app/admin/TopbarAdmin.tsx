@@ -7,6 +7,7 @@ import { HiArrowRightOnRectangle } from "react-icons/hi2";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslations } from 'next-intl';
 import UserProfileToggle from "@/components/UserProfileToggle";
+import { useEffect, useState } from "react";
 
 interface HotelInfo {
   CompanyName: string;
@@ -14,7 +15,9 @@ interface HotelInfo {
   is_approved: boolean;
 }
 
+
 export default function Topbar({
+
   toggleSidebar,
   sideBarOpen,
   userApproved,
@@ -29,6 +32,7 @@ export default function Topbar({
   hotelInfo: HotelInfo | null;
   forceHideSidebar: boolean;
 }) {
+  const [groupName, setGroupName] = useState<string | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations('Topbar');
@@ -52,7 +56,15 @@ export default function Topbar({
     }
     window.location.href = '/auth/login';
   };
+  useEffect(() => {
+  const stored = JSON.parse(localStorage.getItem('propertyBasicInfo') || '{}');
+  // console.log(stored);
+  if (stored.part_of_group && stored.group_name) {
+    setGroupName(stored.group_name);
+  }
+}, []);
 
+// console.log(groupName);
   return (
     <div>
       <div className="h-[50px] backdrop-blur-md opacity-[50] border-b-[1px] border-primary border-opacity-30 bg-white px-[50px] text-black flex justify-between items-center">
@@ -73,10 +85,17 @@ export default function Topbar({
             Буудлын админ
           </div>
         )}
+       
 
-        {/* Right Side */}
-        <div className="flex gap-x-4 items-center">
+
+        {/* Right Side */}\
+        <div className="flex gap-x-6 items-center">
           {/* Hotel Info */}
+                {groupName && (
+  <div className="text-right hidden sm:flex sm:flex-col items-end">
+    <p className="leading-tight font-medium text-black">Груп:</p>  <p className="text-sm text-soft leading-tight">{groupName}</p>
+  </div>
+)}
           {hotelInfo && (
             <div className="text-right hidden sm:flex sm:gap-x-4 items-center">
               <div>
@@ -85,6 +104,7 @@ export default function Topbar({
               </div>
             </div>
           )}
+     
 
           {/* Language + Profile */}
           <div className="flex gap-2 items-center">
