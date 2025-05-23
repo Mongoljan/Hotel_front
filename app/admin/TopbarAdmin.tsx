@@ -88,7 +88,7 @@ export default function Topbar({
        
 
 
-        {/* Right Side */}\
+        {/* Right Side */}
         <div className="flex gap-x-6 items-center">
           {/* Hotel Info */}
                 {groupName && (

@@ -89,6 +89,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
   const [propertyBaseInfo, setPropertyBaseInfo] = useState<PropertyBaseInfo | null>(null);
   const [propertyTypes, setPropertyTypes] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
+  const [additionalInfo, setAdditionalInfo] = useState<{ id: number; About: string; YoutubeUrl: string } | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -103,14 +104,32 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         const cachedAddress = localStorage.getItem('propertyAddress');
         const cachedBasic = localStorage.getItem('propertyBasicInfo');
 
-        let baseInfo: PropertyBaseInfo | null = null;
-
-        // ✅ Always fetch property base info fresh
         const baseRes = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`);
         if (!baseRes.ok) throw new Error('Failed to fetch propertyBaseInfo');
-        baseInfo = await baseRes.json();
+        const baseInfo = await baseRes.json();
         setPropertyBaseInfo(baseInfo);
         localStorage.setItem('propertyBaseInfo', JSON.stringify(baseInfo));
+
+        const additionalRes = await fetch(`https://dev.kacc.mn/api/additionalInfo/?property=${hotelId}`);
+        const additionalJson = await additionalRes.json();
+
+        if (additionalJson?.length > 0) {
+          setAdditionalInfo(additionalJson[0]);
+        } else {
+          const createRes = await fetch(`https://dev.kacc.mn/api/additionalInfo/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              About: 'Мэдээлэл оруулаагүй байна.',
+              YoutubeUrl: '',
+              property: hotelId,
+            }),
+          });
+          if (createRes.ok) {
+            const created = await createRes.json();
+            setAdditionalInfo(created);
+          }
+        }
 
         if (cachedDetail && cachedPolicy && cachedAddress && cachedBasic) {
           const parsedDetail = JSON.parse(cachedDetail);
@@ -222,15 +241,14 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       </div>
 
       {Menu === 0 && (
-        <AboutHotel
-          image={propertyImages[imageIndex] || null}
-          basicInfo={basicInfo}
-          propertyPolicy={propertyPolicy}
-          propertyBaseInfo={propertyBaseInfo}
-          propertyDetail={propertyDetail}
-          getPropertyTypeName={getPropertyTypeName}
-          formatTime={formatTime}
-        />
+       <AboutHotel
+  image={propertyImages[imageIndex] || null}
+  aboutUs={additionalInfo?.About || ""}
+  youtubeUrl={additionalInfo?.YoutubeUrl || ""}
+  additionalId={additionalInfo?.id || null}
+  hotelId={propertyDetail.property}
+/>
+
       )}
     </div>
   );
