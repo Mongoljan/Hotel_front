@@ -182,28 +182,41 @@ export const schemaHotelRegistration = z.object({
 });
 
 export const schemaHotelRegistration2 = z.object({
+  register: z
+    .string()
+    .refine((val) => {
+      const firstTwo = val.slice(0, 2);
+      const isMongolianLetters = /^[А-ЯӨҮа-яөү]{2}$/.test(firstTwo); // Only Mongolian
 
-  register: z 
-  .string()
-  .min(7, { message:"Байгууллагын РД заавал шаардлагатай ",})
-  .max(7, { message:"Байгууллагын РД заавал шаардлагатай ",}),
+      if (isMongolianLetters) {
+        // Must be 2 Mongolian letters + 9 digits = 11 total
+        return /^[А-ЯӨҮа-яөү]{2}\d{8}$/.test(val);
+      } else {
+        // Must be exactly 7 digits
+        return /^\d{7}$/.test(val);
+      }
+    }, {
+      message: "РД буруу байна. Эхний 2 үсэг монгол байх ба 10 оронтой, эсвэл 7 оронтой тоо байх ёстой.",
+    }),
   CompanyName: z
-  .string().min(7, { message:"ААН-н нэрийг оруулна уу?",}),
-  PropertyName : z
-  .string().min(3, {message:"Буудлын нэрийг оруулна уу?"}),
-  location : z
-  .string().min(3, {message:"Ta хаягаа бичиж оруулна уу?"}),
+    .string()
+    .min(7, { message: "ААН-н нэрийг оруулна уу?" }),
+  PropertyName: z
+    .string()
+    .min(3, { message: "Буудлын нэрийг оруулна уу?" }),
+  location: z
+    .string()
+    .min(3, { message: "Та хаягаа бичиж оруулна уу?" }),
   property_type: z
-  .string().min(1, {message:"Буудлын төрлийг сонгоно уу?"}),
-  phone: z 
-  .string()
-  .min(8, {message:"Гар утасны дугаарыг оруулна уу? "}),
-  mail: z 
-  .string()
-  .email({message: "И-мэйл хаяг буруу байна"}),
-
-
-})
+    .string()
+    .min(1, { message: "Буудлын төрлийг сонгоно уу?" }),
+  phone: z
+    .string()
+    .min(8, { message: "Гар утасны дугаарыг оруулна уу?" }),
+  mail: z
+    .string()
+    .email({ message: "И-мэйл хаяг буруу байна" }),
+});
 
 export const schemaHotelSteps1 = z
   .object({
@@ -268,39 +281,48 @@ export const schemaHotelSteps1 = z
 export const schemaHotelSteps2 = z.object({
   zipCode: z
     .string()
-    .min(4, { message: "Шуудангийн код хамгийн багадаа 4 оронтой байх ёстой" })
-    .max(10, { message: "Шуудангийн код хамгийн ихдээ 10 оронтой байх ёстой" }),
+    .regex(/^\d{4,10}$/, {
+      message: "Шуудангийн код 4-10 оронтой тоо байх ёстой",
+    }),
+
   total_floor_number: z
-    .string()
+    .coerce.number()
+    .int({ message: "Бүхэл тоо байх ёстой" })
     .min(1, { message: "Барилгын давхарын тоо хамгийн багадаа 1 байх ёстой" }),
+
   province_city: z
     .string()
     .min(1, { message: "Хот/аймгийн мэдээллийг оруулна уу" }),
-  // city: z
-  //   .string()
-  //   .min(1, { message: "Хорооны мэдээллийг оруулна уу" }),
+
   soum: z
     .string()
     .min(1, { message: "Сум/дүүргийн мэдээллийг оруулна уу" }),
+
   district: z
-    .string()
-    .min(1, { message: "Баг/Хорооны мэдээллийг оруулна уу" }),
+.coerce.number()
+   .int({ message: "Бүхэл тоо байх ёстой" })
+    .min(1, { message: "Баг/Хорооны мэдээллийг оруулна уу" })
+   
 });
 
 export const schemaHotelSteps3 = z.object({
   cancel_time: z.string(),
   before_fee: z.string(),
   after_fee: z.string(),
+  beforeManyRoom_fee: z.string(),
+  afterManyRoom_fee: z.string(),
   subsequent_days_percentage: z.string(),
   special_condition_percentage: z.string(),
   check_in_from: z.string(),
   check_in_until: z.string(),
   check_out_from: z.string(),
   check_out_until: z.string(),
-  breakfast_policy: z.string(),
+  breakfast_policy: z.enum(['no', 'free', 'paid']),
+  parking_situation: z.enum(['no', 'free', 'paid']),
   allow_children: z.boolean(),
   allow_pets: z.boolean(),
 });
+
 
 
 export const schemaHotelSteps5 = z.object({
@@ -322,9 +344,9 @@ export const schemaHotelSteps6 = z.object({
   google_map: z
     .string()
     .url({ message: 'Please enter a valid Google Maps URL' }),
-  parking_situation: z
-    .string()
-    .min(2, {message:"enter valid reason"}),
+  // parking_situation: z
+  //   .string()
+  //   .min(2, {message:"enter valid reason"}),
   general_facilities: z
     .array(z.string())
     .min(1, { message: 'Select at least one general facility' }),

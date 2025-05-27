@@ -15,20 +15,18 @@ interface Props {
   youtubeUrl: string;
   additionalId: number | null;
   hotelId: number;
+  propertyDetailId: number | null;
 }
 
-const AboutHotel: React.FC<Props> = ({ image, aboutUs, youtubeUrl, additionalId, hotelId }) => {
+const AboutHotel: React.FC<Props> = ({ image, aboutUs, youtubeUrl, additionalId, hotelId, propertyDetailId }) => {
   const [about, setAbout] = useState(aboutUs || '');
   const [youtube, setYoutube] = useState(youtubeUrl || '');
   const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
     try {
-      if (additionalId) {
-        toast.error('Өмнө хадгалсан мэдээллийг шинэчлэх боломжгүй байна.');
-        return;
-      }
-
+      setLoading(true);
       const res = await fetch('https://dev.kacc.mn/api/additionalInfo/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,10 +39,28 @@ const AboutHotel: React.FC<Props> = ({ image, aboutUs, youtubeUrl, additionalId,
 
       if (!res.ok) throw new Error('Failed to save additional info');
 
+      const data = await res.json();
+
+      if (!propertyDetailId) {
+        throw new Error('Property detail ID not available');
+      }
+
+      const patchRes = await fetch(`https://dev.kacc.mn/api/property-details/${propertyDetailId}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          Additional_Information: data.id,
+        }),
+      });
+
+      if (!patchRes.ok) throw new Error('Failed to link additional info to property details');
+
       toast.success('Амжилттай хадгалагдлаа');
       setEditing(false);
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,7 +96,8 @@ const AboutHotel: React.FC<Props> = ({ image, aboutUs, youtubeUrl, additionalId,
       <div className="flex flex-col justify-center">
         <button
           onClick={editing ? handleSave : () => setEditing(true)}
-          className="bg-primary text-white px-4 py-2 rounded-[10px]"
+          className="bg-primary text-white px-4 py-2 rounded-[10px] disabled:opacity-50"
+          disabled={loading}
         >
           {editing ? 'Хадгалах' : 'Засварлах'}
         </button>

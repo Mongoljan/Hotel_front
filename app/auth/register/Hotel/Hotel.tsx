@@ -47,12 +47,12 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
     if (step === 1) {
       setView('proceed');
     } else {
-      handleStepChange(step - 1, 'Moved to the previous step');
+      handleStepChange(step - 1, '');
     }
   };
 
   const handleNext = (nextStep: number) => {
-    handleStepChange(nextStep, 'Step completed successfully!');
+    handleStepChange(nextStep, '');
   };
 
   const renderStep = () => {

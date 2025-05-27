@@ -87,11 +87,11 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px] md:max-w-[500px] rounded-[15px] text-gray-600"
+        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px] md:min-w-[450px] rounded-[15px] text-gray-600"
       >
         <h2 className="text-[30px] font-bold text-center text-black mb-8">{t("title")}</h2>
 
-        <div className="mb-4">
+        <div className="mb-5">
           <label className="text-black">Хот/Аймаг</label>
           <select {...register('province_city')} defaultValue="" className="border p-2 w-full h-[45px] rounded-[15px]">
             <option value="" disabled>-- Хот Аймаг сонгох --</option>
@@ -102,7 +102,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
           {errors.province_city && <div className="text-red text-sm">{errors.province_city.message}</div>}
         </div>
 
-        <div className="mb-4">
+        <div className="mb-5">
           <label className="text-black">Сум/Дүүрэг</label>
           <select {...register('soum')} defaultValue="" className="border p-2 w-full h-[45px] rounded-[15px]">
             <option value="" disabled>-- Сум/Дүүрэг сонгох --</option>
@@ -113,23 +113,37 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
           {errors.soum && <div className="text-red text-sm">{errors.soum.message}</div>}
         </div>
 
-        <div className="mb-4">
+        <div className="mb-5">
           <label className="text-black">Баг/Хороо</label>
           <input type="text" {...register('district')} className="border p-2 w-full h-[45px] rounded-[15px]" />
           {errors.district && <div className="text-red text-sm">{errors.district.message}</div>}
         </div>
 
-        <div className="mb-4">
-          <label className="text-black">Zip Code</label>
-          <input type="text" {...register('zipCode')} className="border p-2 w-full h-[45px] rounded-[15px]" />
+        <div className="mb-5 ">
+          <div className="flex justify-between">
+          <label className="text-black h-[45px] place-content-center">Zip Code</label>
+          <input type="text" {...register('zipCode')} className="border p-2 w-[100px] h-[45px] rounded-[15px]" />
+          </div>
           {errors.zipCode && <div className="text-red text-sm">{errors.zipCode.message}</div>}
         </div>
 
-        <div className="mb-4">
-          <label className="text-black">Давхрын тоо</label>
-          <input type="number" {...register('total_floor_number')} className="border p-2 w-full h-[45px] rounded-[15px]" />
-          {errors.total_floor_number && <div className="text-red text-sm">{errors.total_floor_number.message}</div>}
-        </div>
+       <div className="mb-5 ">
+        <div className="flex justify-between">
+  <label className="text-black h-[45px] place-content-center">Барилгын давхрын тоо</label>
+  <input
+    type="number"
+    min="1"
+    {...register('total_floor_number')}
+    className="border p-2 w-[60px] h-[45px] rounded-[15px]"
+  />
+  </div>
+  {errors.total_floor_number && (
+    <div className="text-red text-sm">
+      {errors.total_floor_number.message}
+    </div>
+  )}
+</div>
+
 
         <div className="flex gap-x-4">
           <button type="button" onClick={onBack} className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]">

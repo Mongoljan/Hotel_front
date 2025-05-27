@@ -28,6 +28,7 @@ export default function LoginForm() {
   } = useForm<FormFields>({ resolver: zodResolver(schemaLogin) });
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
+       localStorage.clear();
     const result = await loginAction(data);
     // console.log("here is token:", Cookies.get("token"));
 

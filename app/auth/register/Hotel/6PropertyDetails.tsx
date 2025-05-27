@@ -44,7 +44,6 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
     resolver: zodResolver(schemaHotelSteps6),
     defaultValues: {
       google_map: '',
-      parking_situation: '',
       general_facilities: [],
     },
   });
@@ -62,13 +61,12 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
     fetchFacilities();
   }, []);
 
-  // Restore values from localStorage every time the component mounts
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
     if (stored.step6) {
       reset({
         google_map: stored.step6.google_map || '',
-        parking_situation: stored.step6.parking_situation || '',
+
         general_facilities: (stored.step6.general_facilities || []).map(String),
       });
     }
@@ -150,7 +148,6 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
         confirmAddress: confirmAddressId,
         propertyPolicies: propertyPoliciesId,
         google_map: step6Data.google_map,
-        parking_situation: step6Data.parking_situation,
         property,
         general_facilities: step6Data.general_facilities.map(Number),
         property_photos: imageIDs,
@@ -211,15 +208,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
           {errors.google_map && <div className="text-red text-sm">{errors.google_map.message}</div>}
         </section>
 
-        <section className="mb-4">
-          <label className="text-black">{t('2')}</label>
-          <input
-            type="text"
-            {...register('parking_situation')}
-            className="border p-2 w-full rounded-[15px]"
-          />
-          {errors.parking_situation && <div className="text-red text-sm">{errors.parking_situation.message}</div>}
-        </section>
+       
 
         <section className="mb-4">
           <label className="text-black">{t('3')}</label>

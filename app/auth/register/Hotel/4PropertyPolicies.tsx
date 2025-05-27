@@ -8,7 +8,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { schemaHotelSteps3 } from '../../../schema';
 import { z } from 'zod';
-import { useTranslations } from 'next-intl';
 
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
@@ -18,9 +17,6 @@ type Props = {
 };
 
 export default function RegisterHotel3({ onNext, onBack }: Props) {
-  const t = useTranslations("4PropertyPolicies");
-
-  // Restore and flatten nested cancellation_fee structure
   const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
   const defaultValues = stored.step4
     ? {
@@ -44,6 +40,8 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         cancel_time: data.cancel_time,
         before_fee: data.before_fee,
         after_fee: data.after_fee,
+        beforeManyRoom_fee: data.beforeManyRoom_fee,
+        afterManyRoom_fee: data.afterManyRoom_fee,
         subsequent_days_percentage: data.subsequent_days_percentage,
         special_condition_percentage: data.special_condition_percentage,
       },
@@ -54,6 +52,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
       breakfast_policy: data.breakfast_policy,
       allow_children: data.allow_children,
       allow_pets: data.allow_pets,
+      parking_situation: data.parking_situation,
     };
 
     const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
@@ -69,108 +68,136 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
+        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[650px] md:min-w-[440px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-2xl font-bold text-center mb-6">{t("title")}</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">Property Policies</h2>
 
-        <section className="mb-4">
-          <div className="flex gap-4">
-            <div className="w-1/2">
-              <label className="text-black">{t("1")}</label>
-              <input type="time" {...register('cancel_time')} className="border p-2 w-full rounded-[15px]" />
+        <section className="mb-6">
+          <div className="flex gap-4 place">
+            <div className="w-1/2 place-content-end">
+              <label className="text-black mb-10 ">Цуцлах нөхцөл (цаг)</label>
+      
+              <input type="time" {...register('cancel_time')} className="border p-2 w-[160px] rounded-[15px]" />
               {errors.cancel_time && <div className="text-red text-sm">{errors.cancel_time.message}</div>}
             </div>
-            <div className="w-1/2">
-              <label className="text-black">{t("2")} (%)</label>
-              <input type="text" {...register('before_fee')} className="border p-2 w-full rounded-[15px]" />
+            <div className="w-1/2 ">
+              <label className="text-black">Цуцлах цагаас өмнө цуцлах бол (%)</label>
+              <input type="number" {...register('before_fee')} className="border p-2 w-[90px] rounded-[15px]" />
               {errors.before_fee && <div className="text-red text-sm">{errors.before_fee.message}</div>}
             </div>
           </div>
         </section>
 
-        <section className="mb-4">
+        <section className="mb-6">
           <div className="flex gap-4">
             <div className="w-1/2">
-              <label className="text-black">{t("3")} (%)</label>
-              <input type="text" {...register('after_fee')} className="border p-2 w-full rounded-[15px]" />
+              <label className="text-black">Цуцлах цагаас хойш цуцлах бол (%)</label>
+              <input type="number" {...register('after_fee')} className="border p-2 w-[90px] rounded-[15px]" />
               {errors.after_fee && <div className="text-red text-sm">{errors.after_fee.message}</div>}
             </div>
-            <div className="w-1/2">
-              <label className="text-black">{t("4")} (%)</label>
-              <input type="text" {...register('subsequent_days_percentage')} className="border p-2 w-full rounded-[15px]" />
+            <div className="w-1/2 place-content-end">
+              <label className="text-black ">2 дахь өдрөөс цуцлах бол (%)</label>
+                
+              <input type="number" {...register('subsequent_days_percentage')} className="border p-2 w-[90px] rounded-[15px]" />
               {errors.subsequent_days_percentage && <div className="text-red text-sm">{errors.subsequent_days_percentage.message}</div>}
             </div>
           </div>
         </section>
 
-        <section className="mb-4">
-          <label className="text-black">{t("5")} (%)</label>
-          <input type="text" {...register('special_condition_percentage')} className="border p-2 w-full rounded-[15px]" />
+        <section className="mb-6">
+          <div className="">
+          <label className="text-black my-auto">Онцгой нөхцөлд (%)</label>
+          <input type="number" {...register('special_condition_percentage')} className="border block p-2 w-[90px] rounded-[15px]" />
+          </div>
           {errors.special_condition_percentage && <div className="text-red text-sm">{errors.special_condition_percentage.message}</div>}
         </section>
 
-        <section className="mb-4">
+        <section className="mb-6">
+            <label className=" text-soft text-sm">Олон өрөө цуцлах тохиолдол</label>
           <div className="flex gap-4">
             <div className="w-1/2">
-              <label className="text-black">{t("6")}</label>
-              <input type="time" {...register('check_in_from')} className="border p-2 w-full rounded-[15px]" />
-              {errors.check_in_from && <div className="text-red text-sm">{errors.check_in_from.message}</div>}
+              <label className="text-black">цуцлах цагаас өмнө (%)</label>
+              <input type="text" {...register('beforeManyRoom_fee')} className=" block border p-2 w-[90px]  rounded-[15px]" />
+              {errors.beforeManyRoom_fee && <div className="text-red text-sm">{errors.beforeManyRoom_fee.message}</div>}
             </div>
             <div className="w-1/2">
-              <label className="text-black">{t("7")}</label>
-              <input type="time" {...register('check_in_until')} className="border p-2 w-full rounded-[15px]" />
-              {errors.check_in_until && <div className="text-red text-sm">{errors.check_in_until.message}</div>}
+              <label className="text-black">цуцлах цагаас хойш (%)</label>
+              <input type="text" {...register('afterManyRoom_fee')} className="border p-2 w-[90px] block rounded-[15px]" />
+              {errors.afterManyRoom_fee && <div className="text-red text-sm">{errors.afterManyRoom_fee.message}</div>}
             </div>
           </div>
         </section>
 
-        <section className="mb-4">
-          <div className="flex gap-4">
-            <div className="w-1/2">
-              <label className="text-black">{t("8")}</label>
-              <input type="time" {...register('check_out_from')} className="border p-2 w-full rounded-[15px]" />
-              {errors.check_out_from && <div className="text-red text-sm">{errors.check_out_from.message}</div>}
+        <div className='text-soft text-sm pt-2'>Та зочны өрөөнд орох болон гарах цагийг тохируулж өгнө үү.</div>
+
+        <section className="mb-6">
+          <label className="text-black">Орох цаг (check in)</label>
+          <div className="flex">
+            <div className='flex'>
+              <input type="time" {...register('check_in_from')} className="border p-2 w-[150px] rounded-[15px]" />
+              <div className='place-content-center mx-2'>- цагаас</div>
             </div>
-            <div className="w-1/2">
-              <label className="text-black">{t("9")}</label>
-              <input type="time" {...register('check_out_until')} className="border p-2 w-full rounded-[15px]" />
-              {errors.check_out_until && <div className="text-red text-sm">{errors.check_out_until.message}</div>}
+            <div className='flex'>
+              <input type="time" {...register('check_in_until')} className="border p-2 w-[150px] rounded-[15px]" />
+              <div className='place-content-center mx-2'>цаг хүртэл</div>
             </div>
           </div>
         </section>
 
-        <section className="mb-4">
-          <label className="text-black">{t("10")}</label>
+        <section className="mb-8">
+          <label className="text-black">Гарах цаг (check out)</label>
+          <div className="flex">
+            <div className='flex'>
+              <input type="time" {...register('check_out_from')} className="border p-2 w-[150px] rounded-[15px]" />
+              <div className='place-content-center mx-2'>- цагаас</div>
+            </div>
+            <div className='flex'>
+              <input type="time" {...register('check_out_until')} className="border p-2 w-[150px] rounded-[15px]" />
+              <div className='place-content-center mx-2'>цаг хүртэл</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-6">
+          <label className="text-black">Өглөөний цай</label>
           <select {...register('breakfast_policy')} className="border p-2 w-full rounded-[15px]">
-            <option value="">{t("16")}</option>
-            <option value="no">{t("17")}</option>
-            <option value="free">{t("18")}</option>
-            <option value="paid">{t("19")}</option>
+            <option value="">Сонгох</option>
+            <option value="no">Байхгүй</option>
+            <option value="free">Байгаа, үнэгүй</option>
+            <option value="paid">Байгаа, төлбөртэй</option>
           </select>
           {errors.breakfast_policy && <div className="text-red text-sm">{errors.breakfast_policy.message}</div>}
         </section>
 
-        <section className="flex gap-4 mb-4">
-          <div className="w-1/2">
-            <label className="text-black">{t("11")}</label>
-            <div className="flex items-center">
-              <input type="checkbox" id="allowChildren" {...register("allow_children")} className="hidden peer" />
-              <label htmlFor="allowChildren" className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer select-none transition peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white peer-hover:bg-gray-100">
-                {t("15")}
-              </label>
-            </div>
-          </div>
-
-          <div className="w-1/2">
-            <label className="text-black">{t("12")}</label>
-            <div className="flex items-center">
-              <input type="checkbox" id="allowPets" {...register('allow_pets')} className="hidden peer" />
-              <label htmlFor="allowPets" className="px-4 py-2 border border-gray-300 rounded-lg cursor-pointer select-none transition peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white peer-hover:bg-gray-100">
-                {t("15")}
-              </label>
-            </div>
-          </div>
+        <section className="mb-6">
+          <label className="text-black">Зогсоолын мэдээлэл</label>
+          <select {...register('parking_situation')} className="border p-2 w-full rounded-[15px]">
+            <option value="">Сонгох</option>
+            <option value="no">Байхгүй</option>
+            <option value="free">Төлбөргүй</option>
+            <option value="paid">Төлбөртэй</option>
+          </select>
+          {errors.parking_situation && <div className="text-red text-sm">{errors.parking_situation.message}</div>}
         </section>
+
+     <section className="flex gap-4 mb-6">
+  <div className="w-1/2">
+    <label className="text-black block mb-2">Хүүхэд хүлээн авах эсэх</label>
+    <div className="flex items-center gap-2">
+      <input type="checkbox" id="allowChildren" {...register("allow_children")} className="w-4 h-4" />
+      <label htmlFor="allowChildren" className="cursor-pointer">Тийм</label>
+    </div>
+  </div>
+
+  <div className="w-1/2">
+    <label className="text-black block mb-2">Тэжээвэр амьтан оруулах боломжтой эсэх</label>
+    <div className="flex items-center gap-2">
+      <input type="checkbox" id="allowPets" {...register("allow_pets")} className="w-4 h-4" />
+      <label htmlFor="allowPets" className="cursor-pointer">Тийм</label>
+    </div>
+  </div>
+</section>
+
 
         <div className="flex gap-x-4">
           <button
@@ -178,14 +205,14 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             onClick={onBack}
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
-            <FaArrowLeft className="self-center mx-1" /> {t("13")}
+            <FaArrowLeft className="self-center mx-1" /> Буцах
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
-            {t("14")} <FaArrowRight className="self-center mx-1" />
+            Үргэлжлүүлэх <FaArrowRight className="self-center mx-1" />
           </button>
         </div>
       </form>
