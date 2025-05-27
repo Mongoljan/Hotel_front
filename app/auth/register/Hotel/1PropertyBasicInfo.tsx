@@ -140,7 +140,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
 
         <section className="flex mb-5">
-          <div className='w-1/2 my-auto'>
+          <div className='w-1/2 place-content-end'>
             <div className="text-black">{t('6')}</div>
             <input
               type="number"
@@ -150,7 +150,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
             />
             {errors.total_hotel_rooms && <div className="text-red text-sm">{errors.total_hotel_rooms.message}</div>}
           </div>
-          <div className="w-1/2 my-auto">
+          <div className="w-1/2 my-auto ">
             <div className="text-black">{t('7')}</div>
             <input
               type="number"

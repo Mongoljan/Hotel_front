@@ -75,42 +75,50 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         <section className="mb-6">
           <div className="flex gap-4 place">
             <div className="w-1/2 place-content-end">
-              <label className="text-black mb-10 ">Цуцлах нөхцөл (цаг)</label>
+              <label className="text-black mb-10 ">Цуцлах цаг</label>
       
-              <input type="time" {...register('cancel_time')} className="border p-2 w-[160px] rounded-[15px]" />
+              <input type="time" {...register('cancel_time')} className="border block p-2 w-[160px] rounded-[15px]" />
               {errors.cancel_time && <div className="text-red text-sm">{errors.cancel_time.message}</div>}
-            </div>
-            <div className="w-1/2 ">
-              <label className="text-black">Цуцлах цагаас өмнө цуцлах бол (%)</label>
-              <input type="number" {...register('before_fee')} className="border p-2 w-[90px] rounded-[15px]" />
-              {errors.before_fee && <div className="text-red text-sm">{errors.before_fee.message}</div>}
             </div>
           </div>
         </section>
 
         <section className="mb-6">
-          <div className="flex gap-4">
-            <div className="w-1/2">
+          <div className="flex gap-4 place">
+     
+            <div className="w-1/2 ">
+              <label className="text-black">Цуцлах цагаас өмнө цуцлах бол (%)</label>
+              <input type="number" {...register('before_fee')} className="border p-2 w-[90px] rounded-[15px]" />
+              {errors.before_fee && <div className="text-red text-sm">{errors.before_fee.message}</div>}
+            </div>
+             <div className="w-1/2">
               <label className="text-black">Цуцлах цагаас хойш цуцлах бол (%)</label>
               <input type="number" {...register('after_fee')} className="border p-2 w-[90px] rounded-[15px]" />
               {errors.after_fee && <div className="text-red text-sm">{errors.after_fee.message}</div>}
             </div>
+          </div>
+        </section>
+
+
+        <section className="mb-6">
+          <div className="flex gap-4">
+          
             <div className="w-1/2 place-content-end">
               <label className="text-black ">2 дахь өдрөөс цуцлах бол (%)</label>
                 
               <input type="number" {...register('subsequent_days_percentage')} className="border p-2 w-[90px] rounded-[15px]" />
               {errors.subsequent_days_percentage && <div className="text-red text-sm">{errors.subsequent_days_percentage.message}</div>}
             </div>
-          </div>
-        </section>
 
-        <section className="mb-6">
           <div className="">
           <label className="text-black my-auto">Онцгой нөхцөлд (%)</label>
           <input type="number" {...register('special_condition_percentage')} className="border block p-2 w-[90px] rounded-[15px]" />
-          </div>
+        
           {errors.special_condition_percentage && <div className="text-red text-sm">{errors.special_condition_percentage.message}</div>}
+       </div>
+          </div>
         </section>
+
 
         <section className="mb-6">
             <label className=" text-soft text-sm">Олон өрөө цуцлах тохиолдол</label>
