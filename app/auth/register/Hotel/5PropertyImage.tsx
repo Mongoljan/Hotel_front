@@ -10,6 +10,8 @@ import { schemaHotelSteps5 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 
+const API_URL = 'https://dev.kacc.mn/api/property-images/';
+
 type FormFields = z.infer<typeof schemaHotelSteps5>;
 
 type Props = {
@@ -18,7 +20,7 @@ type Props = {
 };
 
 export default function RegisterHotel5({ onNext, onBack }: Props) {
-  const t = useTranslations("5PropertyImages");
+  const t = useTranslations('5PropertyImages');
 
   const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
   const defaultValues: FormFields = stored.step5 || {
@@ -56,13 +58,43 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
     }
   };
 
-  const onSubmit: SubmitHandler<FormFields> = (data) => {
-    const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-    propertyData.step5 = data;
-    localStorage.setItem('propertyData', JSON.stringify(propertyData));
+  const onSubmit: SubmitHandler<FormFields> = async (data) => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+      const propertyId = stored.propertyId;
 
-    toast.success('Зураг, тайлбар хадгалагдлаа!');
-    onNext();
+      if (!propertyId) {
+        toast.error('Property ID not found. Please complete Step 1.');
+        return;
+      }
+
+      // Check existing images
+      const checkRes = await fetch(`${API_URL}?property=${propertyId}`);
+      const existing = await checkRes.json();
+
+      // Submit each image as a separate entry
+      for (let entry of data.entries) {
+        const payload = {
+          property: propertyId,
+          image: entry.images,
+          description: entry.descriptions,
+        };
+
+        await fetch(existing?.length ? `${API_URL}${existing[0].id}/` : API_URL, {
+          method: existing?.length ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      stored.step5 = data;
+      localStorage.setItem('propertyData', JSON.stringify(stored));
+      toast.success('Зураг, тайлбар хадгалагдлаа!');
+      onNext();
+    } catch (error) {
+      console.error(error);
+      toast.error('Алдаа гарлаа. Дахин оролдоно уу.');
+    }
   };
 
   return (
@@ -72,14 +104,14 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-2xl font-bold text-center mb-6">{t("title")}</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">{t('title')}</h2>
 
         {fields.map((field, index) => {
           const previewSrc = watchedEntries?.[index]?.images;
           return (
             <div key={field.id} className="mb-4 border p-4 rounded-lg">
               <section className="mb-2">
-                <label className="text-black">{t("1")}</label>
+                <label className="text-black">{t('1')}</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -101,7 +133,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
               </section>
 
               <section className="mb-2">
-                <label className="text-black">{t("2")}</label>
+                <label className="text-black">{t('2')}</label>
                 <input
                   type="text"
                   {...register(`entries.${index}.descriptions`)}
@@ -120,7 +152,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                 className="flex items-center justify-center w-full text-red border border-red-500 rounded-lg p-2 mt-2"
               >
                 <FaTrash className="mr-2" />
-                {t("3")}
+                {t('3')}
               </button>
             </div>
           );
@@ -131,7 +163,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           onClick={() => append({ images: '', descriptions: '' })}
           className="w-full flex justify-center text-black py-2 border border-primary rounded-lg mb-4"
         >
-          <FaPlus className="mr-2" /> {t("4")}
+          <FaPlus className="mr-2" /> {t('4')}
         </button>
 
         <div className="flex gap-x-4">
@@ -141,14 +173,14 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
             <FaArrowLeft className="self-center mx-1" />
-            {t("5")}
+            {t('5')}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
           >
-            {t("6")}
+            {t('6')}
             <FaArrowRight className="self-center mx-1" />
           </button>
         </div>

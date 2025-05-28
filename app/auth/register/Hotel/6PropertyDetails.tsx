@@ -9,14 +9,8 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { schemaHotelSteps6 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations, useLocale } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
-const API_PROPERTY_BASIC_INFO = 'https://dev.kacc.mn/api/property-basic-info/';
-const API_CONFIRM_ADDRESS = 'https://dev.kacc.mn/api/confirm-address/';
-const API_PROPERTY_POLICIES = 'https://dev.kacc.mn/api/property-policies/';
-const API_PROPERTY_IMAGES = 'https://dev.kacc.mn/api/property-images/';
 const API_PROPERTY_DETAILS = 'https://dev.kacc.mn/api/property-details/';
 
 type FormFields = z.infer<typeof schemaHotelSteps6>;
@@ -31,13 +25,11 @@ type Props = {
 export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: Props) {
   const t = useTranslations('6FinalPropertyDetails');
   const locale = useLocale();
-  const router = useRouter();
   const [facilities, setFacilities] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
 
   const {
     register,
     handleSubmit,
-    setValue,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
@@ -66,128 +58,57 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
     if (stored.step6) {
       reset({
         google_map: stored.step6.google_map || '',
-
         general_facilities: (stored.step6.general_facilities || []).map(String),
       });
     }
   }, [reset]);
 
-  const submitAllSteps = async (step6Data: FormFields) => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
-      const status = JSON.parse(localStorage.getItem('submissionStatus') || '{}');
-      const hotel = Cookies.get('hotel');
-
-      let propertyBasicInfo = stored.propertyBasicInfo || null;
-      let property = parseInt(hotel || '');
-      let confirmAddressId = stored.confirmAddress || null;
-      let propertyPoliciesId = stored.propertyPolicies || null;
-      let imageIDs: number[] = stored.property_photos || [];
-
-      if (!status.step1) {
-        const step1Payload = {
-          ...stored.step1,
-          group_name: stored.step1.part_of_group ? stored.step1.group_name : null,
-        };
-
-        const res = await fetch(API_PROPERTY_BASIC_INFO, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(step1Payload),
-        });
-        if (!res.ok) throw new Error('Алдаа: Үндсэн мэдээлэл');
-        const basic = await res.json();
-        propertyBasicInfo = basic.id;
-        status.step1 = true;
-      }
-
-      if (!status.step2) {
-        const res = await fetch(API_CONFIRM_ADDRESS, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...stored.step2, property }),
-        });
-        if (!res.ok) throw new Error('Алдаа: Хаяг');
-        const addr = await res.json();
-        confirmAddressId = addr.id;
-        status.step2 = true;
-      }
-
-      if (!status.step4) {
-        const res = await fetch(API_PROPERTY_POLICIES, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...stored.step4, property }),
-        });
-        if (!res.ok) throw new Error('Алдаа: Дотоод журам');
-        const pol = await res.json();
-        propertyPoliciesId = pol.id;
-        status.step4 = true;
-      }
-
-      if (!status.step5) {
-        const payload = stored.step5.entries.map((entry: any) => ({
-          image: entry.images,
-          description: entry.descriptions,
-        }));
-
-        const res = await fetch(API_PROPERTY_IMAGES, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) throw new Error('Алдаа: Зураг илгээх');
-        const images = await res.json();
-        imageIDs = images.map((img: any) => img.id);
-        status.step5 = true;
-      }
-
-      const finalPayload = {
-        propertyBasicInfo,
-        confirmAddress: confirmAddressId,
-        propertyPolicies: propertyPoliciesId,
-        google_map: step6Data.google_map,
-        property,
-        general_facilities: step6Data.general_facilities.map(Number),
-        property_photos: imageIDs,
-      };
-
-      const resFinal = await fetch(API_PROPERTY_DETAILS, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(finalPayload),
-      });
-
-      const result = await resFinal.json();
-      if (!resFinal.ok) throw new Error(result.message || 'Property Details submission failed');
-
-      status.step6 = true;
-      localStorage.setItem('submissionStatus', JSON.stringify(status));
-      toast.success('✔️ Бүртгэл амжилттай хадгалагдлаа!');
-
-      setTimeout(() => {
-        setProceed(2);
-        router.push('/admin/hotel');
-      }, 2000);
-    } catch (error: any) {
-      console.error('Error in final submission:', error);
-      toast.error(error.message || 'Алдаа гарлаа');
-    }
-  };
-
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
+  try {
     const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    const propertyId = stored.propertyId;
+
+    if (!propertyId) {
+      toast.error('Property ID not found. Please complete Step 1.');
+      return;
+    }
+
+    const payload = {
+      propertyBasicInfo: stored.propertyBasicInfo,
+      confirmAddress: stored.confirmAddress,
+      propertyPolicies: stored.propertyPolicies,
+      property_photos: stored.property_photos,
+      google_map: data.google_map,
+      general_facilities: data.general_facilities.map(Number),
+      property: propertyId,
+    };
+
+    const res = await fetch(`${API_PROPERTY_DETAILS}?property=${propertyId}`);
+    const existing = await res.json();
+
+    const response = await fetch(
+      existing?.length > 0 ? `${API_PROPERTY_DETAILS}${existing[0].id}/` : API_PROPERTY_DETAILS,
+      {
+        method: existing?.length > 0 ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) throw new Error('Property detail submission failed.');
+
+    const result = await response.json();
     stored.step6 = data;
     localStorage.setItem('propertyData', JSON.stringify(stored));
 
-    const status = JSON.parse(localStorage.getItem('submissionStatus') || '{}');
-    if (!status.step1 || !status.step2 || !status.step4 || !status.step5 || !status.step6) {
-      toast.info('Мэдээллийг илгээж байна...');
-    }
+    toast.success('✔️ Мэдээлэл хадгалагдлаа!');
+    onNext();
+  } catch (error: any) {
+    console.error(error);
+    toast.error(error.message || 'Алдаа гарлаа. Дахин оролдоно уу.');
+  }
+};
 
-    await submitAllSteps(data);
-  };
 
   return (
     <div className="flex justify-center items-center">
@@ -208,10 +129,8 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
           {errors.google_map && <div className="text-red text-sm">{errors.google_map.message}</div>}
         </section>
 
-       
-
         <section className="mb-4">
-          <label className="text-black">{t('3')}</label>
+          <label className="text-black">Зочин та бүхнээс төлбөртэй болон төлбөргүй ямар нэмэлт үйлчилгээг  авах боломжтой вэ? Дараахаас сонгоно уу.</label>
           {facilities.map((facility) => (
             <div key={facility.id} className="flex items-center">
               <input

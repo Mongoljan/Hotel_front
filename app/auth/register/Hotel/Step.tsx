@@ -13,12 +13,12 @@ const StepIndicator: React.FC<StepIndicatorProps> =  ({ totalSteps, currentStep 
     t("basicInfo"),
     t("confirmAddress"),
     t("googleMap"),
-    t("propertyPolicies"),
+   "Дотоод журам",
     t("propertyImage"),
     t("propertyDetails"),
   ];
   return (
-    <div className="flex items-center justify-center ">
+    <div className="flex items-center justify-center mb-4 ">
       <div className="flex items-center space-x-4">
         <div className=" items-center justify-center ">
           <div className="flex items-center">
@@ -30,9 +30,9 @@ const StepIndicator: React.FC<StepIndicatorProps> =  ({ totalSteps, currentStep 
               return (
                 <div key={stepNumber} className="flex items-center">
                   <div
-                    className={`w-12 h-12 flex items-center justify-center rounded-full border-2 ${
+                    className={`w-12 h-12 flex items-center justify-center rounded-full border-[1px] ${
                       isCompleted
-                        ? 'bg-primary text-white border-primary border-[3px]'
+                        ? 'bg-primary text-white border-primary border-[2px]'
                         : isActive
                         ? 'border-primary text-primary'
                         : 'bg-white text-black border-gray-300'
@@ -43,8 +43,8 @@ const StepIndicator: React.FC<StepIndicatorProps> =  ({ totalSteps, currentStep 
 
                   {stepNumber < totalSteps && (
                     <div
-                      className={`w-40 h-1 ${
-                        isCompleted ? 'bg-primary' : 'bg-gray-300'
+                      className={`w-40 h-[2px] ${
+                        isCompleted ? 'bg-primary' : 'bg-gray-200'
                       }`}
                     ></div>
                   )}
@@ -62,7 +62,7 @@ const StepIndicator: React.FC<StepIndicatorProps> =  ({ totalSteps, currentStep 
           return (
             <div key={i} className="w-12 text-center">
               <div
-                className={`text-[16px] text-center text ${
+                className={`text-[12px] text-center text ${
                   isCompleted || isActive ? 'text-primary' : 'text-black'
                 }`}
               >

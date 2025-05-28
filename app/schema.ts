@@ -218,6 +218,7 @@ export const schemaHotelRegistration2 = z.object({
     .email({ message: "И-мэйл хаяг буруу байна" }),
 });
 
+
 export const schemaHotelSteps1 = z
   .object({
     property_name_mn: z
@@ -243,26 +244,30 @@ export const schemaHotelSteps1 = z
       .min(1, { message: "Одны зэрэглэл хамгийн багадаа 1 байх ёстой" })
       .max(5, { message: "Одны зэрэглэл хамгийн ихдээ 5 байх ёстой" }),
 
-    part_of_group: z.boolean(),
+    part_of_group: z.coerce.boolean(),
 
     group_name: z.string().optional(),
 
     total_hotel_rooms: z
-      .string()
+      .coerce.string()
       .min(1, { message: "Нийт өрөөний тоо хамгийн багадаа 1 байх ёстой" }),
 
     available_rooms: z
-      .string()
+      .coerce.string()
       .min(1, { message: "Боломжит өрөөний тоог оруулна уу?" }),
 
-    sales_room_limitation: z.boolean(),
+    sales_room_limitation: z.coerce.boolean(),
 
     languages: z
       .array(z.string())
       .min(1, { message: "Хамгийн багадаа нэг хэл сонгоно уу" }),
   })
   .refine(
-    (data) => parseInt(data.available_rooms) <= parseInt(data.total_hotel_rooms),
+    (data) => {
+      const total = parseInt(data.total_hotel_rooms);
+      const available = parseInt(data.available_rooms);
+      return !isNaN(total) && !isNaN(available) && available <= total;
+    },
     {
       message: "Боломжит өрөөний тоо нь нийт өрөөний тооноос их байж болохгүй.",
       path: ["available_rooms"],
@@ -278,6 +283,7 @@ export const schemaHotelSteps1 = z
     }
   });
 
+
 export const schemaHotelSteps2 = z.object({
   zipCode: z
     .string()
@@ -291,19 +297,19 @@ export const schemaHotelSteps2 = z.object({
     .min(1, { message: "Барилгын давхарын тоо хамгийн багадаа 1 байх ёстой" }),
 
   province_city: z
-    .string()
+    .coerce.string()
     .min(1, { message: "Хот/аймгийн мэдээллийг оруулна уу" }),
 
   soum: z
-    .string()
+    .coerce.string()
     .min(1, { message: "Сум/дүүргийн мэдээллийг оруулна уу" }),
 
   district: z
-.coerce.number()
-   .int({ message: "Бүхэл тоо байх ёстой" })
+    .coerce.number()
+    .int({ message: "Бүхэл тоо байх ёстой" })
     .min(1, { message: "Баг/Хорооны мэдээллийг оруулна уу" })
-   
 });
+
 
 export const schemaHotelSteps3 = z.object({
   cancel_time: z.string(),

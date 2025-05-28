@@ -22,6 +22,12 @@ interface PropertyDetail {
   parking_situation: string;
   property: number;
   general_facilities: number[];
+  Additional_Information:number;
+}
+interface Additional_Information {
+  id: number;
+  About:string;
+  YoutubeUrl:string;
 }
 
 interface PropertyPolicy {
@@ -119,19 +125,25 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         setPropertyPolicy(policy);
         setAddress(addressData);
         setBasicInfo(basicInfoData);
+        console.log(matchedDetail.Additional_Information)
 
         const combinedData = await (await fetch('https://dev.kacc.mn/api/combined-data/')).json();
         setPropertyTypes(combinedData.property_types || []);
-
-        const additionalRes = await fetch(`https://dev.kacc.mn/api/additionalInfo/?property=${hotelId}`);
+        
+        if(matchedDetail.Additional_Information){
+          
+       
+        const additionalRes = await fetch(`https://dev.kacc.mn/api/additionalInfo/${matchedDetail.Additional_Information}`);
+   
         const additionalJson = await additionalRes.json();
-        if (additionalJson?.length > 0) {
-          setAdditionalInfo(additionalJson[0]);
-        }
+                console.log(additionalJson)
+     setAdditionalInfo(additionalJson);
+         }
       } catch (err) {
         console.error(err);
         setProceed(0);
       }
+      
     }
 
     loadData();
@@ -206,15 +218,21 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       </div>
 
       {Menu === 0 && (
-        <AboutHotel
-          image={propertyImages[imageIndex] || null}
-          aboutUs={additionalInfo?.About || ''}
-          youtubeUrl={additionalInfo?.YoutubeUrl || ''}
-          additionalId={additionalInfo?.id || null}
-          hotelId={propertyDetail.property}
-          propertyDetailId={propertyDetail.id}
-        />
-      )}
+<AboutHotel
+  image={propertyImages[imageIndex] || null}
+  aboutUs={additionalInfo?.About || ''}
+  youtubeUrl={additionalInfo?.YoutubeUrl || ''}
+  hotelId={propertyDetail.property}
+  propertyDetailId={propertyDetail.id}
+  basicInfo={basicInfo}
+  propertyPolicy={propertyPolicy}
+  propertyBaseInfo={propertyBaseInfo}
+  propertyDetail={propertyDetail}
+  getPropertyTypeName={getPropertyTypeName}
+  formatTime={formatTime}
+/>
+
+)}
     </div>
   );
 }

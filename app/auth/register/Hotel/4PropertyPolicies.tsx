@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { ToastContainer, toast } from 'react-toastify';
@@ -9,6 +9,8 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { schemaHotelSteps3 } from '../../../schema';
 import { z } from 'zod';
 
+const API_URL = 'https://dev.kacc.mn/api/property-policies/';
+
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
 type Props = {
@@ -16,13 +18,10 @@ type Props = {
   onBack: () => void;
 };
 
-export default function RegisterHotel3({ onNext, onBack }: Props) {
+export default function RegisterHotel4({ onNext, onBack }: Props) {
   const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
   const defaultValues = stored.step4
-    ? {
-        ...stored.step4,
-        ...(stored.step4.cancellation_fee || {}),
-      }
+    ? { ...stored.step4, ...(stored.step4.cancellation_fee || {}) }
     : {};
 
   const {
@@ -36,7 +35,13 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
   });
 
   const cancelTime = watch('cancel_time');
-  const onSubmit: SubmitHandler<FormFields> = (data) => {
+
+  
+
+  const onSubmit: SubmitHandler<FormFields> = async (data) => {
+  
+      const propertyId = stored.propertyId;
+      console.log(propertyId)
     const formattedData = {
       cancellation_fee: {
         cancel_time: data.cancel_time,
@@ -46,6 +51,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         afterManyRoom_fee: data.afterManyRoom_fee,
         subsequent_days_percentage: data.subsequent_days_percentage,
         special_condition_percentage: data.special_condition_percentage,
+        property: propertyId,
       },
       check_in_from: data.check_in_from,
       check_in_until: data.check_in_until,
@@ -55,16 +61,42 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
       allow_children: data.allow_children,
       allow_pets: data.allow_pets,
       parking_situation: data.parking_situation,
+      property: propertyId,
     };
 
-    const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-    propertyData.step4 = formattedData;
-    localStorage.setItem('propertyData', JSON.stringify(propertyData));
+    try {
+      if (!propertyId) {
+        toast.error('Property ID not found. Please complete Step 1.');
+        return;
+      }
 
-    toast.success('Property policy data saved!');
-    onNext();
+      const checkRes = await fetch(`${API_URL}?property=${propertyId}`);
+      const existing = await checkRes.json();
+
+      const response = await fetch(
+        existing?.length > 0 ? `${API_URL}${existing[0].id}/` : API_URL,
+        {
+          method: existing?.length > 0 ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formattedData),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to save property policy');
+      const result = await response.json();
+
+      localStorage.setItem('propertyData', JSON.stringify({
+        ...stored,
+        step4: result,
+      }));
+
+      toast.success('Property policy data saved!');
+      onNext();
+    } catch (error) {
+      console.error(error);
+      toast.error('Алдаа гарлаа. Дахин оролдоно уу.');
+    }
   };
-
   return (
     <div className="flex justify-center items-center">
       <ToastContainer />
@@ -72,7 +104,37 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[650px] md:min-w-[440px] rounded-[15px] text-gray-600"
       >
-        <h2 className="text-2xl font-bold text-center mb-6">Property Policies</h2>
+   <h2 className="text-2xl font-bold text-center mb-6">Дотоод журам</h2>
+    <div className='text-soft text-sm pt-2'>Та зочны өрөөнд орох болон гарах цагийг тохируулж өгнө үү.</div>
+<div className="border-soft border-dotted border-[1px] rounded-[10px] p-2">
+        <section className="mb-6">
+          <label className="text-black">Орох цаг (check in)</label>
+          <div className="flex">
+            <div className='flex'>
+              <input type="time" {...register('check_in_from')} className="border p-2 w-[150px] rounded-[15px]" />
+              <div className='place-content-center mx-2'>- цагаас</div>
+            </div>
+            <div className='flex'>
+              <input type="time" {...register('check_in_until')} className="border p-2 w-[150px] rounded-[15px]" />
+              <div className='place-content-center mx-2'>цаг хүртэл</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-8">
+          <label className="text-black">Гарах цаг (check out)</label>
+          <div className="flex">
+            <div className='flex'>
+              <input type="time" {...register('check_out_from')} className="border p-2 w-[150px] rounded-[15px]" />
+              <div className='place-content-center mx-2'>- цагаас</div>
+            </div>
+            <div className='flex'>
+              <input type="time" {...register('check_out_until')} className="border p-2 w-[150px] rounded-[15px]" />
+              <div className='place-content-center mx-2'>цаг хүртэл</div>
+            </div>
+          </div>
+        </section>
+        </div>
            <label className=" text-soft text-sm">Цуцлалтын нөхцөл</label>
         <div className="border-soft border-[1px] border-dotted p-2 rounded-[10px] mb-6">
 
@@ -167,36 +229,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         </section>
         </div>
 
-        <div className='text-soft text-sm pt-2'>Та зочны өрөөнд орох болон гарах цагийг тохируулж өгнө үү.</div>
-<div className="border-soft border-dotted border-[1px] rounded-[10px] p-2">
-        <section className="mb-6">
-          <label className="text-black">Орох цаг (check in)</label>
-          <div className="flex">
-            <div className='flex'>
-              <input type="time" {...register('check_in_from')} className="border p-2 w-[150px] rounded-[15px]" />
-              <div className='place-content-center mx-2'>- цагаас</div>
-            </div>
-            <div className='flex'>
-              <input type="time" {...register('check_in_until')} className="border p-2 w-[150px] rounded-[15px]" />
-              <div className='place-content-center mx-2'>цаг хүртэл</div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-8">
-          <label className="text-black">Гарах цаг (check out)</label>
-          <div className="flex">
-            <div className='flex'>
-              <input type="time" {...register('check_out_from')} className="border p-2 w-[150px] rounded-[15px]" />
-              <div className='place-content-center mx-2'>- цагаас</div>
-            </div>
-            <div className='flex'>
-              <input type="time" {...register('check_out_until')} className="border p-2 w-[150px] rounded-[15px]" />
-              <div className='place-content-center mx-2'>цаг хүртэл</div>
-            </div>
-          </div>
-        </section>
-        </div>
+       
 
         <section className="mb-6">
           <label className="text-black">Өглөөний цай</label>
@@ -220,16 +253,16 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
           {errors.parking_situation && <div className="text-red text-sm">{errors.parking_situation.message}</div>}
         </section>
 
-     <section className="flex gap-4 mb-6">
-  <div className="w-1/2">
-    <label className="text-black block mb-2">Хүүхэд хүлээн авах эсэх</label>
+     <section className=" gap-4 mb-6">
+  <div className="mb-6">
+    <label className="text-black block mb-2">Зочин хүүхэдтэй хамт үйлчлүүлэх боломжтой эсэх</label>
     <div className="flex items-center gap-2">
       <input type="checkbox" id="allowChildren" {...register("allow_children")} className="w-4 h-4" />
       <label htmlFor="allowChildren" className="cursor-pointer">Тийм</label>
     </div>
   </div>
 
-  <div className="w-1/2">
+  <div className="">
     <label className="text-black block mb-2">Тэжээвэр амьтан оруулах боломжтой эсэх</label>
     <div className="flex items-center gap-2">
       <input type="checkbox" id="allowPets" {...register("allow_pets")} className="w-4 h-4" />
