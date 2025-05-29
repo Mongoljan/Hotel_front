@@ -52,8 +52,33 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
           const res = await fetch(url);
           const data = await res.json();
 
-          if ((Array.isArray(data) && data.length > 0) || data?.id) {
-            propertyData[key] = Array.isArray(data) ? data[0] : data;
+          const validData = Array.isArray(data)
+            ? data.length > 0 && data[0]?.id
+            : data?.id;
+
+          if (validData) {
+            if (key === 'step5' && Array.isArray(data)) {
+              const uploadedImages = data
+                .map((img: any) => img?.id)
+                .filter((id: any) => typeof id === 'number' && !isNaN(id));
+
+              const entries = data.map((img: any) => ({
+                images: img.image,
+                descriptions: img.description,
+              }));
+
+              propertyData.step5 = {
+                entries,
+                property_photos: uploadedImages,
+                raw: data,
+              };
+
+              // ✅ Store correctly
+              propertyData.property_photos = uploadedImages;
+            } else {
+              propertyData[key] = data;
+            }
+
             lastCompletedStep = step;
           } else {
             break;
@@ -72,20 +97,21 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
         return;
       }
 
-      localStorage.setItem('propertyData', JSON.stringify({
+      const resumeStep = lastCompletedStep === 3 ? 4 : Math.min(lastCompletedStep + 1, 6);
+
+      const finalDataToStore = {
         ...propertyData,
         propertyId: hotelId,
         propertyBasicInfo: propertyData.step1?.id,
         confirmAddress: propertyData.step2?.id,
         propertyPolicies: propertyData.step4?.id,
-        property_photos: Array.isArray(propertyData.step5?.results)
-          ? propertyData.step5.results.map((img: any) => img.id)
-          : [],
-      }));
+        property_photos: propertyData.property_photos || [],
+      };
 
-      const resumeStep = lastCompletedStep === 3 ? 4 : Math.min(lastCompletedStep + 1, 6);
-      setCurrentStep(resumeStep);
+      console.log('✅ Final propertyData for localStorage:', finalDataToStore);
+      localStorage.setItem('propertyData', JSON.stringify(finalDataToStore));
       localStorage.setItem('currentStep', resumeStep.toString());
+      setCurrentStep(resumeStep);
     };
 
     const savedStep = localStorage.getItem('currentStep');

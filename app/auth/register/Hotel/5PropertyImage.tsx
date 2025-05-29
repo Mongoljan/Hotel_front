@@ -23,9 +23,11 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   const t = useTranslations('5PropertyImages');
 
   const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
-  const defaultValues: FormFields = stored.step5 || {
-    entries: [{ images: '', descriptions: '' }],
-  };
+  const defaultValues: FormFields = stored?.step5
+    ? stored.step5.entries
+      ? stored.step5
+      : { entries: [{ images: '', descriptions: '' }] }
+    : { entries: [{ images: '', descriptions: '' }] };
 
   const {
     register,
@@ -41,10 +43,22 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
 
   const watchedEntries = watch('entries');
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control,
     name: 'entries',
   });
+
+  // ✅ Restore previously uploaded images on load
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    if (stored?.step5?.raw) {
+      const restored = stored.step5.raw.map((item: any) => ({
+        images: item.image,
+        descriptions: item.description,
+      }));
+      replace(restored);
+    }
+  }, [replace]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -68,28 +82,48 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         return;
       }
 
-      // Check existing images
-      const checkRes = await fetch(`${API_URL}?property=${propertyId}`);
-      const existing = await checkRes.json();
+      const result: any[] = [];
 
-      // Submit each image as a separate entry
-      for (let entry of data.entries) {
-        const payload = {
-          property: propertyId,
-          image: entry.images,
-          description: entry.descriptions,
-        };
+      for (const entry of data.entries) {
+        const formData = new FormData();
+        formData.append('property', propertyId.toString());
+        formData.append('description', entry.descriptions);
 
-        await fetch(existing?.length ? `${API_URL}${existing[0].id}/` : API_URL, {
-          method: existing?.length ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+        const base64 = entry.images;
+        const blob = await (await fetch(base64)).blob();
+        formData.append('image', blob, `image_${Date.now()}.jpeg`);
+
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: formData,
         });
+
+        if (!res.ok) throw new Error('One of the image uploads failed.');
+        const json = await res.json();
+
+        if (Array.isArray(json)) {
+          result.push(...json);
+        } else {
+          result.push(json);
+        }
       }
 
-      stored.step5 = data;
-      localStorage.setItem('propertyData', JSON.stringify(stored));
-      toast.success('Зураг, тайлбар хадгалагдлаа!');
+      const uploadedImageIds = result.map((img) => img.id);
+
+      const step5Data = {
+        entries: data.entries,
+        property_photos: uploadedImageIds,
+        raw: result,
+      };
+
+      const updatedStorage = {
+        ...stored,
+        step5: step5Data, // ✅ saved as OBJECT, not array
+        property_photos: uploadedImageIds,
+      };
+
+      localStorage.setItem('propertyData', JSON.stringify(updatedStorage));
+      toast.success('Зураг, тайлбар амжилттай хадгалагдлаа!');
       onNext();
     } catch (error) {
       console.error(error);

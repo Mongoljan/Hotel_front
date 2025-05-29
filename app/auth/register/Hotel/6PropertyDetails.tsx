@@ -63,7 +63,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
     }
   }, [reset]);
 
-  const onSubmit: SubmitHandler<FormFields> = async (data) => {
+const onSubmit: SubmitHandler<FormFields> = async (data) => {
   try {
     const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
     const propertyId = stored.propertyId;
@@ -74,26 +74,22 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
     }
 
     const payload = {
-      propertyBasicInfo: stored.propertyBasicInfo,
-      confirmAddress: stored.confirmAddress,
-      propertyPolicies: stored.propertyPolicies,
-      property_photos: stored.property_photos,
+      propertyBasicInfo: stored.step1[0]?.id,
+      confirmAddress: stored.step2[0].id,
+      propertyPolicies: stored.step4[0]?.id,
+  property_photos: Array.isArray(stored.property_photos)
+  ? stored.property_photos
+  : [stored.property_photos],
       google_map: data.google_map,
-      general_facilities: data.general_facilities.map(Number),
+      general_facilities: [...data.general_facilities].map(Number),
       property: propertyId,
     };
 
-    const res = await fetch(`${API_PROPERTY_DETAILS}?property=${propertyId}`);
-    const existing = await res.json();
-
-    const response = await fetch(
-      existing?.length > 0 ? `${API_PROPERTY_DETAILS}${existing[0].id}/` : API_PROPERTY_DETAILS,
-      {
-        method: existing?.length > 0 ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }
-    );
+    const response = await fetch(API_PROPERTY_DETAILS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
     if (!response.ok) throw new Error('Property detail submission failed.');
 
@@ -108,6 +104,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
     toast.error(error.message || 'Алдаа гарлаа. Дахин оролдоно уу.');
   }
 };
+
 
 
   return (
