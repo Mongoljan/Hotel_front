@@ -17,17 +17,17 @@ interface PropertyDetail {
   propertyBasicInfo: number;
   confirmAddress: number;
   propertyPolicies: number;
-  property_photos: PropertyPhoto[];
   google_map: string;
   parking_situation: string;
   property: number;
   general_facilities: number[];
-  Additional_Information:number;
+  Additional_Information: number;
 }
+
 interface Additional_Information {
   id: number;
-  About:string;
-  YoutubeUrl:string;
+  About: string;
+  YoutubeUrl: string;
 }
 
 interface PropertyPolicy {
@@ -105,45 +105,51 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       if (!hotelId) return setProceed(0);
 
       try {
-        const baseRes = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`);
-        if (!baseRes.ok) throw new Error('Failed to fetch propertyBaseInfo');
-        const baseInfo = await baseRes.json();
-        setPropertyBaseInfo(baseInfo);
-
-        const details = await (await fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`)).json();
-        const matchedDetail = details?.[0];
-        if (!matchedDetail) return setProceed(0);
-
-        const [policy, addressData, basicInfoData] = await Promise.all([
-          (await fetch(`https://dev.kacc.mn/api/property-policies/${matchedDetail.propertyPolicies}/`)).json(),
-          (await fetch(`https://dev.kacc.mn/api/confirm-address/${matchedDetail.confirmAddress}/`)).json(),
-          (await fetch(`https://dev.kacc.mn/api/property-basic-info/${matchedDetail.propertyBasicInfo}/`)).json(),
+        const [
+          detailRes,
+          policyRes,
+          addressRes,
+          basicInfoRes,
+          additionalRes,
+          combinedDataRes,
+          baseRes,
+          imagesRes
+        ] = await Promise.all([
+          fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`),
+          fetch(`https://dev.kacc.mn/api/property-policies/?property=${hotelId}`),
+          fetch(`https://dev.kacc.mn/api/confirm-address/?property=${hotelId}`),
+          fetch(`https://dev.kacc.mn/api/property-basic-info/?property=${hotelId}`),
+          fetch(`https://dev.kacc.mn/api/additionalInfo/?property=${hotelId}`),
+          fetch(`https://dev.kacc.mn/api/combined-data/`),
+          fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`),
+          fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`)
         ]);
 
-        setPropertyDetail(matchedDetail);
-        setPropertyImages(matchedDetail.property_photos);
-        setPropertyPolicy(policy);
-        setAddress(addressData);
-        setBasicInfo(basicInfoData);
-        console.log(matchedDetail.Additional_Information)
+        if (!detailRes.ok || !policyRes.ok || !addressRes.ok || !basicInfoRes.ok || !baseRes.ok) {
+          return setProceed(0);
+        }
 
-        const combinedData = await (await fetch('https://dev.kacc.mn/api/combined-data/')).json();
+        const [detail] = await detailRes.json();
+        const [policy] = await policyRes.json();
+        const [address] = await addressRes.json();
+        const [basic] = await basicInfoRes.json();
+        const additional = additionalRes.ok ? await additionalRes.json() : null;
+        const combinedData = await combinedDataRes.json();
+        const baseInfo = await baseRes.json();
+        const imageJson = imagesRes.ok ? await imagesRes.json() : [];
+
+        setPropertyDetail(detail);
+        setPropertyImages(imageJson);
+        setPropertyPolicy(policy);
+        setAddress(address);
+        setBasicInfo(basic);
+        setAdditionalInfo(additional);
+        setPropertyBaseInfo(baseInfo);
         setPropertyTypes(combinedData.property_types || []);
-        
-        if(matchedDetail.Additional_Information){
-          
-       
-        const additionalRes = await fetch(`https://dev.kacc.mn/api/additionalInfo/${matchedDetail.Additional_Information}`);
-   
-        const additionalJson = await additionalRes.json();
-                console.log(additionalJson)
-     setAdditionalInfo(additionalJson);
-         }
       } catch (err) {
         console.error(err);
         setProceed(0);
       }
-      
     }
 
     loadData();
@@ -218,21 +224,20 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       </div>
 
       {Menu === 0 && (
-<AboutHotel
-  image={propertyImages[imageIndex] || null}
-  aboutUs={additionalInfo?.About || ''}
-  youtubeUrl={additionalInfo?.YoutubeUrl || ''}
-  hotelId={propertyDetail.property}
-  propertyDetailId={propertyDetail.id}
-  basicInfo={basicInfo}
-  propertyPolicy={propertyPolicy}
-  propertyBaseInfo={propertyBaseInfo}
-  propertyDetail={propertyDetail}
-  getPropertyTypeName={getPropertyTypeName}
-  formatTime={formatTime}
-/>
-
-)}
+        <AboutHotel
+          image={propertyImages[imageIndex] || null}
+          aboutUs={additionalInfo?.About || ''}
+          youtubeUrl={additionalInfo?.YoutubeUrl || ''}
+          hotelId={propertyDetail.property}
+          propertyDetailId={propertyDetail.id}
+          basicInfo={basicInfo}
+          propertyPolicy={propertyPolicy}
+          propertyBaseInfo={propertyBaseInfo}
+          propertyDetail={propertyDetail}
+          getPropertyTypeName={getPropertyTypeName}
+          formatTime={formatTime}
+        />
+      )}
     </div>
   );
 }

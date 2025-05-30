@@ -23,10 +23,8 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   const t = useTranslations('5PropertyImages');
 
   const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
-  const defaultValues: FormFields = stored?.step5
-    ? stored.step5.entries
-      ? stored.step5
-      : { entries: [{ images: '', descriptions: '' }] }
+  const defaultValues: FormFields = stored?.step5?.entries
+    ? stored.step5
     : { entries: [{ images: '', descriptions: '' }] };
 
   const {
@@ -48,7 +46,6 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
     name: 'entries',
   });
 
-  // ✅ Restore previously uploaded images on load
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
     if (stored?.step5?.raw) {
@@ -101,6 +98,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         if (!res.ok) throw new Error('One of the image uploads failed.');
         const json = await res.json();
 
+        // ✅ FIXED: flatten response array
         if (Array.isArray(json)) {
           result.push(...json);
         } else {
@@ -116,13 +114,15 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         raw: result,
       };
 
-      const updatedStorage = {
-        ...stored,
-        step5: step5Data, // ✅ saved as OBJECT, not array
-        property_photos: uploadedImageIds,
-      };
+      localStorage.setItem(
+        'propertyData',
+        JSON.stringify({
+          ...stored,
+          step5: step5Data,
+          property_photos: uploadedImageIds,
+        })
+      );
 
-      localStorage.setItem('propertyData', JSON.stringify(updatedStorage));
       toast.success('Зураг, тайлбар амжилттай хадгалагдлаа!');
       onNext();
     } catch (error) {
@@ -153,9 +153,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                   className="border p-2 w-full rounded-[15px]"
                 />
                 {errors.entries?.[index]?.images && (
-                  <div className="text-red text-sm">
-                    {errors.entries[index]?.images?.message}
-                  </div>
+                  <div className="text-red text-sm">{errors.entries[index]?.images?.message}</div>
                 )}
                 {previewSrc && (
                   <img
@@ -174,9 +172,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                   className="border p-2 w-full rounded-[15px]"
                 />
                 {errors.entries?.[index]?.descriptions && (
-                  <div className="text-red text-sm">
-                    {errors.entries[index]?.descriptions?.message}
-                  </div>
+                  <div className="text-red text-sm">{errors.entries[index]?.descriptions?.message}</div>
                 )}
               </section>
 

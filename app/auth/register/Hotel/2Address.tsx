@@ -61,11 +61,11 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
         const res = await fetch(`${API_URL}?property=${propertyId}`);
         const data = await res.json();
         const existing = Array.isArray(data) && data.length > 0 ? data[0] : null;
-        const initialValues = stored.step2[0] || existing;
+        const initialValues = stored.step2 || existing;
 
         if (initialValues) {
-          reset(initialValues); // ✅ populate form
-          stored.step2[0] = initialValues;
+          reset(initialValues);
+          stored.step2 = initialValues;
           localStorage.setItem('propertyData', JSON.stringify(stored));
         }
       } catch (err) {

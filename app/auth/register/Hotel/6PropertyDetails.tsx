@@ -63,49 +63,53 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
     }
   }, [reset]);
 
-const onSubmit: SubmitHandler<FormFields> = async (data) => {
-  try {
-    const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
-    const propertyId = stored.propertyId;
+  const getStepId = (step: any) => {
+    if (Array.isArray(step)) return step[0]?.id;
+    if (typeof step === 'object' && step !== null) return step.id;
+    return null;
+  };
 
-    if (!propertyId) {
-      toast.error('Property ID not found. Please complete Step 1.');
-      return;
+  const onSubmit: SubmitHandler<FormFields> = async (data) => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+      const propertyId = stored.propertyId;
+
+      if (!propertyId) {
+        toast.error('Property ID not found. Please complete Step 1.');
+        return;
+      }
+
+      const payload = {
+        propertyBasicInfo: getStepId(stored.step1),
+        confirmAddress: getStepId(stored.step2),
+        propertyPolicies: getStepId(stored.step4),
+        property_photos: Array.isArray(stored.property_photos)
+          ? stored.property_photos
+          : [stored.property_photos],
+        google_map: data.google_map,
+        general_facilities: [...data.general_facilities].map(Number),
+        property: propertyId,
+      };
+
+      const response = await fetch(API_PROPERTY_DETAILS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Property detail submission failed.');
+
+      const result = await response.json();
+      stored.step6 = data;
+      localStorage.setItem('propertyData', JSON.stringify(stored));
+
+      toast.success('✔️ Мэдээлэл хадгалагдлаа!');
+      onNext();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || 'Алдаа гарлаа. Дахин оролдоно уу.');
     }
-
-    const payload = {
-      propertyBasicInfo: stored.step1[0]?.id,
-      confirmAddress: stored.step2[0].id,
-      propertyPolicies: stored.step4[0]?.id,
-  property_photos: Array.isArray(stored.property_photos)
-  ? stored.property_photos
-  : [stored.property_photos],
-      google_map: data.google_map,
-      general_facilities: [...data.general_facilities].map(Number),
-      property: propertyId,
-    };
-
-    const response = await fetch(API_PROPERTY_DETAILS, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) throw new Error('Property detail submission failed.');
-
-    const result = await response.json();
-    stored.step6 = data;
-    localStorage.setItem('propertyData', JSON.stringify(stored));
-
-    toast.success('✔️ Мэдээлэл хадгалагдлаа!');
-    onNext();
-  } catch (error: any) {
-    console.error(error);
-    toast.error(error.message || 'Алдаа гарлаа. Дахин оролдоно уу.');
-  }
-};
-
-
+  };
 
   return (
     <div className="flex justify-center items-center">
@@ -127,7 +131,9 @@ const onSubmit: SubmitHandler<FormFields> = async (data) => {
         </section>
 
         <section className="mb-4">
-          <label className="text-black">Зочин та бүхнээс төлбөртэй болон төлбөргүй ямар нэмэлт үйлчилгээг  авах боломжтой вэ? Дараахаас сонгоно уу.</label>
+          <label className="text-black">
+            Зочин та бүхнээс төлбөртэй болон төлбөргүй ямар нэмэлт үйлчилгээг авах боломжтой вэ? Дараахаас сонгоно уу.
+          </label>
           {facilities.map((facility) => (
             <div key={facility.id} className="flex items-center">
               <input

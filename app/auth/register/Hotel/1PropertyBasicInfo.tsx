@@ -41,7 +41,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
     const initDefaults = async () => {
       const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
       if (stored.step1) {
-        setDefaultValues(stored.step1[0]);
+        setDefaultValues(stored.step1);
         return;
       }
 

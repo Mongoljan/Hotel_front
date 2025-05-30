@@ -52,6 +52,20 @@ interface Props {
   formatTime: (time: string) => string;
 }
 
+function convertYouTubeUrlToEmbed(url: string): string | null {
+  try {
+    const youtubeRegex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(youtubeRegex);
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default function AboutHotel({
   image,
   basicInfo,
@@ -77,6 +91,8 @@ export default function AboutHotel({
   useEffect(() => {
     setYoutube(youtubeUrl || '');
   }, [youtubeUrl]);
+
+  const embedUrl = convertYouTubeUrlToEmbed(youtube);
 
   const handleSave = async () => {
     try {
@@ -118,15 +134,15 @@ export default function AboutHotel({
   return (
     <div className="w-full">
       {/* About + YouTube */}
-      <div className="flex  justify-end mb-2">
-          <button
-            onClick={editing ? handleSave : () => setEditing(true)}
-            className="bg-primary text-white px-4 py-2 rounded-[10px] disabled:opacity-50"
-            disabled={loading}
-          >
-            {editing ? 'Хадгалах' : 'Засварлах'}
-          </button>
-        </div>
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={editing ? handleSave : () => setEditing(true)}
+          className="bg-primary text-white px-4 py-2 rounded-[10px] disabled:opacity-50"
+          disabled={loading}
+        >
+          {editing ? 'Хадгалах' : 'Засварлах'}
+        </button>
+      </div>
       <div className="flex min-h-[200px] gap-x-6 max-h-[500px] mb-6">
         <textarea
           disabled={!editing}
@@ -136,26 +152,29 @@ export default function AboutHotel({
         />
         <div className="min-w-[300px] border-cloud border-solid border-[1px] rounded-[15px] min-h-[200px] text-center p-2">
           {editing ? (
-            <input
-              type="url"
-              value={youtube}
-              onChange={(e) => setYoutube(e.target.value)}
-              className="w-full border border-gray-300 p-2 rounded-[10px]"
-              placeholder="YouTube URL"
-            />
-          ) : youtube ? (
+            <>
+              <input
+                type="url"
+                value={youtube}
+                onChange={(e) => setYoutube(e.target.value)}
+                className="w-full border border-gray-300 p-2 rounded-[10px]"
+                placeholder="YouTube URL"
+              />
+              <div className="text-soft">
+                Youtube бичлэгийн Share-ээс embed доторх линкийг хуулна уу
+              </div>
+            </>
+          ) : embedUrl ? (
             <iframe
               className="w-full h-[200px] rounded-[10px]"
-              src={youtube.replace('watch?v=', 'embed/')}
+              src={embedUrl}
               allowFullScreen
             />
           ) : (
             <span className="text-gray-400">Youtube URL байхгүй байна</span>
           )}
         </div>
-        
       </div>
-      
 
       {/* Policy Section */}
       {propertyPolicy && (

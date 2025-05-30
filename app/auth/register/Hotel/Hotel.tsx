@@ -46,6 +46,7 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
 
       const propertyData: Record<string, any> = {};
       let lastCompletedStep = 0;
+      let uploadedImageIds: number[] = [];
 
       for (const { step, url, key } of stepEndpoints) {
         try {
@@ -73,10 +74,10 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
                 raw: data,
               };
 
-              // ✅ Store correctly
-              propertyData.property_photos = uploadedImages;
+              uploadedImageIds = uploadedImages;
             } else {
-              propertyData[key] = data;
+              // ✅ Store as object, even if returned as array
+              propertyData[key] = Array.isArray(data) ? data[0] : data;
             }
 
             lastCompletedStep = step;
@@ -100,12 +101,16 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
       const resumeStep = lastCompletedStep === 3 ? 4 : Math.min(lastCompletedStep + 1, 6);
 
       const finalDataToStore = {
-        ...propertyData,
+        step1: propertyData.step1,
+        step2: propertyData.step2,
+        step4: propertyData.step4,
+        step5: propertyData.step5,
+        step6: propertyData.step6,
         propertyId: hotelId,
         propertyBasicInfo: propertyData.step1?.id,
         confirmAddress: propertyData.step2?.id,
         propertyPolicies: propertyData.step4?.id,
-        property_photos: propertyData.property_photos || [],
+        property_photos: Array.isArray(uploadedImageIds) ? [...uploadedImageIds] : [],
       };
 
       console.log('✅ Final propertyData for localStorage:', finalDataToStore);
