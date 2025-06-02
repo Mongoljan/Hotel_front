@@ -83,7 +83,7 @@ useEffect(() => {
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
-    const existingPropertyId = stored.propertyId;
+    const existingPropertyId = stored.step1?.propertyId;
 
     try {
       const cleanedData = {
