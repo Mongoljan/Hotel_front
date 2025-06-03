@@ -32,7 +32,7 @@ export default function Sidebar({ isApproved,   userApproved }: { isApproved: bo
 
   const navItems = (isApproved && userApproved)
     ? [
-        { href: "", icon: <MdOutlineSpaceDashboard />, label: "Dashboard" },
+        { href: "/admin/dashboard", icon: <MdOutlineSpaceDashboard />, label: "Dashboard" },
         { href: "", icon: <BsCardChecklist />, label: "Захиалгын жагсаалт" },
         { href: "", icon: <GiLockedDoor />, label: "Өрөө блок" },
         { href: "", icon: <LuReceipt />, label: "Төлбөр тооцоо" },

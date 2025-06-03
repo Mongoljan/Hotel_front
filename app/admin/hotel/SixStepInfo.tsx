@@ -21,7 +21,7 @@ interface PropertyDetail {
   parking_situation: string;
   property: number;
   general_facilities: number[];
-  Additional_Information: number;
+  Additional_Information: number | null;
 }
 
 interface Additional_Information {
@@ -95,7 +95,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
   const [propertyBaseInfo, setPropertyBaseInfo] = useState<PropertyBaseInfo | null>(null);
   const [propertyTypes, setPropertyTypes] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
-  const [additionalInfo, setAdditionalInfo] = useState<{ id: number; About: string; YoutubeUrl: string } | null>(null);
+  const [additionalInfo, setAdditionalInfo] = useState<Additional_Information | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -110,7 +110,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           policyRes,
           addressRes,
           basicInfoRes,
-          additionalRes,
           combinedDataRes,
           baseRes,
           imagesRes
@@ -119,7 +118,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           fetch(`https://dev.kacc.mn/api/property-policies/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/confirm-address/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/property-basic-info/?property=${hotelId}`),
-          fetch(`https://dev.kacc.mn/api/additionalInfo/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/combined-data/`),
           fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`),
           fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`)
@@ -133,19 +131,27 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         const [policy] = await policyRes.json();
         const [address] = await addressRes.json();
         const [basic] = await basicInfoRes.json();
-        const additional = additionalRes.ok ? await additionalRes.json() : null;
         const combinedData = await combinedDataRes.json();
         const baseInfo = await baseRes.json();
         const imageJson = imagesRes.ok ? await imagesRes.json() : [];
 
         setPropertyDetail(detail);
-        setPropertyImages(imageJson);
         setPropertyPolicy(policy);
         setAddress(address);
         setBasicInfo(basic);
-        setAdditionalInfo(additional);
         setPropertyBaseInfo(baseInfo);
         setPropertyTypes(combinedData.property_types || []);
+        setPropertyImages(imageJson);
+
+        // fetch additionalInfo using its ID (not by property)
+        if (detail?.Additional_Information && typeof detail.Additional_Information === 'number') {
+          const additionalRes = await fetch(`https://dev.kacc.mn/api/additionalInfo/${detail.Additional_Information}/`);
+          if (additionalRes.ok) {
+            const additionalData = await additionalRes.json();
+            setAdditionalInfo(additionalData);
+          }
+        }
+
       } catch (err) {
         console.error(err);
         setProceed(0);

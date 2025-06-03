@@ -88,8 +88,11 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
           : [stored.property_photos],
         google_map: data.google_map,
         general_facilities: [...data.general_facilities].map(Number),
-        property: propertyId,
+        property
+        : propertyId,
       };
+
+      console.log(JSON.stringify(payload))
 
       const response = await fetch(API_PROPERTY_DETAILS, {
         method: 'POST',
@@ -138,7 +141,9 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
             <div key={facility.id} className="flex items-center">
               <input
                 type="checkbox"
-                value={facility.id}
+value={String(facility.id)}
+
+
                 {...register('general_facilities')}
                 className="mr-2"
               />
