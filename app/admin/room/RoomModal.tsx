@@ -368,8 +368,8 @@ export default function RoomModal({
       free_Toiletries: formData.free_Toiletries.map(Number),
       food_And_Drink: formData.food_And_Drink.map(Number),
       outdoor_And_View: formData.outdoor_And_View.map(Number),
-      number_of_rooms: formData.number_of_rooms,
-      number_of_rooms_to_sell: parseInt(formData.number_of_rooms_to_sell),
+      number_of_rooms: 1,
+      number_of_rooms_to_sell: 1,
       room_Description: formData.room_Description,
       smoking_allowed: formData.smoking_allowed === "true",
       childQty: Number(formData.childQty),
@@ -680,8 +680,11 @@ export default function RoomModal({
             </section>
 
             <section className=" w-[45%]">
+               {roomToEdit ? <></>
+ :
+ <div>
               <div className="mb-4">
-                <label className="block mb-1">Number of Rooms</label>
+                <label className="block mb-1 font-medium">Өрөөний нийт тоо</label>
                 <input
                   type="number"
                   min="0"
@@ -695,8 +698,8 @@ export default function RoomModal({
                   </span>
                 )}
               </div>
-              <div className="">
-                <label className="block mb-4">Number of Rooms to Sell</label>
+              <div className=" mb-4">
+                <label className="block font-medium">Манай сайтаар зарах өрөөний тоо</label>
                 <input
                   type="number"
                   min="0"
@@ -710,9 +713,11 @@ export default function RoomModal({
                   </span>
                 )}
               </div>
-                <div className="">
-              <label className="block mb-4">
-                Өрөөний дугаарууд (таслалаар тусгаарлагдсан)
+              </div>
+ }
+                <div className="mb-4">
+              <label className="block  font-medium ">
+        {roomToEdit ? <div>Өрөөний дугаар ( 1 дугаар байна)</div> :  <div> Та өрөө тус бүрийн номерийг бичиж оруулна уу? (таслалаар тусгаарлагдсан)</div>   }  
               </label>
               <input
                 type="text"
@@ -726,7 +731,7 @@ export default function RoomModal({
             </div>
 
             <div className="mb-4">
-              <label className="block font-medium mb-1">Smoking Allowed</label>
+              <label className="block font-medium mb-1">Тамхи зөвшөөрөх эсэх</label>
               <div className="flex gap-8 mt-2">
                 <label className="flex items-center cursor-pointer">
                   <input
