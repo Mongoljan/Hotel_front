@@ -463,7 +463,7 @@ export default function RoomModal({
             <section className="flex justify-between mb-4">
               {/* Room Type */}
               <div className="w-[45%]">
-                <label className="block mb-1">Room Type</label>
+                <label className="block mb-1">Өрөөний төрөл</label>
                 <select
                   {...register("room_type")}
                   className="border rounded-lg p-2 w-full"
@@ -476,7 +476,7 @@ export default function RoomModal({
                   ))}
                 </select>
                 {errors.room_type && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red text-sm">
                     {errors.room_type.message}
                   </span>
                 )}
@@ -484,7 +484,7 @@ export default function RoomModal({
 
               {/* Room Category */}
               <div className="w-[45%]">
-                <label className="block mb-1">Room Category</label>
+                <label className="block mb-1">Өрөөний ангилал</label>
                 <select
                   {...register("room_category")}
                   className="border rounded-lg p-2 w-full"
@@ -497,7 +497,7 @@ export default function RoomModal({
                   ))}
                 </select>
                 {errors.room_category && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red text-sm">
                     {errors.room_category.message}
                   </span>
                 )}
@@ -507,7 +507,7 @@ export default function RoomModal({
             <section className="flex justify-between mb-4">
               {/* Room Size */}
               <div className="w-[45%]">
-                <label className="block mb-1">Room Size (m²)</label>
+                <label className="block mb-1">Өрөөний хэмжээ (m²)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -515,7 +515,7 @@ export default function RoomModal({
                   className="border rounded-lg p-2 w-1/2"
                 />
                 {errors.room_size && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red text-sm">
                     {errors.room_size.message}
                   </span>
                 )}
@@ -549,7 +549,7 @@ export default function RoomModal({
                   </div>
                 </div>
                 {(errors.adultQty || errors.childQty) && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red text-sm">
                     {errors.adultQty?.message ?? errors.childQty?.message}
                   </span>
                 )}
@@ -559,7 +559,7 @@ export default function RoomModal({
             <section className="flex justify-between mb-4">
               {/* Bed Type */}
               <div className="w-[45%]">
-                <label className="block mb-1">Bed Type</label>
+                <label className="block mb-1">Орны төрөл</label>
                 <select
                   {...register("bed_type")}
                   className="border rounded-lg p-2 w-full"
@@ -572,7 +572,7 @@ export default function RoomModal({
                   ))}
                 </select>
                 {errors.bed_type && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red text-sm">
                     {errors.bed_type.message}
                   </span>
                 )}
@@ -612,7 +612,7 @@ export default function RoomModal({
                   </label>
                 </div>
                 {errors.is_Bathroom && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red text-sm">
                     {errors.is_Bathroom.message}
                   </span>
                 )}
@@ -621,11 +621,12 @@ export default function RoomModal({
 
 <div className="flex justify-between mb-4">
             <section className="mb-6 w-[45%]">
-              <h3 className="text-2xl font-bold text-center mb-4">Property Images</h3>
+              <h3 className="font-medium text-center ">Зураг нэмэх (Хамгийн багадаа 1 зураг)  </h3>
+              <p className="text-xs text-soft mb-2">*jpg/ jpeg эсвэл png, 47MB-с ихгүй хэмжээтэй байхыг анхаарна уу.</p>
               {fields.map((field, index) => (
                 <div key={field.id} className="mb-4 border  p-4 rounded-lg">
                   <section className="mb-2">
-                    <label className="block mb-1">Upload Image</label>
+                    <label className="block mb-1">Зураг оруулах</label>
                     <input
                       type="file"
                       accept="image/*"
@@ -633,21 +634,21 @@ export default function RoomModal({
                       className="border p-2 w-full rounded-lg"
                     />
                     {errors.entries?.[index]?.images && (
-                      <div className="text-red-600 text-sm">
+                      <div className="text-red text-sm">
                         {errors.entries[index]?.images?.message}
                       </div>
                     )}
                   </section>
 
                   <section className="mb-2">
-                    <label className="block mb-1">Description</label>
+                    <label className="block mb-1">Тайлбар</label>
                     <input
                       type="text"
                       {...register(`entries.${index}.descriptions` as const)}
                       className="border p-2 w-full rounded-lg"
                     />
                     {errors.entries?.[index]?.descriptions && (
-                      <div className="text-red-600 text-sm">
+                      <div className="text-red text-sm">
                         {errors.entries[index]?.descriptions?.message}
                       </div>
                     )}
@@ -663,7 +664,7 @@ export default function RoomModal({
                   <button
                     type="button"
                     onClick={() => remove(index)}
-                    className="flex items-center justify-center w-full text-red-600 border border-red-500 rounded-lg p-2 mt-2 hover:bg-red-100 transition"
+                    className="flex items-center justify-center w-full text-red border border-red-500 rounded-lg p-2 mt-2 hover:bg-red-100 transition"
                   >
                     <FaTrash className="mr-2" /> Remove
                   </button>
@@ -689,7 +690,7 @@ export default function RoomModal({
                   className="border rounded-lg p-2 w-1/2"
                 />
                 {errors.number_of_rooms && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red text-sm">
                     {errors.number_of_rooms.message}
                   </span>
                 )}
@@ -704,7 +705,7 @@ export default function RoomModal({
                   className="border rounded-lg p-2 w-1/2"
                 />
                 {errors.number_of_rooms_to_sell && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red text-sm">
                     {errors.number_of_rooms_to_sell.message}
                   </span>
                 )}
@@ -720,7 +721,7 @@ export default function RoomModal({
                 className="border rounded-lg p-2 w-full"
               />
               {errors.RoomNo && (
-                <span className="text-red-600 text-sm">{errors.RoomNo.message}</span>
+                <span className="text-red text-sm">{errors.RoomNo.message}</span>
               )}
             </div>
 
@@ -755,7 +756,7 @@ export default function RoomModal({
                 </label>
               </div>
               {errors.smoking_allowed && (
-                <span className="text-red-600 text-sm">
+                <span className="text-red text-sm">
                   {errors.smoking_allowed.message}
                 </span>
               )}
@@ -786,7 +787,7 @@ export default function RoomModal({
             {/* Room Facilities */}
             <section className="flex justify-between">
               <div className="w-[45%] mb-4">
-                <label className="block mb-1">Room Facilities</label>
+                <label className="block mb-1">Өрөөний ерөнхий онцлог зүйлс</label>
                 <div className="border p-2 rounded-lg max-h-60 overflow-y-auto flex flex-col gap-2">
                   {combinedData.facilities.map((f) => (
                     <label key={f.id} className="flex items-center gap-2">
@@ -801,14 +802,14 @@ export default function RoomModal({
                   ))}
                 </div>
                 {errors.room_Facilities && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red text-sm">
                     {errors.room_Facilities.message}
                   </span>
                 )}
               </div>
 
               <div className="w-[45%] mb-4">
-                <label className="block mb-1">Bathroom Items</label>
+                <label className="block mb-1">Ариун цэврийн өрөөнд</label>
                 <div className="border p-2 rounded-lg max-h-60 overflow-y-auto flex flex-col gap-2">
                   {combinedData.bathroom_items.map((b) => (
                     <label key={b.id} className="flex items-center gap-2">
@@ -823,7 +824,7 @@ export default function RoomModal({
                   ))}
                 </div>
                 {errors.bathroom_Items && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red text-sm">
                     {errors.bathroom_Items.message}
                   </span>
                 )}
@@ -832,7 +833,7 @@ export default function RoomModal({
 
             {/* Free Toiletries */}
             <div className="mb-4">
-              <label className="block mb-1">Free Toiletries</label>
+              <label className="block mb-1">Үнэгүй 1 удаагийн хэрэгсэл</label>
               <div className="flex flex-wrap gap-x-2 gap-y-6">
                 {combinedData.free_Toiletries.map((ft) => (
                   <div key={ft.id}>
@@ -855,7 +856,7 @@ export default function RoomModal({
                 ))}
               </div>
               {errors.free_Toiletries && (
-                <span className="text-red-600 text-sm">
+                <span className="text-red text-sm">
                   {errors.free_Toiletries.message}
                 </span>
               )}
@@ -863,7 +864,7 @@ export default function RoomModal({
 
             {/* Outdoor & View */}
             <div className="mb-4">
-              <label className="block mb-1">Outdoor & View</label>
+              <label className="block mb-1">Нэмэлт:</label>
               <div className="flex flex-wrap gap-x-2 gap-y-6">
                 {combinedData.outdoor_and_view.map((ov) => (
                   <div key={ov.id}>
@@ -886,7 +887,7 @@ export default function RoomModal({
                 ))}
               </div>
               {errors.outdoor_And_View && (
-                <span className="text-red-600 text-sm">
+                <span className="text-red text-sm">
                   {errors.outdoor_And_View.message}
                 </span>
               )}
@@ -894,7 +895,7 @@ export default function RoomModal({
 
             {/* Food & Drink */}
             <div className="mb-4">
-              <label className="block mb-1">Food & Drink</label>
+              <label className="block mb-1">Бусад</label>
               <div className="flex flex-wrap gap-x-2 gap-y-6">
                 {combinedData.food_and_drink.map((fd) => (
                   <div key={fd.id}>
@@ -917,7 +918,7 @@ export default function RoomModal({
                 ))}
               </div>
               {errors.food_And_Drink && (
-                <span className="text-red-600 text-sm">
+                <span className="text-red text-sm">
                   {errors.food_And_Drink.message}
                 </span>
               )}
@@ -925,13 +926,13 @@ export default function RoomModal({
 
             {/* Final Room Description */}
             <div className="mb-4">
-              <label className="block mb-1">Room Description</label>
+              <label className="block mb-1">Нэмэлт тайлбарс</label>
               <textarea
                 {...register("room_Description")}
                 className="border rounded-lg p-2 w-full h-24"
               />
               {errors.room_Description && (
-                <span className="text-red-600 text-sm">
+                <span className="text-red text-sm">
                   {errors.room_Description.message}
                 </span>
               )}
@@ -944,14 +945,14 @@ export default function RoomModal({
                 onClick={() => setStep(1)}
                 className="flex items-center gap-2 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
               >
-                <FaArrowLeft /> Back
+                <FaArrowLeft /> Буцах
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-cyan-500 transition"
               >
-                {roomToEdit ? "Update Room" : "Create Room"} <FaCheck />
+                {roomToEdit ? "Хадгалах" : "Үүсгэх"} <FaCheck />
               </button>
             </div>
           </div>
