@@ -71,6 +71,8 @@ export const schemaCreateRoom = z.object({
     free_Toiletries: z.array(z.string()).min(1, { message: "Select at least one facility" }),
     food_And_Drink: z.array(z.string()).min(1, { message: "Select at least one facility" }),
     outdoor_And_View: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+    adultQty: z.string().min(1,{message:"Орох насанд хүрсэн хүний тоог оруулна уу?"}),
+        childQty: z.string().min(1,{message:"Орох хүүхдийн тоог оруулна уу?"}),
     number_of_rooms: z.preprocess(
       (val) => Number(val), // Convert input to number
       z.number()

@@ -26,7 +26,7 @@ export default function Sidebar({ isApproved,   userApproved }: { isApproved: bo
   const hotelRegistrationItem = {
     href: "/admin/hotel",
     icon: <LuHotel />,
-    label: t("hotelManagement"),
+    label: "Буудлын мэдээлэл",
   };
   console.log(isApproved);
 
@@ -42,15 +42,12 @@ export default function Sidebar({ isApproved,   userApproved }: { isApproved: bo
           icon: <IoIosSettings />,
           subMenu: [
             hotelRegistrationItem,
-            { href: "/admin/room", icon: <MdOutlineAddBox />, label: "Өрөө" },
-            { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: "Үнэ" },
-            { href: "", icon: <MdOutlineListAlt />, label: "Үйлчилгээ" },
-            { href: "", icon: <MdOutlineListAlt />, label: "Гэрээ байгуулах" },
+            { href: "/admin/room", icon: <MdOutlineAddBox />, label: "Өрөө бүртгэл " },
+            { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: "Өрөөний үнэ" },
+            { href: "", icon: <MdOutlineListAlt />, label: "Үнийн тохируулга" },
             { href: "", icon: <MdOutlineListAlt />, label: "Нөхцөл бодлого" },
+            { href: "", icon: <MdOutlineListAlt />, label: "Гэрээт байгууллага" },
             { href: "", icon: <MdOutlineListAlt />, label: "Админ эрх" },
-            { href: "", icon: <MdOutlineListAlt />, label: "Буудлын профайл" },
-            { href: "", icon: <MdOutlineListAlt />, label: "Хөнгөлөлт" },
-            { href: "", icon: <MdOutlineListAlt />, label: "Захиалах суваг" },
           ],
         },
       ]
