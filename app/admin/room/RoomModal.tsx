@@ -368,8 +368,8 @@ export default function RoomModal({
       free_Toiletries: formData.free_Toiletries.map(Number),
       food_And_Drink: formData.food_And_Drink.map(Number),
       outdoor_And_View: formData.outdoor_And_View.map(Number),
-      number_of_rooms: 1,
-      number_of_rooms_to_sell: 1,
+      number_of_rooms: roomToEdit ? 1 : formData.number_of_rooms,
+      number_of_rooms_to_sell: roomToEdit ? 1 : formData.number_of_rooms_to_sell,
       room_Description: formData.room_Description,
       smoking_allowed: formData.smoking_allowed === "true",
       childQty: Number(formData.childQty),
@@ -931,7 +931,7 @@ export default function RoomModal({
 
             {/* Final Room Description */}
             <div className="mb-4">
-              <label className="block mb-1">Нэмэлт тайлбарс</label>
+              <label className="block mb-1">Нэмэлт тайлбар</label>
               <textarea
                 {...register("room_Description")}
                 className="border rounded-lg p-2 w-full h-24"
