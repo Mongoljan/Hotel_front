@@ -1,10 +1,9 @@
 'use client'
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";  // Import from next/navigation
-import Cookies from "js-cookie";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslations } from "next-intl";
-import { HiArrowRightOnRectangle } from "react-icons/hi2";  // Import js-cookie
+import { HiArrowRightOnRectangle } from "react-icons/hi2";  // 
 // import LanguageToggle from "../components/languageToggle";
 interface Topbar{
   sign_in:string;

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import Topbar from "./TopbarAdmin";
 import Sidebar from "./Sidebar";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HotelInfo {
   pk: number;
@@ -19,70 +19,42 @@ interface HotelInfo {
 
 export default function Layout({
   children,
-  userApproved,
 }: {
   children: React.ReactNode;
-  userApproved: boolean;
 }) {
+  const { isAuthenticated, user } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
   const [hotelInfo, setHotelInfo] = useState<HotelInfo | null>(null);
-  const [isSidebarVisible, setSidebarVisible] = useState<boolean>(false);
-  const [forceHideSidebar, setForceHideSidebar] = useState<boolean>(true);
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     setIsMounted(true);
-
-    const tryUntilSet = () => {
-      const value = localStorage.getItem("proceed");
-      if (value === "2") {
-        setSidebarVisible(true);
-        setForceHideSidebar(false);
-        return true;
-      } else {
-        return false;
-      }
-    };
-
-    if (tryUntilSet()) return;
-
-    const intervalId = setInterval(() => {
-      if (tryUntilSet()) {
-        clearInterval(intervalId);
-      }
-    }, 200);
-
-    setTimeout(() => clearInterval(intervalId), 3000);
-
-    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "proceed") {
-        const value = e.newValue;
-        if (value === "2") {
-          setSidebarVisible(true);
-          setForceHideSidebar(false);
-        } else {
-          setSidebarVisible(false);
-          setForceHideSidebar(true);
-        }
-      }
+    // Set up the sidebar toggle functionality
+    const handleSidebarToggle = () => {
+      setSidebarOpen(prev => !prev);
     };
 
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    // Add a global function to window for the topbar to use
+    (window as any).toggleSidebar = handleSidebarToggle;
+
+    // Cleanup
+    return () => {
+      delete (window as any).toggleSidebar;
+    };
   }, []);
 
   useEffect(() => {
     const fetchHotelInfo = async () => {
-      try {
-        const stored = localStorage.getItem("userInfo");
-        const hotelId = stored ? JSON.parse(stored)?.hotel : null;
-        if (!hotelId) return;
+      if (!user?.hotel) return;
 
-        const res = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}`);
-        if (!res.ok) throw new Error("Failed to fetch hotel info");
+      try {
+        const res = await fetch(`https://dev.kacc.mn/api/properties/${user.hotel}`);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch hotel info: ${res.status}`);
+        }
         const hotel = await res.json();
         setHotelInfo(hotel);
       } catch (err) {
@@ -90,53 +62,47 @@ export default function Layout({
       }
     };
 
-    fetchHotelInfo();
-  }, []);
-
-  const toggleSidebar = () => {
-    if (!forceHideSidebar) {
-      setSidebarVisible((prev) => !prev);
+    if (isAuthenticated && user?.hotel) {
+      fetchHotelInfo();
     }
-  };
-  console.log(forceHideSidebar);
+  }, [isAuthenticated, user?.hotel]);
 
   if (!isMounted) return null;
 
+  // Only render layout for authenticated users
+  if (!isAuthenticated) {
+    return <div className="flex items-center justify-center h-screen bg-background text-foreground">Loading...</div>;
+  }
+
   return (
-    <>
-      <div className="fixed top-0 left-0 z-[100] right-0">
-        <Topbar
-          toggleSidebar={toggleSidebar}
-          sideBarOpen={isSidebarVisible}
-          userApproved={userApproved}
-          isApproved={hotelInfo?.is_approved === true}
-          hotelInfo={hotelInfo}
-          forceHideSidebar={forceHideSidebar}
-        />
+    <div className="relative flex min-h-screen bg-background pt-16">
+      {/* Sidebar */}
+      <div
+        className={`fixed top-16 left-0 transition-transform duration-300 ease-in-out transform bg-card border-r shadow-lg w-64 h-[calc(100vh-4rem)] z-40 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <Sidebar />
       </div>
 
-      <div className="relative flex">
-        {!forceHideSidebar && (
-          <div
-            className={`fixed top-0 left-0 transition-transform duration-500 ease-in-out transform bg-gray-100 shadow-lg w-60 h-screen ${
-              isSidebarVisible ? "translate-x-0" : "-translate-x-full"
-            }`}
-          >
-            <Sidebar
-              isApproved={hotelInfo?.is_approved === true}
-              userApproved={userApproved}
-            />
-          </div>
-        )}
-
-        <div
-          className={`flex-grow mt-[50px] bg-white transition-all duration-700 ease-in-out ${
-            !forceHideSidebar && isSidebarVisible ? "ml-60" : "ml-0"
-          }`}
-        >
+      {/* Main content */}
+      <div
+        className={`flex-1 min-h-screen bg-background transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? "ml-64" : "ml-0"
+        }`}
+      >
+        <main>
           {children}
-        </div>
+        </main>
       </div>
-    </>
+
+      {/* Mobile overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden top-16"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+    </div>
   );
 }

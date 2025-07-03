@@ -7,14 +7,14 @@ import { schemaHotelRegistration } from '../../schema';
 import { z } from 'zod';
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer, toast } from 'react-toastify';
-import Cookies from 'js-cookie';
+import { useSession } from 'next-auth/react';
 
 type FormFields = z.infer<typeof schemaHotelRegistration>;
 
 export default function CreateHotel() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: session } = useSession();
 
-  // Initialize react-hook-form with zod validation
   const {
     register,
     handleSubmit,
@@ -23,61 +23,50 @@ export default function CreateHotel() {
     resolver: zodResolver(schemaHotelRegistration),
   });
 
-  // Display form errors as toast messages
   const showValidationErrors = () => {
-    if (errors.hotel_name) {
-      toast.error(errors.hotel_name.message);
-    }
-    if (errors.email) {
-      toast.error(errors.email.message);
-    }
-    if (errors.contact_number) {
-      toast.error(errors.contact_number.message);
-    }
-    if (errors.address) {
-      toast.error(errors.address.message);
-    }
-    if (errors.map_url) {
-      toast.error(errors.map_url.message);
-    }
+    if (errors.hotel_name) toast.error(errors.hotel_name.message);
+    if (errors.email) toast.error(errors.email.message);
+    if (errors.contact_number) toast.error(errors.contact_number.message);
+    if (errors.address) toast.error(errors.address.message);
+    if (errors.map_url) toast.error(errors.map_url.message);
   };
 
-  // Handle form submission
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    console.log("button clicked")
+    if (!session?.accessToken || !session.user.id) {
+      toast.error('Та эхлээд нэвтэрнэ үү.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const requestBody = {
-        token: Cookies.get('jwtToken'), // Token from cookies
+        token: session.accessToken, // ✅ from session
         hotel_name: data.hotel_name,
         email: data.email,
         contact: data.contact_number,
         address: data.address,
         map_url: data.map_url,
-        gst_number: 'N/A', // Optional
-        food_gst_percentage:  5.0, // Optional
-        room_gst_percentage:  18.0, // Optional
-        joined_date: new Date().toISOString(), // Current date in ISO format
-        hotel_owner: Cookies.get('pk'), // Owner's pk from cookies
+        gst_number: data.gst_number || 'N/A',
+        food_gst_percentage: data.food_gst_percentage || 5.0,
+        room_gst_percentage: data.room_gst_percentage || 18.0,
+        joined_date: new Date().toISOString(),
+        hotel_owner: session.user.id, // ✅ assuming this is in your JWT/session
       };
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/create-hotel/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
-        toast.success('Hotel registration successful!');
+        toast.success('Зочид буудал амжилттай бүртгэгдлээ!');
       } else {
         const errorData = await response.json();
-        toast.error('Registration failed: ' + errorData.message);
-        console.log(errorData)
+        toast.error('Бүртгэл амжилтгүй: ' + errorData.message);
       }
     } catch (error) {
-      toast.error('An unexpected error occurred during registration');
+      toast.error('Сервертэй холбогдоход алдаа гарлаа');
       console.error('Error during registration:', error);
     } finally {
       setIsSubmitting(false);
@@ -89,7 +78,7 @@ export default function CreateHotel() {
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit, showValidationErrors)}
-        className="bg-white border-[#4A90E2] border-solid border-[1px]  p-10 px-10 max-w-[500px] rounded-[10px] text-gray-600"
+        className="bg-white border-[#4A90E2] border-solid border-[1px] p-10 px-10 max-w-[500px] rounded-[10px] text-gray-600"
       >
         <h2 className="text-2xl font-bold mx-auto text-center text-blue-500 mb-10">
           Зочид буудлын бүртгэл
@@ -125,28 +114,24 @@ export default function CreateHotel() {
           {...register('map_url')}
           className="border p-2 w-full mb-4 h-14 rounded-md"
         />
- 
-            <input
+        <input
           type="text"
           placeholder="GST Number (optional)"
           {...register('gst_number')}
           className="border p-2 w-full mb-4 h-14 rounded-md"
         />
-
-<input
-          type="double"
-          placeholder="food_gst_percentage:"
+        <input
+          type="number"
+          placeholder="Хоолны НӨАТ хувь"
           {...register('food_gst_percentage')}
           className="border p-2 w-full mb-4 h-14 rounded-md"
         />
         <input
-          type="double"
-          placeholder="room_gst_percentage:"
+          type="number"
+          placeholder="Өрөөний НӨАТ хувь"
           {...register('room_gst_percentage')}
           className="border p-2 w-full mb-4 h-14 rounded-md"
         />
-        
-
 
         <button
           type="submit"

@@ -1,4 +1,3 @@
-
 import MainLayout from "./admin_layout";
 import type { Metadata } from "next";
 
@@ -9,12 +8,14 @@ export const metadata: Metadata = {
 
 type Props = {
   children: React.ReactNode;
-  params: { lang: string };
+  params: Promise<{ lang: string }>;
 };
 
 export default async function AdminLayout({
   children,
+  params,
 }: Readonly<Props>) {
+  const { lang } = await params;
 
 
   return (

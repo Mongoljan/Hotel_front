@@ -5,14 +5,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { schemaHotelRegistration2 } from '../../schema';
 import { z } from 'zod';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
-import { FaArrowAltCircleRight } from "react-icons/fa";
+import { ArrowLeft, ArrowRight, Search, Building, MapPin, Phone, Mail } from 'lucide-react';
 import { PatternFormat } from 'react-number-format';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const EBARIMT_API = 'https://info.ebarimt.mn/rest/merchant/info?regno=';
@@ -39,14 +43,7 @@ export default function RegisterPage() {
   }
   const [regNo, setRegNo] = useState(parsedDefaults.register || '');
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    getValues,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<FormFields>({
+  const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelRegistration2),
     defaultValues: parsedDefaults,
   });
@@ -68,18 +65,18 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (propertyTypes.length > 0 && parsedDefaults.property_type) {
-      setValue('property_type', parsedDefaults.property_type);
+      form.setValue('property_type', parsedDefaults.property_type);
     }
-  }, [propertyTypes, setValue]);
+  }, [propertyTypes, form]);
 
   useEffect(() => {
-    const subscription = watch((_, { name }) => {
+    const subscription = form.watch((_, { name }) => {
       if (name) {
-        localStorage.setItem('hotelFormData', JSON.stringify(getValues()));
+        localStorage.setItem('hotelFormData', JSON.stringify(form.getValues()));
       }
     });
     return () => subscription.unsubscribe();
-  }, [watch, getValues]);
+  }, [form]);
 
   const fetchCompanyName = async () => {
     const trimmedRegNo = regNo.trim();
@@ -93,7 +90,7 @@ export default function RegisterPage() {
       const response = await fetch(`${EBARIMT_API}${trimmedRegNo}`);
       const data = await response.json();
       if (data.found && data.name) {
-        setValue("CompanyName", data.name);
+        form.setValue("CompanyName", data.name);
         toast.success(`РД: ${trimmedRegNo} -тай компани олдлоо!`);
       } else {
         toast.error(`РД: ${trimmedRegNo} -тай компани олдсонгүй!`);
@@ -119,145 +116,238 @@ export default function RegisterPage() {
     }, 1000);
   };
 
-  const inputStyle = (hasError: boolean) =>
-    `border ${hasError ? 'border-red' : 'border-soft'} p-2 w-full mb-4 h-[45px] rounded-[15px]`;
-
   return (
-    <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">
-      <ToastContainer />
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white   p-8 px-8 border-primary border-solid border-[1px] max-w-[500px] rounded-[15px] text-gray-600"
-      >
-        <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">{t("hotel_info")}</h2>
+    <div className="flex justify-center items-center min-h-screen py-8">
+      <Card className="w-full max-w-2xl mx-auto shadow-lg border-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold tracking-tight">
+            {t("hotel_info")}
+          </CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Зочид буудлын үндсэн мэдээллийг оруулна уу
+          </CardDescription>
+        </CardHeader>
 
-        <section className="flex gap-x-4 mb-4 ">
-          <div className="w-full">
-            <div className="text-black">{t("company_Reg")}</div>
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                value={regNo}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setRegNo(value);
-                  setValue('register', value);
-                }}
-                className={inputStyle(!!errors.register)}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="register"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        {t("company_Reg")}
+                      </FormLabel>
+                      <FormControl>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Компанийн РД"
+                            value={regNo}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setRegNo(value);
+                              form.setValue('register', value);
+                            }}
+                            className="h-11"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={fetchCompanyName}
+                            disabled={loadingCompany}
+                            className="h-11 w-11 shrink-0"
+                          >
+                            <Search className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="CompanyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        {t("company_name")}
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Компанийн нэр"
+                            className="pl-10 h-11 bg-muted/50"
+                            disabled
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="PropertyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        {t("hotel_name")}
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Зочид буудлын нэр"
+                            className="pl-10 h-11"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="property_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        {t("hotel_type")}
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder={t("select")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {propertyTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id.toString()}>
+                              {type.name_mn}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      {t("location")}
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Textarea
+                          placeholder="Зочид буудлын байршил"
+                          className="pl-10 min-h-[80px] resize-none"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <button
-                type="button"
-                onClick={fetchCompanyName}
-                disabled={loadingCompany}
-                className="text-3xl hover:text-primary -translate-y-2 place-items-center w-[50px] px-3 py-2 "
-              >
-                {loadingCompany ? "..." : <FaArrowAltCircleRight />}
-              </button>
-            </div>
-            {errors.register && <div className="text-red text-xs">{errors.register.message}</div>}
-          </div>
 
-          <div className="w-full group relative">
-            <div className="text-black">{t("company_name")}</div>
-            <input
-              type="text"
-              {...register('CompanyName')}
-              className={`${inputStyle(!!errors.CompanyName)} bg-gray-100 border-opacity-10 text-soft`}
-              disabled
-            />
-            <div className="absolute left-0 -top-8 opacity-0 -translate-y-[100px] group-hover:opacity-100 transition bg-gray-800 text-white px-3 py-2 rounded-[15px] shadow-md pointer-events-none">
-              Хажууд байрлах товч дээр дарснаар ebarimt-аас таны компаний нэрийг оруулсан РД-аар хайх болно
-            </div>
-            {errors.CompanyName && <div className="text-red text-xs">{errors.CompanyName.message}</div>}
-          </div>
-        </section>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      {t("phone_number")}
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <PatternFormat
+                          format="#### ####"
+                          allowEmptyFormatting
+                          mask="_"
+                          value={form.getValues('phone') || ''}
+                          onValueChange={({ value }) => {
+                            form.setValue('phone', value);
+                          }}
+                          className="flex h-11 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder="9512 9418"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <section className="flex gap-x-4 justify-between mb-4">
-          <div className="min-w-[220px] md:min-w-[270px]">
-            <div className="text-black">{t("hotel_name")}</div>
-            <input
-              type="text"
-              {...register('PropertyName')}
-              className={inputStyle(!!errors.PropertyName)}
-            />
-            {errors.PropertyName && <div className="text-red text-xs">{errors.PropertyName.message}</div>}
-          </div>
-          <div>
-            <div className="text-black">{t("hotel_type")}</div>
-            <select
-              {...register('property_type')}
-              className={inputStyle(!!errors.property_type)}
-            >
-              <option value="">{t("select")}</option>
-              {propertyTypes.map((type) => (
-                <option key={type.id} value={type.id}>{type.name_mn}</option>
-              ))}
-            </select>
-            {errors.property_type && <div className="text-red text-xs">{errors.property_type.message}</div>}
-          </div>
-        </section>
+              <FormField
+                control={form.control}
+                name="mail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">
+                      {t("email")}
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="example@domain.com"
+                          className="pl-10 h-11"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <section className="mb-4">
-          <div className="text-black">{t("location")}</div>
-          <textarea
-            rows={3}
-            {...register('location')}
-            className={`${inputStyle(!!errors.location)} resize min-h-[60px]`}
-          />
-          {errors.location && <div className="text-red text-xs">{errors.location.message}</div>}
-        </section>
+              <div className="grid grid-cols-2 gap-4 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11"
+                  asChild
+                >
+                  <Link href="/auth/login">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {t("back")}
+                  </Link>
+                </Button>
 
-        {/* Phone number field */}
-        <section className="mb-4">
-          <div className="text-black">{t("phone_number")}</div>
-          <div className="flex items-center gap-2">
-            {/* <span className="text-gray-500 h-full mb-4">+976</span> */}
-            <PatternFormat
-              format="#### ####"
-              allowEmptyFormatting
-              mask="_"
-              value={getValues('phone') || ''}
-              onValueChange={({ value }) => {
-                setValue('phone', value);
-              }}
-              className={inputStyle(!!errors.phone)}
-              placeholder="9512 9418"
-            />
-          </div>
-          {errors.phone && <div className="text-red text-xs">{errors.phone.message}</div>}
-        </section>
-
-        <section>
-          <div className="text-black">{t("email")}</div>
-          <input
-            type="email"
-            {...register('mail')}
-            className={inputStyle(!!errors.mail)}
-          />
-          {errors.mail && <div className="text-red text-xs">{errors.mail.message}</div>}
-        </section>
-
-        <div className="flex gap-x-4">
-          <Link
-            href="/auth/login"
-            className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            <div className="flex">
-              <FaArrowLeft className="self-center mx-1" /> {t("back")}
-            </div>
-          </Link>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            <div className="flex">
-              {t("next")} <FaArrowRight className="self-center mx-1" />
-            </div>
-          </button>
-        </div>
-      </form>
+                <Button
+                  type="submit"
+                  className="h-11"
+                  disabled={form.formState.isSubmitting}
+                >
+                  {t("next")}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </form>
+        </Form>
+      </Card>
     </div>
   );
 }

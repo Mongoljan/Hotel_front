@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { useTranslations } from 'next-intl';
+import { useSession } from 'next-auth/react';
 
 interface Hotel {
   pk: number;
@@ -40,6 +41,7 @@ type FormFields = z.infer<typeof schemaRegistration>;
 export default function Proceed({ proceed, setProceed, setView }: ProceedProps) {
   const t = useTranslations('Proceed');
   const router = useRouter();
+  const { data: session } = useSession();
 
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,9 +58,32 @@ export default function Proceed({ proceed, setProceed, setView }: ProceedProps) 
 
   const getHotelId = (): string | null => {
     try {
+      console.log('🔍 Proceed - Getting hotel ID, session:', {
+        sessionExists: !!session,
+        userExists: !!session?.user,
+        hotelId: session?.user?.hotel,
+        hotelType: typeof session?.user?.hotel
+      });
+      
+      // First try to get from session (for logged in users)
+      if (session?.user?.hotel) {
+        console.log('🔍 Proceed - Using hotel ID from session:', session.user.hotel);
+        return String(session.user.hotel); // Convert to string in case it's a number
+      }
+      
+      // Fallback to localStorage (for registration flow)
       const u = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      return u.hotel || null;
-    } catch {
+      console.log('🔍 Proceed - UserInfo from localStorage:', u);
+      
+      if (u.hotel) {
+        console.log('🔍 Proceed - Using hotel ID from localStorage:', u.hotel);
+        return String(u.hotel);
+      }
+      
+      console.log('❌ Proceed - No hotel ID found in session or localStorage');
+      return null;
+    } catch (error) {
+      console.error('❌ Proceed - Error getting hotel ID:', error);
       return null;
     }
   };
@@ -67,7 +92,11 @@ export default function Proceed({ proceed, setProceed, setView }: ProceedProps) 
     try {
       const id = getHotelId();
       if (!id) throw new Error('Hotel ID not found');
-      const res = await fetch(`https://dev.kacc.mn/api/properties/${id}`);
+      const token = session?.accessToken;
+      const url = token
+        ? `https://dev.kacc.mn/api/properties/${id}?token=${token}`
+        : `https://dev.kacc.mn/api/properties/${id}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch hotel');
       const data: Hotel = await res.json();
       setHotel(data);
@@ -80,7 +109,8 @@ export default function Proceed({ proceed, setProceed, setView }: ProceedProps) 
 
   useEffect(() => {
     fetchHotel();
-  }, []);
+    // eslint-disable-next-line
+  }, [session]);
 
   useEffect(() => {
     if (!loading && hotel && !hotel.is_approved) {

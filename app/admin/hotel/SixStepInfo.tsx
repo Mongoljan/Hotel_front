@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import Cookies from 'js-cookie';
+import { useSession } from 'next-auth/react';
 import { FaChevronLeft, FaChevronRight, FaRegCheckCircle } from 'react-icons/fa';
 import AboutHotel from './AboutHotel';
 
@@ -86,6 +86,11 @@ interface ProceedProps {
 
 export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const t = useTranslations('SixStepInfo');
+  const { data: session } = useSession();
+  const hotelId = session?.user?.hotel;
+
+  console.log('🔍 SixStepInfo - Component mounted with hotelId:', hotelId);
+
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
   const [propertyImages, setPropertyImages] = useState<PropertyPhoto[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
@@ -98,13 +103,17 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [additionalInfo, setAdditionalInfo] = useState<Additional_Information | null>(null);
 
   useEffect(() => {
-    async function loadData() {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-      const hotelId = userInfo.hotel || propertyData.property || Number(Cookies.get('hotel'));
-      if (!hotelId) return setProceed(0);
+    if (!hotelId) {
+      console.log('❌ SixStepInfo - No hotel ID available, returning to step 0');
+      return setProceed(0);
+    }
 
+    console.log('🔍 SixStepInfo - Loading data for hotelId:', hotelId);
+
+    async function loadData() {
       try {
+        console.log('🔍 SixStepInfo - Starting API calls for hotelId:', hotelId);
+        
         const [
           detailRes,
           policyRes,
@@ -123,25 +132,89 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`)
         ]);
 
+        console.log('🔍 SixStepInfo - API responses:', {
+          detailStatus: detailRes.status,
+          policyStatus: policyRes.status,
+          addressStatus: addressRes.status,
+          basicInfoStatus: basicInfoRes.status,
+          baseStatus: baseRes.status
+        });
+
         if (!detailRes.ok || !policyRes.ok || !addressRes.ok || !basicInfoRes.ok || !baseRes.ok) {
+          console.error('❌ SixStepInfo - One or more API responses failed:', {
+            detailStatus: detailRes.status,
+            policyStatus: policyRes.status,
+            addressStatus: addressRes.status,
+            basicInfoStatus: basicInfoRes.status,
+            baseStatus: baseRes.status
+          });
           return setProceed(0);
         }
 
-        const [detail] = await detailRes.json();
-        const [policy] = await policyRes.json();
-        const [address] = await addressRes.json();
-        const [basic] = await basicInfoRes.json();
-        const combinedData = await combinedDataRes.json();
-        const baseInfo = await baseRes.json();
-        const imageJson = imagesRes.ok ? await imagesRes.json() : [];
+        // Use try/catch for each JSON parsing to prevent crashes
+        let detail = null;
+        let policy = null;
+        let address = null;
+        let basic = null;
+        let combinedData = null;
+        let baseInfo = null;
+        let imageJson = [];
 
-        setPropertyDetail(detail);
-        setPropertyPolicy(policy);
-        setAddress(address);
-        setBasicInfo(basic);
-        setPropertyBaseInfo(baseInfo);
-        setPropertyTypes(combinedData.property_types || []);
-        setPropertyImages(imageJson);
+        try {
+          const detailJson = await detailRes.json();
+          detail = Array.isArray(detailJson) && detailJson.length > 0 ? detailJson[0] : null;
+        } catch (e) {
+          console.error('❌ SixStepInfo - Failed to parse detail response:', e);
+        }
+
+        try {
+          const policyJson = await policyRes.json();
+          policy = Array.isArray(policyJson) && policyJson.length > 0 ? policyJson[0] : null;
+        } catch (e) {
+          console.error('❌ SixStepInfo - Failed to parse policy response:', e);
+        }
+
+        try {
+          const addressJson = await addressRes.json();
+          address = Array.isArray(addressJson) && addressJson.length > 0 ? addressJson[0] : null;
+        } catch (e) {
+          console.error('❌ SixStepInfo - Failed to parse address response:', e);
+        }
+
+        try {
+          const basicJson = await basicInfoRes.json();
+          basic = Array.isArray(basicJson) && basicJson.length > 0 ? basicJson[0] : null;
+        } catch (e) {
+          console.error('❌ SixStepInfo - Failed to parse basicInfo response:', e);
+        }
+
+        try {
+          combinedData = await combinedDataRes.json();
+        } catch (e) {
+          console.error('❌ SixStepInfo - Failed to parse combinedData response:', e);
+          combinedData = { property_types: [] };
+        }
+
+        try {
+          baseInfo = await baseRes.json();
+        } catch (e) {
+          console.error('❌ SixStepInfo - Failed to parse baseInfo response:', e);
+        }
+
+        try {
+          imageJson = imagesRes.ok ? await imagesRes.json() : [];
+        } catch (e) {
+          console.error('❌ SixStepInfo - Failed to parse images response:', e);
+        }
+
+        // Only set state for values that were successfully parsed
+        if (detail) setPropertyDetail(detail);
+        if (policy) setPropertyPolicy(policy);
+        if (address) setAddress(address);
+        if (basic) setBasicInfo(basic);
+        if (baseInfo) setPropertyBaseInfo(baseInfo);
+        if (combinedData?.property_types) setPropertyTypes(combinedData.property_types || []);
+        if (imageJson) setPropertyImages(imageJson);
 
         // fetch additionalInfo using its ID (not by property)
         if (detail?.Additional_Information && typeof detail.Additional_Information === 'number') {
@@ -159,7 +232,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     }
 
     loadData();
-  }, [setProceed]);
+  }, [hotelId, setProceed]);
 
   const getPropertyTypeName = (id: number) => propertyTypes.find(pt => pt.id === id)?.name_mn || t('loading');
   const goPrev = () => setImageIndex(prev => (prev === 0 ? propertyImages.length - 1 : prev - 1));

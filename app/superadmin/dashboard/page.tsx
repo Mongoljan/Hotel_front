@@ -1,5 +1,4 @@
 // import { getDictionary } from "../../dictionaries";
-import Cookies from "js-cookie";
 import AdminDashboardClient from "./AdminDashboard";
 
 type Owner = {
@@ -13,13 +12,13 @@ type Owner = {
 };
 
 type Props = {
-  params: { lang: string };
+  params: Promise<{ lang: string }>;
 };
 
 export default async function AdminDashboardPage({ params }: Props) {
-  const { lang } = params;
+  const { lang } = await params;
   // const dict = await getDictionary(lang);
-  const hotelName = Cookies.get('hotelName');
+  const hotelName = "";
 
   // Fetch owners' data on the server-side
   const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/all-owners/`, {

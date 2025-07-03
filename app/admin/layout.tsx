@@ -1,7 +1,7 @@
 // app/[lang]/(admin)/layout.tsx
-import { cookies } from "next/headers";
-import MainLayout from "./admin_layout";
-import type { Metadata } from "next";
+import { getAuthSession } from "@/lib/auth";
+import MainLayout from './admin_layout';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   // title: "Уран бүтээлч хөлслөх вэбсайт",
@@ -10,18 +10,18 @@ export const metadata: Metadata = {
 
 type Props = {
   children: React.ReactNode;
-  params: { lang: string };
+  params: Promise<{ lang: string }>;
 };
 
 export default async function AdminLayout({
   children,
-  params: { lang },
+  params,
 }: Readonly<Props>) {
-  const cookieStore = cookies();
-  const userApproved = cookieStore.get("user_approved")?.value === "true";
+  const { lang } = await params;
+  const session = await getAuthSession();
 
   return (
-    <MainLayout userApproved={userApproved}>
+    <MainLayout>
       {children}
     </MainLayout>
   );

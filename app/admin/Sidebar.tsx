@@ -1,123 +1,199 @@
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  MdOutlineSpaceDashboard,
-  MdOutlineBedroomChild,
-  MdKeyboardArrowDown,
-  MdKeyboardArrowUp,
-  MdOutlineAddBox,
-  MdOutlineListAlt,
-  MdOutlineCategory,
-} from "react-icons/md";
-import { IoPersonOutline } from "react-icons/io5";
-import { LuHotel } from "react-icons/lu";
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
-import { IoIosSettings, IoIosChatboxes } from "react-icons/io";
-import { LuReceipt } from "react-icons/lu";
-import { GiLockedDoor } from "react-icons/gi";
-import { BsCardChecklist } from "react-icons/bs";
+import { useState } from 'react';
+import { 
+  LayoutDashboard, 
+  Calendar,
+  BedDouble,
+  DollarSign,
+  Eye,
+  Settings,
+  Building2,
+  FileText,
+  Users,
+  ChevronDown,
+  ChevronRight
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-export default function Sidebar({ isApproved,   userApproved }: { isApproved: boolean, userApproved:boolean }) {
-  const t = useTranslations('Sidebar');
-  const [isRoomMenuOpen, setRoomMenuOpen] = useState(false);
+interface SidebarItem {
+  title: string;
+  href?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children?: SidebarItem[];
+}
+
+const sidebarItems: SidebarItem[] = [
+  {
+    title: 'dashboard',
+    href: '/admin/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    title: 'bookingsManagement',
+    href: '/admin/bookings',
+    icon: Calendar,
+  },
+  {
+    title: 'roomRegistration',
+    href: '/admin/room',
+    icon: BedDouble,
+  },
+  {
+    title: 'roomPrice',
+    href: '/admin/room/price',
+    icon: DollarSign,
+  },
+  {
+    title: 'topbarView',
+    href: '/admin/topbar',
+    icon: Eye,
+  },
+  {
+    title: 'settings',
+    icon: Settings,
+    children: [
+      {
+        title: 'hotelInfo',
+        href: '/admin/hotel',
+        icon: Building2,
+      },
+      {
+        title: 'roomRegistration',
+        href: '/admin/room',
+        icon: BedDouble,
+      },
+      {
+        title: 'roomPrice',
+        href: '/admin/room/price',
+        icon: DollarSign,
+      },
+      {
+        title: 'terms',
+        href: '/admin/terms',
+        icon: FileText,
+      },
+      {
+        title: 'contractedOrganizations',
+        href: '/admin/contracts',
+        icon: Users,
+      },
+      {
+        title: 'adminRights',
+        href: '/admin/admin-rights',
+        icon: Settings,
+      },
+    ],
+  },
+];
+
+export default function Sidebar() {
   const pathname = usePathname();
+  const t = useTranslations('Sidebar');
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(['settings']));
 
-  const hotelRegistrationItem = {
-    href: "/admin/hotel",
-    icon: <LuHotel />,
-    label: "Буудлын мэдээлэл",
+  const isActive = (href: string) => {
+    return pathname === href || pathname.startsWith(href + '/');
   };
-  console.log(isApproved);
 
-  const navItems = (isApproved && userApproved)
-    ? [
-        { href: "/admin/dashboard", icon: <MdOutlineSpaceDashboard />, label: "Dashboard" },
-        { href: "", icon: <BsCardChecklist />, label: "Захиалгын жагсаалт" },
-        { href: "", icon: <GiLockedDoor />, label: "Өрөө блок" },
-        { href: "", icon: <LuReceipt />, label: "Төлбөр тооцоо" },
-        { href: "", icon: <IoIosChatboxes />, label: "Асуулт хариулт" },
-        {
-          label: "Тохиргоо",
-          icon: <IoIosSettings />,
-          subMenu: [
-            hotelRegistrationItem,
-            { href: "/admin/room", icon: <MdOutlineAddBox />, label: "Өрөө бүртгэл " },
-            { href: "/admin/room/price", icon: <MdOutlineListAlt />, label: "Өрөөний үнэ" },
-            { href: "", icon: <MdOutlineListAlt />, label: "Үнийн тохируулга" },
-            { href: "", icon: <MdOutlineListAlt />, label: "Нөхцөл бодлого" },
-            { href: "", icon: <MdOutlineListAlt />, label: "Гэрээт байгууллага" },
-            { href: "", icon: <MdOutlineListAlt />, label: "Админ эрх" },
-          ],
-        },
-      ]
-    : [
-        {
-          label: "Тохиргоо",
-          icon: <IoIosSettings />,
-          subMenu: [hotelRegistrationItem],
-        },
-      ];
+  const toggleExpanded = (title: string) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(title)) {
+      newExpanded.delete(title);
+    } else {
+      newExpanded.add(title);
+    }
+    setExpandedItems(newExpanded);
+  };
 
-  const toggleRoomMenu = () => setRoomMenuOpen(!isRoomMenuOpen);
+  const renderSidebarItem = (item: SidebarItem, depth: number = 0) => {
+    const Icon = item.icon;
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedItems.has(item.title);
+
+    if (hasChildren) {
+      return (
+        <Collapsible
+          key={item.title}
+          open={isExpanded}
+          onOpenChange={() => toggleExpanded(item.title)}
+        >
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(
+                'w-full justify-start gap-3 h-10 px-3 py-2 text-sm font-medium',
+                'hover:bg-accent hover:text-accent-foreground',
+                depth > 0 && 'ml-6 w-[calc(100%-1.5rem)]'
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="flex-1 text-left">{t(item.title)}</span>
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 shrink-0" />
+              ) : (
+                <ChevronRight className="h-4 w-4 shrink-0" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-1">
+            {item.children?.map((child) => renderSidebarItem(child, depth + 1))}
+          </CollapsibleContent>
+        </Collapsible>
+      );
+    }
+
+    const active = item.href ? isActive(item.href) : false;
+
+    return (
+      <Link
+        key={item.title}
+        href={item.href || '#'}
+        className={cn(
+          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors h-10',
+          'hover:bg-accent hover:text-accent-foreground',
+          active
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground',
+          depth > 0 && 'ml-6'
+        )}
+      >
+        <Icon className="h-4 w-4 shrink-0" />
+        <span>{t(item.title)}</span>
+      </Link>
+    );
+  };
 
   return (
-    <div className="p-2 h-full pt-[100px] bg-white text-sidebar-accent-foreground border-primary border-solid border-[1px] border-opacity-30">
-      <nav className="flex flex-col gap-4 font-normal">
-        {navItems.map((item) => (
-          <div key={item.label}>
-            {item.subMenu ? (
-              <div>
-                <button
-                  onClick={toggleRoomMenu}
-                  className={`w-full text-left rounded-lg items-center px-2 py-2 flex justify-between transition-colors ${
-                    isRoomMenuOpen ? "bg-background" : "hover:bg-background"
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <div className="text-xl text-primary">{item.icon}</div>
-                    <span className="ml-1 text-[14px]">{item.label}</span>
-                  </div>
-                  <div className="text-xl">
-                    {isRoomMenuOpen ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
-                  </div>
-                </button>
+    <div className="flex h-full w-64 flex-col bg-card border-r">
+      {/* Header */}
+      <div className="flex h-16 items-center border-b px-6">
+        <Building2 className="h-6 w-6 mr-2 text-primary" />
+        <div className="flex flex-col">
+          <span className="text-lg font-semibold">MyHotels</span>
+          <span className="text-xs text-muted-foreground">{t('adminPanel')}</span>
+        </div>
+      </div>
 
-                {isRoomMenuOpen && (
-                  <div className="ml-8 mt-2 flex flex-col gap-2">
-                    {item.subMenu.map((subItem) => (
-                      <Link
-                        key={subItem.href}
-                        href={subItem.href}
-                        className={`rounded-lg items-center px-2 py-1 flex transition-colors ${
-                          pathname === subItem.href
-                            ? "bg-background"
-                            : "hover:bg-background"
-                        }`}
-                      >
-                        <span className="text-[14px] text-dim">{subItem.label}</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-lg items-center px-2 py-2 flex transition-colors ${
-                  pathname === item.href
-                    ? "bg-background"
-                    : "hover:bg-background"
-                }`}
-              >
-                <div className="text-xl text-primary">{item.icon}</div>
-                <span className="ml-2 text-[14px]">{item.label}</span>
-              </Link>
-            )}
-          </div>
-        ))}
-      </nav>
+      {/* Navigation */}
+      <ScrollArea className="flex-1 px-4 py-4">
+        <nav className="space-y-1">
+          {sidebarItems.map((item) => renderSidebarItem(item))}
+        </nav>
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="border-t p-4">
+        <div className="text-xs text-muted-foreground text-center">
+          Version 1.0.0
+        </div>
+      </div>
     </div>
   );
 }

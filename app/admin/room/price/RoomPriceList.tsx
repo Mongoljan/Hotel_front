@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import Cookies from "js-cookie";
+import { useSession } from 'next-auth/react';
 import {
   DataGrid, GridColDef, GridToolbar, GridValidRowModel
 } from "@mui/x-data-grid";
@@ -46,6 +46,7 @@ interface RoomModalProps {
 
 export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModalProps) {
   const [rows, setRows] = useState<RoomRow[]>([]);
+    const { data: session } = useSession();
   const [lookup, setLookup] = useState<AllData>({ room_types: [], room_category: [] });
   const [loading, setLoading] = useState<boolean>(true);
   const [openAdd, setOpenAdd] = useState(false);
@@ -58,16 +59,18 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
     half_day_price: 0
   });
 
-  const hotel = typeof window !== 'undefined'
-    ? JSON.parse(localStorage.getItem('userInfo') || '{}').hotel
-    : 0;
+  const hotel = session?.user?.hotel || 0;
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = Cookies.get("token");
-        if (!token) throw new Error("Token not found");
+        const token = session?.accessToken;
+        if (!token) {
+          console.log("No token available, skipping fetch");
+          setLoading(false);
+          return;
+        }
 
         const lookupCache = localStorage.getItem("roomLookup");
         const roomsCache = localStorage.getItem("roomData");
@@ -85,7 +88,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
         const [allRes, roomsRes, pricesRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/all-data/`),
           fetch(`https://dev.kacc.mn/api/roomsNew/?token=${token}`),
-          fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}`)
+          fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}&token=${token}`)
         ]);
         if (!allRes.ok || !roomsRes.ok || !pricesRes.ok) throw new Error("Fetch failed");
 
@@ -107,7 +110,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
       }
     };
     fetchData();
-  }, [isRoomAdded, hotel]);
+  }, [isRoomAdded, hotel, session]);
 
   const buildRows = (
     allData: AllData,
@@ -156,9 +159,12 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
   }, [rows]);
 
   const createPrice = async () => {
-    const token = Cookies.get("token");
-    if (!token) throw new Error("Token not found");
-    await fetch("https://dev.kacc.mn/api/room-prices/", {
+    const token = session?.accessToken;
+    if (!token) {
+      console.error("Token not found");
+      return;
+    }
+    await fetch(`https://dev.kacc.mn/api/room-prices/?token=${token}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ hotel, ...form }),

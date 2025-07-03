@@ -1,101 +1,110 @@
-'use client';
+"use client";
 
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { z } from 'zod';
-import { schemaLogin } from '../../schema'; // Adjust path if needed
-import { zodResolver } from '@hookform/resolvers/zod';
-import { HiEye, HiEyeSlash } from 'react-icons/hi2';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { loginAction } from './LoginAction'; // server action
-import { useTranslations } from 'next-intl';
-import Cookies from 'js-cookie';
-
-type FormFields = z.infer<typeof schemaLogin>;
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 export default function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const t = useTranslations('AuthLogin');
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  
+  const t = useTranslations('Login');
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormFields>({ resolver: zodResolver(schemaLogin) });
-
-  const onSubmit: SubmitHandler<FormFields> = async (data) => {
-       localStorage.clear();
-    const result = await loginAction(data);
-    // console.log("here is token:", Cookies.get("token"));
-
-    if ('error' in result) {
-      toast.error(result.error);
-    } else {
-      localStorage.setItem('userInfo', JSON.stringify(result.userInfo));
-      toast.success('Login successful!');
-      router.push('/admin/hotel');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+      
+      if (result?.error) {
+        toast.error(t('invalidCredentials'));
+      } else {
+        toast.success(t('loginSuccess') || 'Login successful!');
+        // Redirect to admin hotel page after successful login
+        router.push("/admin/hotel");
+      }
+    } catch {
+      toast.error(t('loginError'));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <ToastContainer />
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-10 px-10 max-w-[600px] md:min-w-[440px] min-w-[250px] border-primary border-[1px] rounded-[15px] text-gray-600"
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-medium">
+            {t('email')}
+          </Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="example@hotel.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="pl-10 h-11"
+              required
+            />
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-sm font-medium">
+            {t('password')}
+          </Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pl-10 pr-10 h-11"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <Button 
+        type="submit" 
+        className="w-full h-11 text-base font-medium" 
+        disabled={loading}
       >
-        <h2 className="text-[30px] font-bold text-center text-black mb-10">{t('signIn')}</h2>
-
-        <div className="text-black">{t('email')}</div>
-        <input
-          type="email"
-          {...register('email')}
-          className="border p-4 w-full mb-6 h-[45px] rounded-[15px]"
-        />
-        {errors.email && <div className="text-red text-sm">{errors.email.message}</div>}
-
-        <div className="text-black">{t('password')}</div>
-        <div className="relative">
-          <input
-            type={isPasswordVisible ? 'text' : 'password'}
-            {...register('password')}
-            className="border p-4 w-full mb-2 h-[45px] rounded-[15px]"
-          />
-          <button
-            type="button"
-            onClick={() => setIsPasswordVisible((prev) => !prev)}
-            className="absolute right-3 top-2"
-          >
-            {isPasswordVisible ? <HiEye size={20} className="mt-2 my-auto -translate-y-[2px]" /> : <HiEyeSlash size={20} className="mt-2 -translate-y-[2px]" />}
-          </button>
-        </div>
-
-        {errors.password && <div className="text-red text-sm">{errors.password.message}</div>}
-
-        <div className="flex justify-between text-black mb-4">
-          <Link href="/auth/resetpassword" className="hover:text-blue-400 text-sm underline">{t('remember')}</Link>
-          <Link href="/auth/resetpassword" className="hover:text-blue-400 text-sm underline">{t('savePassword')}</Link>
-        </div>
-
-        <button
-          type="submit"
-          className="w-full border-primary border-solid border-[1px] hover:bg-bg-2 text-black py-2 px-4 rounded-[15px]"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? t('wait') : t('signIn')}
-        </button>
-
-        <Link
-          href="/auth/register"
-          className="block text-center bg-primary text-white py-2 px-4 mt-4 rounded-[15px] hover:bg-bg-3 hover:text-black border border-primary"
-        >
-          {t('signUp')}
-        </Link>
-      </form>
-    </>
+        {loading ? (
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <span>{t('signingIn')}</span>
+          </div>
+        ) : (
+          t('signIn')
+        )}
+      </Button>
+    </form>
   );
 }

@@ -13,7 +13,6 @@ import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { PatternFormat } from 'react-number-format';
 import { schemaRegistrationEmployee2 } from '@/app/schema';
 import { useTranslations } from 'next-intl';
-import Cookies from 'js-cookie';
 import { registerHotelAndEmployeeAction } from '../registerHotelAndEmployeeAction';
 
 type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
@@ -21,6 +20,7 @@ type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
 export default function RegisterEmployee() {
   const t = useTranslations('RegisterStaff');
   const router = useRouter();
+
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
 
@@ -39,7 +39,6 @@ export default function RegisterEmployee() {
     defaultValues: parsedDefaults,
   });
 
-  // ✅ Conditional input border class
   const inputBorderClass = (hasError: boolean) =>
     `border ${hasError ? 'border-red' : 'border-soft'} p-2 w-full h-[45px] rounded-[15px]`;
 
@@ -54,8 +53,7 @@ export default function RegisterEmployee() {
     setValue('user_type', 2);
   }, [setValue]);
 
-  const onError = (formErrors: typeof errors) => {
-    console.log('Validation errors:', formErrors);
+  const onError = () => {
     toast.error('Формыг бүрэн бөглөнө үү!');
   };
 
@@ -67,7 +65,6 @@ export default function RegisterEmployee() {
       return;
     }
 
-    // ✅ Normalize phone number
     employeeData.contact_number = `976${employeeData.contact_number.replace(/\s/g, '')}`;
 
     const result = await registerHotelAndEmployeeAction(hotelData, employeeData);
@@ -76,7 +73,6 @@ export default function RegisterEmployee() {
       toast.success('Бүртгэл амжилттай. Нэвтрэх хуудас руу чиглүүлж байна...');
 
       setTimeout(() => {
-        Object.keys(Cookies.get()).forEach((cookieName) => Cookies.remove(cookieName));
         localStorage.removeItem('hotelFormData');
         localStorage.removeItem('employeeFormData');
         router.push('/auth/login');
@@ -96,80 +92,69 @@ export default function RegisterEmployee() {
         <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">
           {t('staff_info')}
         </h2>
+
         <section className="mb-5">
-
-        <label className="text-black">{t('name')}</label>
-        <input
-          type="text"
-          {...register('contact_person_name')}
-          className={inputBorderClass(!!errors.contact_person_name)}
-        />
-        {errors.contact_person_name && (
-          <p className="text-red text-xs">{errors.contact_person_name.message}</p>
-        )}
+          <label className="text-black">{t('name')}</label>
+          <input
+            type="text"
+            {...register('contact_person_name')}
+            className={inputBorderClass(!!errors.contact_person_name)}
+          />
+          {errors.contact_person_name && <p className="text-red text-xs">{errors.contact_person_name.message}</p>}
         </section>
 
- <section className="mb-5">
-        <label className="text-black">{t('title')}</label>
-        <input
-          type="text"
-          {...register('position')}
-          className={inputBorderClass(!!errors.position)}
-        />
-        {errors.position && (
-          <p className="text-red text-xs">{errors.position.message}</p>
-        )}
+        <section className="mb-5">
+          <label className="text-black">{t('title')}</label>
+          <input
+            type="text"
+            {...register('position')}
+            className={inputBorderClass(!!errors.position)}
+          />
+          {errors.position && <p className="text-red text-xs">{errors.position.message}</p>}
         </section>
 
- <section className="mb-5">
-        <label className="text-black">{t('phone_number')}</label>
-        <div className="flex items-center gap-2">
-          {/* <span className="text-gray-500">+976</span> */}
+        <section className="mb-5">
+          <label className="text-black">{t('phone_number')}</label>
           <PatternFormat
             format="#### ####"
             allowEmptyFormatting
             mask="_"
             value={getValues('contact_number') || ''}
-            onValueChange={({ value }) => {
-              setValue('contact_number', value); // raw: 95129418
-            }}
+            onValueChange={({ value }) => setValue('contact_number', value)}
             className={inputBorderClass(!!errors.contact_number)}
             placeholder="9512 9418"
             required
           />
-        </div>
-        {errors.contact_number && (
-          <p className="text-red text-xs">{errors.contact_number.message}</p>
-        )}
+          {errors.contact_number && <p className="text-red text-xs">{errors.contact_number.message}</p>}
         </section>
 
- <section className="mb-5">
-        <label className="text-black">{t('email')}</label>
-        <input
-          type="email"
-          {...register('email')}
-          className={inputBorderClass(!!errors.email)}
-        />
-        {errors.email && <p className="text-red text-xs">{errors.email.message}</p>}
-        </section>
-
- <section className="mb-5">
-        <label className="text-black">{t('password')}</label>
-        <div className="relative mb-2">
+        <section className="mb-5">
+          <label className="text-black">{t('email')}</label>
           <input
-            type={isPasswordVisible ? 'text' : 'password'}
-            {...register('password')}
-            className={inputBorderClass(!!errors.password)}
+            type="email"
+            {...register('email')}
+            className={inputBorderClass(!!errors.email)}
           />
-          <button
-            type="button"
-            className="absolute right-3 top-2"
-            onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-          >
-            {isPasswordVisible ? <HiEye size={20} /> : <HiEyeSlash size={20} />}
-          </button>
-        </div>
-        {errors.password && <p className="text-red text-xs">{errors.password.message}</p>}
+          {errors.email && <p className="text-red text-xs">{errors.email.message}</p>}
+        </section>
+
+        <section className="mb-5">
+          <label className="text-black">{t('password')}</label>
+          <div className="relative mb-2">
+            <input
+              type={isPasswordVisible ? 'text' : 'password'}
+              {...register('password')}
+              className={inputBorderClass(!!errors.password)}
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-2"
+              onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+            >
+              {isPasswordVisible ? <HiEye size={20} /> : <HiEyeSlash size={20} />}
+            </button>
+          </div>
+          {errors.password && <p className="text-red text-xs">{errors.password.message}</p>}
         </section>
 
         <label className="text-black">{t('password_again')}</label>
@@ -187,9 +172,7 @@ export default function RegisterEmployee() {
             {isConfirmPasswordVisible ? <HiEye size={20} /> : <HiEyeSlash size={20} />}
           </button>
         </div>
-        {errors.confirmPassword && (
-          <p className="text-red text-xs">{errors.confirmPassword.message}</p>
-        )}
+        {errors.confirmPassword && <p className="text-red text-xs">{errors.confirmPassword.message}</p>}
 
         <div className="flex gap-x-4">
           <Link

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import Cookies from "js-cookie";
+import { useSession } from "next-auth/react";
 import {
   DataGrid, GridColDef, GridToolbar, GridValidRowModel
 } from "@mui/x-data-grid";
@@ -67,11 +67,10 @@ interface FlattenRow extends GridValidRowModel {
 }
 
 export default function RoomManagement() {
-  const hotel = typeof window !== "undefined"
-    ? JSON.parse(localStorage.getItem("userInfo") || "{}").hotel
-    : 0;
+  const {data: session} =useSession();
+  const hotel = session?.user?.hotel || 0;
 
-  const token = Cookies.get("token");
+  const token = session?.accessToken;
 
   const [lookup, setLookup] = useState<AllData | null>(null);
   const [rawRooms, setRawRooms] = useState<RoomData[]>([]);
@@ -92,11 +91,17 @@ export default function RoomManagement() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      if (!token) {
+        console.log("No token available, skipping fetch");
+        setLoading(false);
+        return;
+      }
+
       const [lookupRes, roomRes, priceRes, seasonalRes] = await Promise.all([
         fetch("https://dev.kacc.mn/api/all-data/"),
         fetch(`https://dev.kacc.mn/api/roomsNew/?token=${token}`),
-        fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}`),
-        fetch(`https://dev.kacc.mn/api/seasonal-prices?hotel=${hotel}`),
+        fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}&token=${token}`),
+        fetch(`https://dev.kacc.mn/api/seasonal-prices?hotel=${hotel}&token=${token}`),
       ]);
 
       const [lookupJson, roomJson, priceJson, seasonalJson] = await Promise.all([
@@ -137,7 +142,7 @@ export default function RoomManagement() {
     } else {
       fetchData();
     }
-  }, [hotel]);
+  }, [hotel, session]);
 
   const rows: FlattenRow[] = useMemo(() => {
     if (!lookup) return [];

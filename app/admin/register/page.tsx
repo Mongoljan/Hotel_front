@@ -11,14 +11,14 @@ import { HiEye, HiEyeSlash } from 'react-icons/hi2';
 import PhoneInput from "react-phone-input-2";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Cookies from 'js-cookie';
+import { useSession } from 'next-auth/react';
 
 type Location = {
   lat: number;
   lng: number;
 };
 
-const DefaultLocation: Location = { lat: 47.918873, lng: 106.917017 }; // Example: Ulaanbaatar
+const DefaultLocation: Location = { lat: 47.918873, lng: 106.917017 };
 const DefaultZoom = 10;
 
 type FormFields = z.infer<typeof schemaRegistrationEmployee>;
@@ -29,18 +29,15 @@ type UserType = {
 };
 
 export default function RegisterPage() {
+  const { data: session } = useSession();
   const router = useRouter();
   const [location, setLocation] = useState<Location>(DefaultLocation);
   const [zoom, setZoom] = useState(DefaultZoom);
-
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
-    useState(false);
-
-  const [userTypes, setUserTypes] = useState<UserType[]>([]); // State to store user types
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [userTypes, setUserTypes] = useState<UserType[]>([]);
   const modalRef = useRef<HTMLDialogElement>(null);
 
-  // Handle form validation and submission using react-hook-form
   const {
     register,
     handleSubmit,
@@ -52,16 +49,13 @@ export default function RegisterPage() {
     resolver: zodResolver(schemaRegistrationEmployee),
   });
 
-  // Fetch user types on component mount and filter out "Owner" and "SuperAdmin"
   useEffect(() => {
     async function fetchUserTypes() {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user-type/`);
         const data: UserType[] = await response.json();
-
-        // Filter out "Owner" and "SuperAdmin" (pk: 1 and 2)
-        const filteredUserTypes = data.filter(type => type.pk !== 1 && type.pk !== 2);
-        setUserTypes(filteredUserTypes);
+        const filtered = data.filter(type => type.pk !== 1 && type.pk !== 2);
+        setUserTypes(filtered);
       } catch (error) {
         console.error('Error fetching user types:', error);
       }
@@ -73,14 +67,12 @@ export default function RegisterPage() {
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     try {
       const requestBody = {
-        owner_pk: Cookies.get('pk'), // Fixed value for owner registration
-        owner_token: Cookies.get('jwtToken'), // Fixed empty value for owner_token
-        user_type: data.user_type, // Selected user type from the form
-
-        // Values from the form
+        owner_pk: session?.user?.id,
+        owner_token: session?.accessToken,
+        user_type: data.user_type,
         user_name: data.contact_person_name,
-        hotel_name: "", // Hotel name (only for owners)
-        hotel_address: "",// Hotel address (only for owners)
+        hotel_name: "",
+        hotel_address: "",
         user_pass: data.password,
         user_mail: data.email,
         user_phone: data.contact_number,
@@ -90,45 +82,38 @@ export default function RegisterPage() {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/register/`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
         }
       );
 
       if (response.ok) {
-        toast.success('Registration successful! Your registration approval is pending.');
+        toast.success('Бүртгэл амжилттай! Зөвшөөрөл хүлээгдэж байна.');
         router.push('/admin/hotel');
       } else {
         const errorData = await response.json();
-        
-        // Display dynamic error messages from the API
-        if (errorData.email && errorData.email.length > 0) {
-          toast.error(errorData.email[0]); // Display the first email error message
-        } else if (errorData.password && errorData.password.length > 0) {
-          toast.error(errorData.password[0]); // Display the first password error message
-        } else {
-          toast.error('Registration failed. Please check your input.');
-        }
+        if (errorData.email?.[0]) toast.error(errorData.email[0]);
+        else if (errorData.password?.[0]) toast.error(errorData.password[0]);
+        else toast.error('Бүртгэл амжилтгүй боллоо.');
       }
     } catch (error) {
-      toast.error('An unexpected error occurred during registration');
-      console.error('Error during registration:', error);
+      toast.error('Алдаа гарлаа.');
+      console.error('Registration error:', error);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen h-full py-[100px] bg-[#E5FDoD] rounded-[12px]">
+    <div className="flex justify-center items-center min-h-screen py-[100px] bg-[#E5FDoD] rounded-[12px]">
       <ToastContainer />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white border-primary border-solid border-[1px] p-10 px-10 max-w-[600px] rounded-md text-gray-600"
+        className="bg-white border-primary border-[1px] p-10 max-w-[600px] rounded-md text-gray-600"
       >
-        <h2 className="text-2xl font-bold mx-auto text-center text-blue-500 mb-10">Бүртүүлэх</h2>
+        <h2 className="text-2xl font-bold text-center text-blue-500 mb-10">Бүртгүүлэх</h2>
 
-        <div className="mb-5">Аккаунт байгаа юу?
-          <Link className="text-blue-500 ml-[4px] hover:text-blue-300" href={"/auth/login"}>
+        <div className="mb-5">
+          Аккаунт байгаа юу?
+          <Link href="/auth/login" className="text-blue-500 ml-2 hover:text-blue-300">
             Нэвтрэх
           </Link>
         </div>
@@ -151,10 +136,8 @@ export default function RegisterPage() {
         />
         {errors.email && <div className="text-red">{errors.email.message}</div>}
 
-     
-
         <PhoneInput
-          country={"mn"}
+          country="mn"
           enableSearch
           disableSearchIcon
           value={getValues("contact_number")}
@@ -171,21 +154,16 @@ export default function RegisterPage() {
             borderRadius: "4px",
           }}
         />
-        {errors.contact_number && (
-          <div className="text-red text-sm">{errors.contact_number.message}</div>
-        )}
+        {errors.contact_number && <div className="text-red text-sm">{errors.contact_number.message}</div>}
 
-        {/* Dropdown for selecting user type */}
         <select
           {...register('user_type')}
           className="border p-2 w-full mb-4 h-14 rounded-md"
           required
         >
           <option value="">Хэрэглэгчийн төрөл сонгоно уу</option>
-          {userTypes.map((type) => (
-            <option key={type.pk} value={type.pk}>
-              {type.name}
-            </option>
+          {userTypes.map(type => (
+            <option key={type.pk} value={type.pk}>{type.name}</option>
           ))}
         </select>
         {errors.user_type && <div className="text-red">{errors.user_type.message}</div>}
@@ -228,7 +206,7 @@ export default function RegisterPage() {
 
         <button
           type="submit"
-          className="w-full h-12 bg-primary  text-white font-semibold rounded-[10px] shadow-lg"
+          className="w-full h-12 bg-primary text-white font-semibold rounded-[10px] shadow-lg"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Бүртгэж байна...' : 'Бүртгүүлэх'}

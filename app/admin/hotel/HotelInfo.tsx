@@ -1,6 +1,7 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import Cookies from "js-cookie";
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface Hotel {
   pk: number;
@@ -16,41 +17,32 @@ interface Hotel {
 }
 
 export default function HotelInfo() {
+  const { data: session } = useSession();
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const getHotelId = (): string | null => {
-    
-    try {
-      const hotel = Cookies.get("hotel");
-
-      return hotel || null;
-    } catch (error) {
-      console.error("Error parsing hotel ID:", error);
-      return null;
-    }
-  };
 
   useEffect(() => {
     const fetchHotel = async () => {
       try {
-        const hotelId = getHotelId();
-        if (!hotelId) throw new Error("Hotel ID not found in localStorage");
+        const hotelId = session?.user?.hotel;
+        if (!hotelId) throw new Error('Hotel ID not found in session');
 
         const response = await fetch(`https://dev.kacc.mn/api/properties/${hotelId}`);
-        if (!response.ok) throw new Error("Failed to fetch hotel data");
+        if (!response.ok) throw new Error('Failed to fetch hotel data');
 
         const data = await response.json();
         setHotel(data);
       } catch (error) {
-        console.error("Error fetching hotel info:", error);
+        console.error('Error fetching hotel info:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchHotel();
-  }, []);
+    if (session?.user?.hotel) {
+      fetchHotel();
+    }
+  }, [session?.user?.hotel]);
 
   if (loading) return <div className="text-center py-10">Loading...</div>;
   if (!hotel) return <div className="text-center text-red py-10">No hotel info available</div>;
@@ -65,7 +57,7 @@ export default function HotelInfo() {
         <Info label="Type" value={hotel.property_type} />
         <Info label="Phone" value={hotel.phone} />
         <Info label="Email" value={hotel.mail} />
-        <Info label="Approved" value={hotel.is_approved ? "Yes" : "No"} />
+        <Info label="Approved" value={hotel.is_approved ? 'Yes' : 'No'} />
         <Info label="Created at" value={new Date(hotel.created_at).toLocaleString()} />
       </div>
     </div>
@@ -76,7 +68,7 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-sm text-gray-500">{label}:</p>
-      <p className="font-medium">{value || "-"}</p>
+      <p className="font-medium">{value || '-'}</p>
     </div>
   );
 }

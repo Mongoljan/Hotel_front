@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import { useSession } from 'next-auth/react';
 
 import {
   DataGrid,
@@ -108,10 +108,10 @@ interface FlattenRow extends GridValidRowModel {
   // Column 1: Arrow placeholder
   arrowPlaceholder: string;
 
-  // Column 2: Thumbnails “Зураг”
+  // Column 2: Thumbnails "Зураг"
   images: string[];
 
-  // Column 3: “Өрөөний нэр”
+  // Column 3: "Өрөөний нэр"
   categoryName?: string;
   typeName?: string;
   sizeGroup?: string;
@@ -120,14 +120,14 @@ interface FlattenRow extends GridValidRowModel {
   roomNumberLeaf?: string;
   viewDescription?: string;
 
-  // Column 4: “Өрөөний тоо / Зарах тоо”
+  // Column 4: "Өрөөний тоо / Зарах тоо"
   roomNumbersStr?: string; // for group only
   leafSize?: string;       // for leaf only
 
   smokingAllowed?: boolean;
   hasWifi?: boolean;
 
-  // Column 5: “Хүний тоо / Орны тоо”
+  // Column 5: "Хүний тоо / Орны тоо"
   groupHasAdult?: boolean;
   groupHasChild?: boolean;
   groupHasSingleBed?: boolean;
@@ -137,11 +137,11 @@ interface FlattenRow extends GridValidRowModel {
   childQty?: number;
   bedType?: number; // 1 = single, 2 = double
 
-  // Column 6: “Ерөнхий онцлог зүйлс”
+  // Column 6: "Ерөнхий онцлог зүйлс"
   commonFeaturesArr: string[];
   thisRoomExtraFeaturesArr?: string[];
 
-  // Column 7: “Угаалгын өрөөнд:”
+  // Column 7: "Угаалгын өрөөнд:"
   commonBathroomArr: string[];
   thisRoomExtraBathroomArr?: string[];
 
@@ -171,6 +171,7 @@ export default function RoomList({
     outdoor_and_view: []
   });
   const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
 
   // Which groups are expanded?
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -188,14 +189,18 @@ export default function RoomList({
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   /////////////////////////////////////////////////////////////////////////////
-  // 4) Fetch “/api/all-data/” and “/api/roomsNew/” with caching
+  // 4) Fetch "/api/all-data/" and "/api/roomsNew/" with caching
   /////////////////////////////////////////////////////////////////////////////
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       try {
-        const token = Cookies.get("token");
-        if (!token) throw new Error("Token not found");
+        const token = session?.accessToken;
+        if (!token) {
+          console.log("No token available, skipping fetch");
+          setLoading(false);
+          return;
+        }
 
         const cachedLookup = localStorage.getItem("roomLookup");
         const cachedRooms = localStorage.getItem("roomData");
@@ -231,7 +236,7 @@ export default function RoomList({
     }
 
     fetchData();
-  }, [isRoomAdded, setIsRoomAdded]);
+  }, [isRoomAdded, setIsRoomAdded, session]);
 
   ///////////////////////////////////////////////////////////////////////////
   // 5) Build groupMap and lookup maps (with nullish guards)
@@ -248,7 +253,7 @@ export default function RoomList({
     roomTypesMap,
     roomCategoryMap
   } = React.useMemo(() => {
-    // 1) Group rooms by “room_type-room_category”
+    // 1) Group rooms by "room_type-room_category"
     const group = new Map<
       string,
       {
@@ -368,7 +373,7 @@ export default function RoomList({
       })
     );
 
-    // ─── 4) Compute intersection of common “Ерөнхий онцлог зүйлс”
+    // ─── 4) Compute intersection of common "Ерөнхий онцлог зүйлс"
     let interFacilityIDs: number[] = grp.rooms[0]?.room_Facilities?.slice() ?? [];
     for (let i = 1; i < grp.rooms.length; i++) {
       const nextIDs = grp.rooms[i].room_Facilities ?? [];
@@ -408,7 +413,7 @@ export default function RoomList({
       })
       .filter((nm): nm is string => nm !== undefined);
 
-    // ─── 5) Compute intersection of common “Угаалгын өрөөнд:”
+    // ─── 5) Compute intersection of common "Угаалгын өрөөнд:"
     let interBathroomIDs: number[] = grp.rooms[0]?.bathroom_Items?.slice() ?? [];
     for (let i = 1; i < grp.rooms.length; i++) {
       const nextIDs = grp.rooms[i].bathroom_Items ?? [];
@@ -424,20 +429,20 @@ export default function RoomList({
 
     // ─── 7) Push the GROUP row
     rows.push({
-      id: key,                // e.g. “9-8”
+      id: key,                // e.g. "9-8"
       isGroup: true,
       arrowPlaceholder: key,
 
       // Column 2: Thumbnails
       images: uniqueImages,
 
-      // Column 3: “Өрөөний нэр”
+      // Column 3: "Өрөөний нэр"
       categoryName: grp.category,
       typeName: grp.type,
       sizeGroup: grp.rooms[0]?.room_size,
       hasWifiGroup: anyWifiInGroup,
 
-      // Column 4: “Өрөөний тоо / Зарах тоо”
+      // Column 4: "Өрөөний тоо / Зарах тоо"
       roomNumbersStr,   // comma-separated room numbers for the group
 
       // Column 4 leaf-only (unused)
@@ -470,7 +475,7 @@ export default function RoomList({
     // ─── 8) If group is expanded, push each LEAF (individual room)
     if (expanded.has(key)) {
       grp.rooms.forEach((r) => {
-        // Determine leaf’s bedType: 2 if “double” else 1
+        // Determine leaf's bedType: 2 if "double" else 1
         const bedName = bedTypesMap.get(r.bed_type) || "";
         const bedTypeForIcon =
           bedName.toLowerCase().includes("2") ||
@@ -485,7 +490,7 @@ export default function RoomList({
           return mn.toLowerCase().includes("wifi") || en.toLowerCase().includes("wifi");
         });
 
-        // This room’s full feature list
+        // This room's full feature list
         const thisFeatureNamesSet = new Set<string>();
         (r.room_Facilities ?? []).forEach((fid) => {
           const mn = facilitiesMapMn.get(fid);
@@ -507,14 +512,14 @@ export default function RoomList({
         });
         const thisRoomFeaturesArrFull = Array.from(thisFeatureNamesSet);
 
-        // Compute extras vs. group’s commonFeaturesArr
+        // Compute extras vs. group's commonFeaturesArr
         const extrasSet = new Set<string>(thisRoomFeaturesArrFull);
         commonFeaturesArr.forEach((cf) => {
           if (extrasSet.has(cf)) extrasSet.delete(cf);
         });
         const thisRoomExtraFeaturesArr = Array.from(extrasSet);
 
-        // This room’s full bathroom item list
+        // This room's full bathroom item list
         const thisBathroomSet = new Set<string>();
         (r.bathroom_Items ?? []).forEach((bid) => {
           const nm = bathroomItemsMap.get(bid);
@@ -522,7 +527,7 @@ export default function RoomList({
         });
         const thisRoomBathroomArrFull = Array.from(thisBathroomSet);
 
-        // Compute extras vs. group’s commonBathroomArr
+        // Compute extras vs. group's commonBathroomArr
         const extrasBathSet = new Set<string>(thisRoomBathroomArrFull);
         commonBathroomArr.forEach((cb) => {
           if (extrasBathSet.has(cb)) extrasBathSet.delete(cb);
@@ -530,7 +535,7 @@ export default function RoomList({
         const thisRoomExtraBathroomArr = Array.from(extrasBathSet);
 
         rows.push({
-          id: `${key}-${r.room_number}`, // e.g. “9-8-12”
+          id: `${key}-${r.room_number}`, // e.g. "9-8-12"
           isGroup: false,
           arrowPlaceholder: "",
 
@@ -581,9 +586,9 @@ export default function RoomList({
   /////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Called when the user clicks “Edit” (FaEdit) on a leaf row.
+   * Called when the user clicks "Edit" (FaEdit) on a leaf row.
    * We find the corresponding RoomData in rawRooms, set it as selectedRoom,
-   * and open the modal in “Edit” mode.
+   * and open the modal in "Edit" mode.
    */
   const handleEdit = (roomId: number | undefined) => {
     if (roomId == null) return;
@@ -597,12 +602,12 @@ export default function RoomList({
   };
 
   /**
-   * Called when the user clicks “Delete” (FaTrashAlt) on a leaf row.
+   * Called when the user clicks "Delete" (FaTrashAlt) on a leaf row.
    * Sends DELETE to /api/roomsNew/<roomId>/?token=<token>, then refreshes the list.
    */
   const handleDelete = async (roomId: number | undefined) => {
     if (roomId == null) return;
-    const token = Cookies.get("token");
+    const token = session?.accessToken;
     if (!token) {
       toast.error("Token missing; cannot delete.");
       return;
@@ -670,7 +675,7 @@ export default function RoomList({
     },
 
     //
-    // ── Column 2: “Зураг” ──────────────────────────────────────────────────────
+    // ── Column 2: "Зураг" ──────────────────────────────────────────────────────
     //
     {
       field: "images",
@@ -709,7 +714,7 @@ export default function RoomList({
     },
 
     //
-    // ── Column 3: “Өрөөний нэр” ─────────────────────────────────────────────────
+    // ── Column 3: "Өрөөний нэр" ─────────────────────────────────────────────────
     //    Group: three lines — (1) category (bold), (2) type, (3) size + Wi-Fi icon
     //    Leaf: two lines — (1) roomNumberLeaf (bold), (2) viewDescription
     //
@@ -770,7 +775,7 @@ export default function RoomList({
     },
 
     //
-    // ── Column 4: “Өрөөний тоо / Зарах тоо” ────────────────────────────────────
+    // ── Column 4: "Өрөөний тоо / Зарах тоо" ────────────────────────────────────
     //    Group: single line = comma-separated roomNumbers
     //    Leaf: two lines — (1) size bold, (2) smoking + Wi-Fi icons
     //
@@ -818,7 +823,7 @@ export default function RoomList({
     },
 
     //
-    // ── Column 5: “Хүний тоо / Орны тоо” ────────────────────────────────────────
+    // ── Column 5: "Хүний тоо / Орны тоо" ────────────────────────────────────────
     //
     {
       field: "groupHasAdult",
@@ -856,7 +861,7 @@ export default function RoomList({
     },
 
     //
-    // ── Column 6: “Ерөнхий онцлог зүйлс” ────────────────────────────────────────
+    // ── Column 6: "Ерөнхий онцлог зүйлс" ────────────────────────────────────────
     //
     {
       field: "commonFeaturesArr",
@@ -897,7 +902,7 @@ export default function RoomList({
     },
 
     //
-    // ── Column 7: “Угаалгын өрөөнд:” ─────────────────────────────────────────────
+    // ── Column 7: "Угаалгын өрөөнд:" ─────────────────────────────────────────────
     //
     {
       field: "commonBathroomArr",
@@ -938,7 +943,7 @@ export default function RoomList({
     },
 
     //
-    // ── Column 8: “Засах” (Edit + Delete) ──────────────────────────────────────
+    // ── Column 8: "Засах" (Edit + Delete) ──────────────────────────────────────
     //
     {
       field: "actions",
@@ -979,12 +984,12 @@ export default function RoomList({
 
   return (
     <div className="w-full">
-      {/* ─── Top Bar: “Өрөө бүртгэл” + “+ Өрөө нэмэх” ─────────────────────── */}
+      {/* ─── Top Bar: "Өрөө бүртгэл" + "+ Өрөө нэмэх" ─────────────────────── */}
       <div className="flex justify-between mb-4">
         <h1 className="text-lg font-semibold">Өрөө бүртгэл</h1>
         <button
           onClick={() => {
-            // Open modal in “Create” mode (clear any selectedRoom)
+            // Open modal in "Create" mode (clear any selectedRoom)
             setSelectedRoom(null);
             setIsModalOpen(true);
           }}
@@ -1026,7 +1031,7 @@ export default function RoomList({
                   quickFilterProps: { debounceMs: 300 }
                 }
               }}
-              // Let row height auto‐grow to fit multiline content:
+              // Let row height auto-grow to fit multiline content:
               autoHeight
               getRowHeight={() => "auto"}
 

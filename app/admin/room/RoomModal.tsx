@@ -23,7 +23,7 @@ import { FaChild } from "react-icons/fa";
 import { AiOutlineWifi, AiOutlinePlus } from "react-icons/ai";
 import { GiCigarette } from "react-icons/gi";
 import { LiaSmokingBanSolid } from "react-icons/lia";
-import Cookies from "js-cookie";
+import { useSession } from 'next-auth/react';
 
 const API_COMBINED_DATA = "https://dev.kacc.mn/api/all-data/";
 const API_CREATE_ROOM = "https://dev.kacc.mn/api/roomsNew/";
@@ -42,13 +42,13 @@ interface BedType {
   name: string;
   is_custom: boolean;
 }
-// For “generic” lookup items that have separate name_en / name_mn
+// For "generic" lookup items that have separate name_en / name_mn
 interface LookupItem {
   id: number;
   name_en: string;
   name_mn: string;
 }
-// For SimpleLookup (room_category, bed_types, room_types) that use “name”
+// For SimpleLookup (room_category, bed_types, room_types) that use "name"
 interface SimpleLookup {
   id: number;
   name: string;
@@ -65,7 +65,7 @@ interface CombinedData {
   room_category: SimpleLookup[];
 }
 
-// The shape of the API’s RoomData object when fetching an existing room:
+// The shape of the API's RoomData object when fetching an existing room:
 interface RoomImage {
   id: number;
   image: string; // presumably a URL
@@ -74,7 +74,7 @@ interface RoomImage {
 interface RoomData {
   id: number;
   hotel: number;
-  room_number: number; // single number for leaf‐rooms; in editing we pass as array of numbers
+  room_number: number; // single number for leaf-rooms; in editing we pass as array of numbers
   room_type: number;
   room_category: number;
   room_size: string; // e.g. "12.00"
@@ -138,8 +138,9 @@ export default function RoomModal({
     outdoor_and_view: [],
     room_category: [],
   });
+     const { data: session } = useSession();
 
-  // Helper: read hotel ID (or user’s hotel) from localStorage/userInfo
+  // Helper: read hotel ID (or user's hotel) from localStorage/userInfo
   const getHotelId = (): number | null => {
     try {
       const propertyData = JSON.parse(localStorage.getItem("propertyData") || "{}");
@@ -181,7 +182,7 @@ export default function RoomModal({
       food_And_Drink: [],
       outdoor_And_View: [],
 
-      // We store images+descriptions in a field array called “entries”
+      // We store images+descriptions in a field array called "entries"
       entries: [{ images: "", descriptions: "" }],
     },
   });
@@ -193,7 +194,7 @@ export default function RoomModal({
   });
   const watchedEntries = watch("entries");
 
-  // When the modal opens (or roomToEdit changes), fetch combined lookup data & possibly pre‐fill form
+  // When the modal opens (or roomToEdit changes), fetch combined lookup data & possibly pre-fill form
   useEffect(() => {
     // 1) Fetch /api/all-data/
     const fetchCombined = async () => {
@@ -217,7 +218,7 @@ export default function RoomModal({
     };
 
     fetchCombined();
-  }, []);
+  }, [session]);
 
   // 2) If roomToEdit is not null, populate the form with existing values
   useEffect(() => {
@@ -226,13 +227,13 @@ export default function RoomModal({
       const existing = roomToEdit;
 
       // Convert array of existing images into { images: base64|url, descriptions: string }[] form
-      // Since the backend returns URLs, we just store the URL here (we assume no re‐upload in edit, or user can re‐upload if they choose).
+      // Since the backend returns URLs, we just store the URL here (we assume no re-upload in edit, or user can re-upload if they choose).
       const initialEntries = existing.images.map((img) => ({
         images: img.image, // URL from server
         descriptions: img.description,
       }));
 
-      // If there are no existing images, keep one blank “entry”
+      // If there are no existing images, keep one blank "entry"
       if (initialEntries.length === 0) {
         initialEntries.push({ images: "", descriptions: "" });
       }
@@ -284,7 +285,7 @@ export default function RoomModal({
 
         entries: [{ images: "", descriptions: "" }],
       });
-      setStep(1); // always start at step 1 for “create” mode
+      setStep(1); // always start at step 1 for "create" mode
     }
   }, [roomToEdit, reset]);
 
@@ -339,7 +340,7 @@ export default function RoomModal({
       return;
     }
 
-    // Split “RoomNo” string by commas into an array of numbers
+    // Split "RoomNo" string by commas into an array of numbers
     const roomNumbersArr = formData.RoomNo.split(",")
       .map((txt) => parseInt(txt.trim(), 10))
       .filter((n) => !isNaN(n));
@@ -355,9 +356,17 @@ export default function RoomModal({
     }
 
     // Build the final payload
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const hotelId = session?.user?.hotel;
+    if (!hotelId) {
+      toast.error("Hotel ID not found. Please log in again.");
+      return;
+    }
+    
+    console.log('🔧 RoomModal - Hotel ID from session:', hotelId);
+    console.log('🔧 RoomModal - Session user:', session?.user);
+    
     const transformedData: any = {
-      hotel: userInfo?.hotel,
+      hotel: hotelId,
       room_type: Number(formData.room_type),
       room_category: Number(formData.room_category),
       room_size: parseFloat(formData.room_size),
@@ -380,9 +389,16 @@ export default function RoomModal({
         description: entry.descriptions,
       })),
     };
+    
+    console.log('🔧 RoomModal - Transformed data being sent:', transformedData);
 
     try {
-      const token = Cookies.get("token") || "";
+      const token = session?.accessToken;
+      if (!token) {
+        toast.error("Authentication token missing. Please log in again.");
+        return;
+      }
+      
       const isEdit = roomToEdit !== null;
 
       // If editing, do PUT /api/roomsNew/<id>/?token=

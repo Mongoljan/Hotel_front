@@ -1,153 +1,116 @@
-'use client';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import React from 'react';
-import { GrMoney } from "react-icons/gr";
-import { BsClipboard2Data } from "react-icons/bs";
-import { MdOutlineBedroomChild, MdPendingActions } from "react-icons/md";
-import {
-  PieChart, Pie, Tooltip,
-  BarChart, Bar, XAxis, YAxis,
-  LineChart, Line
-} from 'recharts';
-
-const smallCards = [
-  {
-    title: 'Өнгөрсөн сарын борлуулалт',
-    value: '20,000,000',
-    icon: <GrMoney />,
-    description: 'Нийт орлого',
-  },
-  {
-    title: 'Захиалгууд',
-    value: '150(32 гадаад)',
-    icon: <BsClipboard2Data />,
-    description: 'Нийт захиалгын тоо',
-  },
-  {
-    title: 'Өрөөний тоо',
-    value: '500',
-    icon: <MdOutlineBedroomChild />,
-    description: 'Сайтаар зарагдсан өрөөний тоо',
-  },
-  {
-    title: 'Хүлээгдэж буй ',
-    value: "8'000'000T",
-    icon: <MdPendingActions />,
-    description: 'Хүлээгдэж буй орлого',
-  },
-];
-
-const bigCards = [
-  {
-    title: 'Борлуулалтаар',
-    content: 'Сүүлийн 6 сарын хэрэглэгчийн өсөлт болон идэвх.',
-  },
-  {
-    title: 'Өрөөний төрлөөр',
-    content: 'Энэ сарын захиалгын тоо хэмжээ ба хандлага.',
-  },
-  {
-    title: 'Байрласан хоногоор',
-    content: 'Өнгөрсөн улиралтай харьцуулсан гүйцэтгэл.',
-  },
-];
-
-export default function Page() {
+export default function AdminDashboard() {
   return (
     <div className="p-6 space-y-6">
-      {/* Top Bar */}
-      <div className="flex justify-end space-x-4">
-        <select className="border border-gray-300 rounded px-3 py-2">
-          <option>Filter Option 1</option>
-          <option>Filter Option 2</option>
-        </select>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Add New
-        </button>
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold">Хяналтын самбар</h1>
+        <p className="text-muted-foreground">Өнөөдрийн тойм мэдээлэл</p>
       </div>
 
-      {/* First Row - 4 Small Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {smallCards.map((card, index) => (
-          <div key={index} className="bg-white rounded-[10px] border-border border-solid border-[1px] p-6 text-center">
-            <h3 className="text-[18px] text-left font-semibold">{card.title}</h3>
-            <div className="flex mt-5 justify-between">
-              <p className="text-black text-xl font-semibold">{card.value}</p>
-              <p className="text-gray-600 text-3xl">{card.icon}</p>
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Нийт өрөө</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">24</div>
+            <p className="text-xs text-muted-foreground">+2 өмнөх сараас</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Өнөөдрийн захиалга</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">12</div>
+            <p className="text-xs text-muted-foreground">+3 өчигдрөөс</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Нийт зочин</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">156</div>
+            <p className="text-xs text-muted-foreground">+12 энэ долоо хоногт</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Орлого</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₮2,340,000</div>
+            <p className="text-xs text-muted-foreground">-5% өмнөх сараас</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Content Grid */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Recent Bookings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Сүүлийн захиалгууд</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Батбаяр</p>
+                  <p className="text-xs text-muted-foreground">Өрөө №101</p>
+                </div>
+                <div className="text-sm text-muted-foreground">1 цаг өмнө</div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Сарангэрэл</p>
+                  <p className="text-xs text-muted-foreground">Өрөө №102</p>
+                </div>
+                <div className="text-sm text-muted-foreground">2 цаг өмнө</div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Болдбаатар</p>
+                  <p className="text-xs text-muted-foreground">Өрөө №103</p>
+                </div>
+                <div className="text-sm text-muted-foreground">3 цаг өмнө</div>
+              </div>
             </div>
-            <p className="text-soft text-left mt-5">{card.description}</p>
-          </div>
-        ))}
-      </div>
+          </CardContent>
+        </Card>
 
-      {/* Second Row - 3 Large Cards */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {bigCards.map((card, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-[10px] border-border border-solid border-[1px] p-8 h-60 flex flex-col"
-          >
-            <h2 className="text-xl text-left font-bold">{card.title}</h2>
-            <p className="text-gray-500 mt-2 text-center">{card.content}</p>
-          </div>
-        ))}
-      </div> */}
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Pie Chart */}
-        <div className="bg-white rounded-[10px] border border-border p-4">
-          <h3 className="text-lg font-semibold mb-4">Борлуулалтаар</h3>
-          <PieChart width={250} height={250}>
-            <Pie
-              dataKey="value"
-              isAnimationActive={false}
-              data={[
-                { name: 'Дотоод', value: 118 },
-                { name: 'Гадаад', value: 32 },
-              ]}
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              fill="#8884d8"
-              label
-            />
-            <Tooltip />
-          </PieChart>
-        </div>
-
-        {/* Bar Chart */}
-        <div className="bg-white rounded-[10px] border border-border p-4">
-          <h3 className="text-lg font-semibold mb-4">Өрөөний төрлүүдээр</h3>
-          <BarChart width={300} height={250} data={[
-            { name: 'Стандарт', uv: 60 },
-            { name: 'Делюкс', uv: 90 },
-            { name: 'Сьют', uv: 45 },
-          ]}>
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="uv" fill="#82ca9d" />
-          </BarChart>
-        </div>
-
-        {/* Line Chart */}
-        <div className="bg-white rounded-[10px] border border-border p-4">
-          <h3 className="text-lg font-semibold mb-4">Байрласан хоногоор</h3>
-          <LineChart width={300} height={250} data={[
-            { name: '1-р сар', value: 3000000 },
-            { name: '2-р сар', value: 4000000 },
-            { name: '3-р сар', value: 5000000 },
-            { name: '4-р сар', value: 3500000 },
-            { name: '5-р сар', value: 6000000 },
-            { name: '6-р сар', value: 7000000 },
-          ]}>
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="value" stroke="#8884d8" />
-          </LineChart>
-        </div>
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Түргэн үйлдэл</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <button className="p-4 text-center border rounded-lg hover:bg-accent">
+                <div className="text-sm">Өрөө нэмэх</div>
+              </button>
+              <button className="p-4 text-center border rounded-lg hover:bg-accent">
+                <div className="text-sm">Захиалга үзэх</div>
+              </button>
+              <button className="p-4 text-center border rounded-lg hover:bg-accent">
+                <div className="text-sm">Зочин бүртгэх</div>
+              </button>
+              <button className="p-4 text-center border rounded-lg hover:bg-accent">
+                <div className="text-sm">Тайлан үзэх</div>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

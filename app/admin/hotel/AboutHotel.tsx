@@ -185,25 +185,25 @@ export default function AboutHotel({
               <div>
                 <p className="mb-2">Бүртгэх цаг:</p>
                 <p className="flex items-center gap-2">
-                  <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
+                  <span className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
                     {formatTime(propertyPolicy.check_in_from)}
-                  </div>
+                  </span>
                   <span>–</span>
-                  <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
+                  <span className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
                     {formatTime(propertyPolicy.check_in_until)}
-                  </div>
+                  </span>
                 </p>
               </div>
               <div>
                 <p className="mb-2">Гарах цаг:</p>
                 <p className="flex items-center gap-2">
-                  <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
+                  <span className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
                     {formatTime(propertyPolicy.check_out_from)}
-                  </div>
+                  </span>
                   <span>–</span>
-                  <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
+                  <span className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
                     {formatTime(propertyPolicy.check_out_until)}
-                  </div>
+                  </span>
                 </p>
               </div>
             </div>
