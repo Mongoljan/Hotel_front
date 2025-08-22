@@ -10,19 +10,12 @@ export const metadata: Metadata = {
 
 type Props = {
   children: React.ReactNode;
-  params: { lang: string };
+  params: Promise<{}>;
 };
 
 export default async function AdminLayout({
   children,
-  params: { lang },
+  params,
 }: Readonly<Props>) {
-  const cookieStore = cookies();
-  const userApproved = cookieStore.get("user_approved")?.value === "true";
-
-  return (
-    <MainLayout userApproved={userApproved}>
-      {children}
-    </MainLayout>
-  );
+  return <MainLayout>{children}</MainLayout>;
 }

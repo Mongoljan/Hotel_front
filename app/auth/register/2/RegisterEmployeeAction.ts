@@ -33,7 +33,8 @@ export async function registerEmployeeAction(formData: {
     }
 
     // Set server-side cookie
-    cookies().set('token', data.token, {
+    const cookieStore = await cookies();
+    cookieStore.set('token', data.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

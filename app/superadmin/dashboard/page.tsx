@@ -13,11 +13,10 @@ type Owner = {
 };
 
 type Props = {
-  params: { lang: string };
+  params: Promise<{}>;
 };
 
 export default async function AdminDashboardPage({ params }: Props) {
-  const { lang } = params;
   // const dict = await getDictionary(lang);
   const hotelName = Cookies.get('hotelName');
 

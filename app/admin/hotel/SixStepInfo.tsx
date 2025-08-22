@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import Cookies from 'js-cookie';
 import { FaChevronLeft, FaChevronRight, FaRegCheckCircle } from 'react-icons/fa';
 import AboutHotel from './AboutHotel';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PropertyPhoto {
   id: number;
@@ -86,6 +86,7 @@ interface ProceedProps {
 
 export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const t = useTranslations('SixStepInfo');
+  const { user } = useAuth();
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
   const [propertyImages, setPropertyImages] = useState<PropertyPhoto[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
@@ -101,7 +102,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     async function loadData() {
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
-      const hotelId = userInfo.hotel || propertyData.property || Number(Cookies.get('hotel'));
+      const hotelId = user?.hotel || userInfo.hotel || propertyData.property;
       if (!hotelId) return setProceed(0);
 
       try {
@@ -123,7 +124,17 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`)
         ]);
 
+        // Log API responses for debugging
+        console.log('SixStepInfo API responses:', {
+          detailRes: detailRes.status,
+          policyRes: policyRes.status, 
+          addressRes: addressRes.status,
+          basicInfoRes: basicInfoRes.status,
+          baseRes: baseRes.status
+        });
+
         if (!detailRes.ok || !policyRes.ok || !addressRes.ok || !basicInfoRes.ok || !baseRes.ok) {
+          console.log('SixStepInfo: One or more APIs failed, setting proceed to 0');
           return setProceed(0);
         }
 

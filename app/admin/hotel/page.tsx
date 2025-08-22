@@ -6,7 +6,7 @@ import RegisterPage from '@/app/auth/register/Hotel/Hotel';
 import StepIndicator from './StepIndicator';
 import SixStepInfo from './SixStepInfo';
 import { useTranslations } from 'next-intl';
-import Cookies from 'js-cookie';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Hotel {
   is_approved: boolean;
@@ -15,12 +15,13 @@ interface Hotel {
 
 export default function RegisterHotel() {
   const t = useTranslations('AdminPage');
+  const { user, isLoading, isAuthenticated } = useAuth();
   const [proceed, setProceed] = useState<number | null>(null);
   const [hotelApproved, setHotelApproved] = useState(false);
   const [stepStatus, setStepStatus] = useState(2);
   const [view, setView] = useState<'proceed' | 'register'>('proceed');
 
-  // ✅ Load proceed from localStorage
+  // ✅ Load proceed from localStorage (ORIGINAL LOGIC with JWT data source)
   useEffect(() => {
     const saved = localStorage.getItem('proceed');
     if (saved !== null) {
@@ -28,8 +29,10 @@ export default function RegisterHotel() {
       return;
     }
 
-    // ✅ Decide based on fallback data
+    // ✅ Decide based on user data and API calls (ORIGINAL LOGIC)
     const decideStep = async () => {
+      if (!user?.hotel) return; // Wait for user data
+
       try {
         const pd = JSON.parse(localStorage.getItem('propertyData') || '{}');
         if (Array.isArray(pd.general_facilities) && pd.general_facilities.length) {
@@ -37,7 +40,8 @@ export default function RegisterHotel() {
           return;
         }
 
-        const hid = Cookies.get('hotel');
+        // Use JWT user.hotel instead of Cookies.get('hotel')
+        const hid = user.hotel;
         if (hid) {
           const res = await fetch(
             `https://dev.kacc.mn/api/property-details/?property=${hid}`,
@@ -57,7 +61,7 @@ export default function RegisterHotel() {
     };
 
     decideStep();
-  }, []);
+  }, [user?.hotel]); // Only depend on hotel ID being available
 
   // ✅ Persist `proceed` in localStorage
   useEffect(() => {
@@ -66,11 +70,11 @@ export default function RegisterHotel() {
     }
   }, [proceed]);
 
-  // ✅ Poll hotel approval
+  // ✅ Poll hotel approval (ORIGINAL LOGIC with JWT data source)
   useEffect(() => {
     const checkApproval = async () => {
       try {
-        const hid = Cookies.get('hotel');
+        const hid = user?.hotel;
         if (!hid) return;
         const res = await fetch(`https://dev.kacc.mn/api/properties/${hid}`);
         if (!res.ok) return;
@@ -85,9 +89,18 @@ export default function RegisterHotel() {
     checkApproval();
     const id = setInterval(checkApproval, 5000);
     return () => clearInterval(id);
-  }, []);
+  }, [user?.hotel]);
 
-  if (proceed === null) return <div>Loading…</div>;
+  if (isLoading || proceed === null) return <div>Loading authentication and page data…</div>;
+
+  // Debug info
+  console.log('Current state:', {
+    user: user ? { hotel: user.hotel, approved: user.approved, hotelApproved: user.hotelApproved } : null,
+    proceed,
+    hotelApproved,
+    stepStatus,
+    view
+  });
 
   const steps = [
     'Хүсэлт илгээсэн',
@@ -97,7 +110,9 @@ export default function RegisterHotel() {
   ];
 
   return (
-    <div className="p-10">
+    <div className="min-h-screen bg-background p-8">
+   
+
       {view === 'proceed' && proceed !== 2 && (
         <div className="w-full">
           <StepIndicator steps={steps} currentStep={stepStatus} />

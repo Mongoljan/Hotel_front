@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 type Props = {
   children: React.ReactNode;
-  params: { lang: string };
+  params: Promise<{}>;
 };
 
 export default async function AdminLayout({

@@ -46,7 +46,8 @@ export async function registerHotelAndEmployeeAction(hotelData: any, employeeDat
     }
 
     // Optional: Set token cookie if needed
-    cookies().set('token', employeeJson.token, {
+    const cookieStore = await cookies();
+    cookieStore.set('token', employeeJson.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

@@ -47,14 +47,15 @@ export async function loginAction(formData: {
       path: '/',
     };
 
-    cookies().set('token', data.token, options);
-    cookies().set('hotel', String(hotelId), options);
-    cookies().set('userName', data.name, { ...options, httpOnly: true });
-    cookies().set('userEmail', data.email, { ...options, httpOnly: true });
-    cookies().set('user_approved',data.approved, { ...options, httpOnly: true } )
+    const cookieStore = await cookies();
+    cookieStore.set('token', data.token, options);
+    cookieStore.set('hotel', String(hotelId), options);
+    cookieStore.set('userName', data.name, { ...options, httpOnly: true });
+    cookieStore.set('userEmail', data.email, { ...options, httpOnly: true });
+    cookieStore.set('user_approved',data.approved, { ...options, httpOnly: true } )
 
     // ✅ Store approval status securely
-    cookies().set('isApproved', String(isApproved), {
+    cookieStore.set('isApproved', String(isApproved), {
       ...options,
       httpOnly: true,
     });

@@ -1,0 +1,159 @@
+"use client";
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+interface User {
+  id: string
+  email: string
+  name: string
+  hotel: string
+  position: string
+  contact_number: string
+  approved: boolean
+  hotelApproved: boolean
+}
+
+interface AuthState {
+  user: User | null
+  isLoading: boolean
+  isAuthenticated: boolean
+  token: string | null
+  hotel: string | null
+  isUserApproved: boolean
+  isHotelApproved: boolean
+}
+
+export function useAuth(): AuthState & {
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  logout: () => Promise<void>
+  refreshSession: () => Promise<void>
+} {
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    isLoading: true,
+    isAuthenticated: false,
+    token: null,
+    hotel: null,
+    isUserApproved: false,
+    isHotelApproved: false,
+  })
+
+  const router = useRouter()
+
+  const fetchSession = async () => {
+    try {
+      console.log('useAuth: Fetching session from /api/auth/me')
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log('useAuth: Session data received:', data)
+        
+        // Store userInfo in localStorage for compatibility with existing code
+        localStorage.setItem('userInfo', JSON.stringify(data.user))
+        
+        setAuthState({
+          user: data.user,
+          isLoading: false,
+          isAuthenticated: true,
+          token: 'secure-jwt', // We don't expose the actual token
+          hotel: data.user.hotel,
+          isUserApproved: data.user.approved,
+          isHotelApproved: data.user.hotelApproved,
+        })
+        console.log('useAuth: Auth state updated with user data')
+      } else {
+        setAuthState({
+          user: null,
+          isLoading: false,
+          isAuthenticated: false,
+          token: null,
+          hotel: null,
+          isUserApproved: false,
+          isHotelApproved: false,
+        })
+      }
+    } catch (error) {
+      console.error('Session fetch error:', error)
+      setAuthState({
+        user: null,
+        isLoading: false,
+        isAuthenticated: false,
+        token: null,
+        hotel: null,
+        isUserApproved: false,
+        isHotelApproved: false,
+      })
+    }
+  }
+
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setAuthState({
+          user: data.user,
+          isLoading: false,
+          isAuthenticated: true,
+          token: 'secure-jwt',
+          hotel: data.user.hotel,
+          isUserApproved: data.user.approved,
+          isHotelApproved: data.user.hotelApproved,
+        })
+        return { success: true }
+      } else {
+        const errorData = await response.json()
+        return { success: false, error: errorData.error || 'Login failed' }
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      return { success: false, error: 'Network error' }
+    }
+  }
+
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      setAuthState({
+        user: null,
+        isLoading: false,
+        isAuthenticated: false,
+        token: null,
+        hotel: null,
+        isUserApproved: false,
+        isHotelApproved: false,
+      })
+      router.push('/auth/login')
+    }
+  }
+
+  const refreshSession = async () => {
+    await fetchSession()
+  }
+
+  useEffect(() => {
+    fetchSession()
+  }, [])
+
+  return {
+    ...authState,
+    login,
+    logout,
+    refreshSession,
+  }
+}

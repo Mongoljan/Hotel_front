@@ -184,7 +184,7 @@ export default function AboutHotel({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-2">
               <div>
                 <p className="mb-2">Бүртгэх цаг:</p>
-                <p className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
                     {formatTime(propertyPolicy.check_in_from)}
                   </div>
@@ -192,11 +192,11 @@ export default function AboutHotel({
                   <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
                     {formatTime(propertyPolicy.check_in_until)}
                   </div>
-                </p>
+                </div>
               </div>
               <div>
                 <p className="mb-2">Гарах цаг:</p>
-                <p className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
                     {formatTime(propertyPolicy.check_out_from)}
                   </div>
@@ -204,7 +204,7 @@ export default function AboutHotel({
                   <div className="rounded-[10px] border-cloud border-[1px] p-1 px-5 w-fit">
                     {formatTime(propertyPolicy.check_out_until)}
                   </div>
-                </p>
+                </div>
               </div>
             </div>
 

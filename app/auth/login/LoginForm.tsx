@@ -2,17 +2,20 @@
 
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
-import { schemaLogin } from '../../schema'; // Adjust path if needed
+import { schemaLogin } from '../../schema';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { HiEye, HiEyeSlash } from 'react-icons/hi2';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { loginAction } from './LoginAction'; // server action
+import { useAuth } from '@/hooks/useAuth';
 import { useTranslations } from 'next-intl';
-import Cookies from 'js-cookie';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, Loader2, Mail, Lock, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 type FormFields = z.infer<typeof schemaLogin>;
 
@@ -20,6 +23,8 @@ export default function LoginForm() {
   const router = useRouter();
   const t = useTranslations('AuthLogin');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [error, setError] = useState<string>('');
+  const { login } = useAuth();
 
   const {
     register,
@@ -28,74 +33,118 @@ export default function LoginForm() {
   } = useForm<FormFields>({ resolver: zodResolver(schemaLogin) });
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
-       localStorage.clear();
-    const result = await loginAction(data);
-    // console.log("here is token:", Cookies.get("token"));
+    setError('');
+    localStorage.clear();
+    
+    const result = await login(data.email, data.password);
 
-    if ('error' in result) {
-      toast.error(result.error);
+    if (!result.success) {
+      setError(result.error || 'Login failed');
+      toast.error(result.error || 'Login failed');
     } else {
-      localStorage.setItem('userInfo', JSON.stringify(result.userInfo));
       toast.success('Login successful!');
-      router.push('/admin/hotel');
+      setTimeout(() => {
+        router.push('/admin/hotel');
+      }, 1000);
     }
   };
 
   return (
-    <>
-      <ToastContainer />
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-10 px-10 max-w-[600px] md:min-w-[440px] min-w-[250px] border-primary border-[1px] rounded-[15px] text-gray-600"
-      >
-        <h2 className="text-[30px] font-bold text-center text-black mb-10">{t('signIn')}</h2>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        <div className="text-black">{t('email')}</div>
-        <input
-          type="email"
-          {...register('email')}
-          className="border p-4 w-full mb-6 h-[45px] rounded-[15px]"
-        />
-        {errors.email && <div className="text-red text-sm">{errors.email.message}</div>}
-
-        <div className="text-black">{t('password')}</div>
+      <div className="space-y-2">
+        <Label htmlFor="email" className="text-cyrillic">{t('email')}</Label>
         <div className="relative">
-          <input
+          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            id="email"
+            type="email"
+            {...register('email')}
+            className="pl-10"
+            placeholder="your@email.com"
+          />
+        </div>
+        {errors.email && (
+          <p className="text-sm text-destructive">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="password" className="text-cyrillic">{t('password')}</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            id="password"
             type={isPasswordVisible ? 'text' : 'password'}
             {...register('password')}
-            className="border p-4 w-full mb-2 h-[45px] rounded-[15px]"
+            className="pl-10 pr-10"
+            placeholder="••••••••"
           />
-          <button
+          <Button
             type="button"
-            onClick={() => setIsPasswordVisible((prev) => !prev)}
-            className="absolute right-3 top-2"
+            variant="ghost"
+            size="sm"
+            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+            onClick={() => setIsPasswordVisible(!isPasswordVisible)}
           >
-            {isPasswordVisible ? <HiEye size={20} className="mt-2 my-auto -translate-y-[2px]" /> : <HiEyeSlash size={20} className="mt-2 -translate-y-[2px]" />}
-          </button>
+            {isPasswordVisible ? (
+              <EyeOff className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            )}
+          </Button>
         </div>
+        {errors.password && (
+          <p className="text-sm text-destructive">{errors.password.message}</p>
+        )}
+      </div>
 
-        {errors.password && <div className="text-red text-sm">{errors.password.message}</div>}
+      <div className="flex items-center justify-between text-sm">
+        <Link 
+          href="/auth/resetpassword" 
+          className="text-primary hover:text-primary/80 underline text-cyrillic"
+        >
+          {t('savePassword')}
+        </Link>
+      </div>
 
-        <div className="flex justify-between text-black mb-4">
-          <Link href="/auth/resetpassword" className="hover:text-blue-400 text-sm underline">{t('remember')}</Link>
-          <Link href="/auth/resetpassword" className="hover:text-blue-400 text-sm underline">{t('savePassword')}</Link>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {t('wait')}
+          </>
+        ) : (
+          t('signIn')
+        )}
+      </Button>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <Separator className="w-full" />
         </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            эсвэл
+          </span>
+        </div>
+      </div>
 
-        <button
-          type="submit"
-          className="w-full border-primary border-solid border-[1px] hover:bg-bg-2 text-black py-2 px-4 rounded-[15px]"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? t('wait') : t('signIn')}
-        </button>
-
-        <Link
-          href="/auth/register"
-          className="block text-center bg-primary text-white py-2 px-4 mt-4 rounded-[15px] hover:bg-bg-3 hover:text-black border border-primary"
-        >
+      <Button variant="outline" className="w-full" asChild>
+        <Link href="/auth/register" className="text-cyrillic">
           {t('signUp')}
         </Link>
-      </form>
-    </>
+      </Button>
+    </form>
   );
 }

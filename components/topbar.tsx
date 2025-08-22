@@ -1,37 +1,44 @@
 import Link from "next/link"
 import LanguageSwitcher from "./LanguageSwitcher"
 import { getTranslations } from "next-intl/server";
-
-
+import { Button } from "@/components/ui/button";
+import { LogIn, UserPlus } from "lucide-react";
 
 export default async function Topbar() {
   const t = await getTranslations('Topbar');
   
-    return(
-
-        <>
-        <div className="h-[50px] border-b-[1px]   bg-white px-[50px] text-black ">
-
-        <div className="flex gap-4 items-center justify-end h-full ">
-          <Link
-            className="rounded-sm border border-solid text-xs  border-blue-500 transition-colors flex items-center justify-center hover:bg-blue-500  hover:border-transparent  sm:text-base h-8 sm:h-10 px-2 sm:px-2 sm:min-w-36 text-blue-500 hover:text-white"
-            href={"/auth/login"}
-          >
-           {t("signIn")}
-          </Link>
-
-          <Link
-            className="rounded-sm border border-solid  border-blue-500 transition-colors flex items-center justify-center hover:bg-blue-500  hover:border-transparent text-xs sm:text-base h-8 sm:h-10 px-2 sm:px-2 sm:min-w-36 text-blue-500 hover:text-white"
-            href={"/auth/register"}
-          >
-            {t("signUp")}
-          </Link>
-          <LanguageSwitcher/>
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="container mx-auto px-4 flex h-16 items-center justify-between">
+        {/* Logo/Brand */}
+        <div className="flex items-center space-x-2">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">H</span>
+          </div>
+          <span className="font-semibold text-lg">Hotel System</span>
         </div>
 
+        {/* Navigation Actions */}
+        <div className="flex items-center space-x-4">
+          <LanguageSwitcher />
+          
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" asChild>
+              <Link href="/auth/login">
+                <LogIn className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">{t("signIn")}</span>
+              </Link>
+            </Button>
+            
+            <Button asChild>
+              <Link href="/auth/register">
+                <UserPlus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">{t("signUp")}</span>
+              </Link>
+            </Button>
+          </div>
         </div>
-        </>
-    )
-
-
- }
+      </div>
+    </header>
+  )
+}

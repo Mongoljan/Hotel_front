@@ -23,7 +23,7 @@ import { FaChild } from "react-icons/fa";
 import { AiOutlineWifi, AiOutlinePlus } from "react-icons/ai";
 import { GiCigarette } from "react-icons/gi";
 import { LiaSmokingBanSolid } from "react-icons/lia";
-import Cookies from "js-cookie";
+import { getClientBackendToken } from "@/utils/auth";
 
 const API_COMBINED_DATA = "https://dev.kacc.mn/api/all-data/";
 const API_CREATE_ROOM = "https://dev.kacc.mn/api/roomsNew/";
@@ -382,7 +382,7 @@ export default function RoomModal({
     };
 
     try {
-      const token = Cookies.get("token") || "";
+      const token = await getClientBackendToken() || "";
       const isEdit = roomToEdit !== null;
 
       // If editing, do PUT /api/roomsNew/<id>/?token=

@@ -1,15 +1,44 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import Cookies from "js-cookie";
+import { getClientBackendToken } from "@/utils/auth";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  DataGrid, GridColDef, GridToolbar, GridValidRowModel
-} from "@mui/x-data-grid";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
-  CircularProgress,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button, MenuItem
-} from "@mui/material";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Edit, 
+  Trash2, 
+  Plus,
+  DollarSign,
+  Calendar,
+  Users
+} from 'lucide-react';
+import { toast } from 'react-toastify';
 
 interface AllData {
   room_types: { id: number; name: string; is_custom: boolean }[];
@@ -26,7 +55,7 @@ interface PriceEntry {
   room_category: number;
 }
 
-interface RoomRow extends GridValidRowModel {
+interface RoomRow {
   id: number;
   roomNumber: number;
   room_type: number;
@@ -49,7 +78,6 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
   const [lookup, setLookup] = useState<AllData>({ room_types: [], room_category: [] });
   const [loading, setLoading] = useState<boolean>(true);
   const [openAdd, setOpenAdd] = useState(false);
-    const [tableWidth, setTableWidth] = useState(window.innerWidth * 0.7);
   const [form, setForm] = useState({
     room_type: 0,
     room_category: 0,
@@ -66,7 +94,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = Cookies.get("token");
+        const token = await getClientBackendToken();
         if (!token) throw new Error("Token not found");
 
         const lookupCache = localStorage.getItem("roomLookup");
@@ -156,129 +184,322 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded }: RoomModal
   }, [rows]);
 
   const createPrice = async () => {
-    const token = Cookies.get("token");
-    if (!token) throw new Error("Token not found");
-    await fetch("https://dev.kacc.mn/api/room-prices/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hotel, ...form }),
-    });
-    // Clear cache to force re-fetch
-    localStorage.removeItem(`roomPrices_${hotel}`);
-    setOpenAdd(false);
-    setIsRoomAdded(true);
+    try {
+      const token = await getClientBackendToken();
+      if (!token) throw new Error("Token not found");
+      
+      const response = await fetch("https://dev.kacc.mn/api/room-prices/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hotel, ...form }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to create price');
+      
+      // Clear cache to force re-fetch
+      localStorage.removeItem(`roomPrices_${hotel}`);
+      setOpenAdd(false);
+      setIsRoomAdded(true);
+      toast.success('Өрөөний үнэ амжилттай нэмэгдлээ');
+    } catch (err) {
+      console.error('Create price failed:', err);
+      toast.error('Өрөөний үнэ нэмэж чадсангүй');
+    }
+  };
+  
+  const handleDelete = async (priceId: number) => {
+    if (!confirm('Та энэ үнийг устгахыг хүсэж байна уу?')) return;
+    
+    try {
+      const token = await getClientBackendToken();
+      if (!token) throw new Error('Token missing');
+      
+      const response = await fetch(
+        `https://dev.kacc.mn/api/room-prices/${priceId}/?token=${token}`,
+        { method: 'DELETE' }
+      );
+      
+      if (!response.ok) throw new Error('Failed to delete price');
+      
+      toast.success('Үнэ амжилттай устгагдлаа');
+      localStorage.removeItem(`roomPrices_${hotel}`);
+      setIsRoomAdded(true);
+    } catch (err) {
+      console.error('Delete failed:', err);
+      toast.error('Үнэ устгаж чадсангүй');
+    }
   };
 
-  const columns: GridColDef<RoomRow>[] = [
-    { field: "roomNumber", headerName: "Room Number", flex: 1 },
-    { field: "type", headerName: "Type", flex: 1 },
-    { field: "category", headerName: "Category", flex: 1 },
-    { field: "basePrice", headerName: "Base Price", flex: 1 },
-    { field: "singlePrice", headerName: "Single Person Price", flex: 1 },
-    { field: "halfDayPrice", headerName: "Half Day Price", flex: 1 },
-    { field: "numberOfRoomsToSell", headerName: "Rooms for Sale", flex: 1 },
-  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h3 className="mt-2 text-sm font-semibold text-foreground">Үнэ байхгүй</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Эхний үнийг нэмээд эхэлцгээе
+        </p>
+        <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+          <DialogTrigger asChild>
+            <Button className="mt-4">
+              <Plus className="mr-2 h-4 w-4" />
+              Өрөөний үнэ нэмэх
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Өрөөний үнэ нэмэх</DialogTitle>
+              <DialogDescription>
+                Өрөөний төрөл болон ангиллын дагуу үнэ тогтоох
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="room-group">Өрөөний бүлэг</Label>
+                <Select
+                  value={`${form.room_type}-${form.room_category}`}
+                  onValueChange={(value) => {
+                    const [rt, rc] = value.split('-').map(Number);
+                    setForm(f => ({ ...f, room_type: rt, room_category: rc }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Өрөөний бүлэг сонгох" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {options.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="base-price">Үндсэн үнэ</Label>
+                <Input
+                  id="base-price"
+                  type="number"
+                  placeholder="Үндсэн үнэ оруулах"
+                  onChange={e => setForm(f => ({ ...f, base_price: Number(e.target.value) }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="single-price">Ганц хүний үнэ</Label>
+                <Input
+                  id="single-price"
+                  type="number"
+                  placeholder="Ганц хүний үнэ оруулах"
+                  onChange={e => setForm(f => ({ ...f, single_person_price: Number(e.target.value) }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="half-day-price">Хагас өдрийн үнэ</Label>
+                <Input
+                  id="half-day-price"
+                  type="number"
+                  placeholder="Хагас өдрийн үнэ оруулах"
+                  onChange={e => setForm(f => ({ ...f, half_day_price: Number(e.target.value) }))}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpenAdd(false)}>
+                Цуцлах
+              </Button>
+              <Button onClick={createPrice}>Хадгалах</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className="w-full">
-
-       
-        <div
-       
-         style={{ width: tableWidth , height: 500 }}
-         >
-                  <div className="flex justify-between mb-4">
-          <h1 className="text-lg font-semibold">Өрөөний үнэ</h1>
-          <Button onClick={() => setOpenAdd(true)} variant="contained" color="primary">
-            + Өрөөний үнэ нэмэх
-          </Button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Өрөөний үнэ</h2>
+          <p className="text-muted-foreground">
+            Өрөөний төрөл болон ангиллын дагуу үнэ удирдлага
+          </p>
         </div>
-  {loading ? (
-    <div className="flex items-center justify-center h-full">
-      <CircularProgress />
-    </div>
-  ) : (
-    <>
-      <div className="mb-2 font-semibold ">
-        Room prices({rows.length})
+        <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Өрөөний үнэ нэмэх
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Өрөөний үнэ нэмэх</DialogTitle>
+              <DialogDescription>
+                Өрөөний төрөл болон ангиллын дагуу үнэ тогтоох
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="room-group">Өрөөний бүлэг</Label>
+                <Select
+                  value={`${form.room_type}-${form.room_category}`}
+                  onValueChange={(value) => {
+                    const [rt, rc] = value.split('-').map(Number);
+                    setForm(f => ({ ...f, room_type: rt, room_category: rc }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Өрөөний бүлэг сонгох" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {options.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="base-price">Үндсэн үнэ</Label>
+                <Input
+                  id="base-price"
+                  type="number"
+                  placeholder="Үндсэн үнэ оруулах"
+                  onChange={e => setForm(f => ({ ...f, base_price: Number(e.target.value) }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="single-price">Ганц хүний үнэ</Label>
+                <Input
+                  id="single-price"
+                  type="number"
+                  placeholder="Ганц хүний үнэ оруулах"
+                  onChange={e => setForm(f => ({ ...f, single_person_price: Number(e.target.value) }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="half-day-price">Хагас өдрийн үнэ</Label>
+                <Input
+                  id="half-day-price"
+                  type="number"
+                  placeholder="Хагас өдрийн үнэ оруулах"
+                  onChange={e => setForm(f => ({ ...f, half_day_price: Number(e.target.value) }))}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpenAdd(false)}>
+                Цуцлах
+              </Button>
+              <Button onClick={createPrice}>Хадгалах</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      <DataGrid
-        className="overflow-y-auto" 
-        rows={rows}
-        columns={columns}
-        getRowId={(r) => r.id}
-        // autoPageSize={false}
-        
-        pageSizeOptions={[5, 10, 20, 50]}
-        pagination
-        slots={{ toolbar: GridToolbar }}
-        slotProps={{
-          toolbar: {
-            showQuickFilter: true,
-            quickFilterProps: { debounceMs: 300 },
-          },
-        }}
-        sx={{
-          // border: '2px solid #FACC15',
-          padding:"10px",
-          borderRadius: 2,
-        }}
-      />
-    </>
-  )}
-</div>
-
-        </div>
-    
-      <Dialog open={openAdd} onClose={() => setOpenAdd(false)}>
-        <DialogTitle>Нэмэх Үнийн Мэдээлэл</DialogTitle>
-        <DialogContent>
-          <TextField
-            select
-            margin="dense"
-            label="Available Room Group"
-            value={`${form.room_type}-${form.room_category}`}
-            fullWidth
-            onChange={e => {
-              const [rt, rc] = e.target.value.split('-').map(Number);
-              setForm(f => ({ ...f, room_type: rt, room_category: rc }));
-            }}
-          >
-            {options.map(opt => (
-              <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            margin="dense"
-            label="Base Price"
-            type="number"
-            fullWidth
-            onChange={e => setForm(f => ({ ...f, base_price: Number(e.target.value) }))}
-          />
-          <TextField
-            margin="dense"
-            label="Single Person Price"
-            type="number"
-            fullWidth
-            onChange={e => setForm(f => ({ ...f, single_person_price: Number(e.target.value) }))}
-          />
-          <TextField
-            margin="dense"
-            label="Half Day Price"
-            type="number"
-            fullWidth
-            onChange={e => setForm(f => ({ ...f, half_day_price: Number(e.target.value) }))}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenAdd(false)}>Cancel</Button>
-          <Button onClick={createPrice} color="primary">Save</Button>
-        </DialogActions>
-      </Dialog>
-    </>
+      
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Өрөөний дугаар</TableHead>
+              <TableHead>Төрөл</TableHead>
+              <TableHead>Ангилал</TableHead>
+              <TableHead>Үндсэн үнэ</TableHead>
+              <TableHead>Ганц хүний үнэ</TableHead>
+              <TableHead>Хагас өдрийн үнэ</TableHead>
+              <TableHead>Борлуулах өрөө</TableHead>
+              <TableHead className="text-right">Үйлдэл</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => {
+              // Group rows by room type and category to find price
+              const priceKey = `${row.room_type}-${row.room_category}`;
+              const priceEntry = options.find(opt => opt.value === priceKey);
+              
+              return (
+                <TableRow key={row.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center space-x-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>{row.roomNumber}</span>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge variant="outline">{row.type}</Badge>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge variant="outline">{row.category}</Badge>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="flex items-center space-x-1">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <span>{row.basePrice ? `${row.basePrice.toLocaleString()}₮` : '-'}</span>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="flex items-center space-x-1">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <span>{row.singlePrice ? `${row.singlePrice.toLocaleString()}₮` : '-'}</span>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>{row.halfDayPrice ? `${row.halfDayPrice.toLocaleString()}₮` : '-'}</span>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge variant={row.numberOfRoomsToSell > 0 ? "default" : "secondary"}>
+                      {row.numberOfRoomsToSell}
+                    </Badge>
+                  </TableCell>
+                  
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDelete(row.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+      
+      <div className="text-sm text-muted-foreground">
+        Нийт {rows.length} үнийн мэдээлэл
+      </div>
+    </div>
   );
 }

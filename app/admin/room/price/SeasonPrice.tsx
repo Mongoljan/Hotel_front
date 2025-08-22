@@ -1,16 +1,47 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import Cookies from "js-cookie";
+import { getClientBackendToken } from "@/utils/auth";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  DataGrid, GridColDef, GridToolbar, GridValidRowModel
-} from "@mui/x-data-grid";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
-  CircularProgress, IconButton, Dialog, DialogTitle,
-  DialogContent, DialogActions, Button, TextField, MenuItem
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  ChevronDown,
+  ChevronRight,
+  Plus,
+  DollarSign,
+  Calendar,
+  Users,
+  Edit,
+  Trash2
+} from 'lucide-react';
+import { toast } from 'react-toastify';
 
 // Interfaces
 interface AllData {
@@ -50,7 +81,7 @@ interface SeasonalPrice {
   price: number;
 }
 
-interface FlattenRow extends GridValidRowModel {
+interface FlattenRow {
   id: string;
   isGroup: boolean;
   groupKey?: string;
@@ -66,12 +97,9 @@ interface FlattenRow extends GridValidRowModel {
   seasonalPrice?: string;
 }
 
-export default function RoomManagement() {
-  const hotel = typeof window !== "undefined"
-    ? JSON.parse(localStorage.getItem("userInfo") || "{}").hotel
-    : 0;
-
-  const token = Cookies.get("token");
+export default function SeasonPrice() {
+  const { user } = useAuth();
+  const hotel = user?.hotel || "0";
 
   const [lookup, setLookup] = useState<AllData | null>(null);
   const [rawRooms, setRawRooms] = useState<RoomData[]>([]);
@@ -79,7 +107,6 @@ export default function RoomManagement() {
   const [seasonalPrices, setSeasonalPrices] = useState<SeasonalPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-      const [tableWidth, setTableWidth] = useState(window.innerWidth * 0.7);
 
   const [seasonModalOpen, setSeasonModalOpen] = useState(false);
   const [seasonForm, setSeasonForm] = useState({
@@ -92,6 +119,9 @@ export default function RoomManagement() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const token = await getClientBackendToken();
+      if (!token) throw new Error("Token not found");
+      
       const [lookupRes, roomRes, priceRes, seasonalRes] = await Promise.all([
         fetch("https://dev.kacc.mn/api/all-data/"),
         fetch(`https://dev.kacc.mn/api/roomsNew/?token=${token}`),
@@ -117,12 +147,17 @@ export default function RoomManagement() {
       setSeasonalPrices(seasonalJson);
     } catch (err) {
       console.error("Fetch error:", err);
+      toast.error('Өгөгдөл ачааллахад алдаа гарлаа');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    if (!hotel || hotel === "0") {
+      return;
+    }
+    
     const lookupCache = localStorage.getItem("lookup");
     const roomsCache = localStorage.getItem("rooms");
     const pricesCache = localStorage.getItem(`prices_${hotel}`);
@@ -140,7 +175,9 @@ export default function RoomManagement() {
   }, [hotel]);
 
   const rows: FlattenRow[] = useMemo(() => {
-    if (!lookup) return [];
+    if (!lookup || !rawRooms || !Array.isArray(rawRooms)) {
+      return [];
+    }
 
     const typeMap = new Map(lookup.room_types.map(t => [t.id, t.name]));
     const catMap = new Map(lookup.room_category.map(c => [c.id, c.name]));
@@ -185,7 +222,6 @@ export default function RoomManagement() {
       console.warn("Invalid or missing rawRooms data:", rawRooms);
     }
     
-
     const result: FlattenRow[] = [];
     grouped.forEach((grp, key) => {
       const seasonStr = grp.seasonal
@@ -230,123 +266,334 @@ export default function RoomManagement() {
   }, [lookup, rawRooms, roomPrices, seasonalPrices, expanded]);
 
   const createSeasonal = async () => {
-    await fetch("https://dev.kacc.mn/api/seasonal-prices/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hotel, ...seasonForm }),
-    });
-    // Clear cache and reload
-    localStorage.removeItem(`seasonal_${hotel}`);
-    setSeasonModalOpen(false);
-    setSeasonForm({ room_price: 0, start_date: "", end_date: "", price: 0 });
-    fetchData();
+    try {
+      const response = await fetch("https://dev.kacc.mn/api/seasonal-prices/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hotel, ...seasonForm }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to create seasonal price');
+      
+      // Clear cache and reload
+      localStorage.removeItem(`seasonal_${hotel}`);
+      setSeasonModalOpen(false);
+      setSeasonForm({ room_price: 0, start_date: "", end_date: "", price: 0 });
+      fetchData();
+      toast.success('Сезоны үнэ амжилттай нэмэгдлээ');
+    } catch (err) {
+      console.error('Create seasonal price failed:', err);
+      toast.error('Сезоны үнэ нэмэж чадсангүй');
+    }
+  };
+  
+  const handleDeleteSeasonal = async (seasonId: number) => {
+    if (!confirm('Та энэ сезоны үнийг устгахыг хүсэж байна уу?')) return;
+    
+    try {
+      const token = await getClientBackendToken();
+      if (!token) throw new Error('Token missing');
+      
+      const response = await fetch(
+        `https://dev.kacc.mn/api/seasonal-prices/${seasonId}/?token=${token}`,
+        { method: 'DELETE' }
+      );
+      
+      if (!response.ok) throw new Error('Failed to delete seasonal price');
+      
+      toast.success('Сезоны үнэ амжилттай устгагдлаа');
+      localStorage.removeItem(`seasonal_${hotel}`);
+      fetchData();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      toast.error('Сезоны үнэ устгаж чадсангүй');
+    }
+  };
+  
+  const toggleExpanded = (groupKey: string) => {
+    const newSet = new Set(expanded);
+    if (newSet.has(groupKey)) {
+      newSet.delete(groupKey);
+    } else {
+      newSet.add(groupKey);
+    }
+    setExpanded(newSet);
   };
 
-  const columns: GridColDef<FlattenRow>[] = [
-    {
-      field: "roomNumber", headerName: "Room Number", flex: 1,
-      renderCell: (params) =>
-        params.row.isGroup ? (
-          <IconButton size="small" onClick={() => {
-            const newSet = new Set(expanded);
-            newSet.has(params.row.id) ? newSet.delete(params.row.id) : newSet.add(params.row.id);
-            setExpanded(newSet);
-          }}>
-            {expanded.has(params.row.id) ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-          </IconButton>
-        ) : (
-          <span style={{ paddingLeft: 24 }}>{params.value}</span>
-        )
-    },
-    { field: "type", headerName: "Type", flex: 1 },
-    { field: "category", headerName: "Category", flex: 1 },
-    { field: "basePrice", headerName: "Base Price", flex: 1 },
-    { field: "seasonalPrice", headerName: "Seasonal Price", flex: 2 },
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h3 className="mt-2 text-sm font-semibold text-foreground">Сезоны үнэ байхгүй</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Эхний сезоны үнийг нэмээд эхэлцгээе
+        </p>
+        <Dialog open={seasonModalOpen} onOpenChange={setSeasonModalOpen}>
+          <DialogTrigger asChild>
+            <Button className="mt-4">
+              <Plus className="mr-2 h-4 w-4" />
+              Сезоны үнэ нэмэх
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Сезоны үнэ нэмэх</DialogTitle>
+              <DialogDescription>
+                Тусгай үеийн үнэ тогтоох
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="room-price">Өрөөний үнэ</Label>
+                <Select
+                  value={seasonForm.room_price.toString()}
+                  onValueChange={(value: string) => setSeasonForm(f => ({ ...f, room_price: Number(value) }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Өрөөний үнэ сонгох" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roomPrices.map(p => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {lookup?.room_types.find(t => t.id === p.room_type)?.name} –
+                        {lookup?.room_category.find(c => c.id === p.room_category)?.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="start-date">Эхлэх өдөр</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={seasonForm.start_date}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSeasonForm(f => ({ ...f, start_date: e.target.value }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="end-date">Дуусах өдөр</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={seasonForm.end_date}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSeasonForm(f => ({ ...f, end_date: e.target.value }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="price">Үнэ</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  placeholder="Сезоны үнэ оруулах"
+                  value={seasonForm.price}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSeasonForm(f => ({ ...f, price: Number(e.target.value) }))}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSeasonModalOpen(false)}>
+                Цуцлах
+              </Button>
+              <Button onClick={createSeasonal}>Хадгалах</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className="flex justify-between mb-4">
-       
-      </div>
-
-      <div
-         style={{ width: tableWidth , height: 500 }} >
-          
-      <>
-      
-  <div className="mb-2 font-semibold text-sm text-muted">
-    {/* Total: {rows.length} rows */}
-  </div>
-  <div className="flex justify-between mb-4">
- <h1 className="text-lg font-semibold">Seasonal prices</h1>
-        <Button variant="contained" color="primary" onClick={() => setSeasonModalOpen(true)}>
-          + Add Seasonal Price
-        </Button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Сезоны үнэ</h2>
+          <p className="text-muted-foreground">
+            Тусгай үеийн үнэ удирдлага
+          </p>
         </div>
-  <DataGrid
-   className="overflow-y-auto"
-    rows={rows}
-    columns={columns}
-    getRowId={(row) => row.id}
-    autoPageSize={false}
-    pagination
-    pageSizeOptions={[5, 10, 20, 50]}
-    slots={{ toolbar: GridToolbar }}
-    slotProps={{
-      toolbar: {
-        showQuickFilter: true,
-        quickFilterProps: { debounceMs: 300 },
-      },
-    }}
-    sx={{
-      // border: "2px solid #FACC15", // Tailwind yellow-400
-      padding:"10px",
-      borderRadius: 2,
-    }}
-  />
-</>
-
+        <Dialog open={seasonModalOpen} onOpenChange={setSeasonModalOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Сезоны үнэ нэмэх
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Сезоны үнэ нэмэх</DialogTitle>
+              <DialogDescription>
+                Тусгай үеийн үнэ тогтоох
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="room-price">Өрөөний үнэ</Label>
+                <Select
+                  value={seasonForm.room_price.toString()}
+                  onValueChange={(value: string) => setSeasonForm(f => ({ ...f, room_price: Number(value) }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Өрөөний үнэ сонгох" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roomPrices.map(p => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {lookup?.room_types.find(t => t.id === p.room_type)?.name} –
+                        {lookup?.room_category.find(c => c.id === p.room_category)?.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="start-date">Эхлэх өдөр</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={seasonForm.start_date}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSeasonForm(f => ({ ...f, start_date: e.target.value }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="end-date">Дуусах өдөр</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={seasonForm.end_date}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSeasonForm(f => ({ ...f, end_date: e.target.value }))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="price">Үнэ</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  placeholder="Сезоны үнэ оруулах"
+                  value={seasonForm.price}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSeasonForm(f => ({ ...f, price: Number(e.target.value) }))}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSeasonModalOpen(false)}>
+                Цуцлах
+              </Button>
+              <Button onClick={createSeasonal}>Хадгалах</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      <Dialog open={seasonModalOpen} onClose={() => setSeasonModalOpen(false)}>
-        <DialogTitle>Add Seasonal Price</DialogTitle>
-        <DialogContent>
-          <TextField
-            select label="Room Price Entry" fullWidth margin="dense"
-            value={seasonForm.room_price}
-            onChange={e => setSeasonForm(f => ({ ...f, room_price: Number(e.target.value) }))}
-          >
-            {roomPrices.map(p => (
-              <MenuItem key={p.id} value={p.id}>
-                {lookup?.room_types.find(t => t.id === p.room_type)?.name} –
-                {lookup?.room_category.find(c => c.id === p.room_category)?.name}
-              </MenuItem>
+      
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Өрөөний дугаар</TableHead>
+              <TableHead>Төрөл</TableHead>
+              <TableHead>Ангилал</TableHead>
+              <TableHead>Үндсэн үнэ</TableHead>
+              <TableHead>Сезоны үнэ</TableHead>
+              <TableHead className="text-right">Үйлдэл</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell>
+                  {row.isGroup ? (
+                    <div className="flex items-center space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => toggleExpanded(row.id)}
+                        className="p-0 h-auto"
+                      >
+                        {expanded.has(row.id) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <span className="font-medium">{row.roomNumber}</span>
+                    </div>
+                  ) : (
+                    <div className="pl-6">
+                      <div className="flex items-center space-x-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span>{row.roomNumber}</span>
+                      </div>
+                    </div>
+                  )}
+                </TableCell>
+                
+                <TableCell>
+                  {row.type && <Badge variant="outline">{row.type}</Badge>}
+                </TableCell>
+                
+                <TableCell>
+                  {row.category && <Badge variant="outline">{row.category}</Badge>}
+                </TableCell>
+                
+                <TableCell>
+                  {row.basePrice && (
+                    <div className="flex items-center space-x-1">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <span>{row.basePrice.toLocaleString()}₮</span>
+                    </div>
+                  )}
+                </TableCell>
+                
+                <TableCell>
+                  {row.seasonalPrice ? (
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{row.seasonalPrice}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                </TableCell>
+                
+                <TableCell className="text-right">
+                  {row.isGroup && (
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDeleteSeasonal(parseInt(row.id))}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </TableCell>
+              </TableRow>
             ))}
-          </TextField>
-          <TextField
-            label="Start Date" type="date" fullWidth margin="dense"
-            InputLabelProps={{ shrink: true }}
-            value={seasonForm.start_date}
-            onChange={e => setSeasonForm(f => ({ ...f, start_date: e.target.value }))}
-          />
-          <TextField
-            label="End Date" type="date" fullWidth margin="dense"
-            InputLabelProps={{ shrink: true }}
-            value={seasonForm.end_date}
-            onChange={e => setSeasonForm(f => ({ ...f, end_date: e.target.value }))}
-          />
-          <TextField
-            label="Price" type="number" fullWidth margin="dense"
-            value={seasonForm.price}
-            onChange={e => setSeasonForm(f => ({ ...f, price: Number(e.target.value) }))}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSeasonModalOpen(false)}>Cancel</Button>
-          <Button onClick={createSeasonal} color="primary">Save</Button>
-        </DialogActions>
-      </Dialog>
-    </>
+          </TableBody>
+        </Table>
+      </div>
+      
+      <div className="text-sm text-muted-foreground">
+        Нийт {rows.filter(r => r.isGroup).length} бүлэг
+      </div>
+    </div>
   );
 }

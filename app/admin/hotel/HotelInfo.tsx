@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Hotel {
   pk: number;
@@ -16,19 +16,12 @@ interface Hotel {
 }
 
 export default function HotelInfo() {
+  const { user } = useAuth();
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [loading, setLoading] = useState(true);
 
   const getHotelId = (): string | null => {
-    
-    try {
-      const hotel = Cookies.get("hotel");
-
-      return hotel || null;
-    } catch (error) {
-      console.error("Error parsing hotel ID:", error);
-      return null;
-    }
+    return user?.hotel || null;
   };
 
   useEffect(() => {
