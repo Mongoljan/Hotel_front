@@ -24,7 +24,7 @@ interface AuthState {
 }
 
 export function useAuth(): AuthState & {
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; code?: string }>
   logout: () => Promise<void>
   refreshSession: () => Promise<void>
 } {
@@ -112,11 +112,11 @@ export function useAuth(): AuthState & {
         return { success: true }
       } else {
         const errorData = await response.json()
-        return { success: false, error: errorData.error || 'Login failed' }
+        return { success: false, error: errorData.error, code: errorData.code }
       }
     } catch (error) {
       console.error('Login error:', error)
-      return { success: false, error: 'Network error' }
+      return { success: false, error: 'Network error', code: 'error.internal' }
     }
   }
 

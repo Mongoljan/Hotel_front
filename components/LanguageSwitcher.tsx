@@ -1,14 +1,18 @@
 "use client";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+
+import { useTransition } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { Loader2, Globe, Check } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Globe, Check } from "lucide-react";
+
+import { usePathname, useRouter } from "@/i18n/navigation";
 
 const languages = [
   { code: "mn", name: "Монгол", flag: "🇲🇳" },
@@ -16,21 +20,23 @@ const languages = [
 ];
 
 export default function LanguageSwitcher() {
+  const locale = useLocale();
   const router = useRouter();
-  const [locale, setLocale] = useState("mn");
-  const [isChanging, setIsChanging] = useState(false);
+  const pathname = usePathname();
+  const t = useTranslations("Language");
+  const [isPending, startTransition] = useTransition();
 
   const switchLanguage = (lang: string) => {
     if (lang === locale) return;
-    
-    setIsChanging(true);
-    setLocale(lang);
-    document.cookie = `NEXT_LOCALE=${lang}; path=/`;
-    
-    setTimeout(() => {
-      router.refresh();
-      setIsChanging(false);
-    }, 300);
+
+    startTransition(async () => {
+      document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000`;
+      try {
+        await router.replace(pathname, { locale: lang, scroll: false });
+      } finally {
+        router.refresh();
+      }
+    });
   };
 
   const currentLanguage = languages.find(lang => lang.code === locale);
@@ -38,9 +44,25 @@ export default function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
-          <Globe className={`h-4 w-4 transition-transform ${isChanging ? 'animate-spin' : ''}`} />
-          <span className="sr-only">Switch language</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-9 px-2 gap-2 font-medium"
+          aria-label={t("switch")}
+        >
+          <div className="flex items-center gap-1">
+            <span aria-hidden="true" className="text-base leading-none">
+              {currentLanguage?.flag ?? "🌐"}
+            </span>
+            <span className="hidden sm:inline text-xs text-muted-foreground">
+              {currentLanguage?.name ?? locale.toUpperCase()}
+            </span>
+          </div>
+          {isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+          ) : (
+            <Globe className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">

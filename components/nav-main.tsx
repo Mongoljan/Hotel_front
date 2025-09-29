@@ -20,13 +20,15 @@ import {
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export function NavMain({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
+  const tNav = useTranslations('Navigation');
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+  <SidebarGroupLabel>{tNav('platform')}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const Icon = item.icon;
@@ -42,7 +44,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton
-                    tooltip={item.title}
+                    tooltip={item.i18nKey ? tNav(item.i18nKey) : item.title}
                     isActive={isActive}
                     asChild={!item.items}
                   >
@@ -50,14 +52,14 @@ export function NavMain({ items }: { items: NavItem[] }) {
                       <>
                         <div className="flex items-center">
                           <Icon className="mr-2" size={16} />
-                          <span className="text-cyrillic">{item.title}</span>
+                          <span className="text-cyrillic">{item.i18nKey ? tNav(item.i18nKey) : item.title}</span>
                         </div>
                         <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                       </>
                     ) : (
                       <Link href={item.url} className="flex items-center">
                         <Icon className="mr-2" size={16} />
-                        <span className="text-cyrillic">{item.title}</span>
+                        <span className="text-cyrillic">{item.i18nKey ? tNav(item.i18nKey) : item.title}</span>
                       </Link>
                     )}
                   </SidebarMenuButton>
@@ -75,7 +77,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                             <SidebarMenuSubButton asChild isActive={isSubActive}>
                               <Link href={subItem.url} className="flex items-center">
                                 <SubIcon className="mr-2" size={14} />
-                                <span className="text-cyrillic">{subItem.title}</span>
+                                <span className="text-cyrillic">{subItem.i18nKey ? tNav(subItem.i18nKey) : subItem.title}</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>

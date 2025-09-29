@@ -144,11 +144,112 @@
   "signIn": "Sign In",
   "signUp": "Register",
   "email": "Email Address",
+    "email_placeholder": "you@example.com",
   "password": "Password",
   "savePassword": "Forgot Password?",
   "remember": "Remember Me",
-  "wait": "Please wait..."
+  "wait": "Please wait...",
+  "subtitle": "Access your hotel admin dashboard"
 },
+  "AuthMessages": {
+    "login_success": "Login successful!",
+    "company_found": "Reg no: {regno} company found!",
+    "saved_next": "Saved. Moving to the next step...",
+    "register_success_redirect": "Registration successful. Redirecting to login..."
+  },
+  "Common": {
+    "or": "or"
+  },
+  "Rooms": {
+    "table": {
+      "title": "Room management",
+      "caption": "Track availability, amenities, and housekeeping status for every room."
+    },
+    "columns": {
+      "preview": "Preview",
+      "name": "Room details",
+      "inventory": "Sold / Total",
+      "capacity": "Capacity",
+      "amenities": "Highlights",
+      "housekeeping": "Housekeeping",
+      "actions": "Actions"
+    },
+    "status": {
+      "clean": "Clean",
+      "needs_service": "Needs service",
+      "occupied": "Occupied",
+      "unknown": "Unknown"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Are you sure you want to delete this room?",
+      "deleteSuccess": "Room deleted successfully",
+      "deleteError": "Unable to delete the room"
+    },
+    "empty": {
+      "title": "No rooms yet",
+      "caption": "Add your first room to start managing inventory and pricing.",
+      "noImage": "No image"
+    },
+    "errors": {
+      "lookup": "Failed to load room metadata",
+      "rooms": "Failed to load rooms"
+    }
+  },
+  "Navigation": {
+    "platform": "Platform",
+    "dashboard": "Dashboard",
+    "bookings": "Bookings",
+    "rooms": "Rooms",
+    "billing": "Billing",
+    "support": "Support",
+    "settings": "Settings",
+    "hotelInfo": "Hotel Information",
+    "roomPrice": "Room Price",
+    "policies": "Policies",
+    "corporate": "Corporate",
+    "permissions": "Permissions",
+    "sidebarMobileTitle": "Sidebar navigation"
+  },
+  "Language": {
+    "switch": "Switch language"
+  },
+  "AuthErrors": {
+    "auth": {
+      "required": "Email and password are required.",
+      "invalid": "Invalid email or password."
+    },
+    "error": {
+      "internal": "Internal server error."
+    },
+    "unknown": "Something went wrong. Please try again.",
+    "email_required": "Email is required.",
+    "email_invalid": "Email format is invalid.",
+    "password_required": "Password is required.",
+    "company": {
+      "not_found": "Company with reg no {regno} not found.",
+      "reg_required": "Please enter a registration number"
+    },
+    "form": {
+      "incomplete": "Please complete the form."
+    },
+    "hotel": {
+      "missing": "Hotel information not found. Please complete the hotel registration first."
+    },
+    "register": {
+      "failed": "Registration failed."
+    }
+  },
+  "Tooltips": {
+    "ebarimt_lookup": "Click the button to look up your company's name from ebarimt using the entered reg no"
+  },
+  "TopbarAuth": {
+    "title": "Hotel Admin"
+  },
+  "Footer": {
+    "copyright": "© {year} Hotel Admin System. All rights reserved."
+  },
 "AuthRegister": {
   "hotel_info": "Hotel Information",
   "company_Reg": "Business Registration Number",
@@ -180,6 +281,26 @@
     "description": "You do not have permission to access this page.",
     "goback": "Go Back",
     "gotohome": "Go to Home"
+  },
+  "Status": {
+    "unauthorized": {
+      "title": "Sign in required",
+      "description": "Please sign in to continue to this page.",
+      "hint": "Use your account credentials or reach out to the support team if you need assistance.",
+      "actions": {
+        "login": "Go to sign in",
+        "support": "Contact support"
+      }
+    },
+    "forbidden": {
+      "title": "Permission denied",
+      "description": "You do not have the necessary permissions to view this page.",
+      "hint": "If you believe this is an error, ask an administrator or our support team to review your access.",
+      "actions": {
+        "home": "Return home",
+        "support": "Contact support"
+      }
+    }
   },
   "contactForm": {
     "name": "Name",

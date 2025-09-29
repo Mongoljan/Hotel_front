@@ -8,26 +8,26 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-  	extend: {
+		extend: {
 		  fontFamily: {
     sans: ['var(--font-inter)', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
     mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'monospace'],
     cyrillic: ['PT Sans', 'Noto Sans', 'system-ui', 'sans-serif'],
   },
-  		colors: {
-			// Modern Professional Color Palette 2025
-			brand: {
-				50: '#f0f9ff',
-				100: '#e0f2fe',
-				200: '#bae6fd',
-				300: '#7dd3fc',
-				400: '#38bdf8',
-				500: '#0ea5e9',
-				600: '#0284c7',
-				700: '#0369a1',
-				800: '#075985',
-				900: '#0c4a6e',
-			},
+			colors: {
+				// Branded indigo/cyan palette (aligns with new surface gradient)
+				brand: {
+					50: '#eef2ff',
+					100: '#e0e7ff',
+					200: '#c7d2fe',
+					300: '#a5b4fc',
+					400: '#818cf8',
+					500: '#6366f1',
+					600: '#4f46e5',
+					700: '#4338ca',
+					800: '#3730a3',
+					900: '#312e81',
+				},
 			gray: {
 				50: '#f8fafc',
 				100: '#f1f5f9',
@@ -80,11 +80,11 @@ const config: Config = {
 			dim: '#475569',
 			cloud: '#cbd5e1',
 			soft: '#94a3b8',
-			'bg-3': '#bae6fd',
-			'bg-2': '#e0f2fe',
-			primary: '#0ea5e9',
+				'bg-3': '#c7d2fe',
+				'bg-2': '#e0e7ff',
+				primary: '#6366f1',
 			bg: '#f8fafc',
-			'primary-selected': '#f0f9ff',
+				'primary-selected': '#eef2ff',
 			red: '#ef4444',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
@@ -102,10 +102,10 @@ const config: Config = {
   				foreground: 'hsl(var(--secondary-foreground))'
   			},
 			  muted: '#707680',
-  			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
-  			},
+				accent: {
+					DEFAULT: 'hsl(var(--accent))',
+					foreground: 'hsl(var(--accent-foreground))'
+				},
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
@@ -131,6 +131,11 @@ const config: Config = {
   				ring: 'hsl(var(--sidebar-ring))'
   			}
   		},
+		backgroundImage: {
+			'brand-gradient': 'var(--brand-gradient)',
+			'brand-radial': 'var(--brand-radial)',
+			'brand-noise': 'var(--brand-noise)'
+		},
 		spacing: {
 			'18': '4.5rem',
 			'88': '22rem',
@@ -139,9 +144,9 @@ const config: Config = {
 		},
 		boxShadow: {
 			'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-			'medium': '0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 30px -5px rgba(0, 0, 0, 0.05)',
-			'large': '0 10px 50px -12px rgba(0, 0, 0, 0.25)',
-			'colored': '0 4px 25px -5px rgba(14, 165, 233, 0.15)',
+			'medium': '0 4px 25px -5px rgba(15, 23, 42, 0.12), 0 14px 35px -8px rgba(79, 70, 229, 0.18)',
+			'large': '0 18px 55px -15px rgba(15, 23, 42, 0.35)',
+			'colored': '0 8px 35px -10px rgba(79, 70, 229, 0.25)',
 		},
   		borderRadius: {
 			'xs': '0.125rem',
@@ -165,7 +170,7 @@ const config: Config = {
 			'5xl': ['3rem', { lineHeight: '1' }],
 			'6xl': ['3.75rem', { lineHeight: '1' }],
 		},
-  		keyframes: {
+		keyframes: {
   			'accordion-down': {
   				from: {
   					height: '0'

@@ -162,6 +162,7 @@ const Sidebar = React.forwardRef<
     side?: "left" | "right"
     variant?: "sidebar" | "floating" | "inset"
     collapsible?: "offcanvas" | "icon" | "none"
+    mobileTitle?: string
   }
 >(
   (
@@ -169,6 +170,7 @@ const Sidebar = React.forwardRef<
       side = "left",
       variant = "sidebar",
       collapsible = "offcanvas",
+      mobileTitle,
       className,
       children,
       ...props
@@ -193,6 +195,7 @@ const Sidebar = React.forwardRef<
     }
 
     if (isMobile) {
+      const effectiveMobileTitle = mobileTitle ?? "Sidebar navigation"
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
           <SheetContent
@@ -205,6 +208,8 @@ const Sidebar = React.forwardRef<
               } as React.CSSProperties
             }
             side={side}
+            fallbackTitle={effectiveMobileTitle}
+            aria-label={effectiveMobileTitle}
           >
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>

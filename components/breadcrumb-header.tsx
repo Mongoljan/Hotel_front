@@ -11,32 +11,36 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import UserProfileToggle from '@/components/UserProfileToggle';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslations } from 'next-intl';
 
-const routeNames: Record<string, string> = {
-  '/admin': 'Admin',
-  '/admin/dashboard': 'Dashboard',
-  '/admin/bookings': 'Захиалгууд',
-  '/admin/room': 'Өрөөнүүд',
-  '/admin/room/price': 'Өрөөний үнэ',
-  '/admin/billing': 'Төлбөр тооцоо',
-  '/admin/support': 'Дэмжлэг',
-  '/admin/hotel': 'Буудлын мэдээлэл',
-  '/admin/policies': 'Бодлого',
-  '/admin/corporate': 'Байгууллага',
-  '/admin/permissions': 'Эрх',
+const routeI18nKeys: Record<string, string> = {
+  '/admin': 'dashboard',
+  '/admin/dashboard': 'dashboard',
+  '/admin/bookings': 'bookings',
+  '/admin/room': 'rooms',
+  '/admin/room/price': 'roomPrice',
+  '/admin/billing': 'billing',
+  '/admin/support': 'support',
+  '/admin/hotel': 'hotelInfo',
+  '/admin/policies': 'policies',
+  '/admin/corporate': 'corporate',
+  '/admin/permissions': 'permissions',
 };
 
 export function BreadcrumbHeader() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const tNav = useTranslations('Navigation');
   
   const pathSegments = pathname.split('/').filter(Boolean);
   const breadcrumbs = pathSegments.map((segment, index) => {
     const path = '/' + pathSegments.slice(0, index + 1).join('/');
+    const key = routeI18nKeys[path];
     return {
-      name: routeNames[path] || segment,
+      name: key ? tNav(key) : segment,
       path: path,
       isLast: index === pathSegments.length - 1
     };
@@ -69,6 +73,8 @@ export function BreadcrumbHeader() {
         </div>
         
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <Separator orientation="vertical" className="hidden h-6 md:block" />
           <UserProfileToggle 
             userApproved={user?.approved || false}
             hotelApproved={user?.hotelApproved || false}

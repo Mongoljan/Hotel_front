@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { FaArrowAltCircleRight } from "react-icons/fa";
 import { PatternFormat } from 'react-number-format';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const EBARIMT_API = 'https://info.ebarimt.mn/rest/merchant/info?regno=';
@@ -27,6 +27,10 @@ type FormFields = z.infer<typeof schemaHotelRegistration2>;
 
 export default function RegisterPage() {
   const t = useTranslations('AuthRegister');
+  const tErr = useTranslations('AuthErrors');
+  const tMsg = useTranslations('AuthMessages');
+  const tTips = useTranslations('Tooltips');
+  const locale = useLocale();
   const router = useRouter();
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [loadingCompany, setLoadingCompany] = useState(false);
@@ -84,7 +88,7 @@ export default function RegisterPage() {
   const fetchCompanyName = async () => {
     const trimmedRegNo = regNo.trim();
     if (!trimmedRegNo) {
-      toast.error("Please enter a registration number");
+      toast.error(tErr('company.reg_required'));
       return;
     }
 
@@ -94,13 +98,13 @@ export default function RegisterPage() {
       const data = await response.json();
       if (data.found && data.name) {
         setValue("CompanyName", data.name);
-        toast.success(`РД: ${trimmedRegNo} -тай компани олдлоо!`);
+        toast.success(tMsg('company_found', { regno: trimmedRegNo }));
       } else {
-        toast.error(`РД: ${trimmedRegNo} -тай компани олдсонгүй!`);
+        toast.error(tErr('company.not_found', { regno: trimmedRegNo }));
       }
     } catch (error) {
       console.error("Error fetching company info:", error);
-      toast.error("Failed to fetch company name.");
+      toast.error(tErr('error.internal'));
     } finally {
       setLoadingCompany(false);
     }
@@ -113,7 +117,7 @@ export default function RegisterPage() {
 
     const submitData = { ...data, phone: `976${phoneRaw}` };
 
-    toast.success('Мэдээллийг хадгаллаа. Дараагийн алхам руу шилжиж байна...');
+    toast.success(tMsg('saved_next'));
     setTimeout(() => {
       router.push('/auth/register/2');
     }, 1000);
@@ -166,7 +170,7 @@ export default function RegisterPage() {
               disabled
             />
             <div className="absolute left-0 -top-8 opacity-0 -translate-y-[100px] group-hover:opacity-100 transition bg-gray-800 text-white px-3 py-2 rounded-[15px] shadow-md pointer-events-none">
-              Хажууд байрлах товч дээр дарснаар ebarimt-аас таны компаний нэрийг оруулсан РД-аар хайх болно
+              {tTips('ebarimt_lookup')}
             </div>
             {errors.CompanyName && <div className="text-red text-xs">{errors.CompanyName.message}</div>}
           </div>
@@ -190,7 +194,7 @@ export default function RegisterPage() {
             >
               <option value="">{t("select")}</option>
               {propertyTypes.map((type) => (
-                <option key={type.id} value={type.id}>{type.name_mn}</option>
+                <option key={type.id} value={type.id}>{locale === 'en' ? type.name_en : type.name_mn}</option>
               ))}
             </select>
             {errors.property_type && <div className="text-red text-xs">{errors.property_type.message}</div>}

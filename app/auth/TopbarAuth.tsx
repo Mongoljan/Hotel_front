@@ -19,6 +19,7 @@ interface HeaderDictionary {
 
 export default function Topbar() {
   const t = useTranslations("Controls");
+  const tTop = useTranslations("TopbarAuth");
   const pathname = usePathname();  // Get current path using usePathname
   const router = useRouter();      // Get router for navigation
 
@@ -44,9 +45,9 @@ export default function Topbar() {
 
         <div className="mr-2">
        {/* <LanguageToggle/> */}
-       <div className=" text-black  text-[24px]">
-        Буудлын админ 
-       </div>
+  <div className=" text-black  text-[24px]">
+   {tTop("title")}
+  </div>
        </div>
        <div className="flex gap-6">
         <div className="flex gap-2 items-center">

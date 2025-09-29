@@ -22,6 +22,9 @@ type FormFields = z.infer<typeof schemaLogin>;
 export default function LoginForm() {
   const router = useRouter();
   const t = useTranslations('AuthLogin');
+  const tErr = useTranslations('AuthErrors');
+  const tMsg = useTranslations('AuthMessages');
+  const tCommon = useTranslations('Common');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [error, setError] = useState<string>('');
   const { login } = useAuth();
@@ -34,15 +37,17 @@ export default function LoginForm() {
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     setError('');
-    localStorage.clear();
+    // Avoid wiping all local storage; remove only auth-related residue if any
+    try { localStorage.removeItem('userInfo'); } catch {}
     
     const result = await login(data.email, data.password);
 
     if (!result.success) {
-      setError(result.error || 'Login failed');
-      toast.error(result.error || 'Login failed');
+      const msg = (result as any).code ? tErr((result as any).code) : ((result as any).error || tErr('unknown'));
+      setError(msg);
+      toast.error(msg);
     } else {
-      toast.success('Login successful!');
+      toast.success(tMsg('login_success'));
       setTimeout(() => {
         router.push('/admin/hotel');
       }, 1000);
@@ -67,11 +72,16 @@ export default function LoginForm() {
             type="email"
             {...register('email')}
             className="pl-10"
-            placeholder="your@email.com"
+            autoComplete="email"
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? 'email-error' : undefined}
+            placeholder={t('email_placeholder')}
           />
         </div>
         {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
+          <p id="email-error" className="text-sm text-destructive">
+            {typeof errors.email.message === 'string' ? tErr(errors.email.message as any) : ''}
+          </p>
         )}
       </div>
 
@@ -84,6 +94,9 @@ export default function LoginForm() {
             type={isPasswordVisible ? 'text' : 'password'}
             {...register('password')}
             className="pl-10 pr-10"
+            autoComplete="current-password"
+            aria-invalid={!!errors.password}
+            aria-describedby={errors.password ? 'password-error' : undefined}
             placeholder="••••••••"
           />
           <Button
@@ -92,6 +105,8 @@ export default function LoginForm() {
             size="sm"
             className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
             onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+            aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
+            aria-pressed={isPasswordVisible}
           >
             {isPasswordVisible ? (
               <EyeOff className="h-4 w-4 text-muted-foreground" />
@@ -101,7 +116,9 @@ export default function LoginForm() {
           </Button>
         </div>
         {errors.password && (
-          <p className="text-sm text-destructive">{errors.password.message}</p>
+          <p id="password-error" className="text-sm text-destructive">
+            {typeof errors.password.message === 'string' ? tErr(errors.password.message as any) : ''}
+          </p>
         )}
       </div>
 
@@ -134,9 +151,7 @@ export default function LoginForm() {
           <Separator className="w-full" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            эсвэл
-          </span>
+          <span className="bg-background px-2 text-muted-foreground">{tCommon('or')}</span>
         </div>
       </div>
 

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
@@ -30,6 +31,15 @@ const SheetOverlay = React.forwardRef<
 ))
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
+type SheetContentContextValue = {
+  registerTitle: () => void
+  unregisterTitle: () => void
+}
+
+const SheetContentContext = React.createContext<SheetContentContextValue | null>(
+  null
+)
+
 const sheetVariants = cva(
   "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
   {
@@ -51,27 +61,76 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  fallbackTitle?: string
+}
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content
-      ref={ref}
-      className={cn(sheetVariants({ side }), className)}
-      {...props}
+>(
+  ({ side = "right", className, children, fallbackTitle, ...props }, ref) => {
+  const [hasTitle, setHasTitle] = React.useState(false)
+  const titleCountRef = React.useRef(0)
+
+  const registerTitle = React.useCallback(() => {
+    titleCountRef.current += 1
+    if (titleCountRef.current > 0) {
+      setHasTitle(true)
+    }
+  }, [])
+
+  const unregisterTitle = React.useCallback(() => {
+    titleCountRef.current = Math.max(0, titleCountRef.current - 1)
+    if (titleCountRef.current === 0) {
+      setHasTitle(false)
+    }
+  }, [])
+
+  const contextValue = React.useMemo(
+    () => ({
+      registerTitle,
+      unregisterTitle,
+    }),
+    [registerTitle, unregisterTitle]
+  )
+
+    const contentProps = props as React.ComponentPropsWithoutRef<
+      typeof SheetPrimitive.Content
     >
-      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-))
+    const ariaLabelFromProps =
+      typeof contentProps["aria-label"] === "string"
+        ? (contentProps["aria-label"] as string)
+        : undefined
+    const resolvedFallbackTitle =
+      fallbackTitle ?? ariaLabelFromProps ?? "Sheet panel"
+
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        ref={ref}
+        className={cn(sheetVariants({ side }), className)}
+          {...contentProps}
+          aria-label={ariaLabelFromProps ?? resolvedFallbackTitle}
+      >
+        {!hasTitle && resolvedFallbackTitle ? (
+          <VisuallyHidden asChild>
+            <SheetPrimitive.Title>{resolvedFallbackTitle}</SheetPrimitive.Title>
+          </VisuallyHidden>
+        ) : null}
+        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </SheetPrimitive.Close>
+        <SheetContentContext.Provider value={contextValue}>
+          {children}
+        </SheetContentContext.Provider>
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  )
+  }
+)
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({
@@ -105,13 +164,22 @@ SheetFooter.displayName = "SheetFooter"
 const SheetTitle = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
->(({ className, ...props }, ref) => (
-  <SheetPrimitive.Title
-    ref={ref}
-    className={cn("text-lg font-semibold text-foreground", className)}
-    {...props}
-  />
-))
+>(({ className, ...props }, ref) => {
+  const context = React.useContext(SheetContentContext)
+
+  React.useEffect(() => {
+    context?.registerTitle()
+    return () => context?.unregisterTitle()
+  }, [context])
+
+  return (
+    <SheetPrimitive.Title
+      ref={ref}
+      className={cn("text-lg font-semibold text-foreground", className)}
+      {...props}
+    />
+  )
+})
 SheetTitle.displayName = SheetPrimitive.Title.displayName
 
 const SheetDescription = React.forwardRef<

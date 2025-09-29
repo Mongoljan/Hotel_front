@@ -43,8 +43,11 @@ email: z.string().email({ message:"schemas_emailformat"}),
 });
 const urlValidation = z.string().url({ message: "Invalid URL format" });
 export const schemaLogin = z.object({
-    email: z.string().email('И-мэйл хаяг зөв биш байна'),
-    password: z.string().min(1, { message: "Нууц үгээ оруулна уу?"}),
+    email: z
+      .string()
+      .min(1, { message: 'email_required' })
+      .email({ message: 'email_invalid' }),
+    password: z.string().min(1, { message: 'password_required' }),
   });
 
 

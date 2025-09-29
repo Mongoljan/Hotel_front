@@ -20,6 +20,8 @@ type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
 
 export default function RegisterEmployee() {
   const t = useTranslations('RegisterStaff');
+  const tErr = useTranslations('AuthErrors');
+  const tMsg = useTranslations('AuthMessages');
   const router = useRouter();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
@@ -56,14 +58,14 @@ export default function RegisterEmployee() {
 
   const onError = (formErrors: typeof errors) => {
     console.log('Validation errors:', formErrors);
-    toast.error('Формыг бүрэн бөглөнө үү!');
+    toast.error(tErr('form.incomplete'));
   };
 
   const onSubmit: SubmitHandler<FormFields> = async (employeeData) => {
     const hotelData = JSON.parse(localStorage.getItem('hotelFormData') || '{}');
 
     if (!hotelData || !hotelData.register) {
-      toast.error('Зочид буудлын мэдээлэл олдсонгүй. Та эхлээд бүртгэлээ бөглөнө үү.');
+      toast.error(tErr('hotel.missing'));
       return;
     }
 
@@ -73,7 +75,7 @@ export default function RegisterEmployee() {
     const result = await registerHotelAndEmployeeAction(hotelData, employeeData);
 
     if (result.success) {
-      toast.success('Бүртгэл амжилттай. Нэвтрэх хуудас руу чиглүүлж байна...');
+      toast.success(tMsg('register_success_redirect'));
 
       setTimeout(() => {
         Object.keys(Cookies.get()).forEach((cookieName) => Cookies.remove(cookieName));
@@ -82,7 +84,7 @@ export default function RegisterEmployee() {
         router.push('/auth/login');
       }, 1500);
     } else {
-      toast.error(result.error || 'Бүртгэл амжилтгүй боллоо.');
+      toast.error(result.error || tErr('register.failed'));
     }
   };
 

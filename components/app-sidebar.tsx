@@ -12,6 +12,7 @@ import { NavMain } from '@/components/nav-main';
 import { OrgSwitcher } from '@/components/org-switcher';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { navItems } from '@/constants/data';
+import { useTranslations } from 'next-intl';
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   isApproved: boolean;
@@ -19,6 +20,8 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function AppSidebar({ isApproved, userApproved, ...props }: AppSidebarProps) {
+  const tNav = useTranslations('Navigation');
+  const mobileSidebarTitle = tNav('sidebarMobileTitle');
   // Filter navigation items based on approval status
   const filteredNavItems = React.useMemo(() => {
     if (isApproved && userApproved) {
@@ -33,7 +36,7 @@ export function AppSidebar({ isApproved, userApproved, ...props }: AppSidebarPro
   }, [isApproved, userApproved]);
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon" mobileTitle={mobileSidebarTitle} {...props}>
       <SidebarHeader>
         <OrgSwitcher />
       </SidebarHeader>
