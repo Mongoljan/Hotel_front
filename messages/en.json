@@ -189,7 +189,8 @@
       "deleteError": "Unable to delete the room",
       "newRoom": "New Room",
       "syncData": "Sync Data",
-      "dataRefreshed": "Room data refreshed"
+      "dataRefreshed": "Room data refreshed",
+      "next": "Next"
     },
     "empty": {
       "title": "No rooms yet",

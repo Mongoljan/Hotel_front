@@ -510,7 +510,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="">
       {/* Header with metrics */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-4">
         <div>

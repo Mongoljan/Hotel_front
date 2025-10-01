@@ -6,24 +6,44 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
 import { schemaCreateRoom } from "@/app/schema"; // your Zod schema
 import { z } from "zod";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "sonner";
 import {
-  FaArrowRight,
-  FaArrowLeft,
-  FaTrash,
-  FaPlus,
-  FaCheck,
-  FaEdit,
-  FaTrashAlt,
-} from "react-icons/fa";
-import { IoIosCloseCircleOutline } from "react-icons/io";
-import { IoPerson } from "react-icons/io5";
-import { FaChild } from "react-icons/fa";
-import { AiOutlineWifi, AiOutlinePlus } from "react-icons/ai";
-import { GiCigarette } from "react-icons/gi";
-import { LiaSmokingBanSolid } from "react-icons/lia";
+  ChevronRight,
+  ChevronLeft,
+  Trash2,
+  Plus,
+  Check,
+  Edit,
+  X,
+  User,
+  Baby,
+  Wifi,
+  Cigarette,
+  Bed,
+  Upload,
+  Image as ImageIcon
+} from "lucide-react";
 import { getClientBackendToken } from "@/utils/auth";
+import { useTranslations } from "next-intl";
+// Dialog primitives intentionally not used here to keep the modal logic
+// self-contained (we render our own overlay + form). Avoid requiring
+// Dialog context to prevent runtime errors: `DialogTitle` must be used
+// within `Dialog`.
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const API_COMBINED_DATA = "https://dev.kacc.mn/api/all-data/";
 const API_CREATE_ROOM = "https://dev.kacc.mn/api/roomsNew/";
@@ -126,6 +146,7 @@ export default function RoomModal({
   setIsRoomAdded,
 }: RoomModalProps) {
   const [step, setStep] = useState<number>(1);
+  const t = useTranslations("Rooms");
 
   // Combined lookup (room types, bed types, etc.)
   const [combinedData, setCombinedData] = useState<CombinedData>({
@@ -377,7 +398,7 @@ export default function RoomModal({
       RoomNo: roomNumbersArr,
       images: formData.entries.map((entry) => ({
         image: entry.images,
-        description: entry.descriptions,
+        description: "",
       })),
     };
 
@@ -421,36 +442,35 @@ export default function RoomModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[150]"
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50  bg-black/60 flex items-start md:items-center justify-center p-4"
     >
       <form
         onSubmit={handleSubmit(onSubmit)}
         onClick={(e) => e.stopPropagation()}
-        className="p-6 bg-white border max-w-[700px] w-full max-h-[80vh] overflow-y-auto rounded-lg shadow-lg relative"
+        className="p-6 bg-white border max-w-[700px] w-full max-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl relative mx-auto"
       >
-        <ToastContainer />
 
         {/* ─── Header + Close Button ───────────────────────────────────────────── */}
-        <div className="flex justify-between mb-4">
-          <h2 className="text-lg font-bold">
-            {roomToEdit ? "Өрөө засварлах" : "Өрөө нэмэх"}
-          </h2>
-          <button onClick={onClose} type="button">
-            <IoIosCloseCircleOutline className="text-3xl text-black hover:text-primary" />
-          </button>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold">{roomToEdit ? "Өрөө засварлах" : "Өрөө нэмэх"}</h2>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="close">
+            <X className="h-5 w-5 text-slate-700" />
+          </Button>
         </div>
 
         {/* ─── Step Indicator Bar ───────────────────────────────────────────── */}
         <section className="mb-6">
           {step === 1 ? (
             <div className="flex rounded-[10px]">
-              <div className="h-1 w-1/2 rounded-[10px] bg-blue-500"></div>
+              <div className="h-1 w-1/2 rounded-[10px] bg-primary"></div>
               <div className="h-1 w-1/2 rounded-r-[10px] bg-gray-200"></div>
             </div>
           ) : (
             <div className="flex rounded-[10px]">
               <div className="h-1 w-1/2 rounded-l-[10px] bg-gray-200"></div>
-              <div className="h-1 w-1/2 rounded-[10px] bg-blue-500"></div>
+              <div className="h-1 w-1/2 rounded-[10px] bg-primary"></div>
             </div>
           )}
         </section>
@@ -464,17 +484,18 @@ export default function RoomModal({
               {/* Room Type */}
               <div className="w-[45%]">
                 <label className="block mb-1">Өрөөний төрөл</label>
-                <select
-                  {...register("room_type")}
-                  className="border rounded-lg p-2 w-full"
-                >
-                  <option value="">-- Сонгох --</option>
-                  {combinedData.roomTypes.map((rt) => (
-                    <option key={rt.id} value={rt.id}>
-                      {rt.name}
-                    </option>
-                  ))}
-                </select>
+                <Select onValueChange={(value) => setValue("room_type", value)} value={watch("room_type")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="-- Сонгох --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {combinedData.roomTypes.map((rt) => (
+                      <SelectItem key={rt.id} value={rt.id.toString()}>
+                        {rt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {errors.room_type && (
                   <span className="text-red text-sm">
                     {errors.room_type.message}
@@ -485,17 +506,18 @@ export default function RoomModal({
               {/* Room Category */}
               <div className="w-[45%]">
                 <label className="block mb-1">Өрөөний ангилал</label>
-                <select
-                  {...register("room_category")}
-                  className="border rounded-lg p-2 w-full"
-                >
-                  <option value="">-- Сонгох --</option>
-                  {combinedData.room_category.map((rc) => (
-                    <option key={rc.id} value={rc.id}>
-                      {rc.name}
-                    </option>
-                  ))}
-                </select>
+                <Select onValueChange={(value) => setValue("room_category", value)} value={watch("room_category")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="-- Сонгох --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {combinedData.room_category.map((rc) => (
+                      <SelectItem key={rc.id} value={rc.id.toString()}>
+                        {rc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {errors.room_category && (
                   <span className="text-red text-sm">
                     {errors.room_category.message}
@@ -508,11 +530,10 @@ export default function RoomModal({
               {/* Room Size */}
               <div className="w-[45%]">
                 <label className="block mb-1">Өрөөний хэмжээ (m²)</label>
-                <input
+                <Input
                   type="number"
                   step="0.1"
                   {...register("room_size")}
-                  className="border rounded-lg p-2 w-1/2"
                 />
                 {errors.room_size && (
                   <span className="text-red text-sm">
@@ -528,23 +549,23 @@ export default function RoomModal({
                 </label>
                 <div className="flex gap-8">
                   <div className="flex items-center gap-2">
-                    <IoPerson className="text-primary text-xl" />{" "}
-                    <input
+                    <User className="text-primary text-xl" />{" "}
+                    <Input
                       type="number"
                       min="0"
                       placeholder="0"
                       {...register("adultQty")}
-                      className="border rounded-lg p-2 w-16"
+                      className="w-16"
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <FaChild className="text-primary text-xl" />{" "}
-                    <input
+                    <Baby className="text-primary text-xl" />{" "}
+                    <Input
                       type="number"
                       min="0"
                       placeholder="0"
                       {...register("childQty")}
-                      className="border rounded-lg p-2 w-16"
+                      className="w-16"
                     />
                   </div>
                 </div>
@@ -560,17 +581,18 @@ export default function RoomModal({
               {/* Bed Type */}
               <div className="w-[45%]">
                 <label className="block mb-1">Орны төрөл</label>
-                <select
-                  {...register("bed_type")}
-                  className="border rounded-lg p-2 w-full"
-                >
-                  <option value="">-- Сонгох --</option>
-                  {combinedData.bedTypes.map((bt) => (
-                    <option key={bt.id} value={bt.id}>
-                      {bt.name}
-                    </option>
-                  ))}
-                </select>
+                <Select onValueChange={(value) => setValue("bed_type", value)} value={watch("bed_type")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="-- Сонгох --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {combinedData.bedTypes.map((bt) => (
+                      <SelectItem key={bt.id} value={bt.id.toString()}>
+                        {bt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {errors.bed_type && (
                   <span className="text-red text-sm">
                     {errors.bed_type.message}
@@ -640,43 +662,32 @@ export default function RoomModal({
                     )}
                   </section>
 
-                  <section className="mb-2">
-                    <label className="block mb-1">Тайлбар</label>
-                    <input
-                      type="text"
-                      {...register(`entries.${index}.descriptions` as const)}
-                      className="border p-2 w-full rounded-lg"
+                  {watchedEntries[index]?.images && (
+                    <img
+                      src={watchedEntries[index].images}
+                      alt={`Preview ${index + 1}`}
+                      className="mt-2 max-h-20 w-auto rounded-md border"
                     />
-                    {errors.entries?.[index]?.descriptions && (
-                      <div className="text-red text-sm">
-                        {errors.entries[index]?.descriptions?.message}
-                      </div>
-                    )}
-                    {watchedEntries[index]?.images && (
-                      <img
-                        src={watchedEntries[index].images}
-                        alt={`Preview ${index + 1}`}
-                        className="mt-2 max-h-20 w-auto rounded-md border"
-                      />
-                    )}
-                  </section>
+                  )}
 
-                  <button
+                  <Button
                     type="button"
                     onClick={() => remove(index)}
-                    className="flex items-center justify-center w-full text-red border border-red-500 rounded-lg p-2 mt-2 hover:bg-red-100 transition"
+                    variant="destructive"
+                    className="w-full"
                   >
-                    <FaTrash className="mr-2" /> Remove
-                  </button>
+                    <Trash2 className="mr-2" /> Remove
+                  </Button>
                 </div>
               ))}
-              <button
+              <Button
                 type="button"
                 onClick={() => append({ images: "", descriptions: "" })}
-                className="w-full flex justify-center items-center text-black py-2 border border-primary rounded-lg mb-4 hover:bg-gray-100 transition"
+                variant="outline"
+                className="w-full"
               >
-                <FaPlus className="mr-2" /> Add More
-              </button>
+                <Plus className="mr-2" /> Add More
+              </Button>
             </section>
 
             <section className=" w-[45%]">
@@ -685,12 +696,12 @@ export default function RoomModal({
  <div>
               <div className="mb-4">
                 <label className="block mb-1 font-medium">Өрөөний нийт тоо</label>
-                <input
+                <Input
                   type="number"
                   min="0"
                   placeholder="0"
                   {...register("number_of_rooms")}
-                  className="border rounded-lg p-2 w-1/2"
+                  className="w-1/2"
                 />
                 {errors.number_of_rooms && (
                   <span className="text-red text-sm">
@@ -700,12 +711,12 @@ export default function RoomModal({
               </div>
               <div className=" mb-4">
                 <label className="block font-medium">Манай сайтаар зарах өрөөний тоо</label>
-                <input
+                <Input
                   type="number"
                   min="0"
                   placeholder="0"
                   {...register("number_of_rooms_to_sell")}
-                  className="border rounded-lg p-2 w-1/2"
+                  className="w-1/2"
                 />
                 {errors.number_of_rooms_to_sell && (
                   <span className="text-red text-sm">
@@ -719,11 +730,9 @@ export default function RoomModal({
               <label className="block  font-medium ">
         {roomToEdit ? <div>Өрөөний дугаар ( 1 дугаар байна)</div> :  <div> Та өрөө тус бүрийн номерийг бичиж оруулна уу? (таслалаар тусгаарлагдсан)</div>   }  
               </label>
-              <input
-                type="text"
+              <Input
                 {...register("RoomNo")}
                 placeholder="E.g. 101, 102"
-                className="border rounded-lg p-2 w-full"
               />
               {errors.RoomNo && (
                 <span className="text-red text-sm">{errors.RoomNo.message}</span>
@@ -773,13 +782,9 @@ export default function RoomModal({
 
 
             <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-              >
-                Next <FaArrowRight />
-              </button>
+              <Button onClick={() => setStep(2)} className="flex items-center gap-2">
+                {t("actions.next")} <ChevronRight />
+              </Button>
             </div>
           </div>
         )}
@@ -853,7 +858,7 @@ export default function RoomModal({
                       htmlFor={`ft-${ft.id}`}
                       className="peer-checked:bg-blue-500 peer-checked:text-white 
                                  border border-gray-300 rounded-lg px-4 py-2 cursor-pointer 
-                                 bg-gray-100 text-gray-800 transition hover:bg-blue-300 text-sm"
+                                 bg-gray-100 text-gray-800 transition hover:bg-accent text-sm"
                     >
                       {ft.name_en}
                     </label>
@@ -884,7 +889,7 @@ export default function RoomModal({
                       htmlFor={`ov-${ov.id}`}
                       className="peer-checked:bg-blue-500 peer-checked:text-white 
                                  border border-gray-300 rounded-lg px-4 py-2 cursor-pointer 
-                                 bg-gray-100 text-gray-800 transition hover:bg-blue-300"
+                                 bg-gray-100 text-gray-800 transition hover:bg-accent"
                     >
                       {ov.name_en}
                     </label>
@@ -915,7 +920,7 @@ export default function RoomModal({
                       htmlFor={`fd-${fd.id}`}
                       className="peer-checked:bg-blue-500 peer-checked:text-white 
                                  border border-gray-300 rounded-lg px-4 py-2 cursor-pointer 
-                                 bg-gray-100 text-gray-800 transition hover:bg-blue-300"
+                                 bg-gray-100 text-gray-800 transition hover:bg-accent"
                     >
                       {fd.name_en}
                     </label>
@@ -945,20 +950,12 @@ export default function RoomModal({
 
             {/* Navigation Buttons */}
             <div className="flex justify-between">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="flex items-center gap-2 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
-              >
-                <FaArrowLeft /> Буцах
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-cyan-500 transition"
-              >
-                {roomToEdit ? "Хадгалах" : "Үүсгэх"} <FaCheck />
-              </button>
+              <Button variant="secondary" onClick={() => setStep(1)} className="flex items-center gap-2">
+                <ChevronLeft /> Буцах
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
+                {roomToEdit ? "Хадгалах" : "Үүсгэх"} <Check />
+              </Button>
             </div>
           </div>
         )}
