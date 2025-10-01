@@ -3,12 +3,17 @@
 import React, { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
+import { toast } from 'sonner';
+import { ChevronLeft, ChevronRight, MapPin, Settings } from 'lucide-react';
 import { schemaHotelSteps6 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations, useLocale } from 'next-intl';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const API_PROPERTY_DETAILS = 'https://dev.kacc.mn/api/property-details/';
@@ -27,12 +32,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
   const locale = useLocale();
   const [facilities, setFacilities] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<FormFields>({
+  const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps6),
     defaultValues: {
       google_map: '',
@@ -56,12 +56,12 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
     if (stored.step6) {
-      reset({
+      form.reset({
         google_map: stored.step6.google_map || '',
         general_facilities: (stored.step6.general_facilities || []).map(String),
       });
     }
-  }, [reset]);
+  }, [form]);
 
   const getStepId = (step: any) => {
     if (Array.isArray(step)) return step[0]?.id;
@@ -75,7 +75,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
       const propertyId = stored.propertyId;
 
       if (!propertyId) {
-        toast.error('Property ID not found. Please complete Step 1.');
+        toast.error(t('property_id_not_found'));
         return;
       }
 
@@ -88,11 +88,10 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
           : [stored.property_photos],
         google_map: data.google_map,
         general_facilities: [...data.general_facilities].map(Number),
-        property
-        : propertyId,
+        property: propertyId,
       };
 
-      console.log(JSON.stringify(payload))
+      console.log('Final payload:', JSON.stringify(payload));
 
       const response = await fetch(API_PROPERTY_DETAILS, {
         method: 'POST',
@@ -106,72 +105,137 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
       stored.step6 = data;
       localStorage.setItem('propertyData', JSON.stringify(stored));
 
-      toast.success('✔️ Мэдээлэл хадгалагдлаа!');
+      toast.success(t('details_saved_success'));
       onNext();
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || 'Алдаа гарлаа. Дахин оролдоно уу.');
+      toast.error(error.message || t('error_try_again'));
     }
   };
 
   return (
     <div className="flex justify-center items-center">
-      <ToastContainer />
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
-      >
-        <h2 className="text-2xl font-bold text-center mb-6">{t('title')}</h2>
 
-        <section className="mb-4">
-          <label className="text-black">{t('1')}</label>
-          <input
-            type="url"
-            {...register('google_map')}
-            className="border p-2 w-full rounded-[15px]"
-          />
-          {errors.google_map && <div className="text-red text-sm">{errors.google_map.message}</div>}
-        </section>
-
-        <section className="mb-4">
-          <label className="text-black">
-            Зочин та бүхнээс төлбөртэй болон төлбөргүй ямар нэмэлт үйлчилгээг авах боломжтой вэ? Дараахаас сонгоно уу.
-          </label>
-          {facilities.map((facility) => (
-            <div key={facility.id} className="flex items-center">
-              <input
-                type="checkbox"
-value={String(facility.id)}
-
-
-                {...register('general_facilities')}
-                className="mr-2"
+      <Card className="w-full max-w-[600px] md:min-w-[440px]">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center flex items-center justify-center gap-2">
+            <Settings className="h-6 w-6" />
+            {t('title')}
+          </CardTitle>
+          <CardDescription className="text-center">
+            Final property details and amenities
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              
+              <FormField
+                control={form.control}
+                name="google_map"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {t('1')}
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="url"
+                        placeholder="https://maps.google.com/..."
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {t('google_maps_instruction')}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <label>{locale === 'mn' ? facility.name_mn : facility.name_en}</label>
-            </div>
-          ))}
-          {errors.general_facilities && (
-            <div className="text-red text-sm">{errors.general_facilities.message}</div>
-          )}
-        </section>
 
-        <div className="flex gap-x-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            <FaArrowLeft className="self-center mx-1" /> {t('5')}
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            {t('6')} <FaArrowRight className="self-center mx-1" />
-          </button>
-        </div>
-      </form>
+              <Separator />
+
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">{t('general_facilities_title')}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {t('facilities_instruction')}
+                  </p>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="general_facilities"
+                  render={() => (
+                    <FormItem>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {facilities.map((facility) => (
+                          <FormField
+                            key={facility.id}
+                            control={form.control}
+                            name="general_facilities"
+                            render={({ field }) => (
+                              <FormItem
+                                key={facility.id}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(facility.id.toString())}
+                                    onCheckedChange={(checked) => {
+                                      const currentValue = field.value || [];
+                                      const facilityId = facility.id.toString();
+                                      
+                                      if (checked) {
+                                        field.onChange([...currentValue, facilityId]);
+                                      } else {
+                                        field.onChange(
+                                          currentValue.filter((value) => value !== facilityId)
+                                        );
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel className="cursor-pointer">
+                                    {locale === 'mn' ? facility.name_mn : facility.name_en}
+                                  </FormLabel>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex gap-4 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onBack}
+                  className="flex-1"
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  {t('5')}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                  className="flex-1"
+                >
+                  {t('6')}
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

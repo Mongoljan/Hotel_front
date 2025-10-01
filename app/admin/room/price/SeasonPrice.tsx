@@ -41,7 +41,7 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 // Interfaces
 interface AllData {

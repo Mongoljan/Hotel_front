@@ -5,8 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { schemaRegistrationEmployee } from '../../schema';
 import { z } from 'zod';
-import 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { HiEye, HiEyeSlash } from 'react-icons/hi2';
 import PhoneInput from "react-phone-input-2";
 import Link from 'next/link';
@@ -98,7 +97,7 @@ export default function RegisterPage() {
       );
 
       if (response.ok) {
-        toast.success('Registration successful! Your registration approval is pending.');
+        toast.success('Бүртгэл амжилттай! Таны бүртгэлийн зөвшөөрөл хүлээгдэж байна.');
         router.push('/admin/hotel');
       } else {
         const errorData = await response.json();
@@ -109,18 +108,18 @@ export default function RegisterPage() {
         } else if (errorData.password && errorData.password.length > 0) {
           toast.error(errorData.password[0]); // Display the first password error message
         } else {
-          toast.error('Registration failed. Please check your input.');
+          toast.error('Бүртгэл амжилтгүй. Оруулсан мэдээллээ шалгана уу.');
         }
       }
     } catch (error) {
-      toast.error('An unexpected error occurred during registration');
+      toast.error('Бүртгэлийн явцад санаандгүй алдаа гарлаа');
       console.error('Error during registration:', error);
     }
   };
 
   return (
     <div className="flex justify-center items-center min-h-screen h-full py-[100px] bg-[#E5FDoD] rounded-[12px]">
-      <ToastContainer />
+
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white border-primary border-solid border-[1px] p-10 px-10 max-w-[600px] rounded-md text-gray-600"

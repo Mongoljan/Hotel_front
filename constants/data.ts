@@ -26,7 +26,7 @@ export type NavItem = {
 
 export const navItems: NavItem[] = [
   {
-    title: 'Dashboard',
+    title: 'Хяналтын самбар',
     i18nKey: 'dashboard',
     url: '/admin/dashboard',
     icon: IconDashboard,

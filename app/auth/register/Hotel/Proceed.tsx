@@ -1,237 +1,259 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { schemaRegistration } from '../../../schema';
-import { z } from 'zod';
-import 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer, toast } from 'react-toastify';
-import { HiEye, HiEyeSlash } from 'react-icons/hi2';
-import PhoneInput from 'react-phone-input-2';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
-import { useTranslations } from 'next-intl';
+import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { CheckCircle, Clock, Building, MapPin, Phone, Mail, Calendar, Star, User, CreditCard } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
+import { useAuth } from '@/hooks/useAuth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
-interface Hotel {
+type PropertyType = {
+  id: number;
+  name_en: string;
+  name_mn: string;
+};
+
+type HotelDataType = {
   pk: number;
   register: string;
   CompanyName: string;
   PropertyName: string;
   location: string;
-  property_type: string;
+  property_type: number;
   phone: string;
   mail: string;
   is_approved: boolean;
   created_at: string;
+};
+
+interface PropertyBasicInfo {
+  property_name_mn?: string;
+  property_name_en?: string;
+  total_hotel_rooms?: number;
+  star_rating?: number;
 }
 
-type Location = { lat: number; lng: number };
+type ProceedProps = {
+  proceed?: number;
+  setProceed?: (value: number) => void;
+  setView?: (view: 'proceed' | 'register') => void;
+  hotelId?: string | number | null;
+  onContinue?: () => void;
+  hotelApproved?: boolean;
+  basicInfo?: PropertyBasicInfo | null;
+  getPropertyTypeName?: (id: number) => string;
+};
 
-interface ProceedProps {
-  proceed: number;
-  setProceed: (value: number) => void;
-  setView: (view: 'proceed' | 'register') => void;
-}
-
-type FormFields = z.infer<typeof schemaRegistration>;
-
-export default function Proceed({ proceed, setProceed, setView }: ProceedProps) {
+const Proceed: React.FC<ProceedProps> = ({ 
+  proceed,
+  setProceed,
+  setView,
+  hotelId, 
+  onContinue, 
+  hotelApproved, 
+  basicInfo,
+  getPropertyTypeName 
+}) => {
   const t = useTranslations('Proceed');
-  const router = useRouter();
-
-  const [hotel, setHotel] = useState<Hotel | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [location, setLocation] = useState<Location>({ lat: 47.918873, lng: 106.917017 });
-  const [zoom, setZoom] = useState(10);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormFields>({ resolver: zodResolver(schemaRegistration) });
-
-  const getHotelId = (): string | null => {
-    try {
-      const u = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      return u.hotel || null;
-    } catch {
-      return null;
-    }
-  };
-
-  const fetchHotel = async () => {
-    try {
-      const id = getHotelId();
-      if (!id) throw new Error('Hotel ID not found');
-      const res = await fetch(`https://dev.kacc.mn/api/properties/${id}`);
-      if (!res.ok) throw new Error('Failed to fetch hotel');
-      const data: Hotel = await res.json();
-      setHotel(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const locale = useLocale();
+  const { user } = useAuth();
+  const [hotelData, setHotelData] = useState<HotelDataType | null>(null);
+  const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchHotel();
-  }, []);
+    const fetchData = async () => {
+      const currentHotelId = hotelId || user?.hotel;
+      if (!currentHotelId) {
+        setError('Hotel ID is missing');
+        setIsLoading(false);
+        return;
+      }
 
-  useEffect(() => {
-    if (!loading && hotel && !hotel.is_approved) {
-      const intervalId = setInterval(fetchHotel, 5000);
-      return () => clearInterval(intervalId);
-    }
-  }, [loading, hotel]);
+      try {
+        setIsLoading(true);
+        
+        // Fetch hotel data and property types in parallel
+        const [hotelResponse, combinedResponse] = await Promise.all([
+          fetch(`https://dev.kacc.mn/api/properties/${currentHotelId}`),
+          fetch('https://dev.kacc.mn/api/combined-data/')
+        ]);
 
-  useEffect(() => {
-    const savedLoc = localStorage.getItem('mapLocation');
-    const savedZoom = localStorage.getItem('mapZoom');
-    if (savedLoc) setLocation(JSON.parse(savedLoc));
-    if (savedZoom) setZoom(JSON.parse(savedZoom));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('mapLocation', JSON.stringify(location));
-    localStorage.setItem('mapZoom', JSON.stringify(zoom));
-  }, [location, zoom]);
-
-  const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    try {
-      const body = {
-        owner_pk: 0,
-        owner_token: '',
-        user_type: 2,
-        user_name: data.contact_person_name,
-        hotel_name: data.hotel_name,
-        hotel_address: data.address_location,
-        user_pass: data.password,
-        user_mail: data.email,
-        user_phone: data.contact_number,
-      };
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/register/`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+        if (!hotelResponse.ok) {
+          throw new Error(`Failed to fetch hotel data: ${hotelResponse.status}`);
         }
-      );
 
-      if (res.ok) {
-        toast.success('Registration submitted! Approval is pending. You can log in once approved.');
-        router.push('/auth/login');
-      } else {
-        const err = await res.json();
-        const msg =
-          err.email?.[0] ||
-          err.password?.[0] ||
-          'Registration failed, please check your input.';
-        toast.error(msg);
+        if (!combinedResponse.ok) {
+          throw new Error(`Failed to fetch property types: ${combinedResponse.status}`);
+        }
+
+        const hotelData = await hotelResponse.json();
+        const combinedData = await combinedResponse.json();
+
+        setHotelData(hotelData);
+        setPropertyTypes(combinedData.property_types || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to load hotel information');
+        toast.error('Зочид буудлын мэдээлэл ачааллахад алдаа гарлаа');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (e) {
-      console.error(e);
-      toast.error('Unexpected error during registration.');
+    };
+
+    fetchData();
+  }, [hotelId, user?.hotel]);
+
+  // Smart property type display with dynamic text based on API and locale
+  const getSmartPropertyTypeDisplay = (propertyTypeId: number): string => {
+    const propertyType = propertyTypes.find(pt => pt.id === propertyTypeId);
+    if (!propertyType) return '—';
+
+    // If it's a hotel type, show hotel-specific registration text
+    const isHotel = propertyType.name_en.toLowerCase().includes('hotel') || 
+                   propertyType.name_mn.includes('зочид буудал');
+
+    if (isHotel) {
+      return locale === 'mn' ? 'зочид буудал бүртгэлийн' : 'hotel registration';
+    }
+    
+    // For other property types, show generic property registration text
+    return locale === 'mn' ? 'үл хөдлөх хөрөнгийн бүртгэл' : 'property registration';
+  };
+
+  const getPropertyTypeDisplay = (propertyTypeId: number): string => {
+    if (getPropertyTypeName) {
+      return getPropertyTypeName(propertyTypeId);
+    }
+    
+    const propertyType = propertyTypes.find(pt => pt.id === propertyTypeId);
+    return locale === 'mn' ? (propertyType?.name_mn || '—') : (propertyType?.name_en || '—');
+  };
+
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return '—';
+    try {
+      return new Date(dateString).toLocaleDateString(locale === 'mn' ? 'mn-MN' : 'en-US');
+    } catch {
+      return dateString;
     }
   };
 
-  const handleCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation not supported');
-      return;
+  const handleContinue = () => {
+    if (onContinue) {
+      onContinue();
+    } else if (setView) {
+      setView('register');
     }
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        setLocation({ lat: coords.latitude, lng: coords.longitude });
-        setZoom(15);
-      },
-      () => alert('Unable to get location')
-    );
   };
 
-  return (
-    <div className="flex items-left h-full py-12 ">
-      <div className="w-full max-w-[450px] mx-auto ">
-        <ToastContainer />
-        <h2 className="text-2xl font-bold mb-4">{t('title')}</h2>
-
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="bg-white p-8 mb-10 border border-primary rounded-[15px] shadow-sm"
-        >
-          <section className="mb-6 text-center">
-            <h3 className="text-xl font-semibold">
-              {hotel?.PropertyName || '…'}
-            </h3>
-          </section>
-
-          <div className="space-y-4 mb-6">
-            <Info label={t('1')} value={hotel?.CompanyName || '-'} />
-            <Info label={t('2')} value={hotel?.phone || '-'} />
-            <Info label={t('3')} value={hotel?.mail || '-'} />
-            <Info
-              label='Төлөв'
-              value={hotel?.is_approved ? 'Баталгаажсан' : 'Баталгаажаагүй'}
-              valueClassName={
-                hotel?.is_approved ? 'text-green-600' : 'text-red-600'
-              }
-            />
-          </div>
-
-          <div className="flex gap-4">
-          <div className="relative group w-full">
-  <button
-    type="button"
-    onClick={() => {
-      if (hotel?.is_approved) {
-        setProceed(1);
-        setView('register');
-      }
-    }}
-    disabled={!hotel?.is_approved}
-    className={`
-      w-full py-3 rounded-lg font-semibold transition
-      ${hotel?.is_approved
-        ? 'bg-primary text-white hover:bg-primary-dark'
-        : 'bg-gray-200 text-gray-500 cursor-not-allowed'}
-    `}
-  >
-    {t('5')} <FaArrowRight className="inline ml-2" />
-  </button>
-
-  {!hotel?.is_approved && (
-    <div className="absolute top-full mt-2 left-0 w-full bg-white border border-gray-300 text-sm text-gray-700 rounded-lg px-4 py-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-      {t('tooltip_wait_approval')}
-    </div>
-  )}
-</div>
-
-          </div>
-        </form>
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="flex flex-col items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+            <p className="text-muted-foreground">Loading hotel information...</p>
+          </CardContent>
+        </Card>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-// Info component
+  if (error || !hotelData) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-2xl mx-auto border-destructive/50">
+          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+            <div className="rounded-full bg-destructive/10 p-4 mb-6">
+              <Building className="h-8 w-8 text-destructive" />
+            </div>
+            <CardTitle className="text-lg text-destructive mb-2">
+              Error loading hotel information
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">{error || 'Hotel data not found'}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-interface InfoProps {
-  label: string;
-  value: string;
-  valueClassName?: string;
-}
+  const displayName = basicInfo?.property_name_mn || hotelData.PropertyName || '—';
+  const propertyTypeLabel = getSmartPropertyTypeDisplay(hotelData.property_type);
+  const propertyTypeName = getPropertyTypeDisplay(hotelData.property_type);
+  const isApproved = hotelApproved !== undefined ? hotelApproved : hotelData.is_approved;
 
-export function Info({ label, value, valueClassName = '' }: InfoProps) {
   return (
-    <div>
-      <p className="text-sm text-gray-500">{label}:</p>
-      <p className={`font-medium ${valueClassName}`}>{value}</p>
+    <div className="max-w-2xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="text-center">
+        <h2 className="text-xl font-semibold mb-2">{t('title')}</h2>
+        <Badge 
+          variant={isApproved ? "default" : "secondary"} 
+          className={isApproved ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}
+        >
+          {isApproved ? (
+            <>
+              <CheckCircle className="w-4 h-4 mr-2" />
+              {t('4')}
+            </>
+          ) : (
+            <>
+              <Clock className="w-4 h-4 mr-2" />
+              Pending Approval
+            </>
+          )}
+        </Badge>
+      </div>
+
+      {/* Simple Info Grid */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-600">{t('1')}:</span>
+              <p className="font-medium">{hotelData.CompanyName}</p>
+            </div>
+            <div>
+              <span className="text-gray-600">{t('2')}:</span>
+              <p className="font-medium">{hotelData.phone}</p>
+            </div>
+            <div>
+              <span className="text-gray-600">{t('3')}:</span>
+              <p className="font-medium">{hotelData.mail}</p>
+            </div>
+            <div>
+              <span className="text-gray-600">{t('4')}:</span>
+              <p className="font-medium">{isApproved ? 'Yes' : 'No'}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Status Message */}
+      {!isApproved && (
+        <div className="text-center p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <Clock className="h-5 w-5 text-amber-600 mx-auto mb-2" />
+          <p className="text-sm text-amber-800">
+            {t('tooltip_wait_approval')}
+          </p>
+        </div>
+      )}
+
+      {/* Continue Button */}
+      {isApproved && (
+        <div className="flex justify-center">
+          <Button onClick={handleContinue} className="px-8">
+            {t('5')}
+          </Button>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default Proceed;

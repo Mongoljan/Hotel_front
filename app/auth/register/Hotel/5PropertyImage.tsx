@@ -3,12 +3,16 @@
 import React, { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { FaArrowLeft, FaArrowRight, FaPlus, FaTrash } from 'react-icons/fa6';
+import { toast } from 'sonner';
+import { ChevronLeft, ChevronRight, Plus, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
 import { schemaHotelSteps5 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const API_URL = 'https://dev.kacc.mn/api/property-images/';
 
@@ -27,22 +31,15 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
     ? stored.step5
     : { entries: [{ images: '', descriptions: '' }] };
 
-  const {
-    register,
-    control,
-    watch,
-    handleSubmit,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<FormFields>({
+  const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps5),
     defaultValues,
   });
 
-  const watchedEntries = watch('entries');
+  const watchedEntries = form.watch('entries');
 
   const { fields, append, remove, replace } = useFieldArray({
-    control,
+    control: form.control,
     name: 'entries',
   });
 
@@ -63,7 +60,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64Image = reader.result as string;
-        setValue(`entries.${index}.images`, base64Image, { shouldValidate: true });
+        form.setValue(`entries.${index}.images`, base64Image, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
     }
@@ -75,7 +72,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       const propertyId = stored.propertyId;
 
       if (!propertyId) {
-        toast.error('Property ID not found. Please complete Step 1.');
+        toast.error(t('property_id_not_found'));
         return;
       }
 
@@ -123,98 +120,136 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         })
       );
 
-      toast.success('Зураг, тайлбар амжилттай хадгалагдлаа!');
+      toast.success(t('images_saved_success'));
       onNext();
     } catch (error) {
       console.error(error);
-      toast.error('Алдаа гарлаа. Дахин оролдоно уу.');
+      toast.error(t('error_try_again'));
     }
   };
 
   return (
     <div className="flex justify-center items-center">
-      <ToastContainer />
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 border-primary border-solid border-[1px] max-w-[600px] md:min-w-[440px] rounded-[15px] text-gray-600"
-      >
-        <h2 className="text-2xl font-bold text-center mb-6">{t('title')}</h2>
 
-        {fields.map((field, index) => {
-          const previewSrc = watchedEntries?.[index]?.images;
-          return (
-            <div key={field.id} className="mb-4 border p-4 rounded-lg">
-              <section className="mb-2">
-                <label className="text-black">{t('1')}</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageChange(e, index)}
-                  className="border p-2 w-full rounded-[15px]"
-                />
-                {errors.entries?.[index]?.images && (
-                  <div className="text-red text-sm">{errors.entries[index]?.images?.message}</div>
-                )}
-                {previewSrc && (
-                  <img
-                    src={previewSrc}
-                    alt={`Preview ${index + 1}`}
-                    className="mt-2 max-h-40 w-auto rounded-md border"
-                  />
-                )}
-              </section>
+      <Card className="w-full max-w-[600px] md:min-w-[440px]">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center flex items-center justify-center gap-2">
+            <ImageIcon className="h-6 w-6" />
+            {t('title')}
+          </CardTitle>
+          <CardDescription className="text-center">
+            Upload images and descriptions for your property
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              
+              {fields.map((field, index) => {
+                const previewSrc = watchedEntries?.[index]?.images;
+                return (
+                  <Card key={field.id} className="border-dashed">
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name={`entries.${index}.images`}
+                          render={({ field: fieldProps }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                <Upload className="h-4 w-4" />
+                                {t('1')}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handleImageChange(e, index)}
+                                  className="cursor-pointer"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                              {previewSrc && (
+                                <div className="mt-4">
+                                  <img
+                                    src={previewSrc}
+                                    alt={`Preview ${index + 1}`}
+                                    className="max-h-40 w-auto rounded-md border object-cover"
+                                  />
+                                </div>
+                              )}
+                            </FormItem>
+                          )}
+                        />
 
-              <section className="mb-2">
-                <label className="text-black">{t('2')}</label>
-                <input
-                  type="text"
-                  {...register(`entries.${index}.descriptions`)}
-                  className="border p-2 w-full rounded-[15px]"
-                />
-                {errors.entries?.[index]?.descriptions && (
-                  <div className="text-red text-sm">{errors.entries[index]?.descriptions?.message}</div>
-                )}
-              </section>
+                        <FormField
+                          control={form.control}
+                          name={`entries.${index}.descriptions`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('2')}</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Enter image description..."
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-              <button
+                        {fields.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => remove(index)}
+                            className="w-full"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {t('3')}
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+
+              <Button
                 type="button"
-                onClick={() => remove(index)}
-                className="flex items-center justify-center w-full text-red border border-red-500 rounded-lg p-2 mt-2"
+                variant="outline"
+                onClick={() => append({ images: '', descriptions: '' })}
+                className="w-full"
               >
-                <FaTrash className="mr-2" />
-                {t('3')}
-              </button>
-            </div>
-          );
-        })}
+                <Plus className="mr-2 h-4 w-4" />
+                {t('4')}
+              </Button>
 
-        <button
-          type="button"
-          onClick={() => append({ images: '', descriptions: '' })}
-          className="w-full flex justify-center text-black py-2 border border-primary rounded-lg mb-4"
-        >
-          <FaPlus className="mr-2" /> {t('4')}
-        </button>
-
-        <div className="flex gap-x-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            <FaArrowLeft className="self-center mx-1" />
-            {t('5')}
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            {t('6')}
-            <FaArrowRight className="self-center mx-1" />
-          </button>
-        </div>
-      </form>
+              <div className="flex gap-4 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onBack}
+                  className="flex-1"
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  {t('5')}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                  className="flex-1"
+                >
+                  {t('6')}
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

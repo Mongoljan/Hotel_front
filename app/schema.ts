@@ -59,10 +59,9 @@ export const schemaCreateRoom = z.object({
         .url({ message: 'Image must be a valid URL.' })
         .min(1, { message: 'Image URL is required.' }),
       descriptions: z
-        .string()
-        .min(1, { message: 'Description must not be empty.' }),
+        .string(), // Allow empty strings for descriptions
     })
-  ).min(1, { message: 'At least one image and description set is required.' }),
+  ).min(1, { message: 'At least one image is required.' }),
     // room_number: z.string().min(1, { message: "Room number is required" }),
     room_type: z.string().min(1, { message: "Room type is required" }),
     room_category:  z.string().min(1, { message: "Room category is required" }),

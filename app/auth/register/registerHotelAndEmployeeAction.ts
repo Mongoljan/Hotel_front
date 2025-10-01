@@ -3,7 +3,12 @@
 import { cookies } from 'next/headers';
 
 export async function registerHotelAndEmployeeAction(hotelData: any, employeeData: any) {
+  console.log('=== SERVER ACTION DEBUG ===');
+  console.log('Hotel Data:', JSON.stringify(hotelData, null, 2));
+  console.log('Employee Data:', JSON.stringify(employeeData, null, 2));
+  
   try {
+    console.log('Calling hotel registration API: https://dev.kacc.mn/api/properties/create/');
     const hotelResponse = await fetch('https://dev.kacc.mn/api/properties/create/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -11,6 +16,7 @@ export async function registerHotelAndEmployeeAction(hotelData: any, employeeDat
     });
 
     const hotelJson = await hotelResponse.json();
+    console.log('Hotel API Response:', hotelResponse.status, hotelJson);
 
     if (!hotelResponse.ok) {
       return {
@@ -22,21 +28,27 @@ export async function registerHotelAndEmployeeAction(hotelData: any, employeeDat
     const hotelId = hotelJson.pk;
 
     // Merge hotel ID into employee registration
+    const employeePayload = {
+      name: employeeData.contact_person_name,
+      position: employeeData.position,
+      contact_number: employeeData.contact_number,
+      email: employeeData.email,
+      password: employeeData.password,
+      user_type: employeeData.user_type,
+      hotel: hotelId,
+    };
+    
+    console.log('Calling employee registration API: https://dev.kacc.mn/api/EmployeeRegister/');
+    console.log('Employee payload:', JSON.stringify(employeePayload, null, 2));
+    
     const employeeResponse = await fetch('https://dev.kacc.mn/api/EmployeeRegister/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: employeeData.contact_person_name,
-        position: employeeData.position,
-        contact_number: employeeData.contact_number,
-        email: employeeData.email,
-        password: employeeData.password,
-        user_type: employeeData.user_type,
-        hotel: hotelId,
-      }),
+      body: JSON.stringify(employeePayload),
     });
 
     const employeeJson = await employeeResponse.json();
+    console.log('Employee API Response:', employeeResponse.status, employeeJson);
 
     if (!employeeResponse.ok) {
       return {

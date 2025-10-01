@@ -5,10 +5,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { schemaHotelSteps2 } from '../../../schema';
 import { z } from 'zod';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { FaArrowRight, FaArrowLeft } from 'react-icons/fa6';
+import { toast } from 'sonner';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const API_URL = 'https://dev.kacc.mn/api/confirm-address/';
@@ -30,17 +34,18 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
   const [combinedData, setCombinedData] = useState<CombinedData>({ province: [], soum: [], district: [] });
   const [filteredSoum, setFilteredSoum] = useState<Soum[]>([]);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<FormFields>({
+  const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps2),
+    defaultValues: {
+      province_city: '',
+      soum: '',
+      district: 0,
+      zipCode: '',
+      total_floor_number: 1,
+    },
   });
 
-  const selectedProvinceId = watch('province_city');
+  const selectedProvinceId = form.watch('province_city');
 
   useEffect(() => {
     const fetchCombinedData = async () => {
@@ -64,7 +69,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
         const initialValues = stored.step2 || existing;
 
         if (initialValues) {
-          reset(initialValues);
+          form.reset(initialValues);
           stored.step2 = initialValues;
           localStorage.setItem('propertyData', JSON.stringify(stored));
         }
@@ -75,7 +80,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
     fetchCombinedData();
     fetchStep2Data();
-  }, [reset]);
+  }, [form]);
 
   useEffect(() => {
     const provinceId = Number(selectedProvinceId);
@@ -88,7 +93,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
     const propertyId = stored.propertyId;
 
     if (!propertyId) {
-      toast.error('Property ID not found. Please complete Step 1 first.');
+      toast.error('Үл хөдлөх хөрөнгийн ID олдсонгүй. Эхлээд 1-р алхмыг дуусгана уу.');
       return;
     }
 
@@ -120,69 +125,153 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       stored.step2 = result;
       localStorage.setItem('propertyData', JSON.stringify(stored));
 
-      toast.success('Хаягийн мэдээлэл хадгалагдлаа!');
+      toast.success(t('address_saved') || 'Хаягийн мэдээлэл хадгалагдлаа!');
       onNext();
     } catch (err) {
       console.error(err);
-      toast.error('Алдаа гарлаа. Дахин оролдоно уу.');
+      toast.error(t('error') || 'Алдаа гарлаа. Дахин оролдоно уу.');
     }
   };
 
   return (
     <div className="flex justify-center h-full rounded-[12px]">
-      <ToastContainer />
-      <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-8 border-primary border-[1px] max-w-[440px] rounded-[15px] text-gray-600">
-        <h2 className="text-[30px] font-bold text-center text-black mb-8">{t("title")}</h2>
 
-        <div className="mb-5">
-          <label className="text-black">Хот/Аймаг</label>
-          <select {...register('province_city')} className="border p-2 w-full h-[45px] rounded-[15px]">
-            <option value="">-- Хот Аймаг сонгох --</option>
-            {combinedData.province.map((province) => (
-              <option key={province.id} value={province.id}>{province.name}</option>
-            ))}
-          </select>
-          {errors.province_city && <div className="text-red text-sm">{errors.province_city.message}</div>}
-        </div>
+      <Card className="w-full max-w-[440px]">
+        <CardHeader>
+          <CardTitle className="text-[30px] font-bold text-center text-black">{t("title")}</CardTitle>
+          <CardDescription className="text-center">
+            Property address and location information
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="province_city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Хот/Аймаг</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="-- Хот Аймаг сонгох --" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {combinedData.province.map((province) => (
+                          <SelectItem key={province.id} value={province.id.toString()}>
+                            {province.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="mb-5">
-          <label className="text-black">Сум/Дүүрэг</label>
-          <select {...register('soum')} className="border p-2 w-full h-[45px] rounded-[15px]">
-            <option value="">-- Сум/Дүүрэг сонгох --</option>
-            {filteredSoum.map((soum) => (
-              <option key={soum.id} value={soum.id}>{soum.name}</option>
-            ))}
-          </select>
-          {errors.soum && <div className="text-red text-sm">{errors.soum.message}</div>}
-        </div>
+              <FormField
+                control={form.control}
+                name="soum"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Сум/Дүүрэг</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="-- Сум/Дүүрэг сонгох --" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {filteredSoum.map((soum) => (
+                          <SelectItem key={soum.id} value={soum.id.toString()}>
+                            {soum.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="mb-5">
-          <label className="text-black">Баг/Хороо</label>
-          <input type="text" {...register('district')} className="border p-2 w-full h-[45px] rounded-[15px]" />
-          {errors.district && <div className="text-red text-sm">{errors.district.message}</div>}
-        </div>
+              <FormField
+                control={form.control}
+                name="district"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Баг/Хороо</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number"
+                        placeholder={t('district_placeholder')}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="mb-5">
-          <label className="text-black">Zip Code</label>
-          <input type="text" {...register('zipCode')} className="border p-2 w-full h-[45px] rounded-[15px]" />
-          {errors.zipCode && <div className="text-red text-sm">{errors.zipCode.message}</div>}
-        </div>
+              <FormField
+                control={form.control}
+                name="zipCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('5')}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t('zipcode_placeholder')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="mb-5">
-          <label className="text-black">Барилгын давхрын тоо</label>
-          <input type="number" min="1" {...register('total_floor_number')} className="border p-2 w-full h-[45px] rounded-[15px]" />
-          {errors.total_floor_number && <div className="text-red text-sm">{errors.total_floor_number.message}</div>}
-        </div>
+              <FormField
+                control={form.control}
+                name="total_floor_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Барилгын давхрын тоо</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min={1}
+                        placeholder={t('floors_placeholder')}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="flex gap-x-4">
-          <button type="button" onClick={onBack} className="w-full flex justify-center mt-4 text-black py-3 px-4 border-primary border-[1px] font-semibold rounded-[15px]">
-            <FaArrowLeft className="mr-1" /> Back
-          </button>
-          <button type="submit" disabled={isSubmitting} className="w-full flex justify-center mt-4 text-black py-3 px-4 border-primary border-[1px] font-semibold rounded-[15px]">
-            Next <FaArrowRight className="ml-1" />
-          </button>
-        </div>
-      </form>
+              <div className="flex gap-4 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onBack}
+                  className="flex-1"
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                  className="flex-1"
+                >
+                  Next
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

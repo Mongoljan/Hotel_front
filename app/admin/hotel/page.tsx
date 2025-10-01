@@ -7,6 +7,52 @@ import StepIndicator from './StepIndicator';
 import SixStepInfo from './SixStepInfo';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  IconBuilding,
+  IconSettings,
+  IconCheck,
+  IconClock,
+  IconBuildingBank,
+  IconBed
+} from "@tabler/icons-react";
+
+interface BasicInfo {
+  id: number;
+  property_name_mn: string;
+  property_name_en: string;
+  start_date: string;
+  total_hotel_rooms: number;
+  available_rooms: number;
+  star_rating: number;
+}
+
+interface PropertyBaseInfo {
+  pk: number;
+  register: string;
+  CompanyName: string;
+  PropertyName: string;
+  location: string;
+  property_type: number;
+  phone: string;
+  mail: string;
+  is_approved: boolean;
+  created_at: string;
+  groupName?: string;
+}
+
+interface PropertyPolicy {
+  id: number;
+  check_in_from: string;
+  check_in_until: string;
+  check_out_from: string;
+  check_out_until: string;
+  breakfast_policy: string;
+  allow_children: boolean;
+  allow_pets: boolean;
+}
 
 interface Hotel {
   is_approved: boolean;
@@ -14,24 +60,45 @@ interface Hotel {
 }
 
 export default function RegisterHotel() {
-  const t = useTranslations('AdminPage');
+  const t = useTranslations('HotelPage');
   const { user, isLoading, isAuthenticated } = useAuth();
   const [proceed, setProceed] = useState<number | null>(null);
   const [hotelApproved, setHotelApproved] = useState(false);
   const [stepStatus, setStepStatus] = useState(2);
   const [view, setView] = useState<'proceed' | 'register'>('proceed');
+  
+  // Hotel data state
+  const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
+  const [propertyBaseInfo, setPropertyBaseInfo] = useState<PropertyBaseInfo | null>(null);
+  const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
+  const [propertyTypes, setPropertyTypes] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // ✅ Load proceed from localStorage (ORIGINAL LOGIC with JWT data source)
+  // ✅ Load proceed from localStorage but PRIORITIZE approval status
   useEffect(() => {
-    const saved = localStorage.getItem('proceed');
-    if (saved !== null) {
-      setProceed(Number(saved));
-      return;
-    }
-
-    // ✅ Decide based on user data and API calls (ORIGINAL LOGIC)
     const decideStep = async () => {
       if (!user?.hotel) return; // Wait for user data
+
+      console.log('Deciding proceed step. User approval status:', {
+        userApproved: user?.approved,
+        hotelApproved: user?.hotelApproved
+      });
+
+      // 🔥 PRIORITY: If either user or hotel is not approved, always show approval waiting
+      if (!user?.approved || !user?.hotelApproved) {
+        console.log('User/Hotel not approved - showing Proceed component');
+        // Clear any cached proceed value to ensure approval waiting state
+        localStorage.removeItem('proceed');
+        setProceed(0); // Show approval waiting component
+        return;
+      }
+
+      // Only check completion status if both user and hotel are approved
+      const saved = localStorage.getItem('proceed');
+      if (saved !== null) {
+        setProceed(Number(saved));
+        return;
+      }
 
       try {
         const pd = JSON.parse(localStorage.getItem('propertyData') || '{}');
@@ -61,7 +128,7 @@ export default function RegisterHotel() {
     };
 
     decideStep();
-  }, [user?.hotel]); // Only depend on hotel ID being available
+  }, [user?.hotel, user?.approved, user?.hotelApproved]); // Depend on approval statuses
 
   // ✅ Persist `proceed` in localStorage
   useEffect(() => {
@@ -70,26 +137,104 @@ export default function RegisterHotel() {
     }
   }, [proceed]);
 
-  // ✅ Poll hotel approval (ORIGINAL LOGIC with JWT data source)
+  // ✅ Load hotel data once on mount or when hotel ID changes
   useEffect(() => {
-    const checkApproval = async () => {
+    const loadHotelData = async () => {
+      const hid = user?.hotel;
+      if (!hid) return;
+      
+      setIsLoadingData(true);
+      
       try {
-        const hid = user?.hotel;
-        if (!hid) return;
-        const res = await fetch(`https://dev.kacc.mn/api/properties/${hid}`);
-        if (!res.ok) return;
-        const data: Hotel = await res.json();
-        setHotelApproved(data.is_approved);
-        setStepStatus(data.is_approved ? 3 : 2);
+        const [hotelRes, basicRes, policyRes, combinedRes] = await Promise.all([
+          fetch(`https://dev.kacc.mn/api/properties/${hid}`),
+          fetch(`https://dev.kacc.mn/api/property-basic-info/?property=${hid}`),
+          fetch(`https://dev.kacc.mn/api/property-policies/?property=${hid}`),
+          fetch(`https://dev.kacc.mn/api/combined-data/`)
+        ]);
+        
+        if (hotelRes.ok) {
+          const hotelData: Hotel = await hotelRes.json();
+          setHotelApproved(hotelData.is_approved);
+          setStepStatus(hotelData.is_approved ? 3 : 2);
+          setPropertyBaseInfo(hotelData as any);
+        }
+        
+        if (basicRes.ok) {
+          const [basicData] = await basicRes.json();
+          setBasicInfo(basicData);
+        }
+        
+        if (policyRes.ok) {
+          const [policyData] = await policyRes.json();
+          setPropertyPolicy(policyData);
+        }
+        
+        if (combinedRes.ok) {
+          const combinedData = await combinedRes.json();
+          setPropertyTypes(combinedData.property_types || []);
+        }
       } catch (e) {
-        console.error('Error fetching approval', e);
+        console.error('Error loading hotel data', e);
+      } finally {
+        setIsLoadingData(false);
       }
     };
 
-    checkApproval();
-    const id = setInterval(checkApproval, 5000);
-    return () => clearInterval(id);
+    if (user?.hotel) {
+      loadHotelData();
+    }
   }, [user?.hotel]);
+
+  // ✅ Separate lighter approval polling (less frequent, only approval status)
+  useEffect(() => {
+    const checkApproval = async () => {
+      const hid = user?.hotel;
+      if (!hid) return;
+      
+      try {
+        const res = await fetch(`https://dev.kacc.mn/api/properties/${hid}`);
+        if (res.ok) {
+          const data: Hotel = await res.json();
+          setHotelApproved(data.is_approved);
+          setStepStatus(data.is_approved ? 3 : 2);
+        }
+      } catch (e) {
+        console.error('Error checking approval', e);
+      }
+    };
+
+    if (user?.hotel) {
+      // Only poll approval status every 30 seconds (much less aggressive)
+      const id = setInterval(checkApproval, 30000);
+      return () => clearInterval(id);
+    }
+  }, [user?.hotel]);
+
+  // Memoized helper functions
+  const getPropertyTypeName = React.useCallback((id?: number | null) => {
+    if (!id) return '—';
+    return propertyTypes.find((pt) => pt.id === id)?.name_mn ?? '—';
+  }, [propertyTypes]);
+
+  const formatDate = React.useCallback((dateString?: string | null) => {
+    if (!dateString) return '—';
+    try {
+      return new Date(dateString).toLocaleDateString('mn-MN');
+    } catch {
+      return dateString;
+    }
+  }, []);
+
+  // Memoized computed values
+  const hotelDisplayData = React.useMemo(() => ({
+    hotelName: basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || '—',
+    propertyType: getPropertyTypeName(propertyBaseInfo?.property_type),
+    startDate: formatDate(basicInfo?.start_date),
+    totalRooms: basicInfo?.total_hotel_rooms || '—',
+    childrenAllowed: propertyPolicy?.allow_children ? t('yes') : t('no'),
+    hotelId: user?.hotel || '—'
+  }), [basicInfo, propertyBaseInfo, propertyPolicy, user?.hotel, getPropertyTypeName, formatDate, t]);
 
   if (isLoading || proceed === null) return <div>Loading authentication and page data…</div>;
 
@@ -110,8 +255,77 @@ export default function RegisterHotel() {
   ];
 
   return (
-    <div className="min-h-screen bg-background p-8">
-   
+    <div className="space-y-6 p-4">
+      {/* Hero Gradient Card */}
+      {proceed === 2 && (
+        <section className="relative overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 p-6 text-slate-100 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.35),_transparent_55%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.08),transparent_45%)]" />
+          
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-4">
+              <Badge variant="outline" className="w-fit border-white/30 bg-white/10 text-white/90 backdrop-blur">
+                <IconBuildingBank className="mr-2 h-3.5 w-3.5" /> {t('hero_badge')}
+              </Badge>
+              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                {t('hero_title')}
+              </h1>
+              {/* COMMENTED OUT: Too verbose for business use
+              <p className="max-w-xl text-sm text-slate-200/80 md:text-base">
+                {t('hero_description')}
+              </p>
+              */}
+            </div>
+
+            {/* Hotel Info Panel */}
+            <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur">
+              <div className="flex items-center justify-between text-xs uppercase tracking-wide text-white/60 mb-4">
+                <span>{t('status_label')}</span>
+                <Badge className="bg-green-500/20 text-green-300 border-green-400/30">
+                  <IconCheck className="mr-1 h-3 w-3" />
+                  {t('status_approved')}
+                </Badge>
+              </div>
+              
+              {isLoadingData ? (
+                <div className="space-y-3 text-white/90">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm">Loading...</p>
+                    <div className="h-4 w-16 bg-white/20 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 text-white/90">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm">{t('hotel_name')}</p>
+                    <p className="text-sm font-semibold">{hotelDisplayData.hotelName}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm">{t('property_type')}</p>
+                    <p className="text-sm font-semibold">{hotelDisplayData.propertyType}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm">{t('start_date')}</p>
+                    <p className="text-sm font-semibold">{hotelDisplayData.startDate}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm">{t('total_rooms')}</p>
+                    <p className="text-sm font-semibold">{hotelDisplayData.totalRooms}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm">{t('children_allowed')}</p>
+                    <p className="text-sm font-semibold">{hotelDisplayData.childrenAllowed}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm">{t('hotel_id')}</p>
+                    <p className="text-sm font-semibold">{hotelDisplayData.hotelId}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {view === 'proceed' && proceed !== 2 && (
         <div className="w-full">
@@ -122,7 +336,18 @@ export default function RegisterHotel() {
       {/* Conditionally render components */}
       {proceed === 2 && <SixStepInfo proceed={proceed} setProceed={setProceed} />}
       {proceed < 2 && view === 'proceed' && (
-        <Proceed proceed={proceed} setProceed={setProceed} setView={setView} />
+        <Proceed 
+          proceed={proceed} 
+          setProceed={setProceed} 
+          setView={setView}
+          hotelId={user?.hotel}
+          hotelApproved={hotelApproved}
+          basicInfo={basicInfo}
+          getPropertyTypeName={(id: number) => {
+            const type = propertyTypes.find(pt => pt.id === id);
+            return type?.name_mn || '—';
+          }}
+        />
       )}
       {proceed < 2 && view === 'register' && (
         <RegisterPage proceed={proceed} setProceed={setProceed} setView={setView} />

@@ -5,10 +5,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { schemaHotelSteps1 } from '../../../schema';
 import { z } from 'zod';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
+import { toast } from 'sonner';
+import { ArrowLeft, ArrowRight, Building2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 const API_URL = 'https://dev.kacc.mn/api/property-basic-info/';
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
@@ -68,17 +74,29 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
     initDefaults();
   }, [userInfo?.hotel]);
 
-const form = useForm<FormFields>({
-  resolver: zodResolver(schemaHotelSteps1),
-});
+  const form = useForm<FormFields>({
+    resolver: zodResolver(schemaHotelSteps1),
+    defaultValues: defaultValues || {
+      property_name_mn: '',
+      property_name_en: '',
+      start_date: '',
+      star_rating: '',
+      part_of_group: false,
+      group_name: '',
+      total_hotel_rooms: '',
+      available_rooms: '',
+      sales_room_limitation: false,
+      languages: []
+    }
+  });
 
-const { register, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } = form;
+  const { handleSubmit, watch, reset } = form;
 
-useEffect(() => {
-  if (defaultValues) {
-    reset(defaultValues);
-  }
-}, [defaultValues, reset]);
+  useEffect(() => {
+    if (defaultValues) {
+      reset(defaultValues);
+    }
+  }, [defaultValues, reset]);
 
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
@@ -114,102 +132,237 @@ useEffect(() => {
       onNext();
     } catch (error) {
       console.error(error);
-      toast.error('Алдаа гарлаа. Та дахин оролдоно уу.');
+      toast.error(t('error') || 'Алдаа гарлаа. Та дахин оролдоно уу.');
     }
   };
 
   if (defaultValues === null) return null;
 
   return (
-    <div className="flex justify-center items-center min-h-screen h-full rounded-[12px] mt-[30px]">
-      <ToastContainer />
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[440px] md:max-w-[500px] rounded-[15px] text-gray-600"
-      >
-        <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">{t('title')}</h2>
+    <div className="flex justify-center items-center min-h-screen p-4">
 
-        <div className="text-black mb-2">{t('1')}</div>
-        <input type="text" {...register('property_name_mn')} className="border p-2 w-full mb-5 h-[45px] rounded-[15px]" />
-        {errors.property_name_mn && <div className="text-red text-sm">{errors.property_name_mn.message}</div>}
-
-        <div className="text-black mb-2">{t('2')}</div>
-        <input type="text" {...register('property_name_en')} className="border p-2 w-full mb-5 h-[45px] rounded-[15px]" />
-        {errors.property_name_en && <div className="text-red text-sm">{errors.property_name_en.message}</div>}
-
-        <div className="text-black mb-2">{t('3')}</div>
-        <input type="date" {...register('start_date')} className="border p-2 w-full mb-5 h-[45px] rounded-[15px]" />
-        {errors.start_date && <div className="text-red text-sm">{errors.start_date.message}</div>}
-
-        <div className="text-black mb-2">{t('4')}</div>
-        <select {...register('star_rating')} className="border p-2 w-full mb-5 h-[45px] rounded-[15px]">
-          <option value="">Сонгох</option>
-          {ratings.map(r => <option key={r.id} value={r.id}>{r.rating}</option>)}
-        </select>
-        {errors.star_rating && <div className="text-red text-sm">{errors.star_rating.message}</div>}
-
-        <div className="text-black mb-2">{t('5')}?</div>
-        <label className="flex items-center gap-2 mb-5">
-          <input type="checkbox" {...register('part_of_group')} />
-          <span>Тийм</span>
-        </label>
-
-        {watch('part_of_group') && (
-          <>
-            <div className="text-black mb-2">{t('groupName')}</div>
-            <input type="text" {...register('group_name')} className="border p-2 w-full mb-5 h-[45px] rounded-[15px]" />
-            {errors.group_name && <div className="text-red text-sm">{errors.group_name.message}</div>}
-          </>
-        )}
-
-        <section className="flex mb-5">
-          <div className="w-1/2 place-content-end">
-            <div className="text-black mb-2">{t('6')}</div>
-            <input type="number" {...register('total_hotel_rooms')} className="border p-2 w-[100px] mb-4 h-[45px] rounded-[15px]" min={1} />
-            {errors.total_hotel_rooms && <div className="text-red text-sm">{errors.total_hotel_rooms.message}</div>}
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
+              <Building2 className="h-6 w-6 text-primary-foreground" />
+            </div>
           </div>
+          <CardTitle className="text-2xl font-bold">{t('title')}</CardTitle>
+          <CardDescription>
+            Property basic information setup
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="property_name_mn"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('1')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <div className="w-1/2">
-            <div className="text-black mb-2">{t('7')}</div>
-            <input type="number" {...register('available_rooms')} className="border p-2 w-[100px] mb-4 h-[45px] rounded-[15px]" min={0} />
-            {errors.available_rooms && <div className="text-red text-sm">{errors.available_rooms.message}</div>}
-          </div>
-        </section>
+              <FormField
+                control={form.control}
+                name="property_name_en"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('2')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="mb-5">
-          <div className="text-black mb-2">{t('8')}</div>
-          <label>
-            <input type="checkbox" {...register('sales_room_limitation')} />
-            <span className="ml-3">Тийм</span>
-          </label>
-        </div>
+              <FormField
+                control={form.control}
+                name="start_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('3')}</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="text-black mb-2">{t('9')}</div>
-        <select {...register('languages')} multiple className="border p-2 w-full mb-4 h-[45px] rounded-[15px]">
-          {languages.map(lang => (
-            <option key={lang.id} value={lang.id}>{lang.languages_name_mn}</option>
-          ))}
-        </select>
-        {errors.languages && <div className="text-red text-sm">{errors.languages.message}</div>}
+              <FormField
+                control={form.control}
+                name="star_rating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('4')}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Сонгох" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ratings.map(r => (
+                          <SelectItem key={r.id} value={r.id.toString()}>
+                            {r.rating}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="flex gap-x-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            <div className="flex items-center"><FaArrowLeft className="mr-1" /> {t('10')}</div>
-          </button>
+              <FormField
+                control={form.control}
+                name="part_of_group"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="mt-1"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>{t('5')}?</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            <div className="flex items-center">{t('11')} <FaArrowRight className="ml-1" /></div>
-          </button>
-        </div>
-      </form>
+              <FormField
+                control={form.control}
+                name="group_name"
+                render={({ field }) => (
+                  <FormItem className={watch('part_of_group') ? '' : 'hidden'}>
+                    <FormLabel>{t('groupName')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="sales_room_limitation"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="mt-1"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>{t('8')}</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="languages"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('9')}</FormLabel>
+                    <FormControl>
+                      <select 
+                        multiple 
+                        value={field.value || []} 
+                        onChange={(e) => {
+                          const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+                          field.onChange(selectedOptions);
+                        }}
+                        className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {languages.map(lang => (
+                          <option key={lang.id} value={lang.id.toString()}>
+                            {lang.languages_name_mn}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <FormField
+                    control={form.control}
+                    name="total_hotel_rooms"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('6')}</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={1} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <FormField
+                    control={form.control}
+                    name="available_rooms"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('7')}</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onBack}
+                  className="flex-1"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {t('10')}
+                </Button>
+
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                  className="flex-1"
+                >
+                  {t('11')}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

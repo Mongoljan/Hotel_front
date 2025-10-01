@@ -8,6 +8,7 @@ import Topbar from "@/components/topbar";
 import { ReactNode } from "react";
 import { cookies } from "next/headers"; // ✅ use next/headers for server-side cookies
 import { Inter, PT_Sans } from "next/font/google";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -49,6 +50,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       <body className={`${inter.variable} ${ptSans.variable} antialiased font-sans h-full min-h-screen bg-background text-foreground`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
+          <Toaster position="top-right" />
         </NextIntlClientProvider>
       </body>
     </html>

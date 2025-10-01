@@ -37,7 +37,7 @@ export default function Sidebar({ isApproved, userApproved }: { isApproved: bool
 
   const navItems = (isApproved && userApproved)
     ? [
-        { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+        { href: "/admin/dashboard", icon: LayoutDashboard, label: "Хяналтын самбар" },
         { href: "/admin/bookings", icon: ClipboardList, label: "Захиалгын жагсаалт" },
         { href: "/admin/room-blocks", icon: DoorClosed, label: "Өрөө блок" },
         { href: "/admin/billing", icon: Receipt, label: "Төлбөр тооцоо" },

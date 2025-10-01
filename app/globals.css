@@ -12,8 +12,8 @@
     --card-foreground: 227 44% 14%;
     --popover: 0 0% 100%;
     --popover-foreground: 227 44% 14%;
-    --primary: 238 83% 65%;
-    --primary-foreground: 214 100% 98%;
+    --primary: 220 13% 18%;
+    --primary-foreground: 210 40% 98%;
     --secondary: 210 36% 92%;
     --secondary-foreground: 227 42% 22%;
     --muted: 213 32% 90%;
@@ -24,17 +24,17 @@
     --destructive-foreground: 214 100% 98%;
     --border: 216 36% 88%;
     --input: 216 36% 88%;
-    --ring: 238 83% 65%;
+    --ring: 220 13% 18%;
     --radius: 0.75rem;
 
     --sidebar-background: 216 38% 96%;
     --sidebar-foreground: 227 44% 20%;
-    --sidebar-primary: 238 83% 65%;
-    --sidebar-primary-foreground: 214 100% 98%;
+    --sidebar-primary: 220 13% 18%;
+    --sidebar-primary-foreground: 210 40% 98%;
     --sidebar-accent: 213 32% 90%;
     --sidebar-accent-foreground: 227 42% 24%;
     --sidebar-border: 215 30% 86%;
-    --sidebar-ring: 238 83% 65%;
+    --sidebar-ring: 220 13% 18%;
 
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -55,8 +55,8 @@
     --card-foreground: 213 67% 96%;
     --popover: 232 33% 12%;
     --popover-foreground: 213 67% 96%;
-    --primary: 238 83% 68%;
-    --primary-foreground: 214 100% 96%;
+    --primary: 220 13% 91%;
+    --primary-foreground: 220 13% 9%;
     --secondary: 228 28% 18%;
     --secondary-foreground: 213 67% 96%;
     --muted: 228 22% 22%;
@@ -67,16 +67,16 @@
     --destructive-foreground: 214 100% 96%;
     --border: 230 24% 22%;
     --input: 230 24% 22%;
-    --ring: 238 83% 68%;
+    --ring: 220 13% 91%;
 
     --sidebar-background: 232 33% 12%;
     --sidebar-foreground: 213 67% 96%;
-  --sidebar-primary: 238 83% 68%;
-  --sidebar-primary-foreground: 214 100% 96%;
+  --sidebar-primary: 220 13% 91%;
+  --sidebar-primary-foreground: 220 13% 9%;
     --sidebar-accent: 230 24% 24%;
     --sidebar-accent-foreground: 213 67% 94%;
     --sidebar-border: 232 22% 22%;
-    --sidebar-ring: 238 83% 68%;
+    --sidebar-ring: 220 13% 91%;
 
     --brand-gradient: linear-gradient(140deg, hsl(257 60% 22%) 0%, hsl(231 32% 16%) 55%, hsl(200 34% 24%) 100%);
     --brand-radial: radial-gradient(120% 120% at 20% 20%, rgba(99, 102, 241, 0.35) 0%, rgba(15, 23, 42, 0) 60%), radial-gradient(140% 140% at 85% 0%, rgba(45, 212, 191, 0.22) 0%, rgba(15, 23, 42, 0) 65%);
@@ -92,7 +92,7 @@
     z-index: 0;
     min-height: 100vh;
     background-color: hsl(var(--background));
-    background-image: var(--brand-radial), var(--brand-gradient);
+    /* background-image: var(--brand-radial), var(--brand-gradient); */
     background-attachment: fixed, fixed;
     background-size: cover, cover;
     color: hsl(var(--foreground));
@@ -107,7 +107,7 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    background-image: var(--brand-noise);
+    /* background-image: var(--brand-noise); */
     background-size: 300px 300px;
     mix-blend-mode: soft-light;
     opacity: var(--noise-opacity);

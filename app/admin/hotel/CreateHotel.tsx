@@ -5,8 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { schemaHotelRegistration } from '../../schema';
 import { z } from 'zod';
-import 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'sonner';
 import Cookies from 'js-cookie';
 
 type FormFields = z.infer<typeof schemaHotelRegistration>;
@@ -70,14 +69,14 @@ export default function CreateHotel() {
       });
 
       if (response.ok) {
-        toast.success('Hotel registration successful!');
+        toast.success('Зочид буудлын бүртгэл амжилттай!');
       } else {
         const errorData = await response.json();
-        toast.error('Registration failed: ' + errorData.message);
+        toast.error('Бүртгэл амжилтгүй: ' + errorData.message);
         console.log(errorData)
       }
     } catch (error) {
-      toast.error('An unexpected error occurred during registration');
+      toast.error('Бүртгэлийн явцад санаандгүй алдаа гарлаа');
       console.error('Error during registration:', error);
     } finally {
       setIsSubmitting(false);
@@ -86,7 +85,7 @@ export default function CreateHotel() {
 
   return (
     <div className="flex justify-center items-center min-h-screen py-[100px] bg-[#E5FDoD] rounded-[12px]">
-      <ToastContainer />
+
       <form
         onSubmit={handleSubmit(onSubmit, showValidationErrors)}
         className="bg-white border-[#4A90E2] border-solid border-[1px]  p-10 px-10 max-w-[500px] rounded-[10px] text-gray-600"

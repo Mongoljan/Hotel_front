@@ -16,7 +16,7 @@ export function GradientBackground({
   const variants = {
     default: "bg-gradient-to-br from-blue-50 via-white to-indigo-50",
     subtle: "bg-gradient-to-br from-slate-50 via-white to-blue-50/30",
-    vibrant: "bg-gradient-to-br from-blue-100 via-indigo-50 to-purple-50"
+    vibrant: "bg-gradient-to-br from-blue-100 via-slate-50 to-slate-100"
   };
 
   return (

@@ -63,7 +63,7 @@ export function ShimmerButton({
     <motion.button
       className={cn(
         "relative inline-flex items-center justify-center px-6 py-3 font-medium text-white rounded-lg",
-        "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600",
+        "bg-gradient-to-r from-blue-600 via-slate-600 to-slate-700",
         "bg-[length:200%_100%] bg-[position:0%_0%]",
         "hover:bg-[position:100%_0%] transition-all duration-500",
         "shadow-lg hover:shadow-xl",

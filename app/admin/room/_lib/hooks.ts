@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getClientBackendToken } from "@/utils/auth";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { ROOM_API_ENDPOINTS } from "./constants";
 import { clearRoomCache, readRoomCache, writeRoomCache } from "./cache";
@@ -38,6 +39,7 @@ export const useRoomData = ({
   setIsRoomAdded,
   onAuthLost
 }: UseRoomDataParams): UseRoomDataReturn => {
+  const t = useTranslations();
   const onAuthLostRef = useRef(onAuthLost);
   const [rawRooms, setRawRooms] = useState<RoomData[]>([]);
   const [lookup, setLookup] = useState<AllData>(() => createEmptyLookup());
@@ -105,7 +107,7 @@ export const useRoomData = ({
       const now = Date.now();
       setLastSynced(new Date(now));
       writeRoomCache({ lookup: lookupPayload, rooms: roomsPayload, syncedAt: now });
-      toast.success("Room data refreshed");
+      toast.success(t('Rooms.actions.dataRefreshed'));
     } catch (error) {
       console.error("Room data fetch failed", error);
       if (!usedCache) {

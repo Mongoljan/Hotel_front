@@ -1,10 +1,29 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { FaChevronLeft, FaChevronRight, FaRegCheckCircle } from 'react-icons/fa';
+import {
+  IconBed,
+  IconCalendar,
+  IconCar,
+  IconChevronLeft,
+  IconChevronRight,
+  IconFileInfo,
+  IconInfoCircle,
+  IconMoodKid,
+  IconPhoto,
+  IconShieldCheck,
+} from '@tabler/icons-react';
+
 import AboutHotel from './AboutHotel';
 import { useAuth } from '@/hooks/useAuth';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { cn } from '@/lib/utils';
 
 interface PropertyPhoto {
   id: number;
@@ -24,7 +43,7 @@ interface PropertyDetail {
   Additional_Information: number | null;
 }
 
-interface Additional_Information {
+interface AdditionalInformation {
   id: number;
   About: string;
   YoutubeUrl: string;
@@ -77,6 +96,7 @@ interface PropertyBaseInfo {
   mail: string;
   is_approved: boolean;
   created_at: string;
+  groupName?: string;
 }
 
 interface ProceedProps {
@@ -87,16 +107,17 @@ interface ProceedProps {
 export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const t = useTranslations('SixStepInfo');
   const { user } = useAuth();
+
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
   const [propertyImages, setPropertyImages] = useState<PropertyPhoto[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
-  const [Menu, setMenu] = useState(0);
+  const [activeTab, setActiveTab] = useState<'about' | 'location' | 'services' | 'faq'>('about');
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
   const [propertyBaseInfo, setPropertyBaseInfo] = useState<PropertyBaseInfo | null>(null);
   const [propertyTypes, setPropertyTypes] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
-  const [additionalInfo, setAdditionalInfo] = useState<Additional_Information | null>(null);
+  const [additionalInfo, setAdditionalInfo] = useState<AdditionalInformation | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -106,41 +127,24 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       if (!hotelId) return setProceed(0);
 
       try {
-        const [
-          detailRes,
-          policyRes,
-          addressRes,
-          basicInfoRes,
-          combinedDataRes,
-          baseRes,
-          imagesRes
-        ] = await Promise.all([
+        const [detailRes, policyRes, addressRes, basicInfoRes, combinedDataRes, baseRes, imagesRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/property-policies/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/confirm-address/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/property-basic-info/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/combined-data/`),
           fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`),
-          fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`)
+          fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`),
         ]);
 
-        // Log API responses for debugging
-        console.log('SixStepInfo API responses:', {
-          detailRes: detailRes.status,
-          policyRes: policyRes.status, 
-          addressRes: addressRes.status,
-          basicInfoRes: basicInfoRes.status,
-          baseRes: baseRes.status
-        });
-
         if (!detailRes.ok || !policyRes.ok || !addressRes.ok || !basicInfoRes.ok || !baseRes.ok) {
-          console.log('SixStepInfo: One or more APIs failed, setting proceed to 0');
-          return setProceed(0);
+          setProceed(0);
+          return;
         }
 
         const [detail] = await detailRes.json();
         const [policy] = await policyRes.json();
-        const [address] = await addressRes.json();
+        const [fetchedAddress] = await addressRes.json();
         const [basic] = await basicInfoRes.json();
         const combinedData = await combinedDataRes.json();
         const baseInfo = await baseRes.json();
@@ -148,13 +152,12 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
         setPropertyDetail(detail);
         setPropertyPolicy(policy);
-        setAddress(address);
+        setAddress(fetchedAddress);
         setBasicInfo(basic);
         setPropertyBaseInfo(baseInfo);
         setPropertyTypes(combinedData.property_types || []);
         setPropertyImages(imageJson);
 
-        // fetch additionalInfo using its ID (not by property)
         if (detail?.Additional_Information && typeof detail.Additional_Information === 'number') {
           const additionalRes = await fetch(`https://dev.kacc.mn/api/additionalInfo/${detail.Additional_Information}/`);
           if (additionalRes.ok) {
@@ -162,118 +165,332 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
             setAdditionalInfo(additionalData);
           }
         }
-
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error(error);
         setProceed(0);
       }
     }
 
     loadData();
-  }, [setProceed]);
+  }, [setProceed, user?.hotel]);
 
-  const getPropertyTypeName = (id: number) => propertyTypes.find(pt => pt.id === id)?.name_mn || t('loading');
-  const goPrev = () => setImageIndex(prev => (prev === 0 ? propertyImages.length - 1 : prev - 1));
-  const goNext = () => setImageIndex(prev => (prev === propertyImages.length - 1 ? 0 : prev + 1));
-  const formatTime = (t: string) => t?.slice(0, 5);
+  useEffect(() => {
+    if (!propertyImages.length) {
+      setImageIndex(0);
+      return;
+    }
+    setImageIndex((prev) => Math.min(prev, propertyImages.length - 1));
+  }, [propertyImages.length]);
 
-  if (!propertyDetail) return <div>{t('8')}</div>;
+  const getPropertyTypeName = useCallback(
+    (id?: number | null) => {
+      if (!id) return '—';
+      return propertyTypes.find((pt) => pt.id === id)?.name_mn ?? t('loading');
+    },
+    [propertyTypes, t]
+  );
+
+  const formatTime = useCallback((time?: string | null) => {
+    if (!time) return '—';
+    return time.slice(0, 5);
+  }, []);
+
+  const hasImages = propertyImages.length > 0;
+  const currentImage = hasImages ? propertyImages[imageIndex] : null;
+
+  const detailItems = useMemo(
+    () => [
+      {
+        label: 'Үл хөдлөх хөрөнгийн төрөл',
+        value: getPropertyTypeName(propertyBaseInfo?.property_type),
+        icon: IconFileInfo,
+      },
+      {
+        label: 'Үйл ажиллагаа эхэлсэн огноо',
+        value: basicInfo?.start_date ?? '—',
+        icon: IconCalendar,
+      },
+      {
+        label: 'Буудлын нийт өрөөний тоо',
+        value: basicInfo?.total_hotel_rooms ?? '—',
+        icon: IconBed,
+      },
+      {
+        label: 'Хүүхэд үйлчлүүлэх боломжтой эсэх',
+        value: propertyPolicy?.allow_children ?? null,
+        icon: IconMoodKid,
+        type: 'boolean' as const,
+      },
+      {
+        label: 'Зогсоолын нөхцөл',
+        value: propertyDetail?.parking_situation ?? '—',
+        icon: IconCar,
+      },
+    ],
+    [basicInfo, getPropertyTypeName, propertyDetail?.parking_situation, propertyPolicy?.allow_children, propertyBaseInfo?.property_type]
+  );
+
+  const policyItems = useMemo(
+    () => [
+      {
+        label: 'Check-in',
+        value: `${formatTime(propertyPolicy?.check_in_from)} - ${formatTime(propertyPolicy?.check_in_until)}`,
+      },
+      {
+        label: 'Check-out',
+        value: `${formatTime(propertyPolicy?.check_out_from)} - ${formatTime(propertyPolicy?.check_out_until)}`,
+      },
+      {
+        label: 'Өрөөнүүд үйлчилгээнд',
+        value: basicInfo?.available_rooms ?? '—',
+      },
+    ],
+    [basicInfo?.available_rooms, formatTime, propertyPolicy?.check_in_from, propertyPolicy?.check_in_until, propertyPolicy?.check_out_from, propertyPolicy?.check_out_until]
+  );
+
+  const tabs = useMemo(
+    () => [
+      { value: 'about' as const, label: 'Бидний тухай', description: 'Зочид буудлын ерөнхий танилцуулга' },
+      { value: 'location' as const, label: 'Байршил', description: 'Байршил, хүрэх заавар' },
+      { value: 'services' as const, label: 'Үйлчилгээ', description: 'Үйлчилгээ, нэмэлт боломжууд' },
+      { value: 'faq' as const, label: 'Түгээмэл асуулт', description: 'Асуулт, хариултууд' },
+    ],
+    []
+  );
+
+  const statusBadge = propertyBaseInfo?.is_approved
+    ? {
+        label: 'Баталгаажсан',
+        className: 'border border-emerald-200 bg-emerald-500/10 text-emerald-600',
+      }
+    : {
+        label: 'Баталгаажаагүй',
+        className: 'border border-amber-200 bg-amber-50 text-amber-600',
+      };
+
+  if (!propertyDetail) {
+    return (
+      <Card className="border border-dashed border-border bg-muted/30">
+        <CardHeader className="items-start gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <IconInfoCircle className="h-4 w-4 text-muted-foreground" />
+            {t('8')}
+          </CardTitle>
+          <CardDescription>
+            Тохиргооны мэдээлэл хараахан бүртгэгдээгүй байна. Мэдээллээ шинэчилсний дараа энд харагдана.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   return (
-    <div>
-      <div className="flex justify-between mb-6">
-        <p className="text-lg text-black font-semibold">Үндсэн мэдээлэл</p>
-        {propertyBaseInfo?.is_approved ? (
-          <div className="text-green-500 flex gap-x-1 text-[18px]">
-            Баталгаажсан <FaRegCheckCircle className="text-xl mt-[4px]" />
-          </div>
-        ) : (
-          <div className="text-red">Баталгаажаагүй</div>
-        )}
-      </div>
+    <div className="flex-1 space-y-4  pt-6">
+      {/* Dashboard-style Header */}
+      {/* <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight text-cyrillic">
+          {basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || 'Зочид буудал'}
+        </h2>
+        <Badge
+          variant="outline"
+          className={cn('gap-1 px-3 py-1 text-xs font-semibold', statusBadge.className)}
+        >
+          <IconShieldCheck className="h-3 w-3" />
+          {statusBadge.label}
+        </Badge>
+      </div> */}
 
-      <div className="flex flex-col md:flex-row gap-6 items-start min-h-[300px]">
-        <div className="w-full md:w-2/5">
-          {propertyImages.length > 0 && (
-            <div className="relative bg-white rounded-xl overflow-hidden border border-cloud">
-              <img
-                src={propertyImages[imageIndex].image}
-                alt={propertyImages[imageIndex].description}
-                className="w-full object-cover h-[250px]"
-              />
-              {propertyImages.length > 1 && (
-                <div className="absolute inset-0 flex items-center justify-between px-4">
-                  <button onClick={goPrev} className="text-white text-xl bg-black/50 rounded-full p-2"><FaChevronLeft /></button>
-                  <button onClick={goNext} className="text-white text-xl bg-black/50 rounded-full p-2"><FaChevronRight /></button>
-                </div>
-              )}
-              <p className="text-sm text-center text-gray-800 py-2">{propertyImages[imageIndex].description}</p>
+      {/* Stats Cards - Dashboard Style */}
+      {/* COMMENTED OUT: Redundant info now shown in hero card
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {detailItems.slice(0, 4).map((item) => {
+          const formattedValue = (() => {
+            if (item.type === 'boolean') {
+              if (typeof item.value !== 'boolean') return '—';
+              return item.value ? 'Тийм' : 'Үгүй';
+            }
+            if (item.value === null || item.value === undefined || item.value === '') return '—';
+            return item.value;
+          })();
+
+          return (
+            <Card key={item.label}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-cyrillic">
+                  {item.label}
+                </CardTitle>
+                <item.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formattedValue}</div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+      */}
+
+      {/* Additional Info & Image */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle className="text-cyrillic">Нэмэлт мэдээлэл</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {detailItems.slice(4).map((item) => {
+                const formattedValue = (() => {
+                  if (item.type === 'boolean') {
+                    if (typeof item.value !== 'boolean') return '—';
+                    return item.value ? 'Тийм' : 'Үгүй';
+                  }
+                  if (item.value === null || item.value === undefined || item.value === '') return '—';
+                  return item.value;
+                })();
+
+                return (
+                  <div key={item.label} className="flex items-center">
+                    <item.icon className="h-4 w-4 text-muted-foreground mr-3" />
+                    <div className="space-y-1 flex-1">
+                      <p className="text-sm font-medium leading-none text-cyrillic">
+                        {item.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formattedValue}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="w-full md:w-3/5 flex flex-col">
-          <div className="mb-2 min-h-[50px]">
-            {basicInfo && (
-              <>
-                <p className="text-primary text-2xl font-semibold">{basicInfo.property_name_mn}</p>
-                <p className="text-soft -translate-y-1">{basicInfo.property_name_en}</p>
-              </>
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle className="text-cyrillic">Зураг</CardTitle>
+            <CardDescription className="text-cyrillic">
+              {propertyImages.length} фото
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {hasImages ? (
+              <div className="space-y-4">
+                <div className="overflow-hidden rounded-lg border">
+                  <Image
+                    src={currentImage?.image ?? ''}
+                    alt={currentImage?.description || t('hotelImage')}
+                    width={400}
+                    height={250}
+                    className="w-full h-48 object-cover"
+                  />
+                </div>
+                {propertyImages.length > 1 && (
+                  <div className="flex items-center justify-between">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setImageIndex((prev) => (prev === 0 ? propertyImages.length - 1 : prev - 1))
+                      }
+                    >
+                      <IconChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      {imageIndex + 1} / {propertyImages.length}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setImageIndex((prev) => (prev === propertyImages.length - 1 ? 0 : prev + 1))
+                      }
+                    >
+                      <IconChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-48 border border-dashed rounded-lg bg-muted/30">
+                <div className="text-center">
+                  <IconPhoto className="mx-auto h-8 w-8 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mt-2">Зураг байхгүй</p>
+                </div>
+              </div>
             )}
-          </div>
-
-          <div className="border border-cloud rounded-[15px] p-4 space-y-4">
-            <InfoRow label="Үл хөдлөх хөрөнгийн төрөл" value={getPropertyTypeName(propertyBaseInfo?.property_type ?? 0)} />
-            <InfoRow label="Үйл ажиллагаа эхэлсэн огноо" value={basicInfo?.start_date} />
-            <InfoRow label="Буудлын нийт өрөөний тоо" value={basicInfo?.total_hotel_rooms} />
-            <InfoRow label="Хүүхэд үйлчлүүлэх боломжтой эсэх" value={propertyPolicy?.allow_children} isBoolean />
-            <InfoRow label="Зогсоолтой эсэх" value={propertyDetail?.parking_situation} />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="flex max-w-[700px] justify-between text-black text-[17px] mt-3 font-semibold mb-4">
-        {['Бидний тухай', 'Байршил', 'Үйлчилгээ', 'Түгээмэл асуулт, хариулт'].map((label, index) => (
-          <button key={index} className={Menu === index ? 'text-primary' : ''} onClick={() => setMenu(index)}>
-            {index + 1}.{label}
-          </button>
-        ))}
-      </div>
 
-      {Menu === 0 && (
-        <AboutHotel
-          image={propertyImages[imageIndex] || null}
-          aboutUs={additionalInfo?.About || ''}
-          youtubeUrl={additionalInfo?.YoutubeUrl || ''}
-          hotelId={propertyDetail.property}
-          propertyDetailId={propertyDetail.id}
-          basicInfo={basicInfo}
-          propertyPolicy={propertyPolicy}
-          propertyBaseInfo={propertyBaseInfo}
-          propertyDetail={propertyDetail}
-          getPropertyTypeName={getPropertyTypeName}
-          formatTime={formatTime}
-        />
-      )}
+
+      {/* Content Tabs - Back to Minor Component */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-cyrillic">Контент</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="space-y-4">
+            <TabsList className="grid w-full grid-cols-4 bg-card/80 backdrop-blur border border-border/50 shadow-sm">
+              {tabs.map((tab) => (
+                <TabsTrigger 
+                  key={tab.value} 
+                  value={tab.value} 
+                  className="text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium"
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            
+            <div className="mt-4">
+              <TabsContent value="about" className="mt-0">
+                <AboutHotel
+                  image={currentImage}
+                  aboutUs={additionalInfo?.About || ''}
+                  youtubeUrl={additionalInfo?.YoutubeUrl || ''}
+                  hotelId={propertyDetail.property}
+                  propertyDetailId={propertyDetail.id}
+                  basicInfo={basicInfo}
+                  propertyPolicy={propertyPolicy}
+                  propertyBaseInfo={propertyBaseInfo}
+                  propertyDetail={propertyDetail}
+                  getPropertyTypeName={(id) => getPropertyTypeName(id)}
+                  formatTime={(time) => formatTime(time)}
+                />
+              </TabsContent>
+              <TabsContent value="location" className="mt-0">
+                <div className="text-center text-muted-foreground py-8 text-sm">
+                  Байршлын мэдээлэл удахгүй нэмэгдэнэ
+                </div>
+              </TabsContent>
+              <TabsContent value="services" className="mt-0">
+                <div className="text-center text-muted-foreground py-8 text-sm">
+                  Үйлчилгээний мэдээлэл удахгүй нэмэгдэнэ
+                </div>
+              </TabsContent>
+              <TabsContent value="faq" className="mt-0">
+                <div className="text-center text-muted-foreground py-8 text-sm">
+                  Түгээмэл асуулт удахгүй нэмэгдэнэ
+                </div>
+              </TabsContent>
+            </div>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-const InfoRow = ({
-  label,
-  value,
-  isBoolean = false,
-}: {
-  label: string;
-  value: string | number | boolean | null | undefined;
-  isBoolean?: boolean;
-}) => (
-  <div className="flex justify-between">
-    <p className="text-muted">{label}:</p>
-    {isBoolean && typeof value === 'boolean' ? (
-      <span className={value ? 'text-green-500' : 'text-red'}>{value ? 'Тийм' : 'Үгүй'}</span>
-    ) : (
-      <p>{value ?? '-'}</p>
-    )}
-  </div>
-);
+
+
+function EmptyState({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/20 p-10 text-center">
+      <IconInfoCircle className="h-6 w-6 text-muted-foreground" />
+      <p className="text-base font-semibold text-foreground">{title}</p>
+      <p className="max-w-md text-sm text-muted-foreground">{description}</p>
+    </div>
+  );
+}

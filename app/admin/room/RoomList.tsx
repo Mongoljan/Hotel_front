@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useCallback, useMemo, useState } from "react";
+import { useTranslations } from 'next-intl';
 import { getClientBackendToken } from "@/utils/auth";
 
 import {
@@ -41,7 +42,7 @@ import { FaChild } from "react-icons/fa6";
 import { LuBedSingle, LuBedDouble } from "react-icons/lu";
 
 import RoomModal from "./RoomModal";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import {
   buildLookupMaps,
   calculateRoomInsights,
@@ -89,6 +90,7 @@ const StatCard = ({ label, value, helper, icon: Icon, accent }: StatCardProps) =
 );
 
 export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps) {
+  const t = useTranslations('Rooms');
   const apiRef = useGridApiRef();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const handleAuthLost = useCallback(() => {
@@ -241,12 +243,12 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
         const err = await res.json();
         throw new Error(err.error || "Failed to delete room.");
       }
-      toast.success("Room deleted successfully.");
+      toast.success("Өрөө амжилттай устгагдлаа.");
       // Trigger a re-fetch
       setIsRoomAdded(true);
     } catch (err: any) {
       console.error("Delete failed:", err);
-      toast.error(err.message || "Delete failed.");
+      toast.error(err.message || "Устгах амжилтгүй.");
     }
   };
 
@@ -593,101 +595,37 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
   ];
 
   return (
-    <div className="space-y-10">
-      <section className="relative overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 p-8 text-slate-100 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.35),_transparent_55%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.08),transparent_45%)]" />
-        <div className="relative flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-4">
-            <Badge variant="outline" className="w-fit border-white/30 bg-white/10 text-white/90 backdrop-blur">
-              <Sparkles className="mr-2 h-3.5 w-3.5" /> Room operations
-            </Badge>
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              Hotel rooms, orchestrated with clarity.
-            </h1>
-            <p className="max-w-xl text-sm text-slate-200/80 md:text-base">
-              Keep pace with demand, understand occupancy in seconds, and launch new room types with confidence.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                size="lg"
-                onClick={openCreateModal}
-                disabled={!!authError}
-                className="group inline-flex items-center gap-2 rounded-full bg-white/95 px-6 py-2 text-slate-900 shadow-lg transition hover:bg-white"
-              >
-                <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
-                New room
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={handleRefresh}
-                className="border-white/30 bg-white/10 text-white hover:bg-white/20"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Sync data
-              </Button>
-            </div>
+    <div className="w-full min-w-0 space-y-4">
+      {/* Simple header with key metrics */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Building2 className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-semibold">Өрөөний удирдлага</h1>
           </div>
-
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur">
-            <div className="flex items-center justify-between text-xs uppercase tracking-wide text-white/60">
-              <span>Occupancy rate</span>
-              <span className="text-2xl font-semibold text-white">{insights.occupancyRate}%</span>
-            </div>
-            <div className="mt-4">
-              <Progress value={Math.min(insights.occupancyRate, 100)} className="h-2 bg-white/20" />
-              <p className="mt-3 text-xs text-white/70">
-                {formatNumber(insights.sold)} sold · {formatNumber(insights.totalInventory)} total keys
-              </p>
-            </div>
-            <div className="mt-6 grid grid-cols-2 gap-4 text-white/90">
-              <div>
-                <p className="text-[10px] uppercase tracking-wide text-white/60">Ready to sell</p>
-                <p className="mt-1 text-lg font-semibold">{formatNumber(insights.available)}</p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wide text-white/60">Wifi coverage</p>
-                <p className="mt-1 text-lg font-semibold">{insights.wifiShare}%</p>
-              </div>
-            </div>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span>{formatNumber(insights.totalInventory)} өрөө</span>
+            <span>•</span>
+            <span>{formatNumber(insights.available)} боломжтой</span>
+            <span>•</span>
+            <span>{insights.occupancyRate}% эзэлхүүн</span>
           </div>
         </div>
-      </section>
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Inventory keys"
-          value={formatNumber(insights.totalInventory)}
-          helper={`${formatNumber(insights.available)} ready to sell`}
-          icon={Building2}
-        />
-        <StatCard
-          label="Distinct room families"
-          value={formatNumber(insights.categories)}
-          helper="Grouped by type & category"
-          icon={Sparkles}
-          accent="from-fuchsia-500/30 via-purple-400/20 to-indigo-400/30"
-        />
-        <StatCard
-          label="Avg. guest capacity"
-          value={`${formatNumber(insights.avgCapacity, { maximumFractionDigits: 1 })} pax`}
-          helper="Adults + children per room"
-          icon={UsersIcon}
-          accent="from-emerald-500/30 via-teal-400/20 to-sky-400/30"
-        />
-        <StatCard
-          label="Wifi coverage"
-          value={`${insights.wifiShare}%`}
-          helper="Rooms with high-speed connectivity"
-          icon={Wifi}
-          accent="from-sky-500/30 via-blue-400/20 to-cyan-300/30"
-        />
+        <div className="flex gap-2">
+          <Button
+            variant="outline" 
+            size="sm"
+            onClick={handleRefresh}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Шинэчлэх
+          </Button>
+        </div>
       </div>
 
       {authError ? (
         <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-8 text-center text-destructive">
-          <p className="text-lg font-semibold">Authentication required</p>
+          <p className="text-lg font-semibold">{t('errors.authRequired')}</p>
           <p className="mt-2 text-sm text-destructive/80">{authError}</p>
         </div>
       ) : (
@@ -739,16 +677,26 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-border/60 bg-background/60 p-4 shadow-lg backdrop-blur">
+          <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             {loading ? (
               <div className="flex h-64 items-center justify-center">
                 <CircularProgress />
               </div>
             ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-foreground">Rooms ({rows.length})</h2>
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-foreground">Өрөөнүүд ({rows.length})</h2>
+                  <Button
+                    onClick={openCreateModal}
+                    disabled={!!authError}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Өрөө нэмэх
+                  </Button>
                 </div>
+                <div className="w-full min-w-0 overflow-x-auto">
+                  {/* Responsive table container */}
                 <DataGrid
                   apiRef={apiRef}
                   rows={rows}
@@ -764,6 +712,8 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
                   disableColumnSelector
                   disableRowSelectionOnClick
                   sx={{
+                    minWidth: '100%',
+                    width: '100%',
                     border: "none",
                     borderRadius: 24,
                     backgroundColor: "transparent",
@@ -791,6 +741,7 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
                     }
                   }}
                 />
+                </div>
               </div>
             )}
           </div>

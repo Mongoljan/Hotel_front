@@ -27,7 +27,7 @@ interface LoadingPageProps {
   description?: string;
 }
 
-export function LoadingPage({ title = "Loading...", description }: LoadingPageProps) {
+export function LoadingPage({ title = "Ачааллаж байна...", description }: LoadingPageProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-4">

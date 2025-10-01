@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,29 +65,31 @@ const pieData = [
 ];
 
 export default function DashboardPage() {
+  const t = useTranslations();
+  
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('dashboard.title')}</h2>
         <div className="flex items-center space-x-2">
           <Button>
             <IconPlus className="mr-2 h-4 w-4" />
-            Шинэ захиалга
+            {t('dashboard.newBooking')}
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="overview">{t('dashboard.tabs.overview')}</TabsTrigger>
           <TabsTrigger value="analytics" disabled>
-            Analytics
+            {t('dashboard.tabs.analytics')}
           </TabsTrigger>
           <TabsTrigger value="reports" disabled>
-            Reports
+            {t('dashboard.tabs.reports')}
           </TabsTrigger>
           <TabsTrigger value="notifications" disabled>
-            Notifications
+            {t('dashboard.tabs.notifications')}
           </TabsTrigger>
         </TabsList>
 
@@ -103,7 +106,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">₮45,231,890</div>
                 <p className="text-xs text-muted-foreground">
-                  +20.1% from last month
+                  {t('dashboard.stats.revenueChange')}
                 </p>
               </CardContent>
             </Card>
@@ -118,7 +121,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">+2,350</div>
                 <p className="text-xs text-muted-foreground">
-                  +180.1% from last month
+                  {t('dashboard.stats.bookingsChange')}
                 </p>
               </CardContent>
             </Card>
@@ -133,7 +136,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">+12,234</div>
                 <p className="text-xs text-muted-foreground">
-                  +19% from last month
+                  {t('dashboard.stats.roomsChange')}
                 </p>
               </CardContent>
             </Card>
@@ -148,7 +151,7 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">+573</div>
                 <p className="text-xs text-muted-foreground">
-                  +201 since last hour
+                  {t('dashboard.stats.activeChange')}
                 </p>
               </CardContent>
             </Card>
@@ -158,7 +161,7 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
               <CardHeader>
-                <CardTitle className="text-cyrillic">Тойм</CardTitle>
+                <CardTitle className="text-cyrillic">{t('dashboard.chart.title')}</CardTitle>
               </CardHeader>
               <CardContent className="pl-2">
                 <ResponsiveContainer width="100%" height={350}>
@@ -192,7 +195,7 @@ export default function DashboardPage() {
                       }}
                     />
                     <Tooltip 
-                      formatter={(value) => [`₮${value}`, 'Орлого']}
+                      formatter={(value) => [`₮${value}`, t('dashboard.chart.revenue')]}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -201,9 +204,9 @@ export default function DashboardPage() {
 
             <Card className="col-span-3">
               <CardHeader>
-                <CardTitle className="text-cyrillic">Сүүлийн захиалгууд</CardTitle>
+                <CardTitle className="text-cyrillic">{t('dashboard.recentBookings.title')}</CardTitle>
                 <CardDescription className="text-cyrillic">
-                  Өнгөрсөн сарын 265 захиалга
+                  {t('dashboard.recentBookings.subtitle')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -266,9 +269,9 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle className="text-cyrillic">Зочдын хуваарилалт</CardTitle>
+                <CardTitle className="text-cyrillic">{t('dashboard.guestDistribution.title')}</CardTitle>
                 <CardDescription className="text-cyrillic">
-                  Дотоод болон гадаадын зочдын харьцаа
+                  {t('dashboard.guestDistribution.subtitle')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -306,9 +309,9 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-cyrillic">Өрөөний төрөл</CardTitle>
+                <CardTitle className="text-cyrillic">{t('dashboard.roomTypes.title')}</CardTitle>
                 <CardDescription className="text-cyrillic">
-                  Захиалгын тоо өрөөний төрлөөр
+                  {t('dashboard.roomTypes.subtitle')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -334,9 +337,9 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-cyrillic">Сүүлийн үйл ажиллагаа</CardTitle>
+                <CardTitle className="text-cyrillic">{t('dashboard.recentActivity.title')}</CardTitle>
                 <CardDescription className="text-cyrillic">
-                  Өнөөдрийн шинэчлэлтүүд
+                  {t('dashboard.recentActivity.subtitle')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

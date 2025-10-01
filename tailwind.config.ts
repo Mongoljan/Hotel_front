@@ -82,12 +82,15 @@ const config: Config = {
 			soft: '#94a3b8',
 				'bg-3': '#c7d2fe',
 				'bg-2': '#e0e7ff',
-				primary: '#6366f1',
 			bg: '#f8fafc',
 				'primary-selected': '#eef2ff',
 			red: '#ef4444',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
+  			primary: {
+  				DEFAULT: 'hsl(var(--primary))',
+  				foreground: 'hsl(var(--primary-foreground))'
+  			},
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'

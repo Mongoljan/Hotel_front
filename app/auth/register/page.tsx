@@ -5,14 +5,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { schemaHotelRegistration2 } from '../../schema';
 import { z } from 'zod';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
 import { FaArrowAltCircleRight } from "react-icons/fa";
 import { PatternFormat } from 'react-number-format';
 import { useTranslations, useLocale } from 'next-intl';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const EBARIMT_API = 'https://info.ebarimt.mn/rest/merchant/info?regno=';
@@ -123,145 +127,171 @@ export default function RegisterPage() {
     }, 1000);
   };
 
-  const inputStyle = (hasError: boolean) =>
-    `border ${hasError ? 'border-red' : 'border-soft'} p-2 w-full mb-4 h-[45px] rounded-[15px]`;
-
   return (
-    <div className="flex justify-center items-center min-h-screen h-full py-[100px] rounded-[12px]">
-      <ToastContainer />
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white   p-8 px-8 border-primary border-solid border-[1px] max-w-[500px] rounded-[15px] text-gray-600"
-      >
-        <h2 className="text-[30px] font-bold mx-auto text-center text-black mb-10">{t("hotel_info")}</h2>
+    <div className="min-h-screen bg-background">
 
-        <section className="flex gap-x-4 mb-4 ">
-          <div className="w-full">
-            <div className="text-black">{t("company_Reg")}</div>
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                value={regNo}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setRegNo(value);
-                  setValue('register', value);
-                }}
-                className={inputStyle(!!errors.register)}
-              />
-              <button
-                type="button"
-                onClick={fetchCompanyName}
-                disabled={loadingCompany}
-                className="text-3xl hover:text-primary -translate-y-2 place-items-center w-[50px] px-3 py-2 "
-              >
-                {loadingCompany ? "..." : <FaArrowAltCircleRight />}
-              </button>
+      <div className="flex items-center justify-center min-h-screen p-4 md:p-8">
+        <div className="w-full max-w-2xl space-y-6">
+          {/* Brand Header - Dashboard Style */}
+          {/* <div className="text-center space-y-2">
+            <div className="flex items-center justify-center mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center shadow-lg">
+                  <Building2 className="h-7 w-7 text-primary-foreground" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-2xl font-bold tracking-tight">Hotel Admin</span>
+                  <span className="text-sm text-muted-foreground">Management System</span>
+                </div>
+              </div>
             </div>
-            {errors.register && <div className="text-red text-xs">{errors.register.message}</div>}
-          </div>
+          </div> */}
 
-          <div className="w-full group relative">
-            <div className="text-black">{t("company_name")}</div>
-            <input
-              type="text"
-              {...register('CompanyName')}
-              className={`${inputStyle(!!errors.CompanyName)} bg-gray-100 border-opacity-10 text-soft`}
-              disabled
-            />
-            <div className="absolute left-0 -top-8 opacity-0 -translate-y-[100px] group-hover:opacity-100 transition bg-gray-800 text-white px-3 py-2 rounded-[15px] shadow-md pointer-events-none">
-              {tTips('ebarimt_lookup')}
-            </div>
-            {errors.CompanyName && <div className="text-red text-xs">{errors.CompanyName.message}</div>}
-          </div>
-        </section>
+          {/* Registration Card - Dashboard Style */}
+          <Card className="border shadow-sm">
+            <CardHeader className="space-y-1 text-center pb-6">
+              <CardTitle className="text-3xl font-bold tracking-tight text-cyrillic">{t("hotel_info")}</CardTitle>
+              <CardDescription className="text-cyrillic text-muted-foreground">
+                Зочид буудлын үндсэн мэдээллийг оруулна уу
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="register" className="text-cyrillic">{t("company_Reg")}</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="register"
+                        type="text"
+                        value={regNo}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setRegNo(value);
+                          setValue('register', value);
+                        }}
+                        className={errors.register ? "border-destructive" : ""}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={fetchCompanyName}
+                        disabled={loadingCompany}
+                      >
+                        {loadingCompany ? "..." : <FaArrowAltCircleRight className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    {errors.register && <p className="text-sm text-destructive">{errors.register.message}</p>}
+                  </div>
 
-        <section className="flex gap-x-4 justify-between mb-4">
-          <div className="min-w-[220px] md:min-w-[270px]">
-            <div className="text-black">{t("hotel_name")}</div>
-            <input
-              type="text"
-              {...register('PropertyName')}
-              className={inputStyle(!!errors.PropertyName)}
-            />
-            {errors.PropertyName && <div className="text-red text-xs">{errors.PropertyName.message}</div>}
-          </div>
-          <div>
-            <div className="text-black">{t("hotel_type")}</div>
-            <select
-              {...register('property_type')}
-              className={inputStyle(!!errors.property_type)}
-            >
-              <option value="">{t("select")}</option>
-              {propertyTypes.map((type) => (
-                <option key={type.id} value={type.id}>{locale === 'en' ? type.name_en : type.name_mn}</option>
-              ))}
-            </select>
-            {errors.property_type && <div className="text-red text-xs">{errors.property_type.message}</div>}
-          </div>
-        </section>
+                  <div className="space-y-2 group relative">
+                    <Label htmlFor="companyName" className="text-cyrillic">{t("company_name")}</Label>
+                    <Input
+                      id="companyName"
+                      type="text"
+                      {...register('CompanyName')}
+                      className="bg-muted"
+                      disabled
+                    />
+                    <div className="absolute left-0 -top-8 opacity-0 -translate-y-full group-hover:opacity-100 transition-opacity bg-popover text-popover-foreground px-3 py-2 rounded shadow-lg pointer-events-none z-10 text-xs">
+                      {tTips('ebarimt_lookup')}
+                    </div>
+                    {errors.CompanyName && <p className="text-sm text-destructive">{errors.CompanyName.message}</p>}
+                  </div>
+                </div>
 
-        <section className="mb-4">
-          <div className="text-black">{t("location")}</div>
-          <textarea
-            rows={3}
-            {...register('location')}
-            className={`${inputStyle(!!errors.location)} resize min-h-[60px]`}
-          />
-          {errors.location && <div className="text-red text-xs">{errors.location.message}</div>}
-        </section>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="propertyName" className="text-cyrillic">{t("hotel_name")}</Label>
+                    <Input
+                      id="propertyName"
+                      type="text"
+                      {...register('PropertyName')}
+                      className={errors.PropertyName ? "border-destructive" : ""}
+                    />
+                    {errors.PropertyName && <p className="text-sm text-destructive">{errors.PropertyName.message}</p>}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="propertyType" className="text-cyrillic">{t("hotel_type")}</Label>
+                    <select
+                      id="propertyType"
+                      {...register('property_type')}
+                      className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.property_type ? "border-destructive" : ""}`}
+                    >
+                      <option value="">{t("select")}</option>
+                      {propertyTypes.map((type) => (
+                        <option key={type.id} value={type.id}>{locale === 'en' ? type.name_en : type.name_mn}</option>
+                      ))}
+                    </select>
+                    {errors.property_type && <p className="text-sm text-destructive">{errors.property_type.message}</p>}
+                  </div>
+                </div>
 
-        {/* Phone number field */}
-        <section className="mb-4">
-          <div className="text-black">{t("phone_number")}</div>
-          <div className="flex items-center gap-2">
-            {/* <span className="text-gray-500 h-full mb-4">+976</span> */}
-            <PatternFormat
-              format="#### ####"
-              allowEmptyFormatting
-              mask="_"
-              value={getValues('phone') || ''}
-              onValueChange={({ value }) => {
-                setValue('phone', value);
-              }}
-              className={inputStyle(!!errors.phone)}
-              placeholder="9512 9418"
-            />
-          </div>
-          {errors.phone && <div className="text-red text-xs">{errors.phone.message}</div>}
-        </section>
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="text-cyrillic">{t("location")}</Label>
+                  <textarea
+                    id="location"
+                    rows={3}
+                    {...register('location')}
+                    className={`flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none ${errors.location ? "border-destructive" : ""}`}
+                  />
+                  {errors.location && <p className="text-sm text-destructive">{errors.location.message}</p>}
+                </div>
 
-        <section>
-          <div className="text-black">{t("email")}</div>
-          <input
-            type="email"
-            {...register('mail')}
-            className={inputStyle(!!errors.mail)}
-          />
-          {errors.mail && <div className="text-red text-xs">{errors.mail.message}</div>}
-        </section>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-cyrillic">{t("phone_number")}</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">+976</span>
+                    <PatternFormat
+                      format="#### ####"
+                      allowEmptyFormatting
+                      mask="_"
+                      value={getValues('phone') || ''}
+                      onValueChange={({ value }) => {
+                        setValue('phone', value);
+                      }}
+                      className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.phone ? "border-destructive" : ""}`}
+                      placeholder="9512 9418"
+                    />
+                  </div>
+                  {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+                </div>
 
-        <div className="flex gap-x-4">
-          <Link
-            href="/auth/login"
-            className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            <div className="flex">
-              <FaArrowLeft className="self-center mx-1" /> {t("back")}
-            </div>
-          </Link>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-cyrillic">{t("email")}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    {...register('mail')}
+                    className={errors.mail ? "border-destructive" : ""}
+                  />
+                  {errors.mail && <p className="text-sm text-destructive">{errors.mail.message}</p>}
+                </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center mt-[35px] text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            <div className="flex">
-              {t("next")} <FaArrowRight className="self-center mx-1" />
-            </div>
-          </button>
+                <div className="flex gap-4">
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/auth/login" className="flex items-center">
+                      <FaArrowLeft className="mr-2 h-4 w-4" /> {t("back")}
+                    </Link>
+                  </Button>
+
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full"
+                  >
+                    <div className="flex items-center">
+                      {t("next")} <FaArrowRight className="ml-2 h-4 w-4" />
+                    </div>
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
-      </form>
+      </div>
     </div>
   );
-}
+}  

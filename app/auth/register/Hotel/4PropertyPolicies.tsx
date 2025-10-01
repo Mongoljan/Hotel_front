@@ -3,11 +3,18 @@
 import React, { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
+import { toast } from 'sonner';
+import { ChevronLeft, ChevronRight, Clock, Settings } from 'lucide-react';
 import { schemaHotelSteps3 } from '../../../schema';
 import { z } from 'zod';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import { useTranslations } from 'next-intl';
 
 const API_URL = 'https://dev.kacc.mn/api/property-policies/';
 
@@ -19,30 +26,42 @@ type Props = {
 };
 
 export default function RegisterHotel4({ onNext, onBack }: Props) {
+  const t = useTranslations('4PropertyPolicies');
   const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
   const step4 = stored.step4;
 
   const defaultValues = step4
     ? { ...step4, ...(step4?.cancellation_fee || {}) }
-    : {};
+    : {
+        cancel_time: '',
+        before_fee: '',
+        after_fee: '',
+        beforeManyRoom_fee: '',
+        afterManyRoom_fee: '',
+        subsequent_days_percentage: '',
+        special_condition_percentage: '',
+        check_in_from: '',
+        check_in_until: '',
+        check_out_from: '',
+        check_out_until: '',
+        breakfast_policy: 'no' as const,
+        parking_situation: 'no' as const,
+        allow_children: false,
+        allow_pets: false,
+      };
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<FormFields>({
+  const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps3),
     defaultValues,
   });
 
-  const cancelTime = watch('cancel_time');
+  const cancelTime = form.watch('cancel_time');
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     const propertyId = stored.propertyId;
 
     if (!propertyId) {
-      toast.error('Property ID not found. Please complete Step 1.');
+      toast.error(t('property_id_not_found') || 'Үл хөдлөх хөрөнгийн ID олдсонгүй. 1-р алхмыг дуусгана уу.');
       return;
     }
 
@@ -89,206 +108,354 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
         step4: result,
       }));
 
-      toast.success('Property policy data saved!');
+      toast.success(t('policy_saved'));
       onNext();
     } catch (error) {
       console.error(error);
-      toast.error('Алдаа гарлаа. Дахин оролдоно уу.');
+      toast.error(t('error_try_again') || 'Алдаа гарлаа. Дахин оролдоно уу.');
     }
   };
 
   return (
     <div className="flex justify-center items-center">
-      <ToastContainer />
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 px-8 border-primary border-solid border-[1px] max-w-[650px] md:min-w-[440px] rounded-[15px] text-gray-600"
-      >
-   <h2 className="text-2xl font-bold text-center mb-6">Дотоод журам</h2>
-    <div className='text-soft text-sm pt-2'>Та зочны өрөөнд орох болон гарах цагийг тохируулж өгнө үү.</div>
-<div className="border-soft border-dotted border-[1px] rounded-[10px] p-2">
-        <section className="mb-6">
-          <label className="text-black">Орох цаг (check in)</label>
-          <div className="flex">
-            <div className='flex'>
-              <input type="time" {...register('check_in_from')} className="border p-2 w-[150px] rounded-[15px]" />
-              <div className='place-content-center mx-2'>- цагаас</div>
-            </div>
-            <div className='flex'>
-              <input type="time" {...register('check_in_until')} className="border p-2 w-[150px] rounded-[15px]" />
-              <div className='place-content-center mx-2'>цаг хүртэл</div>
-            </div>
-          </div>
-        </section>
 
-        <section className="mb-8">
-          <label className="text-black">Гарах цаг (check out)</label>
-          <div className="flex">
-            <div className='flex'>
-              <input type="time" {...register('check_out_from')} className="border p-2 w-[150px] rounded-[15px]" />
-              <div className='place-content-center mx-2'>- цагаас</div>
-            </div>
-            <div className='flex'>
-              <input type="time" {...register('check_out_until')} className="border p-2 w-[150px] rounded-[15px]" />
-              <div className='place-content-center mx-2'>цаг хүртэл</div>
-            </div>
-          </div>
-        </section>
-        </div>
-           <label className=" text-soft text-sm">Цуцлалтын нөхцөл</label>
-        <div className="border-soft border-[1px] border-dotted p-2 rounded-[10px] mb-6">
-
-        <section className="mb-6">
-          <div className="flex gap-4 place">
-            <div className="w-1/2 place-content-end">
-              <label className="text-black mb-10 ">Цуцлах цаг</label>
-      
-              <input type="time" {...register('cancel_time')} className="border block p-2 w-[160px] rounded-[15px]" />
-              {errors.cancel_time && <div className="text-red text-sm">{errors.cancel_time.message}</div>}
-            </div>
-          </div>
-        </section>
-  <label className=" text-soft text-sm">Өрөө цуцлах нөхцлүүдэд тохирох хувийг оруулна уу?</label>
-        <section className="mb-6">
-          <div className="flex justify-between ">
-     
-            <div className="w-[45%] ">
-                   <label className="text-black">
-  Өмнөх өдрийн{' '}
-  <span className="text-blue-600 font-semibold">
-    {cancelTime || '...'}
-  </span>{' '}
-  цагаас өмнө цуцалвал (%)
-</label>
-              <input type="number" {...register('before_fee')} className="border block p-2 w-[90px] rounded-[15px]" />
-              {errors.before_fee && <div className="text-red text-sm">{errors.before_fee.message}</div>}
-            </div>
-             <div className="w-[45%]">
-             <label className="text-black">
-  Өмнөх өдрийн{' '}
-  <span className="text-blue-600 font-semibold">
-    {cancelTime || '...'}
-  </span>{' '}
-  цагаас хойш цуцалвал (%)
-</label>
-              <input type="number" {...register('after_fee')} className="border block p-2 w-[90px] rounded-[15px]" />
-              {errors.after_fee && <div className="text-red text-sm">{errors.after_fee.message}</div>}
-            </div>
-          </div>
-        </section>
-
-
-       
-
-   <label className=" text-soft text-sm flex w-full justify-end border-b-[1px] border-soft border-dotted">Олон өрөө цуцлах тохиолдол</label>
-        <section className="mb-6">
-         
-          <div className="flex justify-between">
-            <div className="w-[45%]">
-             
-                <label className="text-black">
-  Өмнөх өдрийн{' '}
-  <span className="text-blue-600 font-semibold">
-    {cancelTime || '...'}
-  </span>{' '}
-  цагаас өмнө цуцалвал (%)
-</label>
-              <input type="text" {...register('beforeManyRoom_fee')} className=" block border p-2 w-[90px]  rounded-[15px]" />
-              {errors.beforeManyRoom_fee && <div className="text-red text-sm">{errors.beforeManyRoom_fee.message}</div>}
-            </div>
-            <div className="w-[45%]">
-              <label className="text-black">
-  Өмнөх өдрийн{' '}
-  <span className="text-blue-600 font-semibold">
-    {cancelTime || '...'}
-  </span>{' '}
-  цагаас хойш цуцалвал (%)
-</label>
-              <input type="text" {...register('afterManyRoom_fee')} className="border p-2 w-[90px] block rounded-[15px]" />
-              {errors.afterManyRoom_fee && <div className="text-red text-sm">{errors.afterManyRoom_fee.message}</div>}
-            </div>
-          </div>
-        </section>
-         <section className="mb-6">
-          <div className="flex justify-between">
-          
-            <div className="w-[45%] place-content-end">
-              <label className="text-black ">2 дахь өдрөөс сүүлийн өдөр хүртэлх цуцлах боломжтой хувь(%)</label>
+      <Card className="w-full max-w-[650px] md:min-w-[440px]">
+        <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl font-bold text-center justify-center">
+            <Settings className="h-6 w-6" />
+            {t('title')}
+          </CardTitle>
+          <CardDescription className="text-center">
+            {t('title')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              
+              {/* Check-in/Check-out Times */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">{t('6')} / {t('8')}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t('6')} болон {t('8')} цагийг тохируулна уу
+                </p>
                 
-              <input type="number" {...register('subsequent_days_percentage')} className="border p-2 w-[90px] rounded-[15px]" />
-              {errors.subsequent_days_percentage && <div className="text-red text-sm">{errors.subsequent_days_percentage.message}</div>}
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border border-dashed rounded-lg">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">{t('6')}</h4>
+                    <div className="flex gap-2 items-center">
+                      <FormField
+                        control={form.control}
+                        name="check_in_from"
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input type="time" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <span className="text-sm text-muted-foreground">{t('from')}</span>
+                      <FormField
+                        control={form.control}
+                        name="check_in_until"
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input type="time" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
 
-          <div className="w-[45%] place-content-end">
-          <label className="text-black my-auto">Онцгой нөхцөлд бүх өдрийн үнийн дүнгээс цуцлах хувь(%)</label>
-          <input type="number" {...register('special_condition_percentage')} className="border block p-2 w-[90px] rounded-[15px]" />
-        
-          {errors.special_condition_percentage && <div className="text-red text-sm">{errors.special_condition_percentage.message}</div>}
-       </div>
-          </div>
-        </section>
-        </div>
+                  <div className="space-y-4">
+                    <h4 className="font-medium">{t('8')}</h4>
+                    <div className="flex gap-2 items-center">
+                      <FormField
+                        control={form.control}
+                        name="check_out_from"
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input type="time" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <span className="text-sm text-muted-foreground">{t('to')}</span>
+                      <FormField
+                        control={form.control}
+                        name="check_out_until"
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input type="time" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-       
+              <Separator />
 
-        <section className="mb-6">
-          <label className="text-black">Өглөөний цай</label>
-          <select {...register('breakfast_policy')} className="border p-2 w-full rounded-[15px]">
-            <option value="">Сонгох</option>
-            <option value="no">Байхгүй</option>
-            <option value="free">Байгаа, үнэгүй</option>
-            <option value="paid">Байгаа, төлбөртэй</option>
-          </select>
-          {errors.breakfast_policy && <div className="text-red text-sm">{errors.breakfast_policy.message}</div>}
-        </section>
+              {/* Cancellation Policy */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold">{t('cancellation_policy_title')}</h3>
+                
+                <FormField
+                  control={form.control}
+                  name="cancel_time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('cancellation_time')}</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} className="w-40" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        <section className="mb-6">
-          <label className="text-black">Зогсоолын мэдээлэл</label>
-          <select {...register('parking_situation')} className="border p-2 w-full rounded-[15px]">
-            <option value="">Сонгох</option>
-            <option value="no">Байхгүй</option>
-            <option value="free">Төлбөргүй</option>
-            <option value="paid">Төлбөртэй</option>
-          </select>
-          {errors.parking_situation && <div className="text-red text-sm">{errors.parking_situation.message}</div>}
-        </section>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="before_fee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {cancelTime || '...'} {t('before_cancellation_fee')}
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="0"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-     <section className=" gap-4 mb-6">
-  <div className="mb-6">
-    <label className="text-black block mb-2">Зочин хүүхэдтэй хамт үйлчлүүлэх боломжтой эсэх</label>
-    <div className="flex items-center gap-2">
-      <input type="checkbox" id="allowChildren" {...register("allow_children")} className="w-4 h-4" />
-      <label htmlFor="allowChildren" className="cursor-pointer">Тийм</label>
-    </div>
-  </div>
+                  <FormField
+                    control={form.control}
+                    name="after_fee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {cancelTime || '...'} {t('after_cancellation_fee')}
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="0"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-  <div className="">
-    <label className="text-black block mb-2">Тэжээвэр амьтан оруулах боломжтой эсэх</label>
-    <div className="flex items-center gap-2">
-      <input type="checkbox" id="allowPets" {...register("allow_pets")} className="w-4 h-4" />
-      <label htmlFor="allowPets" className="cursor-pointer">Тийм</label>
-    </div>
-  </div>
-</section>
+                <Separator className="my-4" />
+                
+                <h4 className="font-medium">{t('multi_room_cancellation')}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="beforeManyRoom_fee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('before_multi_room_cancellation')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder="0" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
+                  <FormField
+                    control={form.control}
+                    name="afterManyRoom_fee"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('after_multi_room_cancellation')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder="0" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-        <div className="flex gap-x-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            <FaArrowLeft className="self-center mx-1" /> Буцах
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center mt-4 text-black py-3 hover:bg-bg px-4 border-primary border-[1px] border-solid font-semibold rounded-[15px]"
-          >
-            Үргэлжлүүлэх <FaArrowRight className="self-center mx-1" />
-          </button>
-        </div>
-      </form>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="subsequent_days_percentage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('subsequent_days_percentage')}</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="0"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="special_condition_percentage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('special_condition_percentage')}</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="0"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Hotel Policies */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold">{t('title')}</h3>
+                
+                <FormField
+                  control={form.control}
+                  name="breakfast_policy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('10')}</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('16')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="no">{t('17')}</SelectItem>
+                          <SelectItem value="free">{t('18')}</SelectItem>
+                          <SelectItem value="paid">{t('19')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="parking_situation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Зогсоолын мэдээлэл</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('16')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="no">{t('17')}</SelectItem>
+                          <SelectItem value="free">{t('18')}</SelectItem>
+                          <SelectItem value="paid">{t('19')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="allow_children"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            {t('11')}
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="allow_pets"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            {t('12')}
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onBack}
+                  className="flex-1"
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  {t('13')}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                  className="flex-1"
+                >
+                  {t('14')}
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

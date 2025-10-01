@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
 import StepIndicator from './Step';
 import RegisterHotel1 from './1PropertyBasicInfo';
 import RegisterHotel2 from './2Address';
@@ -91,7 +90,7 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
       }
 
       if (lastCompletedStep === 6) {
-        toast.success('Та бүртгэлээ аль хэдийн дуусгасан байна!');
+        toast.success('Та зочид буудлын бүртгэлээ аль хэдийн дуусгасан байна!');
         localStorage.removeItem('currentStep');
         localStorage.setItem('proceed', '2');
         setProceed(2);
@@ -166,7 +165,7 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
             proceed={proceed}
             setProceed={setProceed}
             onNext={() => {
-              toast.success('Registration completed!');
+              toast.success('Бүртгэл дуусгагдлаа!');
               setTimeout(() => {
                 localStorage.removeItem('currentStep');
                 localStorage.setItem('proceed', '2');
@@ -183,7 +182,7 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
 
   return (
     <div className="max-w-2xl mx-auto">
-      <ToastContainer />
+
       <StepIndicator totalSteps={totalSteps} currentStep={currentStep} />
       {renderStep()}
     </div>

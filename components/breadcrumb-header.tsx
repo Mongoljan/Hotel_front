@@ -39,23 +39,25 @@ export function BreadcrumbHeader() {
   const breadcrumbs = pathSegments.map((segment, index) => {
     const path = '/' + pathSegments.slice(0, index + 1).join('/');
     const key = routeI18nKeys[path];
+    // Fix admin route to go to dashboard instead
+    const finalPath = path === '/admin' ? '/admin/dashboard' : path;
     return {
       name: key ? tNav(key) : segment,
-      path: path,
+      path: finalPath,
       isLast: index === pathSegments.length - 1
     };
   });
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
-      <div className="flex items-center justify-between w-full px-4">
+      <div className="flex items-center justify-between w-full px-8 md:px-16 lg:px-24 xl:px-32 2xl:px-40 max-w-screen-2xl mx-auto">
         <div className="flex items-center gap-2">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
               {breadcrumbs.map((breadcrumb, index) => (
-                <div key={breadcrumb.path} className="flex items-center">
+                <div key={`${breadcrumb.path}-${index}`} className="flex items-center">
                   {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
                   <BreadcrumbItem className="hidden md:block">
                     {breadcrumb.isLast ? (

@@ -38,7 +38,7 @@ import {
   Calendar,
   Users
 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 interface AllData {
   room_types: { id: number; name: string; is_custom: boolean }[];

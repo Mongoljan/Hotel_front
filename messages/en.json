@@ -70,7 +70,8 @@
    "6":"View Location",
    "7":"Parking",
    "8":"Loading hotel details...",
-   "9":"Hotel Name (MN)"
+   "9":"Hotel Name (MN)",
+   "hotelImage":"Hotel image"
   },
   "2ConfirmAddress":{
     "title":"Confirm Address",
@@ -185,7 +186,10 @@
       "delete": "Delete",
       "confirmDelete": "Are you sure you want to delete this room?",
       "deleteSuccess": "Room deleted successfully",
-      "deleteError": "Unable to delete the room"
+      "deleteError": "Unable to delete the room",
+      "newRoom": "New Room",
+      "syncData": "Sync Data",
+      "dataRefreshed": "Room data refreshed"
     },
     "empty": {
       "title": "No rooms yet",
@@ -769,6 +773,42 @@
       "oct": "Oct",
       "nov": "Nov",
       "dec": "Dec"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard", 
+    "newBooking": "New Booking",
+    "tabs": {
+      "overview": "Overview",
+      "analytics": "Analytics", 
+      "reports": "Reports",
+      "notifications": "Notifications"
+    },
+    "stats": {
+      "revenueChange": "+20.1% from last month",
+      "bookingsChange": "+180.1% from last month", 
+      "roomsChange": "+19% from last month",
+      "activeChange": "+201 since last hour"
+    },
+    "chart": {
+      "title": "Overview",
+      "revenue": "Revenue"
+    },
+    "recentBookings": {
+      "title": "Recent Bookings",
+      "subtitle": "265 bookings this month"
+    },
+    "guestDistribution": {
+      "title": "Guest Distribution",
+      "subtitle": "Domestic vs International guests"
+    },
+    "roomTypes": {
+      "title": "Room Types",
+      "subtitle": "Bookings by room category"
+    },
+    "recentActivity": {
+      "title": "Recent Activity", 
+      "subtitle": "Today's updates"
     }
   }
 }
