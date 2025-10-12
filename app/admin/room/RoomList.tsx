@@ -28,6 +28,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Building2, Plus, RefreshCw, Sparkles, Users as UsersIcon, Wifi } from "lucide-react";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -123,6 +133,10 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<number | null>(null);
+
   /////////////////////////////////////////////////////////////////////////////
   // 4) Fetch “/api/all-data/” and “/api/roomsNew/” with caching
   /////////////////////////////////////////////////////////////////////////////
@@ -215,26 +229,26 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
    * Called when the user clicks “Delete” (FaTrashAlt) on a leaf row.
    * Sends DELETE to /api/roomsNew/<roomId>/?token=<token>, then refreshes the list.
    */
-  const handleDelete = async (roomId: number | undefined) => {
+  const handleDeleteClick = (roomId: number | undefined) => {
     if (roomId == null) return;
+    setRoomToDelete(roomId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (roomToDelete == null) return;
     const token = await getClientBackendToken();
     if (!token) {
       const message = "Authentication required. Please sign in again to delete rooms.";
       setAuthError(message);
       toast.error(message);
-      return;
-    }
-    if (
-      !confirm(
-        "Та үнэхээр энэ өрөөг устгахыг хүсэж байна уу? Энэ үйлдэл буцалтгүй."
-      )
-    ) {
+      setDeleteDialogOpen(false);
       return;
     }
 
     try {
       const res = await fetch(
-        `https://dev.kacc.mn/api/roomsNew/${roomId}/?token=${encodeURIComponent(token)}`,
+        `https://dev.kacc.mn/api/roomsNew/${roomToDelete}/?token=${encodeURIComponent(token)}`,
         {
           method: "DELETE"
         }
@@ -246,9 +260,12 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
       toast.success("Өрөө амжилттай устгагдлаа.");
       // Trigger a re-fetch
       setIsRoomAdded(true);
+      setDeleteDialogOpen(false);
+      setRoomToDelete(null);
     } catch (err: any) {
       console.error("Delete failed:", err);
       toast.error(err.message || "Устгах амжилтгүй.");
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -581,7 +598,7 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
               {/* Delete Icon */}
               <IconButton
                 size="small"
-                onClick={() => handleDelete(rid)}
+                onClick={() => handleDeleteClick(rid)}
                 title="Delete Room"
               >
                 <FaTrashAlt />
@@ -788,6 +805,28 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
           </MuiButton>
         </DialogActions>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Өрөө устгах</AlertDialogTitle>
+            <AlertDialogDescription>
+              Та үнэхээр энэ өрөөг устгахыг хүсэж байна уу? Энэ үйлдэл буцалтгүй бөгөөд 
+              өрөөтэй холбоотой бүх мэдээлэл устах болно.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Цуцлах</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Устгах
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

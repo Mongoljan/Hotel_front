@@ -167,7 +167,11 @@ export const createFlattenedRows = ({
 
     const uniqueImages = Array.from(
       new Set(
-        group.rooms.flatMap((room) => room.images.map((image) => image.image))
+        group.rooms.flatMap((room) => 
+          room.images
+            .map((image) => image.image)
+            .filter((url) => url && url.trim() !== '') // Filter out empty/null images
+        )
       )
     ).slice(0, 3);
 

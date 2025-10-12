@@ -15,6 +15,16 @@ import { GroupedRoomRow, RoomApiResponse, RoomLookupPayload } from "./types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getClientBackendToken } from "@/utils/auth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface RoomManagementTableProps {
   rooms: RoomApiResponse[];
@@ -95,6 +105,10 @@ export function RoomManagementTable({ rooms, lookups, onEdit, onDeleted, loading
   const theme = useHotelMuiTheme();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<number | null>(null);
 
   const groupResult = useMemo(() => {
     const amenities = {
@@ -121,22 +135,30 @@ export function RoomManagementTable({ rooms, lookups, onEdit, onDeleted, loading
     });
   };
 
-  const handleDelete = async (room?: RoomApiResponse) => {
-    if (!room) return;
-    if (!confirm(t("actions.confirmDelete"))) return;
+  const handleDeleteClick = (roomId: number | undefined) => {
+    if (roomId == null) return;
+    setRoomToDelete(roomId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (roomToDelete == null) return;
     setBusy(true);
     try {
       const token = await getClientBackendToken();
       if (!token) throw new Error("Missing token");
-      const response = await fetch(`https://dev.kacc.mn/api/roomsNew/${room.id}/?token=${token}`, {
+      const response = await fetch(`https://dev.kacc.mn/api/roomsNew/${roomToDelete}/?token=${token}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete");
       toast.success(t("actions.deleteSuccess"));
       onDeleted();
+      setDeleteDialogOpen(false);
+      setRoomToDelete(null);
     } catch (error) {
       console.error(error);
       toast.error(t("actions.deleteError"));
+      setDeleteDialogOpen(false);
     } finally {
       setBusy(false);
     }
@@ -266,7 +288,7 @@ export function RoomManagementTable({ rooms, lookups, onEdit, onDeleted, loading
                 <IconButton
                   size="small"
                   disabled={busy}
-                  onClick={() => handleDelete(room)}
+                  onClick={() => handleDeleteClick(room?.id)}
                   aria-label={t("actions.delete")}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -309,6 +331,28 @@ export function RoomManagementTable({ rooms, lookups, onEdit, onDeleted, loading
           </div>
         ) : null}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Өрөө устгах</AlertDialogTitle>
+            <AlertDialogDescription>
+              Та үнэхээр энэ өрөөг устгахыг хүсэж байна уу? Энэ үйлдэл буцалтгүй бөгөөд 
+              өрөөтэй холбоотой бүх мэдээлэл устах болно.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Цуцлах</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Устгах
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ThemeProvider>
   );
 }

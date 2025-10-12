@@ -484,7 +484,11 @@ export default function RoomModal({
               {/* Room Type */}
               <div className="w-[45%]">
                 <label className="block mb-1">Өрөөний төрөл</label>
-                <Select onValueChange={(value) => setValue("room_type", value)} value={watch("room_type")}>
+                <Select 
+                  key={`room_type-${roomToEdit?.id || 'new'}-${watch("room_type")}`}
+                  onValueChange={(value) => setValue("room_type", value)} 
+                  value={watch("room_type") || undefined}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="-- Сонгох --" />
                   </SelectTrigger>
@@ -506,7 +510,11 @@ export default function RoomModal({
               {/* Room Category */}
               <div className="w-[45%]">
                 <label className="block mb-1">Өрөөний ангилал</label>
-                <Select onValueChange={(value) => setValue("room_category", value)} value={watch("room_category")}>
+                <Select 
+                  key={`room_category-${roomToEdit?.id || 'new'}-${watch("room_category")}`}
+                  onValueChange={(value) => setValue("room_category", value)} 
+                  value={watch("room_category") || undefined}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="-- Сонгох --" />
                   </SelectTrigger>
@@ -581,7 +589,11 @@ export default function RoomModal({
               {/* Bed Type */}
               <div className="w-[45%]">
                 <label className="block mb-1">Орны төрөл</label>
-                <Select onValueChange={(value) => setValue("bed_type", value)} value={watch("bed_type")}>
+                <Select 
+                  key={`bed_type-${roomToEdit?.id || 'new'}-${watch("bed_type")}`}
+                  onValueChange={(value) => setValue("bed_type", value)} 
+                  value={watch("bed_type") || undefined}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="-- Сонгох --" />
                   </SelectTrigger>

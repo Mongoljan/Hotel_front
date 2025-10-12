@@ -80,6 +80,12 @@ export const navItems: NavItem[] = [
         icon: IconCurrencyDollar,
       },
       {
+        title: 'Үнийн тохиргоо',
+        i18nKey: 'priceSettings',
+        url: '/admin/room/price-settings',
+        icon: IconCurrencyDollar,
+      },
+      {
         title: 'Бодлого',
         i18nKey: 'policies',
         url: '/admin/policies',

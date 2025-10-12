@@ -50,6 +50,7 @@ export default function Sidebar({ isApproved, userApproved }: { isApproved: bool
         hotelRegistrationItem,
         { href: "/admin/room", icon: BedDouble, label: "Өрөө бүртгэл" },
         { href: "/admin/room/price", icon: DollarSign, label: "Өрөөний үнэ" },
+        { href: "/admin/room/price-settings", icon: DollarSign, label: "Үнийн тохиргоо" },
         { href: "/admin/pricing", icon: DollarSign, label: "Үнийн тохируулга" },
         { href: "/admin/policies", icon: FileText, label: "Нөхцөл бодлого" },
         { href: "/admin/corporate", icon: Users, label: "Гэрээт байгууллага" },

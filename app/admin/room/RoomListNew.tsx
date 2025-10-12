@@ -19,6 +19,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { 
   Building2, 
@@ -122,6 +132,10 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<number | null>(null);
 
   // Keyboard navigation for image carousel
   React.useEffect(() => {
@@ -199,26 +213,27 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (roomId: number | undefined) => {
+  const handleDeleteClick = (roomId: number | undefined) => {
     if (roomId == null) return;
+    setRoomToDelete(roomId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (roomToDelete == null) return;
+    
     const token = await getClientBackendToken();
     if (!token) {
       const message = "Authentication required. Please sign in again to delete rooms.";
       setAuthError(message);
       toast.error(message);
-      return;
-    }
-    if (
-      !confirm(
-        "Та үнэхээр энэ өрөөг устгахыг хүсэж байна уу? Энэ үйлдэл буцалтгүй."
-      )
-    ) {
+      setDeleteDialogOpen(false);
       return;
     }
 
     try {
       const res = await fetch(
-        `https://dev.kacc.mn/api/roomsNew/${roomId}/?token=${encodeURIComponent(token)}`,
+        `https://dev.kacc.mn/api/roomsNew/${roomToDelete}/?token=${encodeURIComponent(token)}`,
         {
           method: "DELETE"
         }
@@ -229,9 +244,12 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       }
       toast.success("Өрөө амжилттай устгагдлаа.");
       setIsRoomAdded(true);
+      setDeleteDialogOpen(false);
+      setRoomToDelete(null);
     } catch (err: any) {
       console.error("Delete failed:", err);
       toast.error(err.message || "Устгах амжилтгүй.");
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -276,24 +294,43 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       header: "Зураг",
       cell: ({ row }) => {
         const images = row.original.images;
-        if (row.original.isGroup && images?.length) {
+        if (row.original.isGroup) {
+          // Only show if there are valid images
+          if (!images || images.length === 0) {
+            return (
+              <div className="flex items-center justify-center h-12 w-16 bg-muted/30 rounded border border-border/30">
+                <ImageIcon className="h-4 w-4 text-muted-foreground/50" />
+              </div>
+            );
+          }
+          
           return (
-            <div className="flex gap-1">
+            <div className="flex gap-1 flex-wrap max-w-[200px]">
               {images.slice(0, 3).map((url: string, idx: number) => (
                 <img
                   key={idx}
                   src={url}
                   alt={`Room img ${idx}`}
-                  className="h-12 w-16 object-cover rounded cursor-pointer border border-border/50"
+                  className="h-12 w-16 flex-shrink-0 object-cover rounded cursor-pointer border border-border/50 hover:border-primary transition-colors"
                   onClick={() => {
                     setPreviewImages(images);
                     setCurrentImageIndex(idx);
                     setIsImageModalOpen(true);
                   }}
+                  onError={(e) => {
+                    // Handle broken image links
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               ))}
               {images.length > 3 && (
-                <div className="h-12 w-16 border border-border/50 rounded flex items-center justify-center bg-muted text-xs">
+                <div className="h-12 w-16 flex-shrink-0 border border-border/50 rounded flex items-center justify-center bg-muted text-xs font-medium cursor-pointer hover:bg-muted/80 transition-colors"
+                  onClick={() => {
+                    setPreviewImages(images);
+                    setCurrentImageIndex(3);
+                    setIsImageModalOpen(true);
+                  }}
+                >
                   +{images.length - 3}
                 </div>
               )}
@@ -303,7 +340,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
         return null;
       },
       enableSorting: false,
-      size: 150,
+      size: 220,
     },
 
     // Room Name/Category Column
@@ -495,7 +532,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleDelete(roomId)}
+                onClick={() => handleDeleteClick(roomId)}
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
@@ -696,6 +733,25 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Өрөө устгах</AlertDialogTitle>
+            <AlertDialogDescription>
+              Та үнэхээр энэ өрөөг устгахыг хүсэж байна уу? Энэ үйлдэл буцалтгүй бөгөөд 
+              өрөөтэй холбоотой бүх мэдээлэл устах болно.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Цуцлах</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Устгах
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
