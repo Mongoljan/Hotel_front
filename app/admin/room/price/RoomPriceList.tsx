@@ -189,6 +189,19 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
       combo.roomNumbers.push(r.room_number);
     });
     
+    // Add price-only combinations (prices that exist but have no rooms yet)
+    prices.forEach((price) => {
+      const key = `${price.room_type}-${price.room_category}`;
+      if (!combinationMap.has(key)) {
+        combinationMap.set(key, {
+          room_type: price.room_type,
+          room_category: price.room_category,
+          count: 0,
+          roomNumbers: []
+        });
+      }
+    });
+    
     // Create one row per unique combination
     return Array.from(combinationMap.values()).map((combo) => {
       const key = `${combo.room_type}-${combo.room_category}`;
