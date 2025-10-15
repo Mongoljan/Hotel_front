@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
-import { getClientBackendToken } from '@/utils/auth';
 
 interface RoomType {
   id: number;
@@ -121,14 +120,6 @@ export default function PriceSettingModal({
     setIsSubmitting(true);
 
     try {
-      // Get authentication token
-      const token = await getClientBackendToken();
-      if (!token) {
-        toast.error('Нэвтрэх эрх шаардлагатай. Дахин нэвтэрнэ үү.');
-        setIsSubmitting(false);
-        return;
-      }
-
       // Parse room_type and room_category from room_combination
       const [room_type, room_category] = formData.room_combination.split('-').map(Number);
       
@@ -146,8 +137,8 @@ export default function PriceSettingModal({
       };
 
       const url = editData
-        ? `https://dev.kacc.mn/api/pricesettings/${editData.id}/?token=${encodeURIComponent(token)}`
-        : `https://dev.kacc.mn/api/pricesettings/?token=${encodeURIComponent(token)}`;
+        ? `https://dev.kacc.mn/api/pricesettings/${editData.id}/`
+        : `https://dev.kacc.mn/api/pricesettings/`;
 
       const method = editData ? 'PUT' : 'POST';
 

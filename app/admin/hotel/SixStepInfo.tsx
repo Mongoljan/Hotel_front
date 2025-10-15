@@ -332,7 +332,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
       {/* Additional Info & Image */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+        {/* <Card className="col-span-4">
           <CardHeader>
             <CardTitle className="text-cyrillic">Нэмэлт мэдээлэл</CardTitle>
           </CardHeader>
@@ -364,9 +364,9 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
               })}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
-        <Card className="col-span-3">
+        {/* <Card className="col-span-3">
           <CardHeader>
             <CardTitle className="text-cyrillic">Зураг</CardTitle>
             <CardDescription className="text-cyrillic">
@@ -420,7 +420,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
               </div>
             )}
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
 

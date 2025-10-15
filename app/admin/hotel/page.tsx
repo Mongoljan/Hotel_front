@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Proceed from '@/app/auth/register/Hotel/Proceed';
 import RegisterPage from '@/app/auth/register/Hotel/Hotel';
 import StepIndicator from './StepIndicator';
@@ -16,7 +17,8 @@ import {
   IconCheck,
   IconClock,
   IconBuildingBank,
-  IconBed
+  IconBed,
+  IconPhoto
 } from "@tabler/icons-react";
 
 interface BasicInfo {
@@ -72,6 +74,7 @@ export default function RegisterHotel() {
   const [propertyBaseInfo, setPropertyBaseInfo] = useState<PropertyBaseInfo | null>(null);
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [propertyTypes, setPropertyTypes] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
+  const [propertyImages, setPropertyImages] = useState<{ id: number; image: string; description: string }[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   // ✅ Load proceed from localStorage but PRIORITIZE approval status
@@ -146,11 +149,12 @@ export default function RegisterHotel() {
       setIsLoadingData(true);
       
       try {
-        const [hotelRes, basicRes, policyRes, combinedRes] = await Promise.all([
+        const [hotelRes, basicRes, policyRes, combinedRes, imagesRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/properties/${hid}`),
           fetch(`https://dev.kacc.mn/api/property-basic-info/?property=${hid}`),
           fetch(`https://dev.kacc.mn/api/property-policies/?property=${hid}`),
-          fetch(`https://dev.kacc.mn/api/combined-data/`)
+          fetch(`https://dev.kacc.mn/api/combined-data/`),
+          fetch(`https://dev.kacc.mn/api/property-images/?property=${hid}`)
         ]);
         
         if (hotelRes.ok) {
@@ -173,6 +177,11 @@ export default function RegisterHotel() {
         if (combinedRes.ok) {
           const combinedData = await combinedRes.json();
           setPropertyTypes(combinedData.property_types || []);
+        }
+        
+        if (imagesRes.ok) {
+          const imagesData = await imagesRes.json();
+          setPropertyImages(imagesData);
         }
       } catch (e) {
         console.error('Error loading hotel data', e);
@@ -262,23 +271,44 @@ export default function RegisterHotel() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.35),_transparent_55%)]" />
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.08),transparent_45%)]" />
           
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-4">
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            {/* Left side - Image */}
+            <div className="flex-shrink-0 space-y-4">
               <Badge variant="outline" className="w-fit border-white/30 bg-white/10 text-white/90 backdrop-blur">
                 <IconBuildingBank className="mr-2 h-3.5 w-3.5" /> {t('hero_badge')}
               </Badge>
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                {t('hero_title')}
-              </h1>
-              {/* COMMENTED OUT: Too verbose for business use
-              <p className="max-w-xl text-sm text-slate-200/80 md:text-base">
-                {t('hero_description')}
-              </p>
-              */}
+              
+              {/* Hotel Image */}
+              {isLoadingData ? (
+                <div className="flex items-center justify-center w-[400px] h-[280px] rounded-2xl border border-white/20 bg-white/5">
+                  <div className="text-center">
+                    <div className="h-8 w-8 mx-auto border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm text-white/60 mt-3">Уншиж байна...</p>
+                  </div>
+                </div>
+              ) : propertyImages.length > 0 ? (
+                <div className="overflow-hidden rounded-2xl border border-white/20 shadow-2xl">
+                  <Image
+                    src={propertyImages[0].image}
+                    alt={propertyImages[0].description || hotelDisplayData.hotelName}
+                    width={400}
+                    height={280}
+                    className="w-[400px] h-[280px] object-cover"
+                    priority
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center w-[400px] h-[280px] rounded-2xl border border-dashed border-white/30 bg-white/5">
+                  <div className="text-center">
+                    <IconPhoto className="mx-auto h-12 w-12 text-white/40" />
+                    <p className="text-sm text-white/60 mt-3">Зураг байхгүй байна</p>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Hotel Info Panel */}
-            <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur">
+            {/* Right side - Hotel Info Panel */}
+            <div className="flex-1 max-w-sm rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur">
               <div className="flex items-center justify-between text-xs uppercase tracking-wide text-white/60 mb-4">
                 <span>{t('status_label')}</span>
                 <Badge className="bg-green-500/20 text-green-300 border-green-400/30">

@@ -16,7 +16,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from 'sonner';
-import { getClientBackendToken } from '@/utils/auth';
 import PriceSettingModal from './PriceSettingModal';
 
 interface RoomType {
@@ -34,13 +33,6 @@ interface RoomCategory {
 interface AllData {
   room_types: RoomType[];
   room_category: RoomCategory[];
-}
-
-interface Room {
-  room_number: number;
-  room_type: number;
-  room_category: number;
-  number_of_rooms_to_sell: number;
 }
 
 interface RoomOption {
@@ -68,7 +60,6 @@ interface PriceSetting {
 export default function PriceSettingsPage() {
   const [priceSettings, setPriceSettings] = useState<PriceSetting[]>([]);
   const [lookup, setLookup] = useState<AllData>({ room_types: [], room_category: [] });
-  const [rooms, setRooms] = useState<Room[]>([]);
   const [roomOptions, setRoomOptions] = useState<RoomOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -87,48 +78,22 @@ export default function PriceSettingsPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = await getClientBackendToken();
-        if (!token) {
-          throw new Error("Authentication required");
-        }
-
-        const lookupCache = localStorage.getItem("roomLookup");
-        const roomsCache = localStorage.getItem("roomData");
-        const settingsCache = localStorage.getItem(`priceSettings_${hotel}`);
-
-        if (lookupCache && roomsCache && settingsCache && !isDataRefresh) {
-          const cachedLookup = JSON.parse(lookupCache);
-          const cachedRooms = JSON.parse(roomsCache);
-          const cachedSettings = JSON.parse(settingsCache);
-          
-          setLookup(cachedLookup);
-          setRooms(cachedRooms);
-          setPriceSettings(cachedSettings);
-          buildRoomOptions(cachedLookup, cachedRooms);
-          setLoading(false);
-          return;
-        }
-
-        const [allRes, roomsRes, settingsRes] = await Promise.all([
+        const [allRes, settingsRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/all-data/`),
-          fetch(`https://dev.kacc.mn/api/roomsNew/?token=${encodeURIComponent(token)}`),
           fetch(`https://dev.kacc.mn/api/pricesettings/?hotel=${hotel}`)
         ]);
 
-        if (!allRes.ok || !roomsRes.ok || !settingsRes.ok) throw new Error("Fetch failed");
+        if (!allRes.ok || !settingsRes.ok) throw new Error("Fetch failed");
 
         const allData = await allRes.json() as AllData;
-        const roomsData: Room[] = await roomsRes.json();
         const settings: PriceSetting[] = await settingsRes.json();
 
-        localStorage.setItem("roomLookup", JSON.stringify(allData));
-        localStorage.setItem("roomData", JSON.stringify(roomsData));
-        localStorage.setItem(`priceSettings_${hotel}`, JSON.stringify(settings));
+        console.log('✅ Fetched price settings from API:', settings);
+        console.log('🔗 API URL used:', `https://dev.kacc.mn/api/pricesettings/?hotel=${hotel}`);
 
         setLookup(allData);
-        setRooms(roomsData);
         setPriceSettings(settings);
-        buildRoomOptions(allData, roomsData);
+        buildRoomOptionsFromSettings(allData, settings);
       } catch (e) {
         console.error("Price settings fetch error:", e);
         toast.error('Мэдээлэл татахад алдаа гарлаа');
@@ -143,32 +108,43 @@ export default function PriceSettingsPage() {
     }
   }, [isDataRefresh, hotel]);
 
-  const buildRoomOptions = (allData: AllData, roomsData: Room[]) => {
+  const buildRoomOptionsFromSettings = (allData: AllData, settings: PriceSetting[]) => {
+    // Get unique room type/category combinations from existing price settings
     const map = new Map<string, RoomOption>();
     
-    roomsData.forEach(room => {
-      const key = `${room.room_type}-${room.room_category}`;
-      const typeName = allData.room_types.find(t => t.id === room.room_type)?.name || `Type ${room.room_type}`;
-      const categoryName = allData.room_category.find(c => c.id === room.room_category)?.name || `Category ${room.room_category}`;
+    settings.forEach(setting => {
+      const key = `${setting.room_type}-${setting.room_category}`;
+      const typeName = allData.room_types.find(t => t.id === setting.room_type)?.name || `Type ${setting.room_type}`;
+      const categoryName = allData.room_category.find(c => c.id === setting.room_category)?.name || `Category ${setting.room_category}`;
       
       if (!map.has(key)) {
         map.set(key, {
           label: `${typeName} – ${categoryName}`,
           value: key,
-          room_type: room.room_type,
-          room_category: room.room_category,
+          room_type: setting.room_type,
+          room_category: setting.room_category,
           count: 1
         });
-      } else {
-        map.get(key)!.count++;
       }
     });
     
-    const options = Array.from(map.values()).map(opt => ({
-      ...opt,
-      label: `${opt.label} (${opt.count} өрөө)`
-    }));
+    // Also add all possible combinations from lookup data for new settings
+    allData.room_types.forEach(type => {
+      allData.room_category.forEach(category => {
+        const key = `${type.id}-${category.id}`;
+        if (!map.has(key)) {
+          map.set(key, {
+            label: `${type.name} – ${category.name}`,
+            value: key,
+            room_type: type.id,
+            room_category: category.id,
+            count: 0
+          });
+        }
+      });
+    });
     
+    const options = Array.from(map.values());
     setRoomOptions(options);
   };
 
@@ -191,20 +167,13 @@ export default function PriceSettingsPage() {
     if (!settingToDelete) return;
 
     try {
-      const token = await getClientBackendToken();
-      if (!token) {
-        toast.error('Нэвтрэх эрх шаардлагатай. Дахин нэвтэрнэ үү.');
-        return;
-      }
-
-      const res = await fetch(`https://dev.kacc.mn/api/pricesettings/${settingToDelete}/?token=${encodeURIComponent(token)}`, {
+      const res = await fetch(`https://dev.kacc.mn/api/pricesettings/${settingToDelete}/`, {
         method: 'DELETE',
       });
 
       if (!res.ok) throw new Error('Failed to delete');
 
       toast.success('Тохиргоо амжилттай устгагдлаа');
-      localStorage.removeItem(`priceSettings_${hotel}`);
       setIsDataRefresh(true);
       setDeleteDialogOpen(false);
       setSettingToDelete(null);
@@ -219,7 +188,6 @@ export default function PriceSettingsPage() {
     setIsModalOpen(false);
     setEditingSetting(null);
     if (success) {
-      localStorage.removeItem(`priceSettings_${hotel}`);
       setIsDataRefresh(true);
     }
   };
