@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import UserStorage from '@/utils/storage'
 
 interface User {
   id: string
@@ -51,8 +52,11 @@ export function useAuth(): AuthState & {
         const data = await response.json()
         console.log('useAuth: Session data received:', data)
         
-        // Store userInfo in localStorage for compatibility with existing code
-        localStorage.setItem('userInfo', JSON.stringify(data.user))
+        // Initialize user-scoped storage (clears old data if user changed)
+        UserStorage.initializeForUser(data.user.id, data.user.hotel)
+        
+        // Store userInfo using UserStorage
+        UserStorage.setItem('userInfo', JSON.stringify(data.user), data.user.id)
         
         setAuthState({
           user: data.user,
@@ -100,6 +104,13 @@ export function useAuth(): AuthState & {
 
       if (response.ok) {
         const data = await response.json()
+        
+        // Initialize user-scoped storage (clears old data if user changed)
+        UserStorage.initializeForUser(data.user.id, data.user.hotel)
+        
+        // Store userInfo using UserStorage
+        UserStorage.setItem('userInfo', JSON.stringify(data.user), data.user.id)
+        
         setAuthState({
           user: data.user,
           isLoading: false,
@@ -129,6 +140,9 @@ export function useAuth(): AuthState & {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
+      // Clear all user-scoped localStorage data
+      UserStorage.clearOnLogout()
+      
       setAuthState({
         user: null,
         isLoading: false,

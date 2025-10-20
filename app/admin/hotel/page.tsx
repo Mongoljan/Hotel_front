@@ -8,6 +8,7 @@ import StepIndicator from './StepIndicator';
 import SixStepInfo from './SixStepInfo';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
+import UserStorage from '@/utils/storage';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,10 +78,10 @@ export default function RegisterHotel() {
   const [propertyImages, setPropertyImages] = useState<{ id: number; image: string; description: string }[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // ✅ Load proceed from localStorage but PRIORITIZE approval status
+  // ✅ Load proceed from storage but PRIORITIZE approval status
   useEffect(() => {
     const decideStep = async () => {
-      if (!user?.hotel) return; // Wait for user data
+      if (!user?.hotel || !user?.id) return; // Wait for user data
 
       console.log('Deciding proceed step. User approval status:', {
         userApproved: user?.approved,
@@ -91,23 +92,26 @@ export default function RegisterHotel() {
       if (!user?.approved || !user?.hotelApproved) {
         console.log('User/Hotel not approved - showing Proceed component');
         // Clear any cached proceed value to ensure approval waiting state
-        localStorage.removeItem('proceed');
+        UserStorage.removeItem('proceed');
         setProceed(0); // Show approval waiting component
         return;
       }
 
       // Only check completion status if both user and hotel are approved
-      const saved = localStorage.getItem('proceed');
+      const saved = UserStorage.getItem<string>('proceed', user.id);
       if (saved !== null) {
         setProceed(Number(saved));
         return;
       }
 
       try {
-        const pd = JSON.parse(localStorage.getItem('propertyData') || '{}');
-        if (Array.isArray(pd.general_facilities) && pd.general_facilities.length) {
-          setProceed(1);
-          return;
+        const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+        if (propertyDataStr) {
+          const pd = JSON.parse(propertyDataStr);
+          if (Array.isArray(pd.general_facilities) && pd.general_facilities.length) {
+            setProceed(1);
+            return;
+          }
         }
 
         // Use JWT user.hotel instead of Cookies.get('hotel')
@@ -131,14 +135,14 @@ export default function RegisterHotel() {
     };
 
     decideStep();
-  }, [user?.hotel, user?.approved, user?.hotelApproved]); // Depend on approval statuses
+  }, [user?.hotel, user?.approved, user?.hotelApproved, user?.id]); // Depend on approval statuses
 
-  // ✅ Persist `proceed` in localStorage
+  // ✅ Persist `proceed` in storage
   useEffect(() => {
-    if (proceed !== null) {
-      localStorage.setItem('proceed', String(proceed));
+    if (proceed !== null && user?.id) {
+      UserStorage.setItem('proceed', String(proceed), user.id);
     }
-  }, [proceed]);
+  }, [proceed, user?.id]);
 
   // ✅ Load hotel data once on mount or when hotel ID changes
   useEffect(() => {

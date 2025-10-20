@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { getClientBackendToken } from "@/utils/auth";
+import UserStorage from "@/utils/storage";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -104,9 +105,8 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [priceToDelete, setPriceToDelete] = useState<number | null>(null);
 
-  const hotel = typeof window !== 'undefined'
-    ? JSON.parse(localStorage.getItem('userInfo') || '{}').hotel
-    : 0;
+  const userInfoStr = typeof window !== 'undefined' ? UserStorage.getItem<string>('userInfo', '') : '';
+  const hotel = userInfoStr ? JSON.parse(userInfoStr).hotel : 0;
 
   useEffect(() => {
     const fetchData = async () => {

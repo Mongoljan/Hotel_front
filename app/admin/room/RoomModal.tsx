@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { getClientBackendToken } from "@/utils/auth";
 import { useTranslations } from "next-intl";
+import UserStorage from "@/utils/storage";
 // Dialog primitives intentionally not used here to keep the modal logic
 // self-contained (we render our own overlay + form). Avoid requiring
 // Dialog context to prevent runtime errors: `DialogTitle` must be used
@@ -376,7 +377,8 @@ export default function RoomModal({
     }
 
     // Build the final payload
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const userInfoStr = UserStorage.getItem<string>("userInfo", '');
+    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
     const transformedData: any = {
       hotel: userInfo?.hotel,
       room_type: Number(formData.room_type),

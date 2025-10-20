@@ -10,6 +10,7 @@ import RegisterHotel4 from './4PropertyPolicies';
 import RegisterHotel5 from './5PropertyImage';
 import RegisterHotel6 from './6PropertyDetails';
 import { useRouter } from 'next/navigation';
+import UserStorage from '@/utils/storage';
 
 const API_PROPERTY_BASIC_INFO = 'https://dev.kacc.mn/api/property-basic-info/';
 const API_CONFIRM_ADDRESS = 'https://dev.kacc.mn/api/confirm-address/';
@@ -31,9 +32,13 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
 
   useEffect(() => {
     const checkProgress = async () => {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const userInfoStr = UserStorage.getItem<string>('userInfo', '');
+      if (!userInfoStr) return;
+      
+      const userInfo = JSON.parse(userInfoStr);
+      const userId = userInfo?.id;
       const hotelId = userInfo?.hotel;
-      if (!hotelId) return;
+      if (!hotelId || !userId) return;
 
       const stepEndpoints = [
         { step: 1, url: `${API_PROPERTY_BASIC_INFO}?property=${hotelId}`, key: 'step1' },
@@ -91,8 +96,8 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
 
       if (lastCompletedStep === 6) {
         toast.success('Та зочид буудлын бүртгэлээ аль хэдийн дуусгасан байна!');
-        localStorage.removeItem('currentStep');
-        localStorage.setItem('proceed', '2');
+        UserStorage.removeItem('currentStep');
+        UserStorage.setItem('proceed', '2', userId);
         setProceed(2);
         return;
       }
@@ -112,13 +117,13 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
         property_photos: Array.isArray(uploadedImageIds) ? [...uploadedImageIds] : [],
       };
 
-      console.log('✅ Final propertyData for localStorage:', finalDataToStore);
-      localStorage.setItem('propertyData', JSON.stringify(finalDataToStore));
-      localStorage.setItem('currentStep', resumeStep.toString());
+      console.log('✅ Final propertyData for storage:', finalDataToStore);
+      UserStorage.setItem('propertyData', JSON.stringify(finalDataToStore), userId);
+      UserStorage.setItem('currentStep', resumeStep.toString(), userId);
       setCurrentStep(resumeStep);
     };
 
-    const savedStep = localStorage.getItem('currentStep');
+    const savedStep = UserStorage.getItem<string>('currentStep', '');
     if (savedStep) {
       setCurrentStep(parseInt(savedStep, 10));
     } else {
@@ -130,7 +135,13 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
     if (message) toast.success(message);
     setTimeout(() => {
       setCurrentStep(step);
-      localStorage.setItem('currentStep', step.toString());
+      const userInfoStr = UserStorage.getItem<string>('userInfo', '');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        if (userInfo?.id) {
+          UserStorage.setItem('currentStep', step.toString(), userInfo.id);
+        }
+      }
     }, transitionDelay);
   };
 
@@ -167,8 +178,14 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
             onNext={() => {
               toast.success('Бүртгэл дуусгагдлаа!');
               setTimeout(() => {
-                localStorage.removeItem('currentStep');
-                localStorage.setItem('proceed', '2');
+                UserStorage.removeItem('currentStep');
+                const userInfoStr = UserStorage.getItem<string>('userInfo', '');
+                if (userInfoStr) {
+                  const userInfo = JSON.parse(userInfoStr);
+                  if (userInfo?.id) {
+                    UserStorage.setItem('proceed', '2', userInfo.id);
+                  }
+                }
                 setProceed(2);
               }, transitionDelay);
             }}

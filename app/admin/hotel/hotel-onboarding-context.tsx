@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import UserStorage from '@/utils/storage';
 
 type StepStatus = 'complete' | 'current' | 'upcoming';
 
@@ -85,10 +86,10 @@ export function HotelOnboardingProvider({ children }: { children: React.ReactNod
 
   const updateProceed = React.useCallback((value: number) => {
     setProceedState(value);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('proceed', String(value));
+    if (typeof window !== 'undefined' && user?.id) {
+      UserStorage.setItem('proceed', String(value), user.id);
     }
-  }, []);
+  }, [user?.id]);
 
   const deriveSteps = React.useCallback(
     (state: { proceed: number | null; approved: boolean }): StepDefinition[] => {
@@ -151,17 +152,17 @@ export function HotelOnboardingProvider({ children }: { children: React.ReactNod
   }, [user?.hotel]);
 
   const computeProceedFromData = React.useCallback(async () => {
-    if (!user?.hotel || typeof window === 'undefined') return 0;
+    if (!user?.hotel || !user?.id || typeof window === 'undefined') return 0;
 
-    const storedPropertyData = localStorage.getItem('propertyData');
-    if (storedPropertyData) {
+    const storedPropertyData = UserStorage.getItem<string>('propertyData', user.id);
+    if (storedPropertyData && typeof storedPropertyData === 'string') {
       try {
         const parsed = JSON.parse(storedPropertyData);
         if (Array.isArray(parsed?.general_facilities) && parsed.general_facilities.length) {
           return 1;
         }
       } catch (err) {
-        console.warn('Failed to parse propertyData from localStorage', err);
+        console.warn('Failed to parse propertyData from storage', err);
       }
     }
 
@@ -180,7 +181,7 @@ export function HotelOnboardingProvider({ children }: { children: React.ReactNod
     }
 
     return 0;
-  }, [user?.hotel]);
+  }, [user?.hotel, user?.id]);
 
   const refresh = React.useCallback(async () => {
     if (!user?.hotel) return;
@@ -222,10 +223,11 @@ export function HotelOnboardingProvider({ children }: { children: React.ReactNod
       setError(null);
 
       try {
-        if (!cancelled && typeof window !== 'undefined') {
-          const storedProceed = getNumeric(localStorage.getItem('proceed'));
-          if (storedProceed !== null) {
-            setProceedState(storedProceed);
+        if (!cancelled && typeof window !== 'undefined' && user?.id) {
+          const storedProceed = UserStorage.getItem<string>('proceed', user.id);
+          const numericProceed = getNumeric(storedProceed);
+          if (numericProceed !== null) {
+            setProceedState(numericProceed);
           }
         }
 

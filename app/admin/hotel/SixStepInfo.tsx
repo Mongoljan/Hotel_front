@@ -18,6 +18,7 @@ import {
 
 import AboutHotel from './AboutHotel';
 import { useAuth } from '@/hooks/useAuth';
+import UserStorage from '@/utils/storage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -121,8 +122,12 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
   useEffect(() => {
     async function loadData() {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const propertyData = JSON.parse(localStorage.getItem('propertyData') || '{}');
+      const userInfoStr = UserStorage.getItem<string>('userInfo', '');
+      const propertyDataStr = UserStorage.getItem<string>('propertyData', '');
+      
+      const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
+      const propertyData = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+      
       const hotelId = user?.hotel || userInfo.hotel || propertyData.property;
       if (!hotelId) return setProceed(0);
 

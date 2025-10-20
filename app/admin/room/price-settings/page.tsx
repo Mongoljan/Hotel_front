@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Calendar, Percent, DollarSign } from 'lucide-react';
+import UserStorage from '@/utils/storage';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,9 +71,8 @@ export default function PriceSettingsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [settingToDelete, setSettingToDelete] = useState<number | null>(null);
 
-  const hotel = typeof window !== 'undefined'
-    ? JSON.parse(localStorage.getItem('userInfo') || '{}').hotel
-    : 0;
+  const userInfoStr = typeof window !== 'undefined' ? UserStorage.getItem<string>('userInfo', '') : '';
+  const hotel = userInfoStr ? JSON.parse(userInfoStr).hotel : 0;
 
   useEffect(() => {
     const fetchData = async () => {
