@@ -12,6 +12,7 @@ interface User {
   contact_number: string
   approved: boolean
   hotelApproved: boolean
+  user_type?: number
 }
 
 interface AuthState {

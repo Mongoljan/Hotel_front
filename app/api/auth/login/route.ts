@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
       position: data.position,
       contact_number: data.contact_number,
       approved: data.approved,
-      hotelApproved: isApproved
+      hotelApproved: isApproved,
+      user_type: data.user_type || 5 // Default to User (5) if not provided
     }
 
     // Set secure httpOnly cookies
@@ -94,7 +95,8 @@ export async function POST(request: NextRequest) {
         position: userPayload.position,
         contact_number: userPayload.contact_number,
         approved: userPayload.approved,
-        hotelApproved: userPayload.hotelApproved
+        hotelApproved: userPayload.hotelApproved,
+        user_type: userPayload.user_type
       }
     })
 

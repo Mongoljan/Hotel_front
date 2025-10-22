@@ -15,6 +15,7 @@ export interface UserPayload {
   contact_number: string
   approved: boolean
   hotelApproved: boolean
+  user_type?: number
 }
 
 export interface JWTPayload extends UserPayload {
@@ -90,6 +91,16 @@ export async function setAuthCookies(payload: UserPayload) {
     maxAge: 30 * 60,
     path: '/',
   })
+
+  if (payload.user_type !== undefined) {
+    cookieStore.set('user_type', payload.user_type.toString(), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 60,
+      path: '/',
+    })
+  }
 }
 
 export async function getAuthToken(): Promise<JWTPayload | null> {

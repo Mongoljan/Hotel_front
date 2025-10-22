@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from 'next-intl';
@@ -7,27 +7,41 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { 
-  LayoutDashboard, 
-  ClipboardList, 
-  DoorClosed, 
-  Receipt, 
-  MessageSquare, 
-  Settings, 
-  Building2, 
-  BedDouble, 
+import {
+  LayoutDashboard,
+  ClipboardList,
+  DoorClosed,
+  Receipt,
+  MessageSquare,
+  Settings,
+  Building2,
+  BedDouble,
   DollarSign,
   ChevronDown,
   ChevronRight,
   Users,
   FileText,
-  Shield
+  Shield,
+  UserPlus
 } from "lucide-react";
+import { USER_TYPES, hasPermission } from "@/lib/userTypes";
 
 export default function Sidebar({ isApproved, userApproved }: { isApproved: boolean, userApproved: boolean }) {
   const t = useTranslations('Sidebar');
   const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [userType, setUserType] = useState<number>(0);
   const pathname = usePathname();
+
+  useEffect(() => {
+    // Get user_type from cookies on client
+    const getCookie = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+    };
+    const type = parseInt(getCookie('user_type') || '0');
+    setUserType(type);
+  }, []);
 
   const hotelRegistrationItem = {
     href: "/admin/hotel",
@@ -35,27 +49,45 @@ export default function Sidebar({ isApproved, userApproved }: { isApproved: bool
     label: "Буудлын мэдээлэл",
   };
 
+  const baseNavItems = [
+    { href: "/admin/dashboard", icon: LayoutDashboard, label: "Хяналтын самбар" },
+    { href: "/admin/bookings", icon: ClipboardList, label: "Захиалгын жагсаалт" },
+    { href: "/admin/room-blocks", icon: DoorClosed, label: "Өрөө блок" },
+    { href: "/admin/billing", icon: Receipt, label: "Төлбөр тооцоо" },
+    { href: "/admin/employees", icon: UserPlus, label: "Ажилтан удирдлага", permission: 'canCreateEmployee' as PermissionKey },
+    { href: "/admin/support", icon: MessageSquare, label: "Асуулт хариулт" },
+  ];
+
   const navItems = (isApproved && userApproved)
-    ? [
-        { href: "/admin/dashboard", icon: LayoutDashboard, label: "Хяналтын самбар" },
-        { href: "/admin/bookings", icon: ClipboardList, label: "Захиалгын жагсаалт" },
-        { href: "/admin/room-blocks", icon: DoorClosed, label: "Өрөө блок" },
-        { href: "/admin/billing", icon: Receipt, label: "Төлбөр тооцоо" },
-        { href: "/admin/support", icon: MessageSquare, label: "Асуулт хариулт" },
-      ]
+    ? baseNavItems.filter(item =>
+        !('permission' in item) || !item.permission || hasPermission(userType, item.permission)
+      )
     : [];
 
+  // Filter settings items based on user role
+  type PermissionKey = 'canManageRooms' | 'canManagePricing' | 'canEditHotel' | 'canCreateEmployee';
+
+  const baseSettingsItems: Array<{
+    href: string;
+    icon: any;
+    label: string;
+    permission?: PermissionKey;
+  }> = [
+    { href: "/admin/hotel", icon: Building2, label: "Буудлын мэдээлэл" },
+    { href: "/admin/room", icon: BedDouble, label: "Өрөө бүртгэл", permission: 'canManageRooms' },
+    { href: "/admin/room/price", icon: DollarSign, label: "Өрөөний үнэ", permission: 'canManagePricing' },
+    { href: "/admin/room/price-settings", icon: DollarSign, label: "Үнийн тохиргоо", permission: 'canManagePricing' },
+    { href: "/admin/pricing", icon: DollarSign, label: "Үнийн тохируулга", permission: 'canManagePricing' },
+    { href: "/admin/policies", icon: FileText, label: "Нөхцөл бодлого", permission: 'canEditHotel' },
+    { href: "/admin/corporate", icon: Users, label: "Гэрээт байгууллага", permission: 'canEditHotel' },
+    { href: "/admin/employees", icon: UserPlus, label: "Ажилтан бүртгэл", permission: 'canCreateEmployee' },
+    { href: "/admin/permissions", icon: Shield, label: "Админ эрх", permission: 'canCreateEmployee' },
+  ];
+
   const settingsItems = (isApproved && userApproved)
-    ? [
-        hotelRegistrationItem,
-        { href: "/admin/room", icon: BedDouble, label: "Өрөө бүртгэл" },
-        { href: "/admin/room/price", icon: DollarSign, label: "Өрөөний үнэ" },
-        { href: "/admin/room/price-settings", icon: DollarSign, label: "Үнийн тохиргоо" },
-        { href: "/admin/pricing", icon: DollarSign, label: "Үнийн тохируулга" },
-        { href: "/admin/policies", icon: FileText, label: "Нөхцөл бодлого" },
-        { href: "/admin/corporate", icon: Users, label: "Гэрээт байгууллага" },
-        { href: "/admin/permissions", icon: Shield, label: "Админ эрх" },
-      ]
+    ? baseSettingsItems.filter(item =>
+        !item.permission || hasPermission(userType, item.permission)
+      )
     : [hotelRegistrationItem];
 
   return (

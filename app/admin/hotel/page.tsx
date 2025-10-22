@@ -78,71 +78,112 @@ export default function RegisterHotel() {
   const [propertyImages, setPropertyImages] = useState<{ id: number; image: string; description: string }[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // ✅ Load proceed from storage but PRIORITIZE approval status
+  // ✅ Determine proceed state based on approval and completion status
   useEffect(() => {
+    console.log('🚀 decideStep effect triggered. Dependencies:', {
+      hotel: user?.hotel,
+      userId: user?.id,
+      userApproved: user?.approved,
+      hotelApproved: hotelApproved,
+      isLoadingData: isLoadingData
+    });
+
     const decideStep = async () => {
-      if (!user?.hotel || !user?.id) return; // Wait for user data
+      if (!user?.hotel || !user?.id) {
+        console.log('⏸️ Waiting for user data...');
+        return; // Wait for user data
+      }
 
       console.log('Deciding proceed step. User approval status:', {
         userApproved: user?.approved,
-        hotelApproved: user?.hotelApproved
+        hotelApproved: hotelApproved, // Use state from API, not JWT
+        hotelApprovedFromJWT: user?.hotelApproved
       });
 
-      // 🔥 PRIORITY: If either user or hotel is not approved, always show approval waiting
-      if (!user?.approved || !user?.hotelApproved) {
+      // Wait for hotel approval status to be loaded from API
+      if (isLoadingData) {
+        console.log('Still loading hotel data, waiting...');
+        return;
+      }
+
+      // 🔥 PRIORITY: If user is not approved or hotel is not approved, show approval waiting
+      if (!user?.approved || !hotelApproved) {
         console.log('User/Hotel not approved - showing Proceed component');
-        // Clear any cached proceed value to ensure approval waiting state
-        UserStorage.removeItem('proceed');
         setProceed(0); // Show approval waiting component
         return;
       }
 
-      // Only check completion status if both user and hotel are approved
-      const saved = UserStorage.getItem<string>('proceed', user.id);
-      if (saved !== null) {
-        setProceed(Number(saved));
-        return;
-      }
-
+      // User is approved - now check if 6-step registration is complete
       try {
-        const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
-        if (propertyDataStr) {
-          const pd = JSON.parse(propertyDataStr);
-          if (Array.isArray(pd.general_facilities) && pd.general_facilities.length) {
-            setProceed(1);
-            return;
-          }
-        }
-
-        // Use JWT user.hotel instead of Cookies.get('hotel')
         const hid = user.hotel;
+        console.log('🔍 Checking property details for hotel:', hid);
+        
         if (hid) {
           const res = await fetch(
             `https://dev.kacc.mn/api/property-details/?property=${hid}`,
             { cache: 'no-store' }
           );
-          const details = await res.json();
-          if (Array.isArray(details) && details.length) {
+          
+          console.log('📡 Property details fetch response:', {
+            ok: res.ok,
+            status: res.status,
+            statusText: res.statusText
+          });
+          
+          if (!res.ok) {
+            console.error('❌ Property details fetch failed:', res.status);
+            setProceed(0);
+            return;
+          }
+          
+          let details;
+          try {
+            details = await res.json();
+          } catch (parseError) {
+            console.error('❌ Failed to parse property details JSON:', parseError);
+            setProceed(0);
+            return;
+          }
+          
+          console.log('🔍 Property details API response:', {
+            hotelId: hid,
+            detailsResponse: details,
+            isArray: Array.isArray(details),
+            length: Array.isArray(details) ? details.length : 'N/A',
+            firstItem: Array.isArray(details) && details.length > 0 ? details[0] : null
+          });
+          
+          if (Array.isArray(details) && details.length > 0) {
+            // Six steps completed - show SixStepInfo
+            console.log('✅ Six steps completed - setting proceed to 2');
             setProceed(2);
+            return;
+          } else {
+            console.log('⚠️ Property details not found or empty - user needs to complete 6 steps');
+          }
+        }
+
+        // Check if user has started but not completed registration
+        const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+        if (propertyDataStr) {
+          const pd = JSON.parse(propertyDataStr);
+          if (Array.isArray(pd.general_facilities) && pd.general_facilities.length) {
+            console.log('📝 Found incomplete registration data in storage');
+            setProceed(1);
             return;
           }
         }
       } catch (err) {
-        console.error(err);
+        console.error('❌ Error in decideStep:', err);
       }
 
+      // Default: show proceed/start registration
+      console.log('🔄 No completion data found - setting proceed to 0');
       setProceed(0);
     };
 
     decideStep();
-  }, [user?.hotel, user?.approved, user?.hotelApproved, user?.id]); // Depend on approval statuses
-
-  // ✅ Persist `proceed` in storage
-  useEffect(() => {
-    if (proceed !== null && user?.id) {
-      UserStorage.setItem('proceed', String(proceed), user.id);
-    }
-  }, [proceed, user?.id]);
+  }, [user?.hotel, user?.approved, hotelApproved, user?.id, isLoadingData]); // Depend on API-loaded approval status
 
   // ✅ Load hotel data once on mount or when hotel ID changes
   useEffect(() => {

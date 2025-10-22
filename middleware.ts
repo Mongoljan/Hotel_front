@@ -7,6 +7,7 @@ export function middleware(req: NextRequest) {
   const token = getTokenFromRequest(req)
   const userApproved = req.cookies.get('user_approved')?.value === 'true'
   const hotelApproved = req.cookies.get('isApproved')?.value === 'true'
+  const userType = parseInt(req.cookies.get('user_type')?.value || '0')
   const { pathname } = req.nextUrl
 
   // Verify JWT token
@@ -14,6 +15,14 @@ export function middleware(req: NextRequest) {
   if (token) {
     const payload = verifySimpleJWT(token)
     isValidToken = !!payload
+  }
+
+  // Role-based route protection
+  // Only Owner (2) and SuperAdmin (1) can create employees
+  if (pathname.startsWith('/admin/employees') && isValidToken) {
+    if (userType !== 1 && userType !== 2) {
+      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+    }
   }
 
   // 1. If at root "/" and logged in, send to /admin/hotel

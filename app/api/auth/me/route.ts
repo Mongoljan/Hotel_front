@@ -24,7 +24,8 @@ export async function GET() {
         position: payload.position,
         contact_number: payload.contact_number,
         approved: payload.approved,
-        hotelApproved: payload.hotelApproved
+        hotelApproved: payload.hotelApproved,
+        user_type: payload.user_type
       }
     })
 

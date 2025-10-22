@@ -28,13 +28,14 @@ export async function registerHotelAndEmployeeAction(hotelData: any, employeeDat
     const hotelId = hotelJson.pk;
 
     // Merge hotel ID into employee registration
+    // Default to Owner (user_type: 2) for first signup
     const employeePayload = {
       name: employeeData.contact_person_name,
       position: employeeData.position,
       contact_number: employeeData.contact_number,
       email: employeeData.email,
       password: employeeData.password,
-      user_type: employeeData.user_type,
+      user_type: 2, // Owner
       hotel: hotelId,
     };
     
@@ -57,15 +58,23 @@ export async function registerHotelAndEmployeeAction(hotelData: any, employeeDat
       };
     }
 
-    // Optional: Set token cookie if needed
+    // Set cookies after successful registration
     const cookieStore = await cookies();
-    cookieStore.set('token', employeeJson.token, {
+    const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'strict' as const,
       path: '/',
       maxAge: 60 * 30,
-    });
+    };
+
+    cookieStore.set('token', employeeJson.token, options);
+    cookieStore.set('hotel', String(hotelId), options);
+    cookieStore.set('user_type', '2', options); // Owner
+    cookieStore.set('userName', employeeData.contact_person_name, options);
+    cookieStore.set('userEmail', employeeData.email, options);
+    cookieStore.set('user_approved', 'false', options); // New user needs approval
+    cookieStore.set('isApproved', 'false', options); // Hotel not approved yet
 
     return {
       success: true,

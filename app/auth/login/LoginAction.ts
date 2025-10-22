@@ -30,6 +30,7 @@ export async function loginAction(formData: {
       email: data.email,
       id: data.id,
       approved: data.approved,
+      user_type: data.user_type, // Add user_type from response
     };
 
     const hotelId = data.hotel;
@@ -53,6 +54,7 @@ export async function loginAction(formData: {
     cookieStore.set('userName', data.name, { ...options, httpOnly: true });
     cookieStore.set('userEmail', data.email, { ...options, httpOnly: true });
     cookieStore.set('user_approved',data.approved, { ...options, httpOnly: true } )
+    cookieStore.set('user_type', String(data.user_type), { ...options, httpOnly: true })
 
     // ✅ Store approval status securely
     cookieStore.set('isApproved', String(isApproved), {

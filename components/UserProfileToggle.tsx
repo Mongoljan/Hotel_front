@@ -13,14 +13,43 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface UserProfileToggleProps {
   userApproved: boolean;
   hotelApproved?: boolean;
 }
 
+interface UserType {
+  pk: number;
+  name: string;
+}
+
 export default function UserProfileToggle({ userApproved, hotelApproved = false }: UserProfileToggleProps) {
   const { user, logout } = useAuth();
+  const [userTypes, setUserTypes] = useState<UserType[]>([]);
+
+  useEffect(() => {
+    const fetchUserTypes = async () => {
+      try {
+        const response = await fetch('https://dev.kacc.mn/api/user-types/');
+        if (response.ok) {
+          const data = await response.json();
+          setUserTypes(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user types:', error);
+      }
+    };
+
+    fetchUserTypes();
+  }, []);
+
+  const getUserTypeName = (userTypeId: number | undefined): string => {
+    if (userTypeId === undefined) return '—';
+    const userType = userTypes.find(type => type.pk === userTypeId);
+    return userType?.name || '—';
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -63,6 +92,13 @@ export default function UserProfileToggle({ userApproved, hotelApproved = false 
               <div>
                 <p className="text-xs text-muted-foreground">Албан тушаал</p>
                 <p className="text-sm">{user.position}</p>
+              </div>
+            )}
+
+            {user.user_type !== undefined && (
+              <div>
+                <p className="text-xs text-muted-foreground">Хэрэглэгчийн түвшин</p>
+                <p className="text-sm">{getUserTypeName(user.user_type)}</p>
               </div>
             )}
           </div>
