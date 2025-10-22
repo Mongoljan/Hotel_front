@@ -10,7 +10,14 @@ export default function EmployeesPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    position: string;
+    contact_number: string;
+    email: string;
+    password: string;
+    user_type: number;
+  }>({
     name: '',
     position: '',
     contact_number: '',
