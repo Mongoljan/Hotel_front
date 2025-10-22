@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Clock, Settings } from 'lucide-react';
 import { schemaHotelSteps3 } from '../../../schema';
 import { z } from 'zod';
+import { useAuth } from '@/hooks/useAuth';
+import UserStorage from '@/utils/storage';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
@@ -27,7 +29,10 @@ type Props = {
 
 export default function RegisterHotel4({ onNext, onBack }: Props) {
   const t = useTranslations('4PropertyPolicies');
-  const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+  const { user } = useAuth();
+  
+  const propertyDataStr = user?.id ? UserStorage.getItem<string>('propertyData', user.id) : null;
+  const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
   const step4 = stored.step4;
 
   const defaultValues = step4
@@ -58,7 +63,14 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
   const cancelTime = form.watch('cancel_time');
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    const propertyId = stored.propertyId;
+    if (!user?.id || !user?.hotel) {
+      toast.error('User information missing');
+      return;
+    }
+
+    const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+    const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+    const propertyId = stored.propertyId || user.hotel;
 
     if (!propertyId) {
       toast.error(t('property_id_not_found') || 'Үл хөдлөх хөрөнгийн ID олдсонгүй. 1-р алхмыг дуусгана уу.');
@@ -103,10 +115,10 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       if (!response.ok) throw new Error('Failed to save property policy');
       const result = await response.json();
 
-      localStorage.setItem('propertyData', JSON.stringify({
+      UserStorage.setItem('propertyData', JSON.stringify({
         ...stored,
         step4: result,
-      }));
+      }), user.id);
 
       toast.success(t('policy_saved'));
       onNext();

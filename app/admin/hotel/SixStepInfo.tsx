@@ -122,13 +122,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
   useEffect(() => {
     async function loadData() {
-      const userInfoStr = UserStorage.getItem<string>('userInfo', '');
-      const propertyDataStr = UserStorage.getItem<string>('propertyData', '');
-      
-      const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
-      const propertyData = propertyDataStr ? JSON.parse(propertyDataStr) : {};
-      
-      const hotelId = user?.hotel || userInfo.hotel || propertyData.property;
+      const hotelId = user?.hotel;
       if (!hotelId) return setProceed(0);
 
       try {

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { getClientBackendToken } from "@/utils/auth";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/hooks/useAuth";
 import UserStorage from "@/utils/storage";
 // Dialog primitives intentionally not used here to keep the modal logic
 // self-contained (we render our own overlay + form). Avoid requiring
@@ -148,6 +149,7 @@ export default function RoomModal({
 }: RoomModalProps) {
   const [step, setStep] = useState<number>(1);
   const t = useTranslations("Rooms");
+  const { user } = useAuth(); // Get user from auth hook
 
   // Combined lookup (room types, bed types, etc.)
   const [combinedData, setCombinedData] = useState<CombinedData>({
@@ -377,10 +379,8 @@ export default function RoomModal({
     }
 
     // Build the final payload
-    const userInfoStr = UserStorage.getItem<string>("userInfo", '');
-    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
     const transformedData: any = {
-      hotel: userInfo?.hotel,
+      hotel: user?.hotel,
       room_type: Number(formData.room_type),
       room_category: Number(formData.room_category),
       room_size: parseFloat(formData.room_size),

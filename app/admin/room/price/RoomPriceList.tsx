@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { getClientBackendToken } from "@/utils/auth";
+import { useAuth } from "@/hooks/useAuth";
 import UserStorage from "@/utils/storage";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -87,6 +88,7 @@ interface RoomModalProps {
 }
 
 export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, setOpenAdd }: RoomModalProps) {
+  const { user } = useAuth(); // Get user from auth hook
   const [rows, setRows] = useState<RoomRow[]>([]);
   const [prices, setPrices] = useState<PriceEntry[]>([]);
   const [lookup, setLookup] = useState<AllData>({ room_types: [], room_category: [] });
@@ -105,8 +107,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [priceToDelete, setPriceToDelete] = useState<number | null>(null);
 
-  const userInfoStr = typeof window !== 'undefined' ? UserStorage.getItem<string>('userInfo', '') : '';
-  const hotel = userInfoStr ? JSON.parse(userInfoStr).hotel : 0;
+  const hotel = user?.hotel || 0;
 
   useEffect(() => {
     const fetchData = async () => {

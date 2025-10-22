@@ -8,6 +8,8 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useAuth } from '@/hooks/useAuth';
+import UserStorage from '@/utils/storage';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -30,6 +32,7 @@ interface CombinedData {
 
 export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const t = useTranslations("2ConfirmAddress");
+  const { user } = useAuth();
 
   const [combinedData, setCombinedData] = useState<CombinedData>({ province: [], soum: [], district: [] });
   const [filteredSoum, setFilteredSoum] = useState<Soum[]>([]);
@@ -59,8 +62,11 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
     };
 
     const fetchStep2Data = async () => {
-      const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
-      const propertyId = stored.propertyId;
+      if (!user?.id || !user?.hotel) return;
+
+      const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+      const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+      const propertyId = stored.propertyId || user.hotel;
 
       try {
         const res = await fetch(`${API_URL}?property=${propertyId}`);
@@ -71,7 +77,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
         if (initialValues) {
           form.reset(initialValues);
           stored.step2 = initialValues;
-          localStorage.setItem('propertyData', JSON.stringify(stored));
+          UserStorage.setItem('propertyData', JSON.stringify(stored), user.id);
         }
       } catch (err) {
         console.error('Failed to fetch step 2 data', err);
@@ -80,7 +86,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
     fetchCombinedData();
     fetchStep2Data();
-  }, [form]);
+  }, [form, user?.id, user?.hotel]);
 
   useEffect(() => {
     const provinceId = Number(selectedProvinceId);
@@ -89,8 +95,14 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
   }, [selectedProvinceId, combinedData]);
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
-    const propertyId = stored.propertyId;
+    if (!user?.id || !user?.hotel) {
+      toast.error('User information missing');
+      return;
+    }
+
+    const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+    const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+    const propertyId = stored.propertyId || user.hotel;
 
     if (!propertyId) {
       toast.error('Үл хөдлөх хөрөнгийн ID олдсонгүй. Эхлээд 1-р алхмыг дуусгана уу.');
@@ -123,7 +135,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       const result = await response.json();
 
       stored.step2 = result;
-      localStorage.setItem('propertyData', JSON.stringify(stored));
+      UserStorage.setItem('propertyData', JSON.stringify(stored), user.id);
 
       toast.success(t('address_saved') || 'Хаягийн мэдээлэл хадгалагдлаа!');
       onNext();

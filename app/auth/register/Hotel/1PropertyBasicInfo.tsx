@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Building2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 
 import { Button } from "@/components/ui/button";
@@ -27,12 +28,10 @@ type FormFields = z.infer<typeof schemaHotelSteps1>;
 
 export default function RegisterHotel1({ onNext, onBack }: Props) {
   const t = useTranslations('1BasicInfo');
+  const { user } = useAuth(); // Get user from auth hook
   const [languages, setLanguages] = useState<LanguageType[]>([]);
   const [ratings, setRatings] = useState<RatingType[]>([]);
   const [defaultValues, setDefaultValues] = useState<FormFields | null>(null);
-
-  const userInfoStr = UserStorage.getItem<string>('userInfo', '');
-  const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,12 +46,12 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
     };
 
     const initDefaults = async () => {
-      if (!userInfo?.hotel || !userInfo?.id) {
+      if (!user?.hotel || !user?.id) {
         setDefaultValues({} as FormFields);
         return;
       }
 
-      const propertyDataStr = UserStorage.getItem<string>('propertyData', userInfo.id);
+      const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
       if (propertyDataStr) {
         const stored = JSON.parse(propertyDataStr);
         if (stored.step1) {
@@ -62,14 +61,14 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       }
 
       try {
-        const res = await fetch(`${API_URL}?property=${userInfo?.hotel}`);
+        const res = await fetch(`${API_URL}?property=${user.hotel}`);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           const step1Data = data[0];
           UserStorage.setItem('propertyData', JSON.stringify({
             step1: step1Data,
-            propertyId: userInfo?.hotel,
-          }), userInfo.id);
+            propertyId: user.hotel,
+          }), user.id);
           setDefaultValues(step1Data);
         } else {
           setDefaultValues({} as FormFields);
@@ -82,7 +81,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
     fetchData();
     initDefaults();
-  }, [userInfo?.hotel, userInfo?.id]);
+  }, [user?.hotel, user?.id]);
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps1),
@@ -110,12 +109,12 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    if (!userInfo?.id || !userInfo?.hotel) {
+    if (!user?.id || !user?.hotel) {
       toast.error('User information missing');
       return;
     }
 
-    const propertyDataStr = UserStorage.getItem<string>('propertyData', userInfo.id);
+    const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
     const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
     const existingPropertyId = stored.step1?.propertyId;
 
@@ -123,7 +122,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       const cleanedData = {
         ...data,
         group_name: data.part_of_group ? data.group_name : '',
-        property: userInfo?.hotel,
+        property: user.hotel,
       };
 
       const response = await fetch(
@@ -141,8 +140,8 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       UserStorage.setItem('propertyData', JSON.stringify({
         ...stored,
         step1: result,
-        propertyId: userInfo?.hotel,
-      }), userInfo.id);
+        propertyId: user.hotel,
+      }), user.id);
 
       toast.success(t('saveSuccess') || 'Мэдээлэл хадгалагдлаа!');
       onNext();

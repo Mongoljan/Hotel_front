@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Calendar, Percent, DollarSign } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 import {
   AlertDialog,
@@ -59,6 +60,7 @@ interface PriceSetting {
 }
 
 export default function PriceSettingsPage() {
+  const { user } = useAuth(); // Get user from auth hook
   const [priceSettings, setPriceSettings] = useState<PriceSetting[]>([]);
   const [lookup, setLookup] = useState<AllData>({ room_types: [], room_category: [] });
   const [roomOptions, setRoomOptions] = useState<RoomOption[]>([]);
@@ -71,8 +73,7 @@ export default function PriceSettingsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [settingToDelete, setSettingToDelete] = useState<number | null>(null);
 
-  const userInfoStr = typeof window !== 'undefined' ? UserStorage.getItem<string>('userInfo', '') : '';
-  const hotel = userInfoStr ? JSON.parse(userInfoStr).hotel : 0;
+  const hotel = user?.hotel ? Number(user.hotel) : 0;
 
   useEffect(() => {
     const fetchData = async () => {

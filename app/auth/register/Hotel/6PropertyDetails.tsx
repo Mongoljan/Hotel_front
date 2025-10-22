@@ -14,6 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from '@/hooks/useAuth';
+import UserStorage from '@/utils/storage';
 
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const API_PROPERTY_DETAILS = 'https://dev.kacc.mn/api/property-details/';
@@ -30,6 +32,7 @@ type Props = {
 export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: Props) {
   const t = useTranslations('6FinalPropertyDetails');
   const locale = useLocale();
+  const { user } = useAuth();
   const [facilities, setFacilities] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
 
   const form = useForm<FormFields>({
@@ -54,14 +57,18 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
   }, []);
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    if (!user?.id) return;
+    
+    const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+    const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+    
     if (stored.step6) {
       form.reset({
         google_map: stored.step6.google_map || '',
         general_facilities: (stored.step6.general_facilities || []).map(String),
       });
     }
-  }, [form]);
+  }, [form, user?.id]);
 
   const getStepId = (step: any) => {
     if (Array.isArray(step)) return step[0]?.id;
@@ -71,7 +78,13 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     try {
-      const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+      if (!user?.id || !user?.hotel) {
+        toast.error(t('user_info_missing') || 'User information is missing');
+        return;
+      }
+
+      const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+      const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
       const propertyId = stored.propertyId;
 
       if (!propertyId) {
@@ -103,7 +116,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
 
       const result = await response.json();
       stored.step6 = data;
-      localStorage.setItem('propertyData', JSON.stringify(stored));
+      UserStorage.setItem('propertyData', JSON.stringify(stored), user.id);
 
       toast.success(t('details_saved_success'));
       onNext();

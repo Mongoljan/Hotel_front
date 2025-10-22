@@ -8,6 +8,8 @@ import { ChevronLeft, ChevronRight, Plus, Trash2, Image as ImageIcon, Upload } f
 import { schemaHotelSteps5 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
+import { useAuth } from '@/hooks/useAuth';
+import UserStorage from '@/utils/storage';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -25,8 +27,11 @@ type Props = {
 
 export default function RegisterHotel5({ onNext, onBack }: Props) {
   const t = useTranslations('5PropertyImages');
+  const { user } = useAuth();
 
-  const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+  const propertyDataStr = user?.id ? UserStorage.getItem<string>('propertyData', user.id) : null;
+  const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+  
   const defaultValues: FormFields = stored?.step5?.entries
     ? stored.step5
     : { entries: [{ images: '', descriptions: '' }] };
@@ -44,7 +49,11 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   });
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
+    if (!user?.id) return;
+    
+    const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+    const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+    
     if (stored?.step5?.raw) {
       const restored = stored.step5.raw.map((item: any) => ({
         images: item.image,
@@ -52,7 +61,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       }));
       replace(restored);
     }
-  }, [replace]);
+  }, [replace, user?.id]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -67,9 +76,15 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   };
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
+    if (!user?.id || !user?.hotel) {
+      toast.error('User information missing');
+      return;
+    }
+
     try {
-      const stored = JSON.parse(localStorage.getItem('propertyData') || '{}');
-      const propertyId = stored.propertyId;
+      const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+      const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+      const propertyId = stored.propertyId || user.hotel;
 
       if (!propertyId) {
         toast.error(t('property_id_not_found'));
@@ -111,13 +126,14 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         raw: result,
       };
 
-      localStorage.setItem(
+      UserStorage.setItem(
         'propertyData',
         JSON.stringify({
           ...stored,
           step5: step5Data,
           property_photos: uploadedImageIds,
-        })
+        }),
+        user.id
       );
 
       toast.success(t('images_saved_success'));

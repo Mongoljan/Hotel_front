@@ -10,6 +10,7 @@ import RegisterHotel4 from './4PropertyPolicies';
 import RegisterHotel5 from './5PropertyImage';
 import RegisterHotel6 from './6PropertyDetails';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 
 const API_PROPERTY_BASIC_INFO = 'https://dev.kacc.mn/api/property-basic-info/';
@@ -26,18 +27,15 @@ interface ProceedProps {
 
 export default function RegisterPage({ proceed, setProceed, setView }: ProceedProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const { user } = useAuth(); // Get user from auth hook
   const totalSteps = 6;
   const router = useRouter();
   const transitionDelay = 2000;
 
   useEffect(() => {
     const checkProgress = async () => {
-      const userInfoStr = UserStorage.getItem<string>('userInfo', '');
-      if (!userInfoStr) return;
-      
-      const userInfo = JSON.parse(userInfoStr);
-      const userId = userInfo?.id;
-      const hotelId = userInfo?.hotel;
+      const userId = user?.id;
+      const hotelId = user?.hotel;
       if (!hotelId || !userId) return;
 
       const stepEndpoints = [
@@ -123,24 +121,22 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
       setCurrentStep(resumeStep);
     };
 
-    const savedStep = UserStorage.getItem<string>('currentStep', '');
-    if (savedStep) {
-      setCurrentStep(parseInt(savedStep, 10));
-    } else {
-      checkProgress();
+    if (user?.id) {
+      const savedStep = UserStorage.getItem<string>('currentStep', user.id);
+      if (savedStep) {
+        setCurrentStep(parseInt(savedStep, 10));
+      } else {
+        checkProgress();
+      }
     }
-  }, []);
+  }, [user?.id, user?.hotel]);
 
   const handleStepChange = (step: number, message?: string) => {
     if (message) toast.success(message);
     setTimeout(() => {
       setCurrentStep(step);
-      const userInfoStr = UserStorage.getItem<string>('userInfo', '');
-      if (userInfoStr) {
-        const userInfo = JSON.parse(userInfoStr);
-        if (userInfo?.id) {
-          UserStorage.setItem('currentStep', step.toString(), userInfo.id);
-        }
+      if (user?.id) {
+        UserStorage.setItem('currentStep', step.toString(), user.id);
       }
     }, transitionDelay);
   };
@@ -179,12 +175,8 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
               toast.success('Бүртгэл дуусгагдлаа!');
               setTimeout(() => {
                 UserStorage.removeItem('currentStep');
-                const userInfoStr = UserStorage.getItem<string>('userInfo', '');
-                if (userInfoStr) {
-                  const userInfo = JSON.parse(userInfoStr);
-                  if (userInfo?.id) {
-                    UserStorage.setItem('proceed', '2', userInfo.id);
-                  }
+                if (user?.id) {
+                  UserStorage.setItem('proceed', '2', user.id);
                 }
                 setProceed(2);
               }, transitionDelay);
