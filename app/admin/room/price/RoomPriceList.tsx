@@ -408,7 +408,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
               Өрөөний үнэ нэмэх
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Өрөөний үнэ нэмэх</DialogTitle>
               <DialogDescription>
@@ -425,14 +425,18 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                     setForm(f => ({ ...f, room_type: rt, room_category: rc }));
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Өрөөний бүлэг сонгох" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-w-[550px]">
                     {availableOptions.length > 0 ? (
                       availableOptions.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
+                        <SelectItem 
+                          key={opt.value} 
+                          value={opt.value}
+                          className="whitespace-normal py-3 leading-snug"
+                        >
+                          <span className="block">{opt.label}</span>
                         </SelectItem>
                       ))
                     ) : (
@@ -489,7 +493,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
   return (
     <>
       <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Өрөөний үнэ нэмэх</DialogTitle>
             <DialogDescription>
@@ -506,14 +510,18 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                     setForm(f => ({ ...f, room_type: rt, room_category: rc }));
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Өрөөний бүлэг сонгох" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-w-[550px]">
                     {availableOptions.length > 0 ? (
                       availableOptions.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
+                        <SelectItem 
+                          key={opt.value} 
+                          value={opt.value}
+                          className="whitespace-normal py-3 leading-snug"
+                        >
+                          <span className="block">{opt.label}</span>
                         </SelectItem>
                       ))
                     ) : (
@@ -571,7 +579,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
 
       {/* Edit Price Dialog */}
       <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Өрөөний үнэ засах</DialogTitle>
             <DialogDescription>
@@ -581,7 +589,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>Өрөөний бүлэг</Label>
-              <div className="text-sm text-muted-foreground p-2 bg-muted rounded">
+              <div className="text-sm text-muted-foreground p-2 bg-muted rounded break-words">
                 {lookup.room_types.find(t => t.id === form.room_type)?.name} – {' '}
                 {lookup.room_category.find(c => c.id === form.room_category)?.name}
               </div>

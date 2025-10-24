@@ -55,7 +55,19 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       if (propertyDataStr) {
         const stored = JSON.parse(propertyDataStr);
         if (stored.step1) {
-          setDefaultValues(stored.step1);
+          console.log('📦 Loaded from storage, raw step1:', stored.step1);
+          // Ensure data types are correct for form
+          const formattedData = {
+            ...stored.step1,
+            star_rating: stored.step1.star_rating?.toString() || '',
+            languages: Array.isArray(stored.step1.languages) 
+              ? stored.step1.languages.map((l: any) => l.toString())
+              : [],
+            total_hotel_rooms: stored.step1.total_hotel_rooms?.toString() || '',
+            available_rooms: stored.step1.available_rooms?.toString() || '',
+          };
+          console.log('✨ Formatted data for form:', formattedData);
+          setDefaultValues(formattedData);
           return;
         }
       }
@@ -65,11 +77,21 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           const step1Data = data[0];
+          // Ensure data types are correct for form
+          const formattedData = {
+            ...step1Data,
+            star_rating: step1Data.star_rating?.toString() || '',
+            languages: Array.isArray(step1Data.languages) 
+              ? step1Data.languages.map((l: any) => l.toString())
+              : [],
+            total_hotel_rooms: step1Data.total_hotel_rooms?.toString() || '',
+            available_rooms: step1Data.available_rooms?.toString() || '',
+          };
           UserStorage.setItem('propertyData', JSON.stringify({
-            step1: step1Data,
+            step1: formattedData,
             propertyId: user.hotel,
           }), user.id);
-          setDefaultValues(step1Data);
+          setDefaultValues(formattedData);
         } else {
           setDefaultValues({} as FormFields);
         }
@@ -103,6 +125,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
   useEffect(() => {
     if (defaultValues) {
+      console.log('🔄 Resetting form with defaultValues:', defaultValues);
       reset(defaultValues);
     }
   }, [defaultValues, reset]);
@@ -116,7 +139,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
     const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
     const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
-    const existingPropertyId = stored.step1?.propertyId;
+    const existingPropertyId = stored.step1?.id; // Get the ID from the stored step1 data
 
     try {
       const cleanedData = {
@@ -137,6 +160,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       if (!response.ok) throw new Error('Failed to save property basic info');
       const result = await response.json();
 
+      // Store the complete result from API which includes the id field
       UserStorage.setItem('propertyData', JSON.stringify({
         ...stored,
         step1: result,
@@ -219,18 +243,26 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('4')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select 
+                      key={`star_rating-${field.value}`}
+                      onValueChange={field.onChange} 
+                      value={field.value || undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Сонгох" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {ratings.map(r => (
-                          <SelectItem key={r.id} value={r.id.toString()}>
-                            {r.rating}
-                          </SelectItem>
-                        ))}
+                        {ratings.length === 0 ? (
+                          <SelectItem value="loading" disabled>Ачааллаж байна...</SelectItem>
+                        ) : (
+                          ratings.map(r => (
+                            <SelectItem key={r.id} value={r.id.toString()}>
+                              {r.rating}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -299,21 +331,85 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                   <FormItem>
                     <FormLabel>{t('9')}</FormLabel>
                     <FormControl>
-                      <select 
-                        multiple 
-                        value={field.value || []} 
-                        onChange={(e) => {
-                          const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-                          field.onChange(selectedOptions);
-                        }}
-                        className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {languages.map(lang => (
-                          <option key={lang.id} value={lang.id.toString()}>
-                            {lang.languages_name_mn}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="space-y-3">
+                        {/* Selected languages display */}
+                        {field.value && field.value.length > 0 && (
+                          <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-md border">
+                            {field.value.map((langId: string) => {
+                              const lang = languages.find(l => l.id.toString() === langId);
+                              return lang ? (
+                                <div
+                                  key={langId}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary text-primary-foreground rounded-full text-sm font-medium"
+                                >
+                                  <span>{lang.languages_name_mn}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newValue = field.value.filter((id: string) => id !== langId);
+                                      field.onChange(newValue);
+                                    }}
+                                    className="hover:bg-primary-foreground/20 rounded-full p-0.5 transition-colors"
+                                  >
+                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+
+                        {/* Language selection grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-md max-h-60 overflow-y-auto">
+                          {languages.map(lang => {
+                            const isSelected = field.value?.includes(lang.id.toString());
+                            return (
+                              <button
+                                key={lang.id}
+                                type="button"
+                                onClick={() => {
+                                  const currentValue = field.value || [];
+                                  const langIdStr = lang.id.toString();
+                                  const newValue = isSelected
+                                    ? currentValue.filter((id: string) => id !== langIdStr)
+                                    : [...currentValue, langIdStr];
+                                  field.onChange(newValue);
+                                }}
+                                className={`
+                                  flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all
+                                  ${isSelected
+                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
+                                  }
+                                `}
+                              >
+                                <div className={`
+                                  h-4 w-4 rounded border-2 flex items-center justify-center transition-all
+                                  ${isSelected
+                                    ? 'bg-primary-foreground border-primary-foreground'
+                                    : 'border-muted-foreground/50'
+                                  }
+                                `}>
+                                  {isSelected && (
+                                    <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </div>
+                                <span className="flex-1 text-left">{lang.languages_name_mn}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {(!field.value || field.value.length === 0) && (
+                          <p className="text-xs text-muted-foreground px-1">
+                            {t('selectLanguagesHint') || 'Нэг буюу хэд хэдэн хэл сонгоно уу'}
+                          </p>
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

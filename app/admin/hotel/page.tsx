@@ -122,7 +122,7 @@ export default function RegisterHotel() {
       if (cachedStatus === 'completed') {
         console.log('💾 Found cached completion status - showing SixStepInfo immediately');
         setProceed(2);
-        // Continue to verify with API in background
+        // Continue to verify with API in background, but don't change proceed if cache exists
       }
 
       // User is approved - now check if 6-step registration is complete
@@ -144,7 +144,7 @@ export default function RegisterHotel() {
 
           if (!res.ok) {
             console.error('❌ Property details fetch failed:', res.status);
-            // If we had cache, trust it. Otherwise show proceed
+            // If we had cache, trust it and keep proceed=2. Otherwise show proceed=0
             if (cachedStatus !== 'completed') {
               setProceed(0);
             }
@@ -156,6 +156,7 @@ export default function RegisterHotel() {
             details = await res.json();
           } catch (parseError) {
             console.error('❌ Failed to parse property details JSON:', parseError);
+            // If we had cache, trust it and keep proceed=2. Otherwise show proceed=0
             if (cachedStatus !== 'completed') {
               setProceed(0);
             }
@@ -178,28 +179,44 @@ export default function RegisterHotel() {
             return;
           } else {
             console.log('⚠️ Property details not found or empty - user needs to complete 6 steps');
-            localStorage.removeItem(cacheKey); // Clear invalid cache
+            // Only clear cache and set proceed=0 if we didn't already have cache
+            if (cachedStatus !== 'completed') {
+              localStorage.removeItem(cacheKey); // Clear invalid cache
+            } else {
+              console.log('⚠️ API returned empty but cache exists - trusting cache and keeping proceed=2');
+            }
           }
         }
 
         // Check if user has started but not completed registration
-        const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
-        if (propertyDataStr) {
-          const pd = JSON.parse(propertyDataStr);
-          if (Array.isArray(pd.general_facilities) && pd.general_facilities.length) {
-            console.log('📝 Found incomplete registration data in storage');
-            setProceed(1);
-            return;
+        // But only if we don't already have a completed cache
+        if (cachedStatus !== 'completed') {
+          const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+          if (propertyDataStr) {
+            const pd = JSON.parse(propertyDataStr);
+            if (Array.isArray(pd.general_facilities) && pd.general_facilities.length) {
+              console.log('📝 Found incomplete registration data in storage');
+              setProceed(1);
+              return;
+            }
           }
         }
       } catch (err) {
         console.error('❌ Error in decideStep:', err);
+        // Even on error, if we have cache, trust it
+        if (cachedStatus === 'completed') {
+          console.log('⚠️ Error occurred but cache exists - trusting cache');
+          return;
+        }
       }
 
       // Default: show proceed/start registration
+      // But only if we don't have completed cache
       console.log('🔄 No completion data found - setting proceed to 0');
       if (cachedStatus !== 'completed') {
         setProceed(0);
+      } else {
+        console.log('💾 Cache exists, not changing proceed state');
       }
     };
 
@@ -308,6 +325,9 @@ export default function RegisterHotel() {
     startDate: formatDate(basicInfo?.start_date),
     totalRooms: basicInfo?.total_hotel_rooms || '—',
     childrenAllowed: propertyPolicy?.allow_children ? t('yes') : t('no'),
+    petsAllowed: propertyPolicy?.allow_pets ? t('yes') : t('no'),
+    breakfast: propertyPolicy?.breakfast_policy || '—',
+    starRating: basicInfo?.star_rating ? `${basicInfo.star_rating} ⭐` : '—',
     hotelId: user?.hotel || '—'
   }), [basicInfo, propertyBaseInfo, propertyPolicy, user?.hotel, getPropertyTypeName, formatDate, t]);
 
@@ -398,7 +418,7 @@ export default function RegisterHotel() {
                   {/* Stats Grid */}
                   {isLoadingData ? (
                     <div className="grid grid-cols-2 gap-4">
-                      {[1, 2, 3, 4].map((i) => (
+                      {[1, 2, 3, 4, 5, 6].map((i) => (
                         <div key={i} className="space-y-2">
                           <div className="h-4 w-20 bg-muted rounded animate-pulse" />
                           <div className="h-5 w-16 bg-muted rounded animate-pulse" />
@@ -432,10 +452,32 @@ export default function RegisterHotel() {
                       </div>
 
                       <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">{t('hotel_id')}</p>
+                        <p className="text-xs text-muted-foreground">{t('pets')}</p>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-xs text-muted-foreground">#</span>
-                          <p className="text-lg font-bold">{hotelDisplayData.hotelId}</p>
+                          <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <p className="text-lg font-bold">{hotelDisplayData.petsAllowed}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{t('breakfast')}</p>
+                        <div className="flex items-baseline gap-2">
+                          <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                          </svg>
+                          <p className="text-lg font-bold">{hotelDisplayData.breakfast}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{t('star_rating')}</p>
+                        <div className="flex items-baseline gap-2">
+                          <svg className="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                          </svg>
+                          <p className="text-lg font-bold">{hotelDisplayData.starRating}</p>
                         </div>
                       </div>
                     </div>

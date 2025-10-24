@@ -119,10 +119,20 @@ export async function getAuthToken(): Promise<JWTPayload | null> {
 export async function clearAuthCookies() {
   const cookieStore = await cookies()
   
-  cookieStore.delete(TOKEN_NAME)
-  cookieStore.delete(REFRESH_TOKEN_NAME)
-  cookieStore.delete('user_approved')
-  cookieStore.delete('isApproved')
+  // Clear all auth-related cookies
+  const cookiesToClear = [
+    TOKEN_NAME,
+    REFRESH_TOKEN_NAME,
+    'user_approved',
+    'isApproved',
+    'user_type'
+  ];
+  
+  cookiesToClear.forEach(cookieName => {
+    cookieStore.delete(cookieName);
+  });
+  
+  console.log('🧹 All auth cookies cleared');
 }
 
 export async function refreshAuthToken(): Promise<boolean> {

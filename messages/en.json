@@ -70,7 +70,10 @@
     "children": "Children",
     "hotel_id": "Hotel ID",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "pets": "Pets Allowed",
+    "breakfast": "Breakfast",
+    "star_rating": "Star Rating"
   },
   "RoomModal": {
     "title_add": "Add Room",
@@ -151,10 +154,9 @@
   "9": "Languages",
   "10": "Back",
   "11": "Next",
-  "groupName":"Group name",
-  "saveSuccess":"Мэдээллийг амжилттай хадгаллаа."
-  
-
+  "groupName": "Group name",
+  "saveSuccess": "Information saved successfully.",
+  "selectLanguagesHint": "Select one or more languages"
 },
 
 

@@ -79,24 +79,42 @@ export default function PriceSettingsPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [allRes, settingsRes] = await Promise.all([
+        // Get backend token for API authentication
+        const { getClientBackendToken } = await import('@/utils/auth');
+        const token = await getClientBackendToken();
+        
+        if (!token) {
+          console.error('❌ No backend token found');
+          throw new Error("Token not found");
+        }
+
+        console.log('🔑 Token acquired, fetching data...');
+
+        const [allRes, settingsRes, roomsRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/all-data/`),
-          fetch(`https://dev.kacc.mn/api/pricesettings/?hotel=${hotel}`)
+          fetch(`https://dev.kacc.mn/api/pricesettings/?hotel=${hotel}`),
+          fetch(`https://dev.kacc.mn/api/roomsNew/?token=${token}`) // Correct endpoint with token
         ]);
 
-        if (!allRes.ok || !settingsRes.ok) throw new Error("Fetch failed");
+        if (!allRes.ok || !settingsRes.ok) {
+          console.error('❌ API fetch failed:', { allRes: allRes.ok, settingsRes: settingsRes.ok, roomsRes: roomsRes.ok });
+          throw new Error("Fetch failed");
+        }
 
         const allData = await allRes.json() as AllData;
         const settings: PriceSetting[] = await settingsRes.json();
+        const rooms = roomsRes.ok ? await roomsRes.json() : [];
 
-        console.log('✅ Fetched price settings from API:', settings);
-        console.log('🔗 API URL used:', `https://dev.kacc.mn/api/pricesettings/?hotel=${hotel}`);
+        console.log('✅ Fetched all-data:', allData);
+        console.log('✅ Fetched price settings:', settings);
+        console.log('✅ Fetched actual rooms from API:', rooms);
+        console.log('🔗 Rooms API URL:', `https://dev.kacc.mn/api/roomsNew/?token=${token ? '[TOKEN]' : 'MISSING'}`);
 
         setLookup(allData);
         setPriceSettings(settings);
-        buildRoomOptionsFromSettings(allData, settings);
+        buildRoomOptionsFromActualRooms(allData, rooms);
       } catch (e) {
-        console.error("Price settings fetch error:", e);
+        console.error("❌ Price settings fetch error:", e);
         toast.error('Мэдээлэл татахад алдаа гарлаа');
       } finally {
         setLoading(false);
@@ -109,43 +127,61 @@ export default function PriceSettingsPage() {
     }
   }, [isDataRefresh, hotel]);
 
-  const buildRoomOptionsFromSettings = (allData: AllData, settings: PriceSetting[]) => {
-    // Get unique room type/category combinations from existing price settings
+  const buildRoomOptionsFromActualRooms = (allData: AllData, rooms: any[]) => {
+    console.log('🔍 Building room options from rooms array (length:', rooms?.length, ')');
+    console.log('� First room sample:', rooms?.[0]);
+    
+    // Get unique room type/category combinations from ACTUAL existing rooms only
     const map = new Map<string, RoomOption>();
     
-    settings.forEach(setting => {
-      const key = `${setting.room_type}-${setting.room_category}`;
-      const typeName = allData.room_types.find(t => t.id === setting.room_type)?.name || `Type ${setting.room_type}`;
-      const categoryName = allData.room_category.find(c => c.id === setting.room_category)?.name || `Category ${setting.room_category}`;
+    if (!rooms || rooms.length === 0) {
+      console.warn('⚠️ No rooms found - user needs to create rooms first');
+      setRoomOptions([]);
+      return;
+    }
+    
+    rooms.forEach((room: any, index: number) => {
+      // The API returns rooms with these fields: room_type, room_category (or category), room_numbers
+      const roomTypeId = room.room_type;
+      const roomCategoryId = room.room_category || room.category;
+      
+      if (!roomTypeId || !roomCategoryId) {
+        console.warn(`⚠️ Room ${index} missing type or category:`, { 
+          room_type: roomTypeId, 
+          room_category: roomCategoryId,
+          full_room: room 
+        });
+        return;
+      }
+      
+      const key = `${roomTypeId}-${roomCategoryId}`;
+      const typeName = allData.room_types.find(t => t.id === roomTypeId)?.name || `Type ${roomTypeId}`;
+      const categoryName = allData.room_category.find(c => c.id === roomCategoryId)?.name || `Category ${roomCategoryId}`;
+      
+      // Count how many actual room numbers this entry has
+      const roomCount = room.room_numbers ? room.room_numbers.split(',').length : 1;
       
       if (!map.has(key)) {
         map.set(key, {
-          label: `${typeName} – ${categoryName}`,
+          label: `${typeName} – ${categoryName} (${roomCount} өрөө)`,
           value: key,
-          room_type: setting.room_type,
-          room_category: setting.room_category,
-          count: 1
+          room_type: roomTypeId,
+          room_category: roomCategoryId,
+          count: roomCount
         });
+        console.log(`✅ Added room option: ${typeName} – ${categoryName} (${roomCount} өрөө)`);
+      } else {
+        // Increment count if we already have this combination
+        const existing = map.get(key)!;
+        existing.count += roomCount;
+        existing.label = `${typeName} – ${categoryName} (${existing.count} өрөө)`;
+        console.log(`➕ Updated room option: ${typeName} – ${categoryName} (now ${existing.count} өрөө)`);
       }
     });
     
-    // Also add all possible combinations from lookup data for new settings
-    allData.room_types.forEach(type => {
-      allData.room_category.forEach(category => {
-        const key = `${type.id}-${category.id}`;
-        if (!map.has(key)) {
-          map.set(key, {
-            label: `${type.name} – ${category.name}`,
-            value: key,
-            room_type: type.id,
-            room_category: category.id,
-            count: 0
-          });
-        }
-      });
-    });
-    
     const options = Array.from(map.values());
+    console.log(`✅ Built ${options.length} unique room options from ${rooms.length} room entries`);
+    console.log('📋 Final options:', options);
     setRoomOptions(options);
   };
 
@@ -236,7 +272,7 @@ export default function PriceSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Үнийн тохиргоо</h1>

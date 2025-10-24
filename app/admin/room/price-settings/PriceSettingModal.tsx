@@ -168,10 +168,11 @@ export default function PriceSettingModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative bg-background border border-border rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
+      <div className="min-h-screen flex items-start justify-center p-4 pt-20">
+        <div className="relative bg-background border border-border rounded-lg shadow-xl w-full max-w-2xl my-8">
+          {/* Header */}
+          <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">
             {editData ? 'Үнийн тохиргоо засах' : 'Шинэ үнийн тохиргоо'}
           </h2>
@@ -211,15 +212,26 @@ export default function PriceSettingModal({
               value={formData.room_combination || undefined}
               onValueChange={(value) => setFormData({ ...formData, room_combination: value })}
             >
-              <SelectTrigger className="border-input">
+              <SelectTrigger className="border-input w-full">
                 <SelectValue placeholder="Өрөөний бүлэг сонгох" />
               </SelectTrigger>
-              <SelectContent>
-                {roomOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
+              <SelectContent className="max-w-[500px]">
+                {roomOptions.length > 0 ? (
+                  roomOptions.map((option) => (
+                    <SelectItem 
+                      key={option.value} 
+                      value={option.value}
+                      className="whitespace-normal py-3 leading-snug"
+                    >
+                      <span className="block">{option.label}</span>
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    <p className="font-medium">Өрөө олдсонгүй</p>
+                    <p className="mt-1 text-xs">Эхлээд өрөө нэмнэ үү</p>
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -379,6 +391,7 @@ export default function PriceSettingModal({
             </Button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

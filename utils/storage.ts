@@ -1,24 +1,34 @@
 /**
- * User-scoped localStorage manager
+ * User-scoped localStorage manager with automatic expiry
  * Prevents data leakage between different user sessions
+ * Automatically clears data when session expires
  */
 
 interface StorageMetadata {
   userId: string;
   hotelId: string;
   timestamp: number;
+  expiresAt: number; // Timestamp when session expires
 }
 
 class UserStorage {
   private static METADATA_KEY = '__user_session_metadata__';
   private static PREFIX = 'hotel_';
+  private static SESSION_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds (matches JWT)
 
   /**
    * Initialize storage for current user
-   * Clears all data if user has changed
+   * Clears all data if user has changed or session expired
    */
   static initializeForUser(userId: string, hotelId: string): void {
     const currentMetadata = this.getMetadata();
+    const now = Date.now();
+    
+    // Check if session has expired
+    if (currentMetadata && currentMetadata.expiresAt < now) {
+      console.log('⏰ Session expired - clearing all localStorage');
+      this.clearAll();
+    }
     
     // If user has changed, clear ALL localStorage
     if (currentMetadata && currentMetadata.userId !== userId) {
@@ -26,12 +36,45 @@ class UserStorage {
       this.clearAll();
     }
     
-    // Set new metadata
+    // Set new metadata with expiry
     const metadata: StorageMetadata = {
       userId,
       hotelId,
-      timestamp: Date.now()
+      timestamp: now,
+      expiresAt: now + this.SESSION_DURATION
     };
+    
+    localStorage.setItem(this.METADATA_KEY, JSON.stringify(metadata));
+  }
+
+  /**
+   * Check if current session is still valid (not expired)
+   */
+  static isSessionValid(): boolean {
+    const metadata = this.getMetadata();
+    if (!metadata) return false;
+    
+    const now = Date.now();
+    const isValid = metadata.expiresAt > now;
+    
+    if (!isValid) {
+      console.log('⏰ Session expired - auto-clearing localStorage');
+      this.clearAll();
+    }
+    
+    return isValid;
+  }
+
+  /**
+   * Extend session expiry (called on user activity)
+   */
+  static extendSession(): void {
+    const metadata = this.getMetadata();
+    if (!metadata) return;
+    
+    const now = Date.now();
+    metadata.expiresAt = now + this.SESSION_DURATION;
+    metadata.timestamp = now;
     
     localStorage.setItem(this.METADATA_KEY, JSON.stringify(metadata));
   }
@@ -49,32 +92,40 @@ class UserStorage {
   }
 
   /**
-   * Validate that stored data belongs to current user
+   * Validate that stored data belongs to current user and session is valid
    */
   static validateUser(userId: string): boolean {
+    // First check if session is still valid
+    if (!this.isSessionValid()) {
+      return false;
+    }
+    
     const metadata = this.getMetadata();
     return metadata?.userId === userId;
   }
 
   /**
-   * Set item with user validation
+   * Set item with user validation and session check
    */
   static setItem(key: string, value: any, userId: string): void {
     if (!this.validateUser(userId)) {
-      console.warn('⚠️ User mismatch - data not saved');
+      console.warn('⚠️ User mismatch or session expired - data not saved');
       return;
     }
+    
+    // Extend session on activity
+    this.extendSession();
     
     const prefixedKey = `${this.PREFIX}${key}`;
     localStorage.setItem(prefixedKey, JSON.stringify(value));
   }
 
   /**
-   * Get item with user validation
+   * Get item with user validation and session check
    */
   static getItem<T>(key: string, userId: string): T | null {
     if (!this.validateUser(userId)) {
-      console.warn('⚠️ User mismatch - returning null');
+      console.warn('⚠️ User mismatch or session expired - returning null');
       return null;
     }
     
