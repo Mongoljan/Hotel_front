@@ -30,37 +30,80 @@ type Props = {
 export default function RegisterHotel4({ onNext, onBack }: Props) {
   const t = useTranslations('4PropertyPolicies');
   const { user } = useAuth();
-  
-  const propertyDataStr = user?.id ? UserStorage.getItem<string>('propertyData', user.id) : null;
-  const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
-  const step4 = stored.step4;
-
-  const defaultValues = step4
-    ? { ...step4, ...(step4?.cancellation_fee || {}) }
-    : {
-        cancel_time: '',
-        before_fee: '',
-        after_fee: '',
-        beforeManyRoom_fee: '',
-        afterManyRoom_fee: '',
-        subsequent_days_percentage: '',
-        special_condition_percentage: '',
-        check_in_from: '',
-        check_in_until: '',
-        check_out_from: '',
-        check_out_until: '',
-        breakfast_policy: 'no' as const,
-        parking_situation: 'no' as const,
-        allow_children: false,
-        allow_pets: false,
-      };
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps3),
-    defaultValues,
+    defaultValues: {
+      cancel_time: '',
+      before_fee: '',
+      after_fee: '',
+      beforeManyRoom_fee: '',
+      afterManyRoom_fee: '',
+      subsequent_days_percentage: '',
+      special_condition_percentage: '',
+      check_in_from: '',
+      check_in_until: '',
+      check_out_from: '',
+      check_out_until: '',
+      breakfast_policy: 'no' as const,
+      parking_situation: 'no' as const,
+      allow_children: false,
+      allow_pets: false,
+    },
   });
 
   const cancelTime = form.watch('cancel_time');
+
+  // Fetch and populate data when component mounts
+  useEffect(() => {
+    const fetchPolicyData = async () => {
+      if (!user?.id || !user?.hotel) return;
+
+      const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+      const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+      const propertyId = stored.propertyId || user.hotel;
+
+      try {
+        const res = await fetch(`${API_URL}?property=${propertyId}`);
+        const data = await res.json();
+        const existing = Array.isArray(data) && data.length > 0 ? data[0] : null;
+        const initialValues = stored.step4 || existing;
+
+        if (initialValues) {
+          console.log('📋 Step 4 data from API/storage:', initialValues);
+
+          // Flatten cancellation_fee object
+          const normalizedValues = {
+            cancel_time: initialValues.cancellation_fee?.cancel_time || initialValues.cancel_time || '',
+            before_fee: initialValues.cancellation_fee?.before_fee || initialValues.before_fee || '',
+            after_fee: initialValues.cancellation_fee?.after_fee || initialValues.after_fee || '',
+            beforeManyRoom_fee: initialValues.cancellation_fee?.beforeManyRoom_fee || initialValues.beforeManyRoom_fee || '',
+            afterManyRoom_fee: initialValues.cancellation_fee?.afterManyRoom_fee || initialValues.afterManyRoom_fee || '',
+            subsequent_days_percentage: initialValues.cancellation_fee?.subsequent_days_percentage || initialValues.subsequent_days_percentage || '',
+            special_condition_percentage: initialValues.cancellation_fee?.special_condition_percentage || initialValues.special_condition_percentage || '',
+            check_in_from: initialValues.check_in_from || '',
+            check_in_until: initialValues.check_in_until || '',
+            check_out_from: initialValues.check_out_from || '',
+            check_out_until: initialValues.check_out_until || '',
+            breakfast_policy: initialValues.breakfast_policy || 'no',
+            parking_situation: initialValues.parking_situation || 'no',
+            allow_children: initialValues.allow_children || false,
+            allow_pets: initialValues.allow_pets || false,
+          };
+
+          console.log('✅ Normalized step 4 values:', normalizedValues);
+          form.reset(normalizedValues);
+
+          stored.step4 = initialValues;
+          UserStorage.setItem('propertyData', JSON.stringify(stored), user.id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch step 4 data:', err);
+      }
+    };
+
+    fetchPolicyData();
+  }, [form, user?.id, user?.hotel]);
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     if (!user?.id || !user?.hotel) {

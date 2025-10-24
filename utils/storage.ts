@@ -101,7 +101,7 @@ class UserStorage {
   static clearAll(): void {
     const keys = Object.keys(localStorage);
     keys.forEach(key => {
-      if (key.startsWith(this.PREFIX) || key === this.METADATA_KEY) {
+      if (key.startsWith(this.PREFIX) || key === this.METADATA_KEY || key.startsWith('hotelCompletion_')) {
         localStorage.removeItem(key);
       }
     });

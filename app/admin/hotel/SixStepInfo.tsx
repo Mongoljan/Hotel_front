@@ -13,18 +13,20 @@ import {
   IconInfoCircle,
   IconMoodKid,
   IconPhoto,
-  IconShieldCheck,
 } from '@tabler/icons-react';
 
 import AboutHotel from './AboutHotel';
+import HotelImageGallery from './HotelImageGallery';
+import LocationTab from './LocationTab';
+import ServicesTab from './ServicesTab';
+import FAQTab from './FAQTab';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PropertyPhoto {
   id: number;
@@ -112,7 +114,8 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
   const [propertyImages, setPropertyImages] = useState<PropertyPhoto[]>([]);
   const [imageIndex, setImageIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<'about' | 'location' | 'services' | 'faq'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'images' | 'location' | 'services' | 'faq'>('about');
+  const [isLoading, setIsLoading] = useState(true);
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
@@ -129,6 +132,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       }
 
       try {
+        setIsLoading(true);
         console.log('🔄 SixStepInfo: Loading data for hotel:', hotelId);
         const [detailRes, policyRes, addressRes, basicInfoRes, combinedDataRes, baseRes, imagesRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`),
@@ -182,6 +186,8 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       } catch (error) {
         console.error(error);
         setProceed(0);
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -265,22 +271,17 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const tabs = useMemo(
     () => [
       { value: 'about' as const, label: 'Бидний тухай', description: 'Зочид буудлын ерөнхий танилцуулга' },
+      { value: 'images' as const, label: 'Зургийн цомог', description: `${propertyImages.length} зураг` },
       { value: 'location' as const, label: 'Байршил', description: 'Байршил, хүрэх заавар' },
       { value: 'services' as const, label: 'Үйлчилгээ', description: 'Үйлчилгээ, нэмэлт боломжууд' },
       { value: 'faq' as const, label: 'Түгээмэл асуулт', description: 'Асуулт, хариултууд' },
     ],
-    []
+    [propertyImages.length]
   );
 
-  const statusBadge = propertyBaseInfo?.is_approved
-    ? {
-        label: 'Баталгаажсан',
-        className: 'border border-emerald-200 bg-emerald-500/10 text-emerald-600',
-      }
-    : {
-        label: 'Баталгаажаагүй',
-        className: 'border border-amber-200 bg-amber-50 text-amber-600',
-      };
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
 
   if (!propertyDetail) {
     return (
@@ -299,7 +300,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   }
 
   return (
-    <div className="flex-1 space-y-4  pt-6">
+    <div className="flex-1 space-y-6">
       {/* Dashboard-style Header */}
       {/* <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight text-cyrillic">
@@ -439,26 +440,27 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
 
 
-      {/* Content Tabs - Back to Minor Component */}
+      {/* Content Tabs */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-cyrillic">Контент</CardTitle>
+          <CardTitle className="text-cyrillic">Дэлгэрэнгүй мэдээлэл</CardTitle>
+          <CardDescription>Зочид буудлын бүх мэдээллийг энд үзнэ үү</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4 bg-card/80 backdrop-blur border border-border/50 shadow-sm">
+            <TabsList className="grid w-full grid-cols-5">
               {tabs.map((tab) => (
-                <TabsTrigger 
-                  key={tab.value} 
-                  value={tab.value} 
-                  className="text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium"
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
                   {tab.label}
                 </TabsTrigger>
               ))}
             </TabsList>
-            
-            <div className="mt-4">
+
+            <div className="mt-6">
               <TabsContent value="about" className="mt-0">
                 <AboutHotel
                   image={currentImage}
@@ -474,20 +476,28 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                   formatTime={(time) => formatTime(time)}
                 />
               </TabsContent>
+
+              <TabsContent value="images" className="mt-0">
+                <HotelImageGallery images={propertyImages} />
+              </TabsContent>
+
               <TabsContent value="location" className="mt-0">
-                <div className="text-center text-muted-foreground py-8 text-sm">
-                  Байршлын мэдээлэл удахгүй нэмэгдэнэ
-                </div>
+                <LocationTab
+                  address={address}
+                  propertyBaseInfo={propertyBaseInfo}
+                  propertyDetail={propertyDetail}
+                />
               </TabsContent>
+
               <TabsContent value="services" className="mt-0">
-                <div className="text-center text-muted-foreground py-8 text-sm">
-                  Үйлчилгээний мэдээлэл удахгүй нэмэгдэнэ
-                </div>
+                <ServicesTab
+                  facilityIds={propertyDetail.general_facilities || []}
+                  hotelId={propertyDetail.property}
+                />
               </TabsContent>
+
               <TabsContent value="faq" className="mt-0">
-                <div className="text-center text-muted-foreground py-8 text-sm">
-                  Түгээмэл асуулт удахгүй нэмэгдэнэ
-                </div>
+                <FAQTab hotelId={propertyDetail.property} />
               </TabsContent>
             </div>
           </Tabs>
@@ -498,6 +508,35 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 }
 
 
+
+function LoadingSkeleton() {
+  return (
+    <div className="flex-1 space-y-6 pt-6">
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-6 w-1/2" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (

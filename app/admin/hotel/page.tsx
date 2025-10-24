@@ -12,14 +12,16 @@ import UserStorage from '@/utils/storage';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   IconBuilding,
   IconSettings,
   IconCheck,
   IconClock,
   IconBuildingBank,
   IconBed,
-  IconPhoto
+  IconPhoto,
+  IconCalendar,
+  IconMoodKid
 } from "@tabler/icons-react";
 
 interface BasicInfo {
@@ -113,38 +115,53 @@ export default function RegisterHotel() {
         return;
       }
 
+      // ✨ Check cache first for instant UI (tied to user + hotel)
+      const cacheKey = `hotelCompletion_${user.id}_${user.hotel}`;
+      const cachedStatus = localStorage.getItem(cacheKey);
+
+      if (cachedStatus === 'completed') {
+        console.log('💾 Found cached completion status - showing SixStepInfo immediately');
+        setProceed(2);
+        // Continue to verify with API in background
+      }
+
       // User is approved - now check if 6-step registration is complete
       try {
         const hid = user.hotel;
         console.log('🔍 Checking property details for hotel:', hid);
-        
+
         if (hid) {
           const res = await fetch(
             `https://dev.kacc.mn/api/property-details/?property=${hid}`,
             { cache: 'no-store' }
           );
-          
+
           console.log('📡 Property details fetch response:', {
             ok: res.ok,
             status: res.status,
             statusText: res.statusText
           });
-          
+
           if (!res.ok) {
             console.error('❌ Property details fetch failed:', res.status);
-            setProceed(0);
+            // If we had cache, trust it. Otherwise show proceed
+            if (cachedStatus !== 'completed') {
+              setProceed(0);
+            }
             return;
           }
-          
+
           let details;
           try {
             details = await res.json();
           } catch (parseError) {
             console.error('❌ Failed to parse property details JSON:', parseError);
-            setProceed(0);
+            if (cachedStatus !== 'completed') {
+              setProceed(0);
+            }
             return;
           }
-          
+
           console.log('🔍 Property details API response:', {
             hotelId: hid,
             detailsResponse: details,
@@ -152,14 +169,16 @@ export default function RegisterHotel() {
             length: Array.isArray(details) ? details.length : 'N/A',
             firstItem: Array.isArray(details) && details.length > 0 ? details[0] : null
           });
-          
+
           if (Array.isArray(details) && details.length > 0) {
             // Six steps completed - show SixStepInfo
             console.log('✅ Six steps completed - setting proceed to 2');
+            localStorage.setItem(cacheKey, 'completed'); // Cache it
             setProceed(2);
             return;
           } else {
             console.log('⚠️ Property details not found or empty - user needs to complete 6 steps');
+            localStorage.removeItem(cacheKey); // Clear invalid cache
           }
         }
 
@@ -179,7 +198,9 @@ export default function RegisterHotel() {
 
       // Default: show proceed/start registration
       console.log('🔄 No completion data found - setting proceed to 0');
-      setProceed(0);
+      if (cachedStatus !== 'completed') {
+        setProceed(0);
+      }
     };
 
     decideStep();
@@ -310,96 +331,120 @@ export default function RegisterHotel() {
 
   return (
     <div className="space-y-6 p-4">
-      {/* Hero Gradient Card */}
+      {/* Hero Card */}
       {proceed === 2 && (
-        <section className="relative overflow-hidden rounded-3xl border border-border/50 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 p-6 text-slate-100 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.35),_transparent_55%)]" />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.08),transparent_45%)]" />
-          
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            {/* Left side - Image */}
-            <div className="flex-shrink-0 space-y-4">
-              <Badge variant="outline" className="w-fit border-white/30 bg-white/10 text-white/90 backdrop-blur">
-                <IconBuildingBank className="mr-2 h-3.5 w-3.5" /> {t('hero_badge')}
-              </Badge>
-              
-              {/* Hotel Image */}
-              {isLoadingData ? (
-                <div className="flex items-center justify-center w-[400px] h-[280px] rounded-2xl border border-white/20 bg-white/5">
-                  <div className="text-center">
-                    <div className="h-8 w-8 mx-auto border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm text-white/60 mt-3">Уншиж байна...</p>
+        <Card className="border-2 overflow-hidden">
+          <CardContent className="p-0">
+            <div className="grid md:grid-cols-[400px_1fr] gap-0">
+              {/* Left side - Image */}
+              <div className="relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+                {isLoadingData ? (
+                  <div className="flex items-center justify-center h-[300px] md:h-[400px]">
+                    <div className="text-center">
+                      <div className="h-8 w-8 mx-auto border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <p className="text-sm text-muted-foreground mt-3">{t('loading')}</p>
+                    </div>
                   </div>
-                </div>
-              ) : propertyImages.length > 0 ? (
-                <div className="overflow-hidden rounded-2xl border border-white/20 shadow-2xl">
-                  <Image
-                    src={propertyImages[0].image}
-                    alt={propertyImages[0].description || hotelDisplayData.hotelName}
-                    width={400}
-                    height={280}
-                    className="w-[400px] h-[280px] object-cover"
-                    priority
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center justify-center w-[400px] h-[280px] rounded-2xl border border-dashed border-white/30 bg-white/5">
-                  <div className="text-center">
-                    <IconPhoto className="mx-auto h-12 w-12 text-white/40" />
-                    <p className="text-sm text-white/60 mt-3">Зураг байхгүй байна</p>
+                ) : propertyImages.length > 0 ? (
+                  <div className="relative h-[300px] md:h-[400px]">
+                    <Image
+                      src={propertyImages[0].image}
+                      alt={propertyImages[0].description || hotelDisplayData.hotelName}
+                      fill
+                      className="object-cover"
+                      priority
+                    />
+                    <div className="absolute top-4 left-4">
+                      <Badge variant="secondary" className="bg-white/90 backdrop-blur">
+                        <IconPhoto className="mr-1.5 h-3.5 w-3.5" />
+                        {propertyImages.length} {t('images')}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right side - Hotel Info Panel */}
-            <div className="flex-1 max-w-sm rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur">
-              <div className="flex items-center justify-between text-xs uppercase tracking-wide text-white/60 mb-4">
-                <span>{t('status_label')}</span>
-                <Badge className="bg-green-500/20 text-green-300 border-green-400/30">
-                  <IconCheck className="mr-1 h-3 w-3" />
-                  {t('status_approved')}
-                </Badge>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-[300px] md:h-[400px]">
+                    <IconPhoto className="h-16 w-16 text-muted-foreground/40" />
+                    <p className="text-sm text-muted-foreground mt-3">{t('no_images')}</p>
+                  </div>
+                )}
               </div>
-              
-              {isLoadingData ? (
-                <div className="space-y-3 text-white/90">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm">Loading...</p>
-                    <div className="h-4 w-16 bg-white/20 rounded animate-pulse"></div>
+
+              {/* Right side - Hotel Info */}
+              <div className="p-6 md:p-8 flex flex-col justify-between">
+                <div className="space-y-6">
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                        {hotelDisplayData.hotelName}
+                      </h1>
+                      {basicInfo?.property_name_en && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {basicInfo.property_name_en}
+                        </p>
+                      )}
+                    </div>
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 shrink-0">
+                      <IconCheck className="mr-1 h-3.5 w-3.5" />
+                      {t('verified')}
+                    </Badge>
                   </div>
+
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <IconBuildingBank className="h-4 w-4" />
+                    <span>{hotelDisplayData.propertyType}</span>
+                  </div>
+
+                  {/* Stats Grid */}
+                  {isLoadingData ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="space-y-2">
+                          <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+                          <div className="h-5 w-16 bg-muted rounded animate-pulse" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{t('total_rooms')}</p>
+                        <div className="flex items-baseline gap-2">
+                          <IconBed className="h-4 w-4 text-primary" />
+                          <p className="text-lg font-bold">{hotelDisplayData.totalRooms}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{t('start_date')}</p>
+                        <div className="flex items-baseline gap-2">
+                          <IconCalendar className="h-4 w-4 text-primary" />
+                          <p className="text-lg font-bold">{hotelDisplayData.startDate}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{t('children')}</p>
+                        <div className="flex items-baseline gap-2">
+                          <IconMoodKid className="h-4 w-4 text-primary" />
+                          <p className="text-lg font-bold">{hotelDisplayData.childrenAllowed}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{t('hotel_id')}</p>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xs text-muted-foreground">#</span>
+                          <p className="text-lg font-bold">{hotelDisplayData.hotelId}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-3 text-white/90">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm">{t('hotel_name')}</p>
-                    <p className="text-sm font-semibold">{hotelDisplayData.hotelName}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm">{t('property_type')}</p>
-                    <p className="text-sm font-semibold">{hotelDisplayData.propertyType}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm">{t('start_date')}</p>
-                    <p className="text-sm font-semibold">{hotelDisplayData.startDate}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm">{t('total_rooms')}</p>
-                    <p className="text-sm font-semibold">{hotelDisplayData.totalRooms}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm">{t('children_allowed')}</p>
-                    <p className="text-sm font-semibold">{hotelDisplayData.childrenAllowed}</p>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm">{t('hotel_id')}</p>
-                    <p className="text-sm font-semibold">{hotelDisplayData.hotelId}</p>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       )}
 
       {view === 'proceed' && proceed !== 2 && (

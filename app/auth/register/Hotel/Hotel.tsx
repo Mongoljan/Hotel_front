@@ -96,6 +96,9 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
         toast.success('Та зочид буудлын бүртгэлээ аль хэдийн дуусгасан байна!');
         UserStorage.removeItem('currentStep');
         UserStorage.setItem('proceed', '2', userId);
+        // Cache completion status (tied to user + hotel)
+        const cacheKey = `hotelCompletion_${userId}_${hotelId}`;
+        localStorage.setItem(cacheKey, 'completed');
         setProceed(2);
         return;
       }
@@ -175,8 +178,11 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
               toast.success('Бүртгэл дуусгагдлаа!');
               setTimeout(() => {
                 UserStorage.removeItem('currentStep');
-                if (user?.id) {
+                if (user?.id && user?.hotel) {
                   UserStorage.setItem('proceed', '2', user.id);
+                  // Cache completion status (tied to user + hotel)
+                  const cacheKey = `hotelCompletion_${user.id}_${user.hotel}`;
+                  localStorage.setItem(cacheKey, 'completed');
                 }
                 setProceed(2);
               }, transitionDelay);

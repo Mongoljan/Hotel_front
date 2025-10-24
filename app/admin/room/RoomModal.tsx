@@ -21,7 +21,8 @@ import {
   Cigarette,
   Bed,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  AlertCircle
 } from "lucide-react";
 import { getClientBackendToken } from "@/utils/auth";
 import { useTranslations } from "next-intl";
@@ -39,6 +40,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -148,7 +150,7 @@ export default function RoomModal({
   setIsRoomAdded,
 }: RoomModalProps) {
   const [step, setStep] = useState<number>(1);
-  const t = useTranslations("Rooms");
+  const t = useTranslations("RoomModal"); // Changed from "Rooms" to "RoomModal"
   const { user } = useAuth(); // Get user from auth hook
 
   // Combined lookup (room types, bed types, etc.)
@@ -163,7 +165,7 @@ export default function RoomModal({
     room_category: [],
   });
 
-  // Helper: read hotel ID (or user’s hotel) from localStorage/userInfo
+  // Helper: read hotel ID (or user's hotel) from localStorage/userInfo
   const getHotelId = (): number | null => {
     try {
       const propertyData = JSON.parse(localStorage.getItem("propertyData") || "{}");
@@ -171,6 +173,26 @@ export default function RoomModal({
     } catch {
       return null;
     }
+  };
+
+  // Helper: check if step 1 is complete for validation
+  const isStep1Complete = (): boolean => {
+    const roomType = watch("room_type");
+    const roomCategory = watch("room_category");
+    const bedType = watch("bed_type");
+    const roomNo = watch("RoomNo");
+    
+    return !!(roomType && roomCategory && bedType && roomNo);
+  };
+
+  // Helper: get missing fields for step 1
+  const getMissingFields = (): string[] => {
+    const missing: string[] = [];
+    if (!watch("room_type")) missing.push(t('room_type'));
+    if (!watch("room_category")) missing.push(t('category'));
+    if (!watch("bed_type")) missing.push(t('bed_type'));
+    if (!watch("RoomNo")) missing.push(t('room_numbers'));
+    return missing;
   };
 
   // React Hook Form setup
@@ -428,14 +450,15 @@ export default function RoomModal({
 
       // Success
       setIsRoomAdded(true);
-      toast.success(isEdit ? "Room updated successfully!" : "Room created successfully!");
+      toast.success(isEdit ? t('success_updated') : t('success_created'));
 
       setTimeout(() => {
         onClose();
       }, 1200);
     } catch (err: any) {
       console.error("RoomModal submit error:", err);
-      toast.error(err.message || "An unexpected error occurred.");
+      const isEdit = roomToEdit !== null;
+      toast.error(err.message || t(isEdit ? 'error_update' : 'error_create'));
     }
   };
 
@@ -456,7 +479,7 @@ export default function RoomModal({
 
         {/* ─── Header + Close Button ───────────────────────────────────────────── */}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">{roomToEdit ? "Өрөө засварлах" : "Өрөө нэмэх"}</h2>
+          <h2 className="text-lg font-bold">{roomToEdit ? t('title_edit') : t('title_add')}</h2>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="close">
             <X className="h-5 w-5 text-slate-700" />
           </Button>
@@ -464,16 +487,69 @@ export default function RoomModal({
 
         {/* ─── Step Indicator Bar ───────────────────────────────────────────── */}
         <section className="mb-6">
-          {step === 1 ? (
-            <div className="flex rounded-[10px]">
-              <div className="h-1 w-1/2 rounded-[10px] bg-primary"></div>
-              <div className="h-1 w-1/2 rounded-r-[10px] bg-gray-200"></div>
-            </div>
-          ) : (
-            <div className="flex rounded-[10px]">
-              <div className="h-1 w-1/2 rounded-l-[10px] bg-gray-200"></div>
-              <div className="h-1 w-1/2 rounded-[10px] bg-primary"></div>
-            </div>
+          <div className="flex gap-2 border-b">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors relative ${
+                step === 1
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {isStep1Complete() ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-xs">
+                    1
+                  </span>
+                )}
+                {t('basic_info')}
+              </div>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => {
+                if (!isStep1Complete()) {
+                  toast.info(t('complete_basic_first'), {
+                    description: t('fill_required_fields')
+                  });
+                  return;
+                }
+                setStep(2);
+              }}
+              className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                step === 2
+                  ? "border-primary text-primary"
+                  : isStep1Complete()
+                  ? "border-transparent text-muted-foreground hover:text-foreground"
+                  : "border-transparent text-muted-foreground/50 cursor-not-allowed"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-xs">
+                  2
+                </span>
+                {t('amenities')}
+                {!isStep1Complete() && (
+                  <Badge variant="secondary" className="ml-2 text-xs">
+                    {t('locked')}
+                  </Badge>
+                )}
+              </div>
+            </button>
+          </div>
+
+          {/* Show alert if step 1 is incomplete */}
+          {step === 1 && !isStep1Complete() && (getMissingFields().length > 0) && (
+            <Alert className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {t('required_fields_hint')}: {getMissingFields().join(', ')}
+              </AlertDescription>
+            </Alert>
           )}
         </section>
 
@@ -485,7 +561,7 @@ export default function RoomModal({
             <section className="flex justify-between mb-4">
               {/* Room Type */}
               <div className="w-[45%]">
-                <label className="block mb-1">Өрөөний төрөл</label>
+                <label className="block mb-1">{t('room_type')}</label>
                 <Select 
                   key={`room_type-${roomToEdit?.id || 'new'}-${watch("room_type")}`}
                   onValueChange={(value) => setValue("room_type", value)} 
@@ -495,11 +571,15 @@ export default function RoomModal({
                     <SelectValue placeholder="-- Сонгох --" />
                   </SelectTrigger>
                   <SelectContent>
-                    {combinedData.roomTypes.map((rt) => (
-                      <SelectItem key={rt.id} value={rt.id.toString()}>
-                        {rt.name}
-                      </SelectItem>
-                    ))}
+                    {combinedData.roomTypes.length === 0 ? (
+                      <SelectItem value="loading" disabled>{t('loading')}</SelectItem>
+                    ) : (
+                      combinedData.roomTypes.map((rt) => (
+                        <SelectItem key={rt.id} value={rt.id.toString()}>
+                          {rt.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 {errors.room_type && (
@@ -511,7 +591,7 @@ export default function RoomModal({
 
               {/* Room Category */}
               <div className="w-[45%]">
-                <label className="block mb-1">Өрөөний ангилал</label>
+                <label className="block mb-1">{t('category')}</label>
                 <Select 
                   key={`room_category-${roomToEdit?.id || 'new'}-${watch("room_category")}`}
                   onValueChange={(value) => setValue("room_category", value)} 
@@ -521,11 +601,15 @@ export default function RoomModal({
                     <SelectValue placeholder="-- Сонгох --" />
                   </SelectTrigger>
                   <SelectContent>
-                    {combinedData.room_category.map((rc) => (
-                      <SelectItem key={rc.id} value={rc.id.toString()}>
-                        {rc.name}
-                      </SelectItem>
-                    ))}
+                    {combinedData.room_category.length === 0 ? (
+                      <SelectItem value="loading" disabled>{t('loading')}</SelectItem>
+                    ) : (
+                      combinedData.room_category.map((rc) => (
+                        <SelectItem key={rc.id} value={rc.id.toString()}>
+                          {rc.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 {errors.room_category && (
@@ -657,51 +741,57 @@ export default function RoomModal({
 
 <div className="flex justify-between mb-4">
             <section className="mb-6 w-[45%]">
-              <h3 className="font-medium text-center ">Зураг нэмэх (Хамгийн багадаа 1 зураг)  </h3>
-              <p className="text-xs text-soft mb-2">*jpg/ jpeg эсвэл png, 47MB-с ихгүй хэмжээтэй байхыг анхаарна уу.</p>
-              {fields.map((field, index) => (
-                <div key={field.id} className="mb-4 border  p-4 rounded-lg">
-                  <section className="mb-2">
-                    <label className="block mb-1">Зураг оруулах</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageChange(e, index)}
-                      className="border p-2 w-full rounded-lg"
-                    />
-                    {errors.entries?.[index]?.images && (
-                      <div className="text-red text-sm">
-                        {errors.entries[index]?.images?.message}
-                      </div>
+              <h3 className="font-medium mb-2">{t('images')}</h3>
+              <p className="text-xs text-muted-foreground mb-3">{t('images_hint')}</p>
+              
+              {/* Minimal image upload interface */}
+              <div className="space-y-3">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex items-start gap-2">
+                    {watchedEntries[index]?.images && (
+                      <img
+                        src={watchedEntries[index].images}
+                        alt={`Preview ${index + 1}`}
+                        className="w-16 h-16 rounded border object-cover"
+                      />
                     )}
-                  </section>
-
-                  {watchedEntries[index]?.images && (
-                    <img
-                      src={watchedEntries[index].images}
-                      alt={`Preview ${index + 1}`}
-                      className="mt-2 max-h-20 w-auto rounded-md border"
-                    />
-                  )}
-
-                  <Button
-                    type="button"
-                    onClick={() => remove(index)}
-                    variant="destructive"
-                    className="w-full"
-                  >
-                    <Trash2 className="mr-2" /> Remove
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                onClick={() => append({ images: "", descriptions: "" })}
-                variant="outline"
-                className="w-full"
-              >
-                <Plus className="mr-2" /> Add More
-              </Button>
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageChange(e, index)}
+                        className="text-sm file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer"
+                      />
+                      {errors.entries?.[index]?.images && (
+                        <div className="text-red text-xs mt-1">
+                          {errors.entries[index]?.images?.message}
+                        </div>
+                      )}
+                    </div>
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        onClick={() => remove(index)}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                
+                <Button
+                  type="button"
+                  onClick={() => append({ images: "", descriptions: "" })}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> {t('upload_images')}
+                </Button>
+              </div>
             </section>
 
             <section className=" w-[45%]">
@@ -797,7 +887,7 @@ export default function RoomModal({
 
             <div className="flex justify-end">
               <Button onClick={() => setStep(2)} className="flex items-center gap-2">
-                {t("actions.next")} <ChevronRight />
+                {t("next")} <ChevronRight />
               </Button>
             </div>
           </div>
@@ -811,7 +901,7 @@ export default function RoomModal({
             {/* Room Facilities */}
             <section className="flex justify-between">
               <div className="w-[45%] mb-4">
-                <label className="block mb-1">Өрөөний ерөнхий онцлог зүйлс</label>
+                <label className="block mb-1">{t('facilities')}</label>
                 <div className="border p-2 rounded-lg max-h-60 overflow-y-auto flex flex-col gap-2">
                   {combinedData.facilities.map((f) => (
                     <label key={f.id} className="flex items-center gap-2">
@@ -833,7 +923,7 @@ export default function RoomModal({
               </div>
 
               <div className="w-[45%] mb-4">
-                <label className="block mb-1">Ариун цэврийн өрөөнд</label>
+                <label className="block mb-1">{t('bathroom')}</label>
                 <div className="border p-2 rounded-lg max-h-60 overflow-y-auto flex flex-col gap-2">
                   {combinedData.bathroom_items.map((b) => (
                     <label key={b.id} className="flex items-center gap-2">
@@ -857,7 +947,7 @@ export default function RoomModal({
 
             {/* Free Toiletries */}
             <div className="mb-4">
-              <label className="block mb-1">Үнэгүй 1 удаагийн хэрэгсэл</label>
+              <label className="block mb-1">{t('toiletries')}</label>
               <div className="flex flex-wrap gap-x-2 gap-y-6">
                 {combinedData.free_Toiletries.map((ft) => (
                   <div key={ft.id}>
@@ -888,7 +978,7 @@ export default function RoomModal({
 
             {/* Outdoor & View */}
             <div className="mb-4">
-              <label className="block mb-1">Нэмэлт:</label>
+              <label className="block mb-1">{t('view')}</label>
               <div className="flex flex-wrap gap-x-2 gap-y-6">
                 {combinedData.outdoor_and_view.map((ov) => (
                   <div key={ov.id}>
@@ -950,9 +1040,10 @@ export default function RoomModal({
 
             {/* Final Room Description */}
             <div className="mb-4">
-              <label className="block mb-1">Нэмэлт тайлбар</label>
+              <label className="block mb-1">{t('description')}</label>
               <textarea
                 {...register("room_Description")}
+                placeholder={t('description_placeholder')}
                 className="border rounded-lg p-2 w-full h-24"
               />
               {errors.room_Description && (
@@ -965,10 +1056,10 @@ export default function RoomModal({
             {/* Navigation Buttons */}
             <div className="flex justify-between">
               <Button variant="secondary" onClick={() => setStep(1)} className="flex items-center gap-2">
-                <ChevronLeft /> Буцах
+                <ChevronLeft /> {t('back')}
               </Button>
               <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
-                {roomToEdit ? "Хадгалах" : "Үүсгэх"} <Check />
+                {isSubmitting ? t('saving') : (roomToEdit ? t('save') : t('save'))} <Check />
               </Button>
             </div>
           </div>

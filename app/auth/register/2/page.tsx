@@ -34,7 +34,16 @@ export default function RegisterEmployee() {
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaRegistrationEmployee2),
-    defaultValues: parsedDefaults,
+    defaultValues: {
+      contact_person_name: '',
+      position: '',
+      contact_number: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      user_type: 2,
+      ...parsedDefaults,
+    },
   });
 
   const { handleSubmit, setValue, watch } = form;

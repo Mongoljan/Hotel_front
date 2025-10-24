@@ -36,6 +36,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
   const [combinedData, setCombinedData] = useState<CombinedData>({ province: [], soum: [], district: [] });
   const [filteredSoum, setFilteredSoum] = useState<Soum[]>([]);
+  const [pendingSoumValue, setPendingSoumValue] = useState<string | null>(null);
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps2),
@@ -61,8 +62,13 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       }
     };
 
+    fetchCombinedData();
+  }, []);
+
+  useEffect(() => {
     const fetchStep2Data = async () => {
       if (!user?.id || !user?.hotel) return;
+      if (combinedData.province.length === 0) return; // Wait for combined data
 
       const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
       const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
@@ -75,7 +81,32 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
         const initialValues = stored.step2 || existing;
 
         if (initialValues) {
-          form.reset(initialValues);
+          console.log('🔍 Initial values from API/storage:', initialValues);
+
+          // Convert numbers to strings for Select components
+          const normalizedValues = {
+            ...initialValues,
+            province_city: String(initialValues.province_city || ''),
+            soum: String(initialValues.soum || ''),
+            district: Number(initialValues.district || 0),
+            total_floor_number: Number(initialValues.total_floor_number || 1),
+          };
+
+          console.log('✅ Normalized values:', normalizedValues);
+          console.log('📍 Setting province_city to:', normalizedValues.province_city);
+
+          // Set province first, then store soum value to be set after filtering
+          form.setValue('province_city', normalizedValues.province_city);
+          form.setValue('district', normalizedValues.district);
+          form.setValue('zipCode', normalizedValues.zipCode);
+          form.setValue('total_floor_number', normalizedValues.total_floor_number);
+
+          // Store soum value to set after filteredSoum is populated
+          if (normalizedValues.soum) {
+            console.log('⏳ Pending soum value:', normalizedValues.soum);
+            setPendingSoumValue(normalizedValues.soum);
+          }
+
           stored.step2 = initialValues;
           UserStorage.setItem('propertyData', JSON.stringify(stored), user.id);
         }
@@ -84,15 +115,29 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       }
     };
 
-    fetchCombinedData();
     fetchStep2Data();
-  }, [form, user?.id, user?.hotel]);
+  }, [form, user?.id, user?.hotel, combinedData.province.length]);
 
   useEffect(() => {
     const provinceId = Number(selectedProvinceId);
     const filtered = combinedData.soum.filter((s) => s.code === provinceId);
+    console.log('🏙️ Province ID:', provinceId, 'Filtered soums:', filtered.length);
     setFilteredSoum(filtered);
-  }, [selectedProvinceId, combinedData]);
+
+    // If there's a pending soum value and filtered list is now available, set it
+    if (pendingSoumValue && filtered.length > 0) {
+      console.log('🔍 Checking if pending soum exists in filtered list:', pendingSoumValue);
+      const soumExists = filtered.some((s) => String(s.id) === pendingSoumValue);
+      console.log('✅ Soum exists:', soumExists, 'Available IDs:', filtered.map(s => String(s.id)));
+      if (soumExists) {
+        console.log('✅ Setting soum to:', pendingSoumValue);
+        form.setValue('soum', pendingSoumValue);
+        setPendingSoumValue(null); // Clear pending value
+      } else {
+        console.warn('❌ Soum value not found in filtered list:', pendingSoumValue);
+      }
+    }
+  }, [selectedProvinceId, combinedData, pendingSoumValue, form]);
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     if (!user?.id || !user?.hotel) {
@@ -189,7 +234,12 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Сум/Дүүрэг</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      key={`soum-${selectedProvinceId}-${field.value}`}
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="-- Сум/Дүүрэг сонгох --" />
