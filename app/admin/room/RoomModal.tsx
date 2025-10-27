@@ -743,45 +743,75 @@ export default function RoomModal({
             <section className="mb-6 w-[45%]">
               <h3 className="font-medium mb-2">{t('images')}</h3>
               <p className="text-xs text-muted-foreground mb-3">{t('images_hint')}</p>
-              
+
               {/* Minimal image upload interface */}
               <div className="space-y-3">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-start gap-2">
-                    {watchedEntries[index]?.images && (
-                      <img
-                        src={watchedEntries[index].images}
-                        alt={`Preview ${index + 1}`}
-                        className="w-16 h-16 rounded border object-cover"
-                      />
-                    )}
-                    <div className="flex-1">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageChange(e, index)}
-                        className="text-sm file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer"
-                      />
-                      {errors.entries?.[index]?.images && (
-                        <div className="text-red text-xs mt-1">
-                          {errors.entries[index]?.images?.message}
+                {fields.map((field, index) => {
+                  const hasImage = watchedEntries[index]?.images;
+
+                  return (
+                    <div key={field.id} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/20">
+                      {hasImage ? (
+                        <img
+                          src={watchedEntries[index].images}
+                          alt={`Preview ${index + 1}`}
+                          className="w-12 h-12 flex-shrink-0 rounded border object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 flex-shrink-0 rounded border border-dashed border-muted-foreground/30 bg-muted/10 flex items-center justify-center">
+                          <ImageIcon className="h-5 w-5 text-muted-foreground/50" />
                         </div>
                       )}
+
+                      <div className="flex-1 min-w-0">
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageChange(e, index)}
+                            className="hidden"
+                            id={`image-upload-${index}`}
+                          />
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 text-xs"
+                              onClick={() => document.getElementById(`image-upload-${index}`)?.click()}
+                            >
+                              <Upload className="h-3 w-3 mr-1" />
+                              {hasImage ? 'Change' : 'Choose File'}
+                            </Button>
+                            {hasImage && (
+                              <span className="text-xs text-muted-foreground truncate">
+                                Image {index + 1}
+                              </span>
+                            )}
+                          </div>
+                        </label>
+                        {errors.entries?.[index]?.images && (
+                          <div className="text-red text-xs mt-1">
+                            {errors.entries[index]?.images?.message}
+                          </div>
+                        )}
+                      </div>
+
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          onClick={() => remove(index)}
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 flex-shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
-                    {fields.length > 1 && (
-                      <Button
-                        type="button"
-                        onClick={() => remove(index)}
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                
+                  );
+                })}
+
                 <Button
                   type="button"
                   onClick={() => append({ images: "", descriptions: "" })}

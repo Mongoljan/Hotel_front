@@ -8,6 +8,80 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Formatted Number Input Component for prices
+interface FormattedNumberInputProps {
+  id?: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+}
+
+const FormattedNumberInput: React.FC<FormattedNumberInputProps> = ({
+  id,
+  value,
+  onChange,
+  placeholder,
+  className,
+  disabled
+}) => {
+  const [displayValue, setDisplayValue] = useState('');
+
+  // Format number with thousand separators
+  const formatNumber = (str: string): string => {
+    if (!str || str === '0') return '';
+    const num = str.replace(/'/g, '');
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+  };
+
+  // Parse formatted string back to plain number string
+  const parseFormattedNumber = (str: string): string => {
+    return str.replace(/'/g, '');
+  };
+
+  // Update display value when prop value changes
+  useEffect(() => {
+    setDisplayValue(formatNumber(value));
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+
+    // Allow only numbers, apostrophes, and decimal point
+    if (inputValue && !/^[\d'.]*$/.test(inputValue)) {
+      return;
+    }
+
+    // Update display
+    setDisplayValue(inputValue);
+
+    // Parse and call onChange
+    const numericValue = parseFormattedNumber(inputValue);
+    onChange(numericValue);
+  };
+
+  const handleBlur = () => {
+    // Reformat on blur to ensure proper formatting
+    const numericValue = parseFormattedNumber(displayValue);
+    setDisplayValue(formatNumber(numericValue));
+  };
+
+  return (
+    <Input
+      id={id}
+      type="text"
+      inputMode="decimal"
+      value={displayValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      placeholder={placeholder}
+      className={className}
+      disabled={disabled}
+    />
+  );
+};
+
 interface RoomType {
   id: number;
   name: string;
@@ -170,7 +244,7 @@ export default function PriceSettingModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
       <div className="min-h-screen flex items-start justify-center p-4 pt-20">
-        <div className="relative bg-background border border-border rounded-lg shadow-xl w-full max-w-2xl my-8">
+        <div className="relative bg-background border border-border rounded-2xl shadow-xl w-full max-w-2xl my-8">
           {/* Header */}
           <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">
@@ -218,8 +292,8 @@ export default function PriceSettingModal({
               <SelectContent className="max-w-[500px]">
                 {roomOptions.length > 0 ? (
                   roomOptions.map((option) => (
-                    <SelectItem 
-                      key={option.value} 
+                    <SelectItem
+                      key={option.value}
                       value={option.value}
                       className="whitespace-normal py-3 leading-snug"
                     >
@@ -228,8 +302,14 @@ export default function PriceSettingModal({
                   ))
                 ) : (
                   <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                    <p className="font-medium">Өрөө олдсонгүй</p>
-                    <p className="mt-1 text-xs">Эхлээд өрөө нэмнэ үү</p>
+                    <p className="font-medium">
+                      {editData ? 'Өрөө олдсонгүй' : 'Бүх өрөөний үнийн тохиргоо хийгдсэн байна'}
+                    </p>
+                    <p className="mt-1 text-xs">
+                      {editData
+                        ? 'Эхлээд өрөө нэмнэ үү'
+                        : 'Үнийн тохиргоо нэмэхийн тулд эхлээд Өрөөний үнэ хэсэгт үнэ тохируулаагүй өрөө байх ёстой'}
+                    </p>
                   </div>
                 )}
               </SelectContent>
@@ -280,7 +360,7 @@ export default function PriceSettingModal({
                   onChange={(e) => setFormData({ ...formData, adjustment_type: 'ADD' })}
                   className="hidden peer"
                 />
-                <span className="peer-checked:bg-slate-700 peer-checked:text-white peer-checked:border-slate-700 border border-border/40 rounded-lg px-4 py-2.5 w-full text-center bg-background text-muted-foreground transition hover:bg-muted/50 hover:border-border">
+                <span className="peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary border border-border/40 rounded-lg px-4 py-2.5 w-full text-center bg-background text-muted-foreground transition hover:bg-muted/50 hover:border-border">
                   Нэмэгдэх
                 </span>
               </label>
@@ -294,7 +374,7 @@ export default function PriceSettingModal({
                   onChange={(e) => setFormData({ ...formData, adjustment_type: 'SUB' })}
                   className="hidden peer"
                 />
-                <span className="peer-checked:bg-slate-700 peer-checked:text-white peer-checked:border-slate-700 border border-border/40 rounded-lg px-4 py-2.5 w-full text-center bg-background text-muted-foreground transition hover:bg-muted/50 hover:border-border">
+                <span className="peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary border border-border/40 rounded-lg px-4 py-2.5 w-full text-center bg-background text-muted-foreground transition hover:bg-muted/50 hover:border-border">
                   Хасагдах
                 </span>
               </label>
@@ -316,7 +396,7 @@ export default function PriceSettingModal({
                   onChange={(e) => setFormData({ ...formData, value_type: 'PERCENT' })}
                   className="hidden peer"
                 />
-                <span className="peer-checked:bg-slate-700 peer-checked:text-white peer-checked:border-slate-700 border border-border/40 rounded-lg px-4 py-2.5 w-full text-center bg-background text-muted-foreground transition hover:bg-muted/50 hover:border-border">
+                <span className="peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary border border-border/40 rounded-lg px-4 py-2.5 w-full text-center bg-background text-muted-foreground transition hover:bg-muted/50 hover:border-border">
                   Хувиар (%)
                 </span>
               </label>
@@ -330,7 +410,7 @@ export default function PriceSettingModal({
                   onChange={(e) => setFormData({ ...formData, value_type: 'AMOUNT' })}
                   className="hidden peer"
                 />
-                <span className="peer-checked:bg-slate-700 peer-checked:text-white peer-checked:border-slate-700 border border-border/40 rounded-lg px-4 py-2.5 w-full text-center bg-background text-muted-foreground transition hover:bg-muted/50 hover:border-border">
+                <span className="peer-checked:bg-primary peer-checked:text-primary-foreground peer-checked:border-primary border border-border/40 rounded-lg px-4 py-2.5 w-full text-center bg-background text-muted-foreground transition hover:bg-muted/50 hover:border-border">
                   Дүнгээр (₮)
                 </span>
               </label>
@@ -342,19 +422,29 @@ export default function PriceSettingModal({
             <Label htmlFor="value">
               Утга <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="value"
-              type="number"
-              step="0.01"
-              value={formData.value}
-              onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-              placeholder={formData.value_type === 'PERCENT' ? '10' : '50000'}
-              className="border-input"
-            />
+            {formData.value_type === 'AMOUNT' ? (
+              <FormattedNumberInput
+                id="value"
+                value={formData.value}
+                onChange={(value) => setFormData({ ...formData, value })}
+                placeholder="50'000"
+                className="border-input"
+              />
+            ) : (
+              <Input
+                id="value"
+                type="number"
+                step="0.01"
+                value={formData.value}
+                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                placeholder="10"
+                className="border-input"
+              />
+            )}
             <p className="text-xs text-muted-foreground">
-              {formData.value_type === 'PERCENT' 
+              {formData.value_type === 'PERCENT'
                 ? 'Хувиар илэрхийлнэ (жишээ нь: 10 гэж оруулбал 10% нэмэгдэнэ)'
-                : 'Төгрөгөөр илэрхийлнэ (жишээ нь: 50000 гэж оруулбал 50,000₮ нэмэгдэнэ)'}
+                : "Төгрөгөөр илэрхийлнэ (жишээ нь: 50'000 гэж оруулбал 50,000₮ нэмэгдэнэ)"}
             </p>
           </div>
 

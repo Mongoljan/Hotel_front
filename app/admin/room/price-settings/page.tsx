@@ -185,6 +185,16 @@ export default function PriceSettingsPage() {
     setRoomOptions(options);
   };
 
+  // Filter room options to only show those WITHOUT price settings
+  const availableRoomOptions = roomOptions.filter(option => {
+    // Check if this room combination already has a price setting
+    const hasPriceSetting = priceSettings.some(
+      setting => setting.room_type === option.room_type &&
+                 setting.room_category === option.room_category
+    );
+    return !hasPriceSetting;
+  });
+
   const handleAdd = () => {
     setEditingSetting(null);
     setIsModalOpen(true);
@@ -273,24 +283,43 @@ export default function PriceSettingsPage() {
 
   return (
     <div className="">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Үнийн тохиргоо</h1>
           <p className="text-muted-foreground">
             Өрөөний үнийн нэмэгдэл болон хасалт тохируулах
           </p>
         </div>
-        <Button 
-          onClick={handleAdd} 
-          disabled={loading}
+        <Button
+          onClick={handleAdd}
+          disabled={loading || availableRoomOptions.length === 0}
           className="bg-primary text-primary-foreground hover:bg-primary/90"
+          title={availableRoomOptions.length === 0 ? 'Бүх өрөөний үнийн тохиргоо хийгдсэн байна' : 'Үнийн тохиргоо нэмэх'}
         >
           <Plus className="mr-2 h-4 w-4" />
           Нэмэх
         </Button>
       </div>
 
-      <Card>
+      {/* Show info when all rooms have price settings */}
+      {!loading && roomOptions.length > 0 && availableRoomOptions.length === 0 && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>Мэдээлэл:</strong> Бүх өрөөний үнийн тохиргоо хийгдсэн байна. Шинэ тохиргоо нэмэхийн тулд эхлээд шинэ өрөө нэмэх эсвэл одоогийн тохиргоог устгана уу.
+          </p>
+        </div>
+      )}
+
+      {/* Show info when there are available room options */}
+      {!loading && availableRoomOptions.length > 0 && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-800">
+            <strong>{availableRoomOptions.length}</strong> өрөөний бүлэг үнийн тохиргоо хийх боломжтой байна
+          </p>
+        </div>
+      )}
+
+      <Card className="border border-border/50 shadow-sm">
         <CardContent className="pt-6">
           {priceSettings.length === 0 ? (
             <div className="text-center py-8">
@@ -303,7 +332,7 @@ export default function PriceSettingsPage() {
           ) : (
             <div className="space-y-4">
               {priceSettings.map((setting) => (
-                <Card key={setting.id} className="overflow-hidden border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                <Card key={setting.id} className="overflow-hidden border border-border/50 shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 space-y-3">
@@ -322,7 +351,6 @@ export default function PriceSettingsPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(setting)}
-                              className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -330,7 +358,7 @@ export default function PriceSettingsPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDeleteClick(setting.id)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-destructive hover:text-destructive/90"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -387,7 +415,7 @@ export default function PriceSettingsPage() {
           isOpen={isModalOpen}
           onClose={handleModalClose}
           editData={editingSetting}
-          roomOptions={roomOptions}
+          roomOptions={editingSetting ? roomOptions : availableRoomOptions}
           lookup={lookup}
           hotelId={hotel}
         />

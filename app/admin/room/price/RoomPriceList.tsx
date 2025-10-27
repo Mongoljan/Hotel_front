@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import UserStorage from "@/utils/storage";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -42,15 +43,87 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Edit, 
-  Trash2, 
+import {
+  Edit,
+  Trash2,
   Plus,
   DollarSign,
   Calendar,
   Users
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Formatted Number Input Component
+interface FormattedNumberInputProps {
+  id?: string;
+  value: number;
+  onChange: (value: number) => void;
+  placeholder?: string;
+  className?: string;
+}
+
+const FormattedNumberInput: React.FC<FormattedNumberInputProps> = ({
+  id,
+  value,
+  onChange,
+  placeholder,
+  className
+}) => {
+  const [displayValue, setDisplayValue] = useState('');
+
+  // Format number with thousand separators
+  const formatNumber = (num: number): string => {
+    if (num === 0) return '';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+  };
+
+  // Parse formatted string back to number
+  const parseFormattedNumber = (str: string): number => {
+    const cleaned = str.replace(/'/g, '');
+    const num = parseInt(cleaned, 10);
+    return isNaN(num) ? 0 : num;
+  };
+
+  // Update display value when prop value changes
+  useEffect(() => {
+    setDisplayValue(formatNumber(value));
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+
+    // Allow only numbers and apostrophes
+    if (inputValue && !/^[\d']*$/.test(inputValue)) {
+      return;
+    }
+
+    // Update display
+    setDisplayValue(inputValue);
+
+    // Parse and call onChange
+    const numericValue = parseFormattedNumber(inputValue);
+    onChange(numericValue);
+  };
+
+  const handleBlur = () => {
+    // Reformat on blur to ensure proper formatting
+    const numericValue = parseFormattedNumber(displayValue);
+    setDisplayValue(formatNumber(numericValue));
+  };
+
+  return (
+    <Input
+      id={id}
+      type="text"
+      inputMode="numeric"
+      value={displayValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+};
 
 interface AllData {
   room_types: { id: number; name: string; is_custom: boolean }[];
@@ -447,34 +520,34 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="base-price">Үндсэн үнэ</Label>
-                <Input
-                  id="base-price"
-                  type="number"
-                  placeholder="Үндсэн үнэ оруулах"
-                  onChange={e => setForm(f => ({ ...f, base_price: Number(e.target.value) }))}
+                <Label htmlFor="base-price-empty">Үндсэн үнэ</Label>
+                <FormattedNumberInput
+                  id="base-price-empty"
+                  value={form.base_price}
+                  onChange={(value) => setForm(f => ({ ...f, base_price: value }))}
+                  placeholder="Үндсэн үнэ оруулах (жишээ нь: 200'000)"
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="single-price">Ганц хүний үнэ</Label>
-                <Input
-                  id="single-price"
-                  type="number"
-                  placeholder="Ганц хүний үнэ оруулах"
-                  onChange={e => setForm(f => ({ ...f, single_person_price: Number(e.target.value) }))}
+                <Label htmlFor="single-price-empty">Ганц хүний үнэ</Label>
+                <FormattedNumberInput
+                  id="single-price-empty"
+                  value={form.single_person_price}
+                  onChange={(value) => setForm(f => ({ ...f, single_person_price: value }))}
+                  placeholder="Ганц хүний үнэ оруулах (жишээ нь: 120'000)"
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="half-day-price">Хагас өдрийн үнэ</Label>
-                <Input
-                  id="half-day-price"
-                  type="number"
-                  placeholder="Хагас өдрийн үнэ оруулах"
-                  onChange={e => setForm(f => ({ ...f, half_day_price: Number(e.target.value) }))}
+                <Label htmlFor="half-day-price-empty">Хагас өдрийн үнэ</Label>
+                <FormattedNumberInput
+                  id="half-day-price-empty"
+                  value={form.half_day_price}
+                  onChange={(value) => setForm(f => ({ ...f, half_day_price: value }))}
+                  placeholder="Хагас өдрийн үнэ оруулах (жишээ нь: 150'000)"
                 />
               </div>
             </div>
@@ -493,7 +566,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
   return (
     <>
       <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-2xl">
           <DialogHeader>
             <DialogTitle>Өрөөний үнэ нэмэх</DialogTitle>
             <DialogDescription>
@@ -532,34 +605,34 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="base-price">Үндсэн үнэ</Label>
-                <Input
+                <FormattedNumberInput
                   id="base-price"
-                  type="number"
-                  placeholder="Үндсэн үнэ оруулах"
-                  onChange={e => setForm(f => ({ ...f, base_price: Number(e.target.value) }))}
+                  value={form.base_price}
+                  onChange={(value) => setForm(f => ({ ...f, base_price: value }))}
+                  placeholder="Үндсэн үнэ оруулах (жишээ нь: 200'000)"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="single-price">Ганц хүний үнэ</Label>
-                <Input
+                <FormattedNumberInput
                   id="single-price"
-                  type="number"
-                  placeholder="Ганц хүний үнэ оруулах"
-                  onChange={e => setForm(f => ({ ...f, single_person_price: Number(e.target.value) }))}
+                  value={form.single_person_price}
+                  onChange={(value) => setForm(f => ({ ...f, single_person_price: value }))}
+                  placeholder="Ганц хүний үнэ оруулах (жишээ нь: 120'000)"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="half-day-price">Хагас өдрийн үнэ</Label>
-                <Input
+                <FormattedNumberInput
                   id="half-day-price"
-                  type="number"
-                  placeholder="Хагас өдрийн үнэ оруулах"
-                  onChange={e => setForm(f => ({ ...f, half_day_price: Number(e.target.value) }))}
+                  value={form.half_day_price}
+                  onChange={(value) => setForm(f => ({ ...f, half_day_price: value }))}
+                  placeholder="Хагас өдрийн үнэ оруулах (жишээ нь: 150'000)"
                 />
               </div>
             </div>
@@ -567,7 +640,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
               <Button variant="outline" onClick={() => setOpenAdd(false)}>
                 Цуцлах
               </Button>
-              <Button 
+              <Button
                 onClick={createPrice}
                 disabled={availableOptions.length === 0}
               >
@@ -579,7 +652,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
 
       {/* Edit Price Dialog */}
       <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-2xl">
           <DialogHeader>
             <DialogTitle>Өрөөний үнэ засах</DialogTitle>
             <DialogDescription>
@@ -597,31 +670,31 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
             
             <div className="space-y-2">
               <Label htmlFor="edit-base-price">Үндсэн үнэ</Label>
-              <Input
+              <FormattedNumberInput
                 id="edit-base-price"
-                type="number"
                 value={form.base_price}
-                onChange={e => setForm(f => ({ ...f, base_price: Number(e.target.value) }))}
+                onChange={(value) => setForm(f => ({ ...f, base_price: value }))}
+                placeholder="Үндсэн үнэ оруулах (жишээ нь: 200'000)"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="edit-single-price">Ганц хүний үнэ</Label>
-              <Input
+              <FormattedNumberInput
                 id="edit-single-price"
-                type="number"
                 value={form.single_person_price}
-                onChange={e => setForm(f => ({ ...f, single_person_price: Number(e.target.value) }))}
+                onChange={(value) => setForm(f => ({ ...f, single_person_price: value }))}
+                placeholder="Ганц хүний үнэ оруулах (жишээ нь: 120'000)"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="edit-half-day-price">Хагас өдрийн үнэ</Label>
-              <Input
+              <FormattedNumberInput
                 id="edit-half-day-price"
-                type="number"
                 value={form.half_day_price}
-                onChange={e => setForm(f => ({ ...f, half_day_price: Number(e.target.value) }))}
+                onChange={(value) => setForm(f => ({ ...f, half_day_price: value }))}
+                placeholder="Хагас өдрийн үнэ оруулах (жишээ нь: 150'000)"
               />
             </div>
           </div>
@@ -636,9 +709,11 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      <div className="rounded-md border">
-        <Table>
+
+
+      <Card className="border border-border/50 shadow-sm">
+        <CardContent className="pt-6">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Өрөөний тоо</TableHead>
@@ -726,8 +801,9 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
             })}
           </TableBody>
         </Table>
-      </div>
-      
+        </CardContent>
+      </Card>
+
       <div className="text-sm text-muted-foreground">
         Нийт {rows.length} үнийн мэдээлэл
       </div>
