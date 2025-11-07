@@ -156,7 +156,10 @@
   "11": "Next",
   "groupName": "Group name",
   "saveSuccess": "Information saved successfully.",
-  "selectLanguagesHint": "Select one or more languages"
+  "selectLanguagesHint": "Select one or more languages",
+  "yes": "Yes",
+  "no": "No",
+  "selectOption": "Select"
 },
 
 

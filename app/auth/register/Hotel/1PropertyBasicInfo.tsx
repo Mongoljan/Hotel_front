@@ -274,18 +274,39 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 control={form.control}
                 name="part_of_group"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem>
+                    <FormLabel>{t('5')}?</FormLabel>
                     <FormControl>
-                      <input
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={field.onChange}
-                        className="mt-1"
-                      />
+                      <div className="flex gap-4">
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(true)}
+                          className={`
+                            flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all border-2
+                            ${field.value === true
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-muted-foreground/20 bg-background text-muted-foreground hover:border-muted-foreground/40'
+                            }
+                          `}
+                        >
+                          {t('yes')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(false)}
+                          className={`
+                            flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all border-2
+                            ${field.value === false
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-muted-foreground/20 bg-background text-muted-foreground hover:border-muted-foreground/40'
+                            }
+                          `}
+                        >
+                          {t('no')}
+                        </button>
+                      </div>
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>{t('5')}?</FormLabel>
-                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -304,22 +325,43 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 )}
               />
 
-              <FormField
+                            <FormField
                 control={form.control}
                 name="sales_room_limitation"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem>
+                    <FormLabel>{t('8')}?</FormLabel>
                     <FormControl>
-                      <input
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={field.onChange}
-                        className="mt-1"
-                      />
+                      <div className="flex gap-4">
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(true)}
+                          className={`
+                            flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all border-2
+                            ${field.value === true
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-muted-foreground/20 bg-background text-muted-foreground hover:border-muted-foreground/40'
+                            }
+                          `}
+                        >
+                          {t('yes')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => field.onChange(false)}
+                          className={`
+                            flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all border-2
+                            ${field.value === false
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-muted-foreground/20 bg-background text-muted-foreground hover:border-muted-foreground/40'
+                            }
+                          `}
+                        >
+                          {t('no')}
+                        </button>
+                      </div>
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>{t('8')}</FormLabel>
-                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -340,7 +382,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                               return lang ? (
                                 <div
                                   key={langId}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary text-primary-foreground rounded-full text-sm font-medium"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/20 text-foreground rounded-full text-sm font-medium border border-primary/30"
                                 >
                                   <span>{lang.languages_name_mn}</span>
                                   <button
@@ -349,7 +391,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                                       const newValue = field.value.filter((id: string) => id !== langId);
                                       field.onChange(newValue);
                                     }}
-                                    className="hover:bg-primary-foreground/20 rounded-full p-0.5 transition-colors"
+                                    className="hover:bg-muted rounded-full p-0.5 transition-colors"
                                   >
                                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -380,20 +422,20 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                                 className={`
                                   flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all
                                   ${isSelected
-                                    ? 'bg-primary text-primary-foreground shadow-sm'
-                                    : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground'
+                                    ? 'bg-primary/10 text-primary border-2 border-primary shadow-sm'
+                                    : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border-2 border-transparent'
                                   }
                                 `}
                               >
                                 <div className={`
                                   h-4 w-4 rounded border-2 flex items-center justify-center transition-all
                                   ${isSelected
-                                    ? 'bg-primary-foreground border-primary-foreground'
+                                    ? 'bg-primary border-primary'
                                     : 'border-muted-foreground/50'
                                   }
                                 `}>
                                   {isSelected && (
-                                    <svg className="h-3 w-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="h-3 w-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                     </svg>
                                   )}
