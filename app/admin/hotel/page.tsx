@@ -350,8 +350,9 @@ export default function RegisterHotel() {
   ];
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-3 ">
       {/* Hero Card */}
+      <div className="p-1">
       {proceed === 2 && (
         <Card className="border-2 overflow-hidden">
           <CardContent className="p-0">
@@ -488,6 +489,7 @@ export default function RegisterHotel() {
           </CardContent>
         </Card>
       )}
+      </div>
 
       {view === 'proceed' && proceed !== 2 && (
         <div className="w-full">

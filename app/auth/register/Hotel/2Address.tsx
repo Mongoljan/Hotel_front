@@ -196,9 +196,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       <Card className="w-full max-w-[440px]">
         <CardHeader>
           <CardTitle className="text-[30px] font-bold text-center text-black">{t("title")}</CardTitle>
-          <CardDescription className="text-center">
-            Property address and location information
-          </CardDescription>
+       
         </CardHeader>
         <CardContent>
           <Form {...form}>

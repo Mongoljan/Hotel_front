@@ -17,6 +17,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const API_URL = 'https://dev.kacc.mn/api/property-basic-info/';
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
@@ -178,19 +183,15 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
   if (defaultValues === null) return null;
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-4">
+    <div className="flex justify-center items-center  p-4">
 
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-              <Building2 className="h-6 w-6 text-primary-foreground" />
-            </div>
+          
           </div>
           <CardTitle className="text-2xl font-bold">{t('title')}</CardTitle>
-          <CardDescription>
-            Property basic information setup
-          </CardDescription>
+          
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -229,9 +230,30 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('3')}</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? format(new Date(field.value), "yyyy-MM-dd") : <span>Огноо сонгох</span>}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? new Date(field.value) : undefined}
+                          onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -277,15 +299,15 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                   <FormItem>
                     <FormLabel>{t('5')}?</FormLabel>
                     <FormControl>
-                      <div className="flex gap-4">
+                      <div className="flex gap-3">
                         <button
                           type="button"
                           onClick={() => field.onChange(true)}
                           className={`
-                            flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all border-2
+                            px-8 py-2 rounded-md text-sm font-medium transition-all border
                             ${field.value === true
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-muted-foreground/20 bg-background text-muted-foreground hover:border-muted-foreground/40'
+                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                              : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
                             }
                           `}
                         >
@@ -295,10 +317,10 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                           type="button"
                           onClick={() => field.onChange(false)}
                           className={`
-                            flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all border-2
+                            px-8 py-2 rounded-md text-sm font-medium transition-all border
                             ${field.value === false
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-muted-foreground/20 bg-background text-muted-foreground hover:border-muted-foreground/40'
+                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                              : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
                             }
                           `}
                         >
@@ -325,22 +347,22 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 )}
               />
 
-                            <FormField
+              <FormField
                 control={form.control}
                 name="sales_room_limitation"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('8')}?</FormLabel>
                     <FormControl>
-                      <div className="flex gap-4">
+                      <div className="flex gap-3">
                         <button
                           type="button"
                           onClick={() => field.onChange(true)}
                           className={`
-                            flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all border-2
+                            px-8 py-2 rounded-md text-sm font-medium transition-all border
                             ${field.value === true
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-muted-foreground/20 bg-background text-muted-foreground hover:border-muted-foreground/40'
+                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                              : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
                             }
                           `}
                         >
@@ -350,10 +372,10 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                           type="button"
                           onClick={() => field.onChange(false)}
                           className={`
-                            flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all border-2
+                            px-8 py-2 rounded-md text-sm font-medium transition-all border
                             ${field.value === false
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-muted-foreground/20 bg-background text-muted-foreground hover:border-muted-foreground/40'
+                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                              : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
                             }
                           `}
                         >
@@ -373,82 +395,42 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                   <FormItem>
                     <FormLabel>{t('9')}</FormLabel>
                     <FormControl>
-                      <div className="space-y-3">
-                        {/* Selected languages display */}
-                        {field.value && field.value.length > 0 && (
-                          <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-md border">
-                            {field.value.map((langId: string) => {
-                              const lang = languages.find(l => l.id.toString() === langId);
-                              return lang ? (
-                                <div
-                                  key={langId}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/20 text-foreground rounded-full text-sm font-medium border border-primary/30"
-                                >
-                                  <span>{lang.languages_name_mn}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const newValue = field.value.filter((id: string) => id !== langId);
-                                      field.onChange(newValue);
-                                    }}
-                                    className="hover:bg-muted rounded-full p-0.5 transition-colors"
-                                  >
-                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              ) : null;
-                            })}
-                          </div>
-                        )}
-
-                        {/* Language selection grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-md max-h-60 overflow-y-auto">
-                          {languages.map(lang => {
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          {languages.map((lang) => {
                             const isSelected = field.value?.includes(lang.id.toString());
                             return (
-                              <button
-                                key={lang.id}
-                                type="button"
-                                onClick={() => {
-                                  const currentValue = field.value || [];
-                                  const langIdStr = lang.id.toString();
-                                  const newValue = isSelected
-                                    ? currentValue.filter((id: string) => id !== langIdStr)
-                                    : [...currentValue, langIdStr];
-                                  field.onChange(newValue);
-                                }}
-                                className={`
-                                  flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all
-                                  ${isSelected
-                                    ? 'bg-primary/10 text-primary border-2 border-primary shadow-sm'
-                                    : 'bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border-2 border-transparent'
-                                  }
-                                `}
-                              >
-                                <div className={`
-                                  h-4 w-4 rounded border-2 flex items-center justify-center transition-all
-                                  ${isSelected
-                                    ? 'bg-primary border-primary'
-                                    : 'border-muted-foreground/50'
-                                  }
-                                `}>
-                                  {isSelected && (
-                                    <svg className="h-3 w-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  )}
-                                </div>
-                                <span className="flex-1 text-left">{lang.languages_name_mn}</span>
-                              </button>
+                              <div key={lang.id}>
+                                <input
+                                  type="checkbox"
+                                  id={`lang-${lang.id}`}
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    const currentValue = field.value || [];
+                                    const langIdStr = lang.id.toString();
+                                    const newValue = e.target.checked
+                                      ? [...currentValue, langIdStr]
+                                      : currentValue.filter((id: string) => id !== langIdStr);
+                                    field.onChange(newValue);
+                                  }}
+                                  className="hidden peer"
+                                />
+                                <label
+                                  htmlFor={`lang-${lang.id}`}
+                                  className="peer-checked:bg-primary peer-checked:text-primary-foreground
+                                             border border-input rounded-md px-3 py-1.5 cursor-pointer
+                                             bg-background text-foreground transition hover:bg-accent text-sm inline-block"
+                                >
+                                  {lang.languages_name_mn}
+                                </label>
+                              </div>
                             );
                           })}
                         </div>
 
-                        {(!field.value || field.value.length === 0) && (
-                          <p className="text-xs text-muted-foreground px-1">
-                            {t('selectLanguagesHint') || 'Нэг буюу хэд хэдэн хэл сонгоно уу'}
+                        {field.value && field.value.length > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            {field.value.length} хэл сонгогдсон
                           </p>
                         )}
                       </div>
