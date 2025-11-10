@@ -6,7 +6,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { schemaHotelSteps1 } from '../../../schema';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { ArrowLeft, ArrowRight, Building2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, Star } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
@@ -227,36 +227,42 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
               <FormField
                 control={form.control}
                 name="start_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('3')}</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? format(new Date(field.value), "yyyy-MM-dd") : <span>Огноо сонгох</span>}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value ? new Date(field.value) : undefined}
-                          onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const [isOpen, setIsOpen] = React.useState(false);
+                  return (
+                    <FormItem>
+                      <FormLabel>{t('3')}</FormLabel>
+                      <Popover open={isOpen} onOpenChange={setIsOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {field.value ? format(new Date(field.value), "yyyy-MM-dd") : <span>Огноо сонгох</span>}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={(date) => {
+                              field.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                              setIsOpen(false); // Close popover after selection
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
@@ -264,29 +270,51 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 name="star_rating"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('4')}</FormLabel>
-                    <Select 
-                      key={`star_rating-${field.value}`}
-                      onValueChange={field.onChange} 
-                      value={field.value || undefined}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Сонгох" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
+                    <FormLabel className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                      {t('4')}
+                    </FormLabel>
+                    <FormControl>
+                      <div className="flex gap-2 flex-wrap">
                         {ratings.length === 0 ? (
-                          <SelectItem value="loading" disabled>Ачааллаж байна...</SelectItem>
+                          <div className="text-sm text-muted-foreground">Ачааллаж байна...</div>
                         ) : (
-                          ratings.map(r => (
-                            <SelectItem key={r.id} value={r.id.toString()}>
-                              {r.rating}
-                            </SelectItem>
-                          ))
+                          ratings.map(r => {
+                            const isSelected = field.value === r.id.toString();
+                            const starCount = parseInt(r.rating) || 0;
+                            const isNA = r.rating.toUpperCase() === 'N/A' || !starCount;
+
+                            return (
+                              <button
+                                key={r.id}
+                                type="button"
+                                onClick={() => field.onChange(r.id.toString())}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-3 py-2 rounded-md border transition-all font-medium",
+                                  isSelected
+                                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                    : "border-input bg-background hover:bg-accent hover:border-accent-foreground/20"
+                                )}
+                              >
+                                {isNA ? (
+                                  <span className="text-sm">Байхгүй</span>
+                                ) : (
+                                  <>
+                                    <Star
+                                      className={cn(
+                                        "h-4 w-4",
+                                        isSelected ? "text-amber-300 fill-amber-300" : "text-amber-500 fill-amber-500"
+                                      )}
+                                    />
+                                    <span className="text-sm">{starCount}</span>
+                                  </>
+                                )}
+                              </button>
+                            );
+                          })
                         )}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -440,14 +468,16 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 )}
               />
 
-              <div className="flex gap-4">
-                <div className="flex-1">
+              <div className="flex gap-4 ">
+                <div className="flex-1 ">
                   <FormField
                     control={form.control}
                     name="total_hotel_rooms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('6')}</FormLabel>
+                        <div className="h-6"></div>
+                        <FormLabel >{t('6')}</FormLabel>
+
                         <FormControl>
                           <Input type="number" min={1} {...field} />
                         </FormControl>
