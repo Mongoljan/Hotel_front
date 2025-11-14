@@ -50,7 +50,7 @@ export interface RoomData {
   childQty: number;
 
   number_of_rooms: number;
-  number_of_rooms_to_sell: number;
+  number_of_rooms_to_sell: number | string;
   room_Description: string;
   smoking_allowed: boolean;
 
@@ -79,6 +79,7 @@ export interface LookupMaps {
 export interface FlattenRow extends GridValidRowModel {
   id: string;
   isGroup: boolean;
+  isPreviewRow?: boolean;
   arrowPlaceholder: string;
   images: string[];
   categoryName?: string;
@@ -88,6 +89,8 @@ export interface FlattenRow extends GridValidRowModel {
   roomNumberLeaf?: string;
   viewDescription?: string;
   roomNumbersStr?: string;
+  totalRoomsInGroup?: number;
+  totalRoomsToSellInGroup?: number;
   leafSize?: string;
   smokingAllowed?: boolean;
   hasWifi?: boolean;

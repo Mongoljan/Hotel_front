@@ -172,6 +172,10 @@ export const createFlattenedRows = ({
 
     const uniqueImages = firstRoomImages.slice(0, 3);
 
+    // Get total rooms and rooms to sell from the first room (they all have the same values)
+    const totalRoomsInGroup = Number(group.rooms[0]?.number_of_rooms) || 0;
+    const totalRoomsToSellInGroup = Number(group.rooms[0]?.number_of_rooms_to_sell) || 0;
+
     rows.push({
       id: key,
       isGroup: true,
@@ -182,6 +186,8 @@ export const createFlattenedRows = ({
       sizeGroup: group.rooms[0]?.room_size,
       hasWifiGroup: anyWifiInGroup,
       roomNumbersStr,
+      totalRoomsInGroup,
+      totalRoomsToSellInGroup,
       leafSize: undefined,
       smokingAllowed: undefined,
       hasWifi: undefined,

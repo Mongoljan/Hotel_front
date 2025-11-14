@@ -11,6 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { AdvancedTable } from "@/components/ui/advanced-table";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { 
   Dialog,
   DialogContent,
@@ -30,19 +35,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { 
-  Building2, 
-  Plus, 
-  RefreshCw, 
-  Sparkles, 
-  Users as UsersIcon, 
-  Wifi, 
+import {
+  Building2,
+  Plus,
+  RefreshCw,
+  Sparkles,
+  Users as UsersIcon,
+  Wifi,
   Edit,
   Trash2,
   ChevronDown,
   ChevronRight,
   ChevronLeft,
-  ImageIcon
+  ImageIcon,
+  Info
 } from "lucide-react";
 
 import { AiOutlineWifi, AiOutlinePlus } from "react-icons/ai";
@@ -177,11 +183,29 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
   }, [lookupMaps.groupMap]);
 
   const rows = useMemo<FlattenRow[]>(
-    () =>
-      createFlattenedRows({
+    () => {
+      const baseRows = createFlattenedRows({
         lookupMaps,
         expandedKeys: expanded
-      }),
+      });
+
+      // Insert preview rows after collapsed groups
+      const rowsWithPreviews: FlattenRow[] = [];
+      baseRows.forEach((row) => {
+        rowsWithPreviews.push(row);
+
+        // If it's a group row and it's NOT expanded, add a preview row
+        if (row.isGroup && row.arrowPlaceholder && !expanded.has(row.arrowPlaceholder)) {
+          rowsWithPreviews.push({
+            ...row,
+            id: `${row.id}-preview`,
+            isPreviewRow: true,
+          } as any);
+        }
+      });
+
+      return rowsWithPreviews;
+    },
     [lookupMaps, expanded]
   );
 
@@ -267,7 +291,45 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     {
       id: "expand",
       header: "",
-      cell: ({ row }) => {
+      cell: ({ row, table }) => {
+        // Preview row - return special marker that we'll handle in custom table rendering
+        if (row.original.isPreviewRow) {
+          const roomNumbers = row.original.roomNumbersStr || "";
+          const roomNumbersArray = roomNumbers.split(",").map(n => n.trim());
+          const shouldTruncate = roomNumbersArray.length > 10;
+          const displayNumbers = shouldTruncate
+            ? roomNumbersArray.slice(0, 10).join(", ") + "..."
+            : roomNumbers;
+
+          return (
+            <div className="preview-row-content py-2 px-4 border-t border-border/40">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="font-medium text-muted-foreground whitespace-nowrap">Өрөөний №:</span>
+                <span className="text-muted-foreground/80">{displayNumbers}</span>
+                {shouldTruncate && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 rounded-full hover:bg-muted"
+                      >
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm">Бүх өрөөний дугаарууд</h4>
+                        <p className="text-sm text-muted-foreground">{roomNumbers}</p>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            </div>
+          );
+        }
+
         if (row.original.isGroup) {
           const grpKey = row.original.arrowPlaceholder!;
           const isExpanded = expanded.has(grpKey);
@@ -307,6 +369,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       accessorKey: "images",
       header: "Зураг",
       cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
         const images = row.original.images;
         if (row.original.isGroup) {
           // Only show if there are valid images
@@ -362,6 +426,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       accessorKey: "categoryName",
       header: "Өрөөний нэр",
       cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
         if (row.original.isGroup) {
           return (
             <div className="flex flex-col space-y-1">
@@ -393,38 +459,61 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       size: 200,
     },
 
-    // Room Numbers/Size Column
+    // Total Rooms Column
     {
-      accessorKey: "roomNumbersStr",
-      header: "Өрөөний тоо / Зарах тоо",
+      accessorKey: "totalRoomsInGroup",
+      header: "Нийт өрөөний тоо",
       cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
         if (row.original.isGroup) {
           return (
-            <span className="text-sm text-muted-foreground">
-              {row.original.roomNumbersStr}
+            <span className="text-sm font-medium">
+              {row.original.totalRoomsInGroup || 0}
             </span>
           );
         } else {
           return (
-            <div className="flex flex-col space-y-1">
-              <span className="font-semibold">{row.original.leafSize} м²</span>
-              <div className="flex items-center gap-2">
-                {row.original.smokingAllowed ? (
-                  <GiCigarette className="h-4 w-4" />
-                ) : (
-                  <LiaSmokingBanSolid className="h-4 w-4 text-red-500" />
-                )}
-                {row.original.hasWifi ? (
-                  <Wifi className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Wifi className="h-4 w-4 text-gray-400" />
-                )}
-              </div>
+            <span className="text-sm text-muted-foreground">
+              {row.original.leafSize} м²
+            </span>
+          );
+        }
+      },
+      size: 120,
+    },
+
+    // Rooms for Sale Column
+    {
+      accessorKey: "totalRoomsToSellInGroup",
+      header: "Зарах өрөөний тоо",
+      cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
+        if (row.original.isGroup) {
+          return (
+            <span className="text-sm text-muted-foreground">
+              {row.original.totalRoomsToSellInGroup || 0}
+            </span>
+          );
+        } else {
+          return (
+            <div className="flex items-center gap-2">
+              {row.original.smokingAllowed ? (
+                <GiCigarette className="h-4 w-4" />
+              ) : (
+                <LiaSmokingBanSolid className="h-4 w-4 text-red-500" />
+              )}
+              {row.original.hasWifi ? (
+                <Wifi className="h-4 w-4 text-green-600" />
+              ) : (
+                <Wifi className="h-4 w-4 text-gray-400" />
+              )}
             </div>
           );
         }
       },
-      size: 150,
+      size: 120,
     },
 
     // Capacity Column
@@ -432,6 +521,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       id: "capacity",
       header: "Хүний тоо / Орны тоо",
       cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
         if (row.original.isGroup) {
           return (
             <div className="flex items-center gap-3">
@@ -470,12 +561,14 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       accessorKey: "commonFeaturesArr",
       header: "Ерөнхий онцлог зүйлс",
       cell: ({ row }) => {
-        const features = row.original.isGroup 
-          ? row.original.commonFeaturesArr 
+        if (row.original.isPreviewRow) return null;
+
+        const features = row.original.isGroup
+          ? row.original.commonFeaturesArr
           : row.original.thisRoomExtraFeaturesArr || [];
-        
+
         if (!features?.length) return null;
-        
+
         return (
           <div className="flex flex-col gap-1">
             {features.slice(0, 3).map((feat: string, idx: number) => (
@@ -498,15 +591,17 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
 
     // Bathroom Column
     {
-      accessorKey: "commonBathroomArr", 
+      accessorKey: "commonBathroomArr",
       header: "Угаалгын өрөөнд",
       cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
         const bathFeatures = row.original.isGroup
           ? row.original.commonBathroomArr
           : row.original.thisRoomExtraBathroomArr || [];
-          
+
         if (!bathFeatures?.length) return null;
-        
+
         return (
           <div className="flex flex-col gap-1">
             {bathFeatures.slice(0, 3).map((item: string, idx: number) => (
@@ -532,6 +627,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       id: "actions",
       header: "Засах",
       cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
         if (!row.original.isGroup && row.original.leafRoomId != null) {
           const roomId = row.original.leafRoomId;
           return (

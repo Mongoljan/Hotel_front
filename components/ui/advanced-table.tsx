@@ -270,20 +270,38 @@ export function AdvancedTable<TData, TValue>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                    onClick={() => onRowClick?.(row.original)}
-                    className={onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                table.getRowModel().rows.map((row) => {
+                  // Check if this is a preview row (special handling)
+                  const isPreviewRow = (row.original as any)?.isPreviewRow;
+
+                  if (isPreviewRow) {
+                    // Render preview row spanning all columns
+                    const firstCell = row.getVisibleCells()[0];
+                    return (
+                      <TableRow key={row.id} className="bg-muted/30">
+                        <TableCell colSpan={row.getVisibleCells().length}>
+                          {firstCell && flexRender(firstCell.column.columnDef.cell, firstCell.getContext())}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+
+                  // Normal row rendering
+                  return (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && 'selected'}
+                      onClick={() => onRowClick?.(row.original)}
+                      className={onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
