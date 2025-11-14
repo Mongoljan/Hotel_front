@@ -191,11 +191,13 @@ export default function RoomModal({
     const roomSize = watch("room_size");
     const adultQty = watch("adultQty");
     const childQty = watch("childQty");
+    const numberOfRooms = watch("number_of_rooms");
+    const numberOfRoomsToSell = watch("number_of_rooms_to_sell");
 
     // Check if at least one image is uploaded
     const hasValidImage = entries?.some(entry => entry.images && entry.images.trim() !== '');
 
-    // Check for duplicate room numbers
+    // Check for duplicate room numbers and validate count
     if (roomNo) {
       const roomNumbersArr = roomNo.split(",")
         .map(txt => parseInt(txt.trim(), 10))
@@ -203,6 +205,25 @@ export default function RoomModal({
 
       const { hasDuplicate } = checkDuplicateRoomNumbers(roomNumbersArr);
       if (hasDuplicate) {
+        return false;
+      }
+
+      // When creating (not editing), check if room numbers count matches number_of_rooms
+      if (!roomToEdit) {
+        // Check if the number of room numbers entered matches the total number of rooms
+        const numberOfRoomsNum = Number(numberOfRooms);
+        if (numberOfRoomsNum > 0 && roomNumbersArr.length !== numberOfRoomsNum) {
+          return false;
+        }
+      }
+    }
+
+    // When creating, require number_of_rooms and number_of_rooms_to_sell
+    const hasRoomCounts = roomToEdit || (numberOfRooms && numberOfRoomsToSell);
+
+    // Validate that number_of_rooms_to_sell is not greater than number_of_rooms
+    if (!roomToEdit && numberOfRooms && numberOfRoomsToSell) {
+      if (parseInt(numberOfRoomsToSell) > numberOfRooms) {
         return false;
       }
     }
@@ -217,7 +238,8 @@ export default function RoomModal({
       smokingAllowed &&
       roomSize &&
       adultQty &&
-      childQty
+      childQty &&
+      hasRoomCounts
     );
   };
 
@@ -296,8 +318,8 @@ export default function RoomModal({
       bed_type: "",
       adultQty: "2",
       childQty: "1",
-      number_of_rooms: 0,
-      number_of_rooms_to_sell: "",
+      number_of_rooms: 1,
+      number_of_rooms_to_sell: "1",
       room_Description: "",
       smoking_allowed: "",
       RoomNo: "",
@@ -400,8 +422,8 @@ export default function RoomModal({
         bed_type: "",
         adultQty: "2",
         childQty: "1",
-        number_of_rooms: 0,
-        number_of_rooms_to_sell: "",
+        number_of_rooms: 1,
+        number_of_rooms_to_sell: "1",
         room_Description: "",
         smoking_allowed: "",
         RoomNo: "",
@@ -631,12 +653,12 @@ export default function RoomModal({
 
           {/* Show alert if step 1 is incomplete */}
           {step === 1 && !isStep1Complete() && (getMissingFields().length > 0) && (
-            <Alert className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {t('required_fields_hint')}: {getMissingFields().join(', ')}
-              </AlertDescription>
-            </Alert>
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-yellow-700">
+                {t('required_fields_hint')}: <span className="font-medium">{getMissingFields().join(', ')}</span>
+              </p>
+            </div>
           )}
         </section>
 
@@ -944,6 +966,19 @@ export default function RoomModal({
                     {errors.number_of_rooms_to_sell.message}
                   </span>
                 )}
+                {/* Show warning if number_of_rooms_to_sell exceeds number_of_rooms */}
+                {(() => {
+                  const numberOfRooms = watch("number_of_rooms");
+                  const numberOfRoomsToSell = watch("number_of_rooms_to_sell");
+                  if (numberOfRooms && numberOfRoomsToSell && parseInt(numberOfRoomsToSell) > numberOfRooms) {
+                    return (
+                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+                        ⚠️ Зарах өрөөний тоо ({numberOfRoomsToSell}) нийт өрөөний тооноос ({numberOfRooms}) их байж болохгүй!
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
               </div>
  }
@@ -961,15 +996,29 @@ export default function RoomModal({
               {/* Show duplicate room number warning */}
               {(() => {
                 const roomNo = watch("RoomNo");
-                if (roomNo) {
+                if (roomNo && !roomToEdit) {
                   const roomNumbersArr = roomNo.split(",")
                     .map(txt => parseInt(txt.trim(), 10))
                     .filter(n => !isNaN(n));
+
+                  // Check for duplicates
                   const { hasDuplicate, duplicates } = checkDuplicateRoomNumbers(roomNumbersArr);
                   if (hasDuplicate) {
                     return (
                       <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
                         ⚠️ Дараах өрөөний дугаар аль хэдийн бүртгэгдсэн байна: {duplicates.join(", ")}
+                      </div>
+                    );
+                  }
+
+                  // Check if count matches number_of_rooms
+                  const numberOfRooms = watch("number_of_rooms");
+                  const numberOfRoomsNum = Number(numberOfRooms);
+                  // Only show warning if numberOfRooms is a positive number and doesn't match
+                  if (numberOfRoomsNum > 0 && roomNumbersArr.length !== numberOfRoomsNum) {
+                    return (
+                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
+                        ⚠️ Өрөөний нийт тоо {numberOfRoomsNum} байхаар оруулсан байна. Та {numberOfRoomsNum} өрөөний дугаар оруулах шаардлагатай. Одоо {roomNumbersArr.length} дугаар оруулсан байна.
                       </div>
                     );
                   }
