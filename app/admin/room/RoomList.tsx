@@ -285,6 +285,7 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
       renderCell: (params) => {
         if (params.row.isGroup) {
           const grpKey = params.row.arrowPlaceholder!;
+          const isExpanded = expanded.has(grpKey);
           return (
             <IconButton
               size="small"
@@ -294,8 +295,17 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
                 else newSet.add(grpKey);
                 setExpanded(newSet);
               }}
+              sx={{
+                color: isExpanded ? '#3b82f6' : '#64748b',
+                backgroundColor: isExpanded ? '#eff6ff' : '#f1f5f9',
+                '&:hover': {
+                  backgroundColor: isExpanded ? '#dbeafe' : '#e2e8f0',
+                  color: '#3b82f6',
+                },
+                transition: 'all 0.2s ease-in-out',
+              }}
             >
-              {expanded.has(grpKey) ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+              {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
             </IconButton>
           );
         }

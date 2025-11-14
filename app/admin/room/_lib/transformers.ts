@@ -165,15 +165,12 @@ export const createFlattenedRows = ({
       .map((id) => lookupMaps.bathroomItemsMap.get(id))
       .filter((value): value is string => Boolean(value));
 
-    const uniqueImages = Array.from(
-      new Set(
-        group.rooms.flatMap((room) => 
-          room.images
-            .map((image) => image.image)
-            .filter((url) => url && url.trim() !== '') // Filter out empty/null images
-        )
-      )
-    ).slice(0, 3);
+    // Get images from the first room only (not all rooms in the group)
+    const firstRoomImages = group.rooms[0]?.images
+      ?.map((image) => image.image)
+      .filter((url) => url && url.trim() !== '') || [];
+
+    const uniqueImages = firstRoomImages.slice(0, 3);
 
     rows.push({
       id: key,

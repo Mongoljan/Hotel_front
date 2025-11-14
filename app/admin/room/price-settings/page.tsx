@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Calendar, Percent, DollarSign } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
+import { getClientBackendToken } from '@/utils/auth';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -80,7 +81,6 @@ export default function PriceSettingsPage() {
       setLoading(true);
       try {
         // Get backend token for API authentication
-        const { getClientBackendToken } = await import('@/utils/auth');
         const token = await getClientBackendToken();
         
         if (!token) {
