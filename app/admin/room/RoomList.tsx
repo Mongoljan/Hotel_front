@@ -667,6 +667,7 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
             roomToEdit={selectedRoom}
             isRoomAdded={isRoomAdded}
             setIsRoomAdded={setIsRoomAdded}
+            existingRooms={rawRooms}
           />
 
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
