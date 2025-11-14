@@ -168,6 +168,14 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     [rawRooms, lookup]
   );
 
+  // Expand all groups by default
+  React.useEffect(() => {
+    if (lookupMaps.groupMap.size > 0 && expanded.size === 0) {
+      const allKeys = Array.from(lookupMaps.groupMap.keys());
+      setExpanded(new Set(allKeys));
+    }
+  }, [lookupMaps.groupMap, expanded.size]);
+
   const rows = useMemo<FlattenRow[]>(
     () =>
       createFlattenedRows({
@@ -265,7 +273,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
           const isExpanded = expanded.has(grpKey);
           return (
             <Button
-              variant="ghost"
+              variant={isExpanded ? "default" : "secondary"}
               size="sm"
               onClick={() => {
                 const newSet = new Set(expanded);
@@ -273,11 +281,17 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                 else newSet.add(grpKey);
                 setExpanded(newSet);
               }}
+              className={cn(
+                "h-8 w-8 p-0 rounded-md border-2 shadow-md transition-all duration-200 text-white",
+                isExpanded
+                  ? "bg-primary border-primary hover:bg-primary/90 hover:scale-105"
+                  : "bg-primary/80 border-primary hover:bg-primary hover:scale-105"
+              )}
             >
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-5 w-5" />
               ) : (
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
               )}
             </Button>
           );

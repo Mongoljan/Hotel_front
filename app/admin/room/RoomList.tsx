@@ -288,7 +288,7 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
           const isExpanded = expanded.has(grpKey);
           return (
             <IconButton
-              size="small"
+              size="medium"
               onClick={() => {
                 const newSet = new Set(expanded);
                 if (newSet.has(grpKey)) newSet.delete(grpKey);
@@ -296,13 +296,17 @@ export default function RoomList({ isRoomAdded, setIsRoomAdded }: RoomListProps)
                 setExpanded(newSet);
               }}
               sx={{
-                color: isExpanded ? '#3b82f6' : '#64748b',
-                backgroundColor: isExpanded ? '#eff6ff' : '#f1f5f9',
+                color: '#fff',
+                backgroundColor: isExpanded ? '#3b82f6' : '#6366f1',
+                border: '2px solid',
+                borderColor: isExpanded ? '#2563eb' : '#4f46e5',
                 '&:hover': {
-                  backgroundColor: isExpanded ? '#dbeafe' : '#e2e8f0',
-                  color: '#3b82f6',
+                  backgroundColor: isExpanded ? '#2563eb' : '#4338ca',
+                  borderColor: isExpanded ? '#1d4ed8' : '#3730a3',
+                  transform: 'scale(1.05)',
                 },
                 transition: 'all 0.2s ease-in-out',
+                boxShadow: isExpanded ? '0 2px 8px rgba(59, 130, 246, 0.4)' : '0 2px 8px rgba(99, 102, 241, 0.3)',
               }}
             >
               {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}

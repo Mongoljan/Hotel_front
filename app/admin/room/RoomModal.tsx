@@ -407,7 +407,7 @@ export default function RoomModal({
       return;
     }
 
-    // Split “RoomNo” string by commas into an array of numbers
+    // Split "RoomNo" string by commas into an array of numbers
     const roomNumbersArr = formData.RoomNo.split(",")
       .map((txt) => parseInt(txt.trim(), 10))
       .filter((n) => !isNaN(n));
@@ -415,7 +415,9 @@ export default function RoomModal({
       toast.error("Enter at least one valid room number.");
       return;
     }
-    if (roomNumbersArr.length < parseInt(formData.number_of_rooms_to_sell)) {
+
+    // Only validate room count when creating (not editing)
+    if (!roomToEdit && roomNumbersArr.length < parseInt(formData.number_of_rooms_to_sell)) {
       toast.error(
         `Та ${formData.number_of_rooms_to_sell} өрөөг зарах гэж байгаа ч зөвхөн ${roomNumbersArr.length} өрөөний номер оруулсан байна.`
       );
