@@ -44,7 +44,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       province_city: '',
       soum: '',
       district: 0,
-      zipCode: '',
+      zipCode: '00000',
       total_floor_number: 1,
     },
   });
@@ -89,6 +89,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
             province_city: String(initialValues.province_city || ''),
             soum: String(initialValues.soum || ''),
             district: Number(initialValues.district || 0),
+            zipCode: initialValues.zipCode || '00000',
             total_floor_number: Number(initialValues.total_floor_number || 1),
           };
 

@@ -291,9 +291,8 @@ export const schemaHotelSteps1 = z
 export const schemaHotelSteps2 = z.object({
   zipCode: z
     .string()
-    .regex(/^\d{4,10}$/, {
-      message: "Шуудангийн код 4-10 оронтой тоо байх ёстой",
-    }),
+    .optional()
+    .default('00000'),
 
   total_floor_number: z
     .coerce.number()

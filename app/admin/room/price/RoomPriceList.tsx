@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { getClientBackendToken } from "@/utils/auth";
 import { useAuth } from "@/hooks/useAuth";
 import UserStorage from "@/utils/storage";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -162,6 +163,7 @@ interface RoomModalProps {
 
 export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, setOpenAdd }: RoomModalProps) {
   const { user } = useAuth(); // Get user from auth hook
+  const router = useRouter();
   const [rows, setRows] = useState<RoomRow[]>([]);
   const [prices, setPrices] = useState<PriceEntry[]>([]);
   const [lookup, setLookup] = useState<AllData>({ room_types: [], room_category: [] });
@@ -175,7 +177,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
   });
   const [editingPrice, setEditingPrice] = useState<PriceEntry | null>(null);
   const [openEdit, setOpenEdit] = useState(false);
-  
+
   // Delete confirmation state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [priceToDelete, setPriceToDelete] = useState<number | null>(null);
@@ -468,97 +470,20 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
 
   if (rows.length === 0) {
     return (
-      <div className="text-center py-8">
-        <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="mt-2 text-sm font-semibold text-foreground">Үнэ байхгүй</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Эхний үнийг нэмээд эхэлцгээе
+      <div className="text-center py-12">
+        <DollarSign className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold text-foreground">Өрөөний үнэ тохируулах боломжгүй</h3>
+        <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+          Өрөөний үнэ тохируулахын өмнө эхлээд <span className="font-medium text-foreground">Өрөө</span> цэснээс өрөө үүсгэнэ үү.
         </p>
-        <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-          <DialogTrigger asChild>
-            <Button className="mt-4">
-              <Plus className="mr-2 h-4 w-4" />
-              Өрөөний үнэ нэмэх
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Өрөөний үнэ нэмэх</DialogTitle>
-              <DialogDescription>
-                Өрөөний төрөл болон ангиллын дагуу үнэ тогтоох
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="room-group">Өрөөний бүлэг</Label>
-                <Select
-                  value={`${form.room_type}-${form.room_category}`}
-                  onValueChange={(value) => {
-                    const [rt, rc] = value.split('-').map(Number);
-                    setForm(f => ({ ...f, room_type: rt, room_category: rc }));
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Өрөөний бүлэг сонгох" />
-                  </SelectTrigger>
-                  <SelectContent className="max-w-[550px]">
-                    {availableOptions.length > 0 ? (
-                      availableOptions.map(opt => (
-                        <SelectItem 
-                          key={opt.value} 
-                          value={opt.value}
-                          className="whitespace-normal py-3 leading-snug"
-                        >
-                          <span className="block">{opt.label}</span>
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-                        Бүх өрөөний үнэ тохируулсан байна
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="base-price-empty">Үндсэн үнэ</Label>
-                <FormattedNumberInput
-                  id="base-price-empty"
-                  value={form.base_price}
-                  onChange={(value) => setForm(f => ({ ...f, base_price: value }))}
-                  placeholder="Үндсэн үнэ оруулах (жишээ нь: 200'000)"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="single-price-empty">Ганц хүний үнэ</Label>
-                <FormattedNumberInput
-                  id="single-price-empty"
-                  value={form.single_person_price}
-                  onChange={(value) => setForm(f => ({ ...f, single_person_price: value }))}
-                  placeholder="Ганц хүний үнэ оруулах (жишээ нь: 120'000)"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="half-day-price-empty">Хагас өдрийн үнэ</Label>
-                <FormattedNumberInput
-                  id="half-day-price-empty"
-                  value={form.half_day_price}
-                  onChange={(value) => setForm(f => ({ ...f, half_day_price: value }))}
-                  placeholder="Хагас өдрийн үнэ оруулах (жишээ нь: 150'000)"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpenAdd(false)}>
-                Цуцлах
-              </Button>
-              <Button onClick={createPrice}>Хадгалах</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button
+          className="mt-6"
+          variant="default"
+          onClick={() => router.push('/admin/room')}
+        >
+          <Users className="mr-2 h-4 w-4" />
+          Өрөө үүсгэх хэсэг рүү очих
+        </Button>
       </div>
     );
   }

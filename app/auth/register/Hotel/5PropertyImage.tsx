@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Image as ImageIcon, Upload, Crop } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
 import { schemaHotelSteps5 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
@@ -15,7 +15,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import ImageCropModal from '@/components/ImageCropModal';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const API_URL = 'https://dev.kacc.mn/api/property-images/';
@@ -30,9 +29,6 @@ type Props = {
 export default function RegisterHotel5({ onNext, onBack }: Props) {
   const t = useTranslations('5PropertyImages');
   const { user } = useAuth();
-  const [cropModalOpen, setCropModalOpen] = useState(false);
-  const [currentImageSrc, setCurrentImageSrc] = useState('');
-  const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
 
   const propertyDataStr = user?.id ? UserStorage.getItem<string>('propertyData', user.id) : null;
   const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
@@ -82,19 +78,9 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64Image = reader.result as string;
-        setCurrentImageSrc(base64Image);
-        setCurrentImageIndex(index);
-        setCropModalOpen(true);
+        form.setValue(`entries.${index}.images`, base64Image, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
-    }
-  };
-
-  const handleCropComplete = (croppedImage: string) => {
-    if (currentImageIndex !== null) {
-      form.setValue(`entries.${currentImageIndex}.images`, croppedImage, { shouldValidate: true });
-      setCurrentImageIndex(null);
-      setCurrentImageSrc('');
     }
   };
 
@@ -186,7 +172,6 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>Хамгийн багадаа <strong>5 зураг</strong> оруулна уу</li>
                 <li>Зураг бүр хамгийн багадаа <strong>100KB</strong> хэмжээтэй байх ёстой</li>
-                <li>Зургууд <strong>дөрвөлжин хэлбэр</strong> рүү тайрагдана</li>
               </ul>
               <div className="mt-3 text-sm font-medium">
                 Оруулсан зургийн тоо: <span className={`${watchedEntries.filter(e => e.images).length >= 5 ? 'text-green-600' : 'text-orange-600'}`}>{watchedEntries.filter(e => e.images).length}</span> / 5 (хамгийн бага)
@@ -222,25 +207,12 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                               </FormControl>
                               <FormMessage />
                               {previewSrc && (
-                                <div className="mt-4 space-y-2">
+                                <div className="mt-4">
                                   <img
                                     src={previewSrc}
                                     alt={`Preview ${index + 1}`}
                                     className="max-h-40 w-auto rounded-md border object-cover"
                                   />
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setCurrentImageSrc(previewSrc);
-                                      setCurrentImageIndex(index);
-                                      setCropModalOpen(true);
-                                    }}
-                                  >
-                                    <Crop className="mr-2 h-4 w-4" />
-                                    Дахин тайрах
-                                  </Button>
                                 </div>
                               )}
                             </FormItem>
@@ -313,17 +285,6 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
               </div>
             </form>
           </Form>
-
-          <ImageCropModal
-            isOpen={cropModalOpen}
-            onClose={() => {
-              setCropModalOpen(false);
-              setCurrentImageSrc('');
-              setCurrentImageIndex(null);
-            }}
-            imageSrc={currentImageSrc}
-            onCropComplete={handleCropComplete}
-          />
         </CardContent>
       </Card>
     </div>

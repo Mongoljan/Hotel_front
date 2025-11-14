@@ -204,7 +204,19 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                   <FormItem>
                     <FormLabel>{t('1')}</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input
+                        {...field}
+                        onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                          const input = e.currentTarget;
+                          const value = input.value;
+                          // Remove any non-Cyrillic characters (keep Cyrillic, numbers, and spaces)
+                          const filtered = value.replace(/[^А-Яа-яӨөҮүЁё0-9\s]/g, '');
+                          if (value !== filtered) {
+                            input.value = filtered;
+                            field.onChange(filtered);
+                          }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -218,7 +230,19 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                   <FormItem>
                     <FormLabel>{t('2')}</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input
+                        {...field}
+                        onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                          const input = e.currentTarget;
+                          const value = input.value;
+                          // Remove any non-Latin characters (keep Latin, numbers, and spaces)
+                          const filtered = value.replace(/[^A-Za-z0-9\s]/g, '');
+                          if (value !== filtered) {
+                            input.value = filtered;
+                            field.onChange(filtered);
+                          }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
