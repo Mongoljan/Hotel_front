@@ -271,7 +271,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const tabs = useMemo(
     () => [
       { value: 'about' as const, label: 'Бидний тухай', description: 'Зочид буудлын ерөнхий танилцуулга' },
-      { value: 'images' as const, label: 'Зургийн цомог', description: `${propertyImages.length} зураг` },
+      { value: 'images' as const, label: 'Зураг', description: `${propertyImages.length} зураг` },
       { value: 'location' as const, label: 'Байршил', description: 'Байршил, хүрэх заавар' },
       { value: 'services' as const, label: 'Үйлчилгээ', description: 'Үйлчилгээ, нэмэлт боломжууд' },
       { value: 'faq' as const, label: 'Түгээмэл асуулт', description: 'Асуулт, хариултууд' },
@@ -301,144 +301,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
   return (
     <div className="flex-1 space-y-6">
-      {/* Dashboard-style Header */}
-      {/* <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-cyrillic">
-          {basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || 'Зочид буудал'}
-        </h2>
-        <Badge
-          variant="outline"
-          className={cn('gap-1 px-3 py-1 text-xs font-semibold', statusBadge.className)}
-        >
-          <IconShieldCheck className="h-3 w-3" />
-          {statusBadge.label}
-        </Badge>
-      </div> */}
-
-      {/* Stats Cards - Dashboard Style */}
-      {/* COMMENTED OUT: Redundant info now shown in hero card
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {detailItems.slice(0, 4).map((item) => {
-          const formattedValue = (() => {
-            if (item.type === 'boolean') {
-              if (typeof item.value !== 'boolean') return '—';
-              return item.value ? 'Тийм' : 'Үгүй';
-            }
-            if (item.value === null || item.value === undefined || item.value === '') return '—';
-            return item.value;
-          })();
-
-          return (
-            <Card key={item.label}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-cyrillic">
-                  {item.label}
-                </CardTitle>
-                <item.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formattedValue}</div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-      */}
-
-      {/* Additional Info & Image */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle className="text-cyrillic">Нэмэлт мэдээлэл</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {detailItems.slice(4).map((item) => {
-                const formattedValue = (() => {
-                  if (item.type === 'boolean') {
-                    if (typeof item.value !== 'boolean') return '—';
-                    return item.value ? 'Тийм' : 'Үгүй';
-                  }
-                  if (item.value === null || item.value === undefined || item.value === '') return '—';
-                  return item.value;
-                })();
-
-                return (
-                  <div key={item.label} className="flex items-center">
-                    <item.icon className="h-4 w-4 text-muted-foreground mr-3" />
-                    <div className="space-y-1 flex-1">
-                      <p className="text-sm font-medium leading-none text-cyrillic">
-                        {item.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formattedValue}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card> */}
-
-        {/* <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle className="text-cyrillic">Зураг</CardTitle>
-            <CardDescription className="text-cyrillic">
-              {propertyImages.length} фото
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {hasImages ? (
-              <div className="space-y-4">
-                <div className="overflow-hidden rounded-lg border">
-                  <Image
-                    src={currentImage?.image ?? ''}
-                    alt={currentImage?.description || t('hotelImage')}
-                    width={400}
-                    height={250}
-                    className="w-full h-48 object-cover"
-                  />
-                </div>
-                {propertyImages.length > 1 && (
-                  <div className="flex items-center justify-between">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setImageIndex((prev) => (prev === 0 ? propertyImages.length - 1 : prev - 1))
-                      }
-                    >
-                      <IconChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                      {imageIndex + 1} / {propertyImages.length}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setImageIndex((prev) => (prev === propertyImages.length - 1 ? 0 : prev + 1))
-                      }
-                    >
-                      <IconChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-48 border border-dashed rounded-lg bg-muted/30">
-                <div className="text-center">
-                  <IconPhoto className="mx-auto h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mt-2">Зураг байхгүй</p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card> */}
-      </div>
-
-
 
       {/* Content Tabs */}
       <Card>
@@ -448,12 +310,12 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-5 bg-muted/10 border-slate-200 rounded-md border-1 border-solid">
               {tabs.map((tab) => (
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-background data-[state=inactive]:text-foreground data-[state=inactive]:shadow-sm"
                 >
                   {tab.label}
                 </TabsTrigger>

@@ -52,6 +52,8 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
   });
 
   const cancelTime = form.watch('cancel_time');
+  // Strip seconds from cancel time for display (HH:MM:SS -> HH:MM)
+  const displayCancelTime = cancelTime ? cancelTime.slice(0, 5) : '';
 
   // Fetch and populate data when component mounts
   useEffect(() => {
@@ -119,9 +121,12 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       return;
     }
 
+    // Helper function to strip seconds from time (HH:MM:SS -> HH:MM)
+    const stripSeconds = (time: string) => time ? time.slice(0, 5) : time;
+
     const formattedData = {
       cancellation_fee: {
-        cancel_time: data.cancel_time,
+        cancel_time: stripSeconds(data.cancel_time),
         single_before_time_percentage: data.single_before_time_percentage,
         single_after_time_percentage: data.single_after_time_percentage,
         multi_5days_before_percentage: data.multi_5days_before_percentage,
@@ -130,10 +135,10 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
         multi_1day_before_percentage: data.multi_1day_before_percentage,
         property: propertyId,
       },
-      check_in_from: data.check_in_from,
-      check_in_until: data.check_in_until,
-      check_out_from: data.check_out_from,
-      check_out_until: data.check_out_until,
+      check_in_from: stripSeconds(data.check_in_from),
+      check_in_until: stripSeconds(data.check_in_until),
+      check_out_from: stripSeconds(data.check_out_from),
+      check_out_until: stripSeconds(data.check_out_until),
       breakfast_policy: data.breakfast_policy,
       allow_children: data.allow_children,
       allow_pets: data.allow_pets,
@@ -307,7 +312,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                       <FormItem>
                         <div className="flex items-center gap-4">
                           <FormLabel className="min-w-[200px]">
-                            {cancelTime || '...'} хугацаанаас өмнө цуцлах төлбөр (%)
+                         Өмнөх өдрийн  <div className="text-blue-500 mr-1 inline-block">{displayCancelTime || '...'} </div> цагаас өмнө цуцалвал
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -330,7 +335,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                       <FormItem>
                         <div className="flex items-center gap-4">
                           <FormLabel className="min-w-[200px]">
-                            {cancelTime || '...'} хугацаанаас хойш цуцлах төлбөр (%)
+                          Өмнөх өдрийн   <div className="text-blue-500 mr-1 inline-block">{displayCancelTime || '...'} </div> цагаас хойш цуцалвал
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -359,7 +364,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center gap-4">
-                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 5 хоногийн өмнөх хувь (%)</FormLabel>
+                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 5 хоногийн өмнөх хувь</FormLabel>
                           <FormControl>
                             <Input type="number" placeholder="0" {...field} className="w-32" />
                           </FormControl>
@@ -375,7 +380,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center gap-4">
-                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 3 хоногийн өмнөх хувь (%)</FormLabel>
+                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 3 хоногийн өмнөх хувь </FormLabel>
                           <FormControl>
                             <Input type="number" placeholder="0" {...field} className="w-32" />
                           </FormControl>
@@ -391,7 +396,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center gap-4">
-                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 2 хоногийн өмнөх хувь (%)</FormLabel>
+                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 2 хоногийн өмнөх хувь </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -412,7 +417,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center gap-4">
-                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 1 хоногийн өмнөх хувь (%)</FormLabel>
+                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 1 хоногийн өмнөх хувь </FormLabel>
                           <FormControl>
                             <Input
                               type="number"

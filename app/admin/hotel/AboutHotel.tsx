@@ -22,8 +22,12 @@ interface PropertyPolicy {
   allow_children: boolean;
   cancellation_fee: {
     cancel_time: string;
-    before_fee: string;
-    after_fee: string;
+    single_before_time_percentage: string;
+    single_after_time_percentage: string;
+    multi_5days_before_percentage: string;
+    multi_3days_before_percentage: string;
+    multi_2days_before_percentage: string;
+    multi_1day_before_percentage: string;
   };
 }
 
@@ -148,6 +152,7 @@ export default function AboutHotel({
           disabled={!editing}
           value={about}
           onChange={(e) => setAbout(e.target.value)}
+          placeholder="Буудлын дэлгэрэнгүй мэдээллийг оруулна уу"
           className="border-[1px] border-cloud border-solid rounded-[15px] w-full min-h-[200px] p-2"
         />
         <div className="min-w-[300px] border-cloud border-solid border-[1px] rounded-[15px] min-h-[200px] text-center p-2">
@@ -158,9 +163,9 @@ export default function AboutHotel({
                 value={youtube}
                 onChange={(e) => setYoutube(e.target.value)}
                 className="w-full border border-gray-300 p-2 rounded-[10px]"
-                placeholder="YouTube URL"
+                placeholder="Буудалтай холбоотой бичлэгийн холбоосыг энд оруулна уу"
               />
-              <div className="text-soft">
+              <div className="text-soft text-xs mt-2">
                 Youtube бичлэгийн Share-ээс embed доторх линкийг хуулна уу
               </div>
             </>
@@ -209,28 +214,71 @@ export default function AboutHotel({
             </div>
 
             {/* Cancellation Policy */}
-            <div className="grid grid-cols-1 gap-y-2 mt-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12">
-                <div className="">Цуцлах боломжтой хугацаа</div>
-                <div className="">Цуцлалтын шимтгэл</div>
-              </div>
+            <div className="mt-6">
+              <div className="font-semibold mb-4 text-[17px]">Цуцлалтын бодлого</div>
 
-              <div>
-                <div className="grid grid-cols-1 mb-2 sm:grid-cols-2 gap-x-12">
-                  <div className="text-muted my-auto">
-                    тухайн өдрийн {formatTime(propertyPolicy.cancellation_fee.cancel_time)} цагаас өмнө
+              <div className="space-y-4">
+                {/* Single Room Section */}
+                <div>
+                  <div className="text-sm font-medium mb-2">
+                    1 өрөөний захиалгад нийт төлбөрөөс суутгах хураамжийн хувь:
                   </div>
-                  <div className="border border-cloud p-1 px-[14px] w-fit text-center rounded-[10px]">
-                    {propertyPolicy.cancellation_fee.before_fee}%
+
+                  <div className="pl-4 space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">
+                        Өмнөх өдрийн {formatTime(propertyPolicy.cancellation_fee.cancel_time)} цагаас өмнө:
+                      </span>
+                      <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                        {propertyPolicy.cancellation_fee.single_before_time_percentage}%
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">
+                        Өмнөх өдрийн {formatTime(propertyPolicy.cancellation_fee.cancel_time)} цагаас хойш:
+                      </span>
+                      <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                        {propertyPolicy.cancellation_fee.single_after_time_percentage}%
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12">
-                  <div className="text-muted my-auto">
-                    тухайн өдрийн {formatTime(propertyPolicy.cancellation_fee.cancel_time)} цагаас дараа
+                {/* Multi Room Section */}
+                <div>
+                  <div className="text-sm font-medium mb-2">
+                    2 болон түүнээс дээш өрөөнд нийт төлбөрөөс суутгах хураамжийн хувь:
                   </div>
-                  <div className="border border-cloud p-1 px-[14px] w-fit text-center rounded-[10px]">
-                    {propertyPolicy.cancellation_fee.after_fee}%
+
+                  <div className="pl-4 space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">5 хоногийн өмнө:</span>
+                      <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                        {propertyPolicy.cancellation_fee.multi_5days_before_percentage}%
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">3 хоногийн өмнө:</span>
+                      <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                        {propertyPolicy.cancellation_fee.multi_3days_before_percentage}%
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">2 хоногийн өмнө:</span>
+                      <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                        {propertyPolicy.cancellation_fee.multi_2days_before_percentage}%
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">1 хоногийн өмнө:</span>
+                      <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                        {propertyPolicy.cancellation_fee.multi_1day_before_percentage}%
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

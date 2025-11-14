@@ -312,7 +312,11 @@ export default function RegisterHotel() {
   const formatDate = React.useCallback((dateString?: string | null) => {
     if (!dateString) return '—';
     try {
-      return new Date(dateString).toLocaleDateString('mn-MN');
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}/${month}/${day}`;
     } catch {
       return dateString;
     }
