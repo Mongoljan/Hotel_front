@@ -494,13 +494,13 @@ export default function RoomModal({
             <button
               type="button"
               onClick={() => setStep(1)}
-              className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors relative ${
+              className={`flex-1 pb-3 px-4 text-sm font-medium border-b-2 transition-colors relative ${
                 step === 1
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 {isStep1Complete() ? (
                   <Check className="h-4 w-4 text-green-500" />
                 ) : (
@@ -511,7 +511,7 @@ export default function RoomModal({
                 {t('basic_info')}
               </div>
             </button>
-            
+
             <button
               type="button"
               onClick={() => {
@@ -523,7 +523,7 @@ export default function RoomModal({
                 }
                 setStep(2);
               }}
-              className={`pb-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex-1 pb-3 px-4 text-sm font-medium border-b-2 transition-colors ${
                 step === 2
                   ? "border-primary text-primary"
                   : isStep1Complete()
@@ -531,7 +531,7 @@ export default function RoomModal({
                   : "border-transparent text-muted-foreground/50 cursor-not-allowed"
               }`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-xs">
                   2
                 </span>
@@ -919,7 +919,11 @@ export default function RoomModal({
 
 
             <div className="flex justify-end">
-              <Button onClick={() => setStep(2)} className="flex items-center gap-2">
+              <Button
+                onClick={() => setStep(2)}
+                disabled={!isStep1Complete()}
+                className="flex items-center gap-2"
+              >
                 {t("next")} <ChevronRight />
               </Button>
             </div>
