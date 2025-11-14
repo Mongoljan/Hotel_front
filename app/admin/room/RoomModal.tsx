@@ -212,8 +212,8 @@ export default function RoomModal({
       room_category: "",
       room_size: "",
       bed_type: "",
-      adultQty: "",
-      childQty: "",
+      adultQty: "2",
+      childQty: "1",
       number_of_rooms: 0,
       number_of_rooms_to_sell: "",
       room_Description: "",
@@ -227,7 +227,7 @@ export default function RoomModal({
       food_And_Drink: [],
       outdoor_And_View: [],
 
-      // We store images+descriptions in a field array called “entries”
+      // We store images+descriptions in a field array called "entries"
       entries: [{ images: "", descriptions: "" }],
     },
   });
@@ -267,6 +267,9 @@ export default function RoomModal({
 
   // 2) If roomToEdit is not null, populate the form with existing values
   useEffect(() => {
+    // Only run when modal is open
+    if (!isOpen) return;
+
     if (roomToEdit) {
       // Build a flat FormFields object from RoomData
       const existing = roomToEdit;
@@ -278,7 +281,7 @@ export default function RoomModal({
         descriptions: img.description,
       }));
 
-      // If there are no existing images, keep one blank “entry”
+      // If there are no existing images, keep one blank "entry"
       if (initialEntries.length === 0) {
         initialEntries.push({ images: "", descriptions: "" });
       }
@@ -313,8 +316,8 @@ export default function RoomModal({
         room_category: "",
         room_size: "",
         bed_type: "",
-        adultQty: "",
-        childQty: "",
+        adultQty: "2",
+        childQty: "1",
         number_of_rooms: 0,
         number_of_rooms_to_sell: "",
         room_Description: "",
@@ -330,9 +333,9 @@ export default function RoomModal({
 
         entries: [{ images: "", descriptions: "" }],
       });
-      setStep(1); // always start at step 1 for “create” mode
+      setStep(1); // always start at step 1 for "create" mode
     }
-  }, [roomToEdit, reset]);
+  }, [roomToEdit, reset, isOpen]);
 
   // File → Base64 conversion for image previews
   const handleImageChange = (
