@@ -302,7 +302,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
             : roomNumbers;
 
           return (
-            <div className="preview-row-content py-2 px-4 border-t border-border/40">
+            <div className="preview-row-content py-2 px-4 ">
               <div className="flex items-center gap-2 text-xs">
                 <span className="font-medium text-muted-foreground whitespace-nowrap">Өрөөний №:</span>
                 <span className="text-muted-foreground/80">{displayNumbers}</span>

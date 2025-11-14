@@ -115,7 +115,7 @@ interface RoomData {
   childQty: number;
 
   number_of_rooms: number;
-  number_of_rooms_to_sell: number;
+  number_of_rooms_to_sell: number | string;
   room_Description: string;
   smoking_allowed: boolean;
 

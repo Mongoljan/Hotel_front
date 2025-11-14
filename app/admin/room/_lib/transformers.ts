@@ -296,7 +296,7 @@ export const calculateRoomInsights = (
   );
 
   const available = rawRooms.reduce(
-    (acc, room) => acc + (room.number_of_rooms_to_sell ?? 0),
+    (acc, room) => acc + (Number(room.number_of_rooms_to_sell) || 0),
     0
   );
 

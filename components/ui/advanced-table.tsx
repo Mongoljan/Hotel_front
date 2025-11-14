@@ -278,7 +278,7 @@ export function AdvancedTable<TData, TValue>({
                     // Render preview row spanning all columns
                     const firstCell = row.getVisibleCells()[0];
                     return (
-                      <TableRow key={row.id} className="bg-muted/30">
+                      <TableRow key={row.id}>
                         <TableCell colSpan={row.getVisibleCells().length}>
                           {firstCell && flexRender(firstCell.column.columnDef.cell, firstCell.getContext())}
                         </TableCell>
