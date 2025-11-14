@@ -181,8 +181,27 @@ export default function RoomModal({
     const roomCategory = watch("room_category");
     const bedType = watch("bed_type");
     const roomNo = watch("RoomNo");
-    
+
     return !!(roomType && roomCategory && bedType && roomNo);
+  };
+
+  // Helper: check if step 2 is complete for validation
+  const isStep2Complete = (): boolean => {
+    const roomFacilities = watch("room_Facilities");
+    const bathroomItems = watch("bathroom_Items");
+    const freeToiletries = watch("free_Toiletries");
+    const foodAndDrink = watch("food_And_Drink");
+    const outdoorAndView = watch("outdoor_And_View");
+    const roomDescription = watch("room_Description");
+
+    return !!(
+      roomFacilities?.length > 0 &&
+      bathroomItems?.length > 0 &&
+      freeToiletries?.length > 0 &&
+      foodAndDrink?.length > 0 &&
+      outdoorAndView?.length > 0 &&
+      roomDescription?.length >= 5
+    );
   };
 
   // Helper: get missing fields for step 1
@@ -1095,7 +1114,7 @@ export default function RoomModal({
               <Button variant="secondary" onClick={() => setStep(1)} className="flex items-center gap-2">
                 <ChevronLeft /> {t('back')}
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
+              <Button type="submit" disabled={isSubmitting || !isStep2Complete()} className="flex items-center gap-2">
                 {isSubmitting ? t('saving') : (roomToEdit ? t('save') : t('save'))} <Check />
               </Button>
             </div>
