@@ -136,6 +136,9 @@ interface RoomModalProps {
   // After a successful create/update, parent can flip this to reload the datagrid
   isRoomAdded: boolean;
   setIsRoomAdded: (b: boolean) => void;
+
+  // Existing rooms data for duplicate validation
+  existingRooms: RoomData[];
 }
 
 ///////////////////////////////////////
@@ -148,6 +151,7 @@ export default function RoomModal({
   roomToEdit,
   isRoomAdded,
   setIsRoomAdded,
+  existingRooms,
 }: RoomModalProps) {
   const [step, setStep] = useState<number>(1);
   const t = useTranslations("RoomModal"); // Changed from "Rooms" to "RoomModal"
@@ -181,8 +185,40 @@ export default function RoomModal({
     const roomCategory = watch("room_category");
     const bedType = watch("bed_type");
     const roomNo = watch("RoomNo");
+    const entries = watch("entries");
+    const isBathroom = watch("is_Bathroom");
+    const smokingAllowed = watch("smoking_allowed");
+    const roomSize = watch("room_size");
+    const adultQty = watch("adultQty");
+    const childQty = watch("childQty");
 
-    return !!(roomType && roomCategory && bedType && roomNo);
+    // Check if at least one image is uploaded
+    const hasValidImage = entries?.some(entry => entry.images && entry.images.trim() !== '');
+
+    // Check for duplicate room numbers
+    if (roomNo) {
+      const roomNumbersArr = roomNo.split(",")
+        .map(txt => parseInt(txt.trim(), 10))
+        .filter(n => !isNaN(n));
+
+      const { hasDuplicate } = checkDuplicateRoomNumbers(roomNumbersArr);
+      if (hasDuplicate) {
+        return false;
+      }
+    }
+
+    return !!(
+      roomType &&
+      roomCategory &&
+      bedType &&
+      roomNo &&
+      hasValidImage &&
+      isBathroom &&
+      smokingAllowed &&
+      roomSize &&
+      adultQty &&
+      childQty
+    );
   };
 
   // Helper: check if step 2 is complete for validation
@@ -211,7 +247,34 @@ export default function RoomModal({
     if (!watch("room_category")) missing.push(t('category'));
     if (!watch("bed_type")) missing.push(t('bed_type'));
     if (!watch("RoomNo")) missing.push(t('room_numbers'));
+
+    const entries = watch("entries");
+    const hasValidImage = entries?.some(entry => entry.images && entry.images.trim() !== '');
+    if (!hasValidImage) missing.push(t('images'));
+
     return missing;
+  };
+
+  // Helper: check for duplicate room numbers
+  const checkDuplicateRoomNumbers = (roomNumbers: number[]): { hasDuplicate: boolean; duplicates: number[] } => {
+    const duplicates: number[] = [];
+
+    for (const num of roomNumbers) {
+      // When editing, exclude the current room's number from the check
+      const isDuplicate = existingRooms.some(room =>
+        room.room_number === num &&
+        (!roomToEdit || room.id !== roomToEdit.id)
+      );
+
+      if (isDuplicate) {
+        duplicates.push(num);
+      }
+    }
+
+    return {
+      hasDuplicate: duplicates.length > 0,
+      duplicates
+    };
   };
 
   // React Hook Form setup
@@ -895,6 +958,24 @@ export default function RoomModal({
               {errors.RoomNo && (
                 <span className="text-red text-sm">{errors.RoomNo.message}</span>
               )}
+              {/* Show duplicate room number warning */}
+              {(() => {
+                const roomNo = watch("RoomNo");
+                if (roomNo) {
+                  const roomNumbersArr = roomNo.split(",")
+                    .map(txt => parseInt(txt.trim(), 10))
+                    .filter(n => !isNaN(n));
+                  const { hasDuplicate, duplicates } = checkDuplicateRoomNumbers(roomNumbersArr);
+                  if (hasDuplicate) {
+                    return (
+                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+                        ⚠️ Дараах өрөөний дугаар аль хэдийн бүртгэгдсэн байна: {duplicates.join(", ")}
+                      </div>
+                    );
+                  }
+                }
+                return null;
+              })()}
             </div>
 
             <div className="mb-4">

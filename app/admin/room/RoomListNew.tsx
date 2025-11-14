@@ -170,11 +170,11 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
 
   // Expand all groups by default
   React.useEffect(() => {
-    if (lookupMaps.groupMap.size > 0 && expanded.size === 0) {
+    if (lookupMaps.groupMap.size > 0) {
       const allKeys = Array.from(lookupMaps.groupMap.keys());
       setExpanded(new Set(allKeys));
     }
-  }, [lookupMaps.groupMap, expanded.size]);
+  }, [lookupMaps.groupMap]);
 
   const rows = useMemo<FlattenRow[]>(
     () =>
@@ -612,6 +612,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
             roomToEdit={selectedRoom}
             isRoomAdded={isRoomAdded}
             setIsRoomAdded={setIsRoomAdded}
+            existingRooms={rawRooms}
           />
 
           <div className="flex items-center justify-between">
