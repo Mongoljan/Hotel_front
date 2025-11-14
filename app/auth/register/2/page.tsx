@@ -109,9 +109,9 @@ export default function RegisterEmployee() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">{t('staff_info')}</CardTitle>
-          <CardDescription>
+          {/* <CardDescription>
             Employee registration information
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
         <CardContent>
           <Form {...form}>
