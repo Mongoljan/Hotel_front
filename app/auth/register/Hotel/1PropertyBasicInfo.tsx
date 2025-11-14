@@ -150,6 +150,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       const cleanedData = {
         ...data,
         group_name: data.part_of_group ? data.group_name : '',
+        sales_room_limitation: false, // Default value since field is removed
         property: user.hotel,
       };
 
@@ -377,47 +378,6 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
               <FormField
                 control={form.control}
-                name="sales_room_limitation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('8')}?</FormLabel>
-                    <FormControl>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => field.onChange(true)}
-                          className={`
-                            px-8 py-2 rounded-md text-sm font-medium transition-all border
-                            ${field.value === true
-                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                              : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                            }
-                          `}
-                        >
-                          {t('yes')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => field.onChange(false)}
-                          className={`
-                            px-8 py-2 rounded-md text-sm font-medium transition-all border
-                            ${field.value === false
-                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                              : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                            }
-                          `}
-                        >
-                          {t('no')}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="languages"
                 render={({ field }) => (
                   <FormItem>
@@ -479,7 +439,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                         <FormLabel >{t('6')}</FormLabel>
 
                         <FormControl>
-                          <Input type="number" min={1} {...field} />
+                          <Input type="number" min={1} placeholder="1" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -495,7 +455,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                       <FormItem>
                         <FormLabel>{t('7')}</FormLabel>
                         <FormControl>
-                          <Input type="number" min={0} {...field} />
+                          <Input type="number" min={1} placeholder="1" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

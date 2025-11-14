@@ -317,12 +317,12 @@ export const schemaHotelSteps2 = z.object({
 
 export const schemaHotelSteps3 = z.object({
   cancel_time: z.string(),
-  before_fee: z.string(),
-  after_fee: z.string(),
-  beforeManyRoom_fee: z.string(),
-  afterManyRoom_fee: z.string(),
-  subsequent_days_percentage: z.string(),
-  special_condition_percentage: z.string(),
+  single_before_time_percentage: z.string(),
+  single_after_time_percentage: z.string(),
+  multi_5days_before_percentage: z.string(),
+  multi_3days_before_percentage: z.string(),
+  multi_2days_before_percentage: z.string(),
+  multi_1day_before_percentage: z.string(),
   check_in_from: z.string(),
   check_in_until: z.string(),
   check_out_from: z.string(),
@@ -346,7 +346,7 @@ export const schemaHotelSteps5 = z.object({
         .string()
         .min(1, { message: 'Description must not be empty.' }),
     })
-  ).min(1, { message: 'At least one image and description set is required.' }),
+  ).min(5, { message: 'At least 5 images are required.' }),
 });
 
 

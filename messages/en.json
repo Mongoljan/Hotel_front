@@ -1,5 +1,10 @@
 {
-
+  "Loading": {
+    "loading": "Loading...",
+    "please_wait": "Please wait",
+    "initializing": "Initializing...",
+    "setting_up_dashboard": "Setting up your dashboard"
+  },
 
   "Proceed":{
     "title":"Proceed registeration",
@@ -25,9 +30,9 @@
     "3":"After Fee",
     "4":"Subsequent Days",
     "5":"Special Condition",
-    "6":"Check-in From",
+    "6":"Check-in",
     "7":"Check-in Until",
-    "8":"Check-out From",
+    "8":"Check-out",
     "9":"Check-out Until",
     "10":"Breakfast Policy",
     "11":"Allow Children",
@@ -38,8 +43,21 @@
     "17":"Байхгүй",
     "18":"Үнэд багтсан",
     "19":"Тусдаа үнэтэй",
-    "20":"Proceed"
-
+    "20":"Proceed",
+    "from": "from",
+    "to": "to",
+    "cancellation_policy_title": "Cancellation Policy",
+    "cancellation_time": "Cancellation Time",
+    "before_cancellation_fee": "before cancellation fee (%)",
+    "after_cancellation_fee": "after cancellation fee (%)",
+    "multi_room_cancellation": "Multi-room cancellation",
+    "before_multi_room_cancellation": "days before percentage (%)",
+    "after_multi_room_cancellation": "days before percentage (%)",
+    "subsequent_days_percentage": "days before percentage (%)",
+    "special_condition_percentage": "day before percentage (%)",
+    "property_id_not_found": "Property ID not found. Please complete step 1.",
+    "policy_saved": "Policy saved successfully",
+    "error_try_again": "Error occurred. Please try again."
   },
 
   "5PropertyImages":{
@@ -273,7 +291,9 @@
     "policies": "Policies",
     "corporate": "Corporate",
     "permissions": "Permissions",
-    "sidebarMobileTitle": "Sidebar navigation"
+    "sidebarMobileTitle": "Sidebar navigation",
+    "waitingApproval": "Waiting for approval...",
+    "completeRegistration": "Complete hotel registration to unlock all features"
   },
   "Language": {
     "switch": "Switch language"

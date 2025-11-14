@@ -132,11 +132,11 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
       <Card className="w-full max-w-[600px] md:min-w-[440px]">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center flex items-center justify-center gap-2">
-            <Settings className="h-6 w-6" />
+
             {t('title')}
           </CardTitle>
           <CardDescription className="text-center">
-            Final property details and amenities
+
           </CardDescription>
         </CardHeader>
         <CardContent>

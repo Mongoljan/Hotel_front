@@ -158,7 +158,11 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       const checkRes = await fetch(`${API_URL}?property=${propertyId}`);
       const existing = await checkRes.json();
 
-      const payload = { ...data, property: propertyId };
+      const payload = {
+        ...data,
+        zipCode: '00000', // Default dummy zip code since field is removed
+        property: propertyId
+      };
       let response;
 
       if (Array.isArray(existing) && existing.length > 0) {
@@ -269,20 +273,6 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                         {...field}
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="zipCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('5')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t('zipcode_placeholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
