@@ -63,9 +63,12 @@ interface PropertyPolicy {
   allow_pets: boolean;
   cancellation_fee: {
     cancel_time: string;
-    before_fee: string;
-    after_fee: string;
-    special_condition_percentage: string;
+    single_before_time_percentage: string;
+    single_after_time_percentage: string;
+    multi_5days_before_percentage: string;
+    multi_3days_before_percentage: string;
+    multi_2days_before_percentage: string;
+    multi_1day_before_percentage: string;
   };
 }
 
