@@ -43,13 +43,21 @@ export default function Sidebar({ isApproved, userApproved }: { isApproved: bool
     setUserType(type);
   }, []);
 
+  // Filter settings items based on user role
+  type PermissionKey = 'canManageRooms' | 'canManagePricing' | 'canEditHotel' | 'canCreateEmployee';
+
   const hotelRegistrationItem = {
     href: "/admin/hotel",
     icon: Building2,
     label: "Буудлын мэдээлэл",
   };
 
-  const baseNavItems = [
+  const baseNavItems: Array<{
+    href: string;
+    icon: any;
+    label: string;
+    permission?: PermissionKey;
+  }> = [
     { href: "/admin/dashboard", icon: LayoutDashboard, label: "Хяналтын самбар" },
     { href: "/admin/bookings", icon: ClipboardList, label: "Захиалгын жагсаалт" },
     { href: "/admin/room-blocks", icon: DoorClosed, label: "Өрөө блок" },
@@ -59,12 +67,9 @@ export default function Sidebar({ isApproved, userApproved }: { isApproved: bool
 
   const navItems = (isApproved && userApproved)
     ? baseNavItems.filter(item =>
-        !('permission' in item) || !item.permission || hasPermission(userType, item.permission)
+        !item.permission || hasPermission(userType, item.permission)
       )
     : [];
-
-  // Filter settings items based on user role
-  type PermissionKey = 'canManageRooms' | 'canManagePricing' | 'canEditHotel' | 'canCreateEmployee';
 
   const baseSettingsItems: Array<{
     href: string;

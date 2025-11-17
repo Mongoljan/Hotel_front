@@ -11,20 +11,8 @@ export const buildLookupMaps = (rawRooms: RoomData[], lookup: AllData): LookupMa
   const groupMap: LookupMaps["groupMap"] = new Map();
 
   rawRooms.forEach((room) => {
-    // Create a composite key based on:
-    // - room_type and room_category
-    // - number_of_rooms and number_of_rooms_to_sell
-    // - sorted image URLs (to match rooms with same images)
-    const imageUrls = (room.images || [])
-      .map(img => img.image)
-      .filter(url => url && url.trim() !== '')
-      .sort()
-      .join('|');
-    
-    const key = `${room.room_type}-${room.room_category}-${room.number_of_rooms}-${room.number_of_rooms_to_sell}-${imageUrls}`;
-    
-    console.log('🔑 Room grouping key for room', room.id, ':', key);
-    
+    const key = `${room.room_type}-${room.room_category}`;
+
     if (!groupMap.has(key)) {
       const typeObj = (lookup.room_types ?? []).find((t) => t.id === room.room_type) ?? null;
       const catObj = (lookup.room_category ?? []).find((c) => c.id === room.room_category) ?? null;
@@ -38,13 +26,7 @@ export const buildLookupMaps = (rawRooms: RoomData[], lookup: AllData): LookupMa
         rooms: []
       });
     }
-
     groupMap.get(key)!.rooms.push(room);
-  });
-
-  console.log('📊 Total groups created:', groupMap.size);
-  groupMap.forEach((group, key) => {
-    console.log(`  Group "${key}": ${group.rooms.length} rooms`);
   });
 
   const facilitiesMapMn = new Map<number, string>(
@@ -183,17 +165,27 @@ export const createFlattenedRows = ({
       .map((id) => lookupMaps.bathroomItemsMap.get(id))
       .filter((value): value is string => Boolean(value));
 
-    // Get images from the first room (they all have the same images by grouping criteria)
-    const roomImages = group.rooms[0]?.images
-      ?.map((image) => image.image)
-      .filter((url) => url && url.trim() !== '') || [];
-    
-    const uniqueImages = Array.from(new Set(roomImages));
+    // Collect unique images across the group (limit to avoid huge payloads)
+    const imageSet = new Set<string>();
+    group.rooms.forEach((room) => {
+      room.images?.forEach((image) => {
+        const url = image.image?.trim();
+        if (url) {
+          imageSet.add(url);
+        }
+      });
+    });
+    const uniqueImages = Array.from(imageSet).slice(0, 6);
 
-    // All rooms in the group have the same number_of_rooms and number_of_rooms_to_sell
-    // So we can just take from the first room
-    const totalRoomsInGroup = Number(group.rooms[0]?.number_of_rooms) || 0;
-    const totalRoomsToSellInGroup = Number(group.rooms[0]?.number_of_rooms_to_sell) || 0;
+    // Aggregate room counts from every room in the group
+    const totalRoomsInGroup = group.rooms.reduce(
+      (sum, room) => sum + (Number(room.number_of_rooms) || 0),
+      0
+    );
+    const totalRoomsToSellInGroup = group.rooms.reduce(
+      (sum, room) => sum + (Number(room.number_of_rooms_to_sell) || 0),
+      0
+    );
 
     rows.push({
       id: key,
@@ -270,6 +262,8 @@ export const createFlattenedRows = ({
         roomNumberLeaf: String(room.room_number),
         viewDescription: room.room_Description,
         leafSize: room.room_size,
+  leafTotalRooms: Number(room.number_of_rooms) || 0,
+  leafRoomsToSell: Number(room.number_of_rooms_to_sell) || 0,
         roomNumbersStr: undefined,
         smokingAllowed: room.smoking_allowed,
         hasWifi: leafHasWifi,

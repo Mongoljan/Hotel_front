@@ -486,14 +486,21 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
         if (row.original.isGroup) {
           return (
             <span className="text-sm font-medium">
-              {row.original.totalRoomsInGroup || 0}
+              {row.original.totalRoomsInGroup ?? 0}
             </span>
           );
         } else {
           return (
-            <span className="text-sm text-muted-foreground">
-              {row.original.leafSize} м²
-            </span>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-semibold">
+                {row.original.leafTotalRooms ?? 0}
+              </span>
+              {row.original.leafSize && (
+                <span className="text-xs text-muted-foreground">
+                  {row.original.leafSize} м²
+                </span>
+              )}
+            </div>
           );
         }
       },
@@ -509,23 +516,28 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
 
         if (row.original.isGroup) {
           return (
-            <span className="text-sm text-muted-foreground">
-              {row.original.totalRoomsToSellInGroup || 0}
+            <span className="text-sm font-medium text-muted-foreground">
+              {row.original.totalRoomsToSellInGroup ?? 0}
             </span>
           );
         } else {
           return (
-            <div className="flex items-center gap-2">
-              {row.original.smokingAllowed ? (
-                <GiCigarette className="h-4 w-4" />
-              ) : (
-                <LiaSmokingBanSolid className="h-4 w-4 text-red-500" />
-              )}
-              {row.original.hasWifi ? (
-                <Wifi className="h-4 w-4 text-green-600" />
-              ) : (
-                <Wifi className="h-4 w-4 text-gray-400" />
-              )}
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-semibold">
+                {row.original.leafRoomsToSell ?? 0}
+              </span>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                {row.original.smokingAllowed ? (
+                  <GiCigarette className="h-4 w-4" />
+                ) : (
+                  <LiaSmokingBanSolid className="h-4 w-4 text-red-500" />
+                )}
+                {row.original.hasWifi ? (
+                  <Wifi className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Wifi className="h-4 w-4 text-gray-400" />
+                )}
+              </div>
             </div>
           );
         }

@@ -92,6 +92,8 @@ export interface FlattenRow extends GridValidRowModel {
   totalRoomsInGroup?: number;
   totalRoomsToSellInGroup?: number;
   leafSize?: string;
+  leafTotalRooms?: number;
+  leafRoomsToSell?: number;
   smokingAllowed?: boolean;
   hasWifi?: boolean;
   groupHasAdult?: boolean;

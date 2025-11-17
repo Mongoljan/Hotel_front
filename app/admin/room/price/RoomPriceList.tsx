@@ -136,6 +136,7 @@ interface PriceEntry {
   base_price: number;
   single_person_price: number | null;
   half_day_price: number | null;
+  breakfast_include_price: number | null;
   hotel: number;
   room_type: number;
   room_category: number;
@@ -151,6 +152,7 @@ interface RoomRow {
   basePrice: number | null;
   singlePrice: number | null;
   halfDayPrice: number | null;
+  breakfastPrice: number | null;
   numberOfRoomsToSell: number;
 }
 
@@ -168,12 +170,14 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
   const [prices, setPrices] = useState<PriceEntry[]>([]);
   const [lookup, setLookup] = useState<AllData>({ room_types: [], room_category: [] });
   const [loading, setLoading] = useState<boolean>(true);
+  const [breakfastPolicy, setBreakfastPolicy] = useState<'no' | 'free' | 'paid'>('no');
   const [form, setForm] = useState({
     room_type: 0,
     room_category: 0,
     base_price: 0,
     single_person_price: 0,
-    half_day_price: 0
+    half_day_price: 0,
+    breakfast_include_price: 0
   });
   const [editingPrice, setEditingPrice] = useState<PriceEntry | null>(null);
   const [openEdit, setOpenEdit] = useState(false);
@@ -207,16 +211,23 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
           return;
         }
 
-        const [allRes, roomsRes, pricesRes] = await Promise.all([
+        const [allRes, roomsRes, pricesRes, hotelRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/all-data/`),
           fetch(`https://dev.kacc.mn/api/roomsNew/?token=${token}`),
-          fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}`)
+          fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}`),
+          fetch(`https://dev.kacc.mn/api/hotel/${hotel}/`)
         ]);
         if (!allRes.ok || !roomsRes.ok || !pricesRes.ok) throw new Error("Fetch failed");
 
         const allData = await allRes.json() as AllData;
         const roomsData = await roomsRes.json();
         const pricesData: PriceEntry[] = await pricesRes.json();
+
+        // Fetch hotel data to get breakfast_policy
+        if (hotelRes.ok) {
+          const hotelData = await hotelRes.json();
+          setBreakfastPolicy(hotelData.breakfast_policy || 'no');
+        }
 
         localStorage.setItem("roomLookup", JSON.stringify(allData));
         localStorage.setItem("roomData", JSON.stringify(roomsData));
@@ -243,13 +254,13 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
     const priceMap = new Map(prices.map(p => [`${p.room_type}-${p.room_category}`, p]));
     
     // Group rooms by type and category combination
-    const combinationMap = new Map<string, { 
-      room_type: number; 
-      room_category: number; 
+    const combinationMap = new Map<string, {
+      room_type: number;
+      room_category: number;
       count: number;
       roomNumbers: number[];
     }>();
-    
+
     rooms.forEach((r) => {
       const key = `${r.room_type}-${r.room_category}`;
       if (!combinationMap.has(key)) {
@@ -264,7 +275,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
       combo.count++;
       combo.roomNumbers.push(r.room_number);
     });
-    
+
     // Add price-only combinations (prices that exist but have no rooms yet)
     prices.forEach((price) => {
       const key = `${price.room_type}-${price.room_category}`;
@@ -292,6 +303,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
         basePrice: price?.base_price ?? null,
         singlePrice: price?.single_person_price ?? null,
         halfDayPrice: price?.half_day_price ?? null,
+        breakfastPrice: price?.breakfast_include_price ?? null,
         numberOfRoomsToSell: combo.count,
       };
     });
@@ -381,6 +393,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
       base_price: priceEntry.base_price || 0,
       single_person_price: priceEntry.single_person_price || 0,
       half_day_price: priceEntry.half_day_price || 0,
+      breakfast_include_price: priceEntry.breakfast_include_price || 0,
     });
     
     setEditingPrice(priceEntry);
@@ -560,6 +573,18 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                   placeholder="Хагас өдрийн үнэ оруулах (жишээ нь: 150'000)"
                 />
               </div>
+
+              {breakfastPolicy === 'paid' && (
+                <div className="space-y-2">
+                  <Label htmlFor="breakfast-price">Өглөөний цай багтсан үнэ</Label>
+                  <FormattedNumberInput
+                    id="breakfast-price"
+                    value={form.breakfast_include_price}
+                    onChange={(value) => setForm(f => ({ ...f, breakfast_include_price: value }))}
+                    placeholder="Өглөөний цай багтсан үнэ (жишээ нь: 180'000)"
+                  />
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpenAdd(false)}>
@@ -622,6 +647,18 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                 placeholder="Хагас өдрийн үнэ оруулах (жишээ нь: 150'000)"
               />
             </div>
+
+            {breakfastPolicy === 'paid' && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-breakfast-price">Өглөөний цай багтсан үнэ</Label>
+                <FormattedNumberInput
+                  id="edit-breakfast-price"
+                  value={form.breakfast_include_price}
+                  onChange={(value) => setForm(f => ({ ...f, breakfast_include_price: value }))}
+                  placeholder="Өглөөний цай багтсан үнэ (жишээ нь: 180'000)"
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
@@ -647,6 +684,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
               <TableHead>Үндсэн үнэ</TableHead>
               <TableHead>Ганц хүний үнэ</TableHead>
               <TableHead>Хагас өдрийн үнэ</TableHead>
+              {breakfastPolicy === 'paid' && <TableHead>Өглөөний цай</TableHead>}
               <TableHead>Борлуулах өрөө</TableHead>
               <TableHead className="text-right">Үйлдэл</TableHead>
             </TableRow>
@@ -692,7 +730,16 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                       <span>{row.halfDayPrice ? `${row.halfDayPrice.toLocaleString()}₮` : '-'}</span>
                     </div>
                   </TableCell>
-                  
+
+                  {breakfastPolicy === 'paid' && (
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span>{row.breakfastPrice ? `${row.breakfastPrice.toLocaleString()}₮` : '-'}</span>
+                      </div>
+                    </TableCell>
+                  )}
+
                   <TableCell>
                     <Badge variant={row.numberOfRoomsToSell > 0 ? "default" : "secondary"}>
                       {row.numberOfRoomsToSell}

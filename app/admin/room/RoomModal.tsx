@@ -583,7 +583,7 @@ export default function RoomModal({
       <form
         onSubmit={handleSubmit(onSubmit)}
         onClick={(e) => e.stopPropagation()}
-        className="p-6 bg-white border max-w-[700px] w-full max-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl relative mx-auto"
+        className="p-6 bg-white border max-w-[840px] w-full max-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl relative mx-auto"
       >
 
         {/* ─── Header + Close Button ───────────────────────────────────────────── */}
