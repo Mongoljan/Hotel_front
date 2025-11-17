@@ -94,8 +94,29 @@ export const useRoomData = ({
         fetch(`${ROOM_API_ENDPOINTS.rooms}?token=${encodeURIComponent(token)}`)
       ]);
 
+      // Handle 401 authentication errors specifically
+      if (roomsRes.status === 401) {
+        onAuthLostRef.current?.();
+        clearRoomCache();
+        const message = "Session expired. Please sign in again.";
+        setAuthError(message);
+        toast.error(message);
+        setRawRooms([]);
+        setLookup(createEmptyLookup());
+        return;
+      }
+
       if (!allRes.ok || !roomsRes.ok) {
-        throw new Error("Failed to fetch room data");
+        const errorDetails = [];
+        if (!allRes.ok) {
+          const lookupError = await allRes.text().catch(() => "Unknown error");
+          errorDetails.push(`Lookup API (${allRes.status}): ${lookupError}`);
+        }
+        if (!roomsRes.ok) {
+          const roomsError = await roomsRes.text().catch(() => "Unknown error");
+          errorDetails.push(`Rooms API (${roomsRes.status}): ${roomsError}`);
+        }
+        throw new Error(`Failed to fetch room data. ${errorDetails.join("; ")}`);
       }
 
       const lookupPayload = (await allRes.json()) as AllData;

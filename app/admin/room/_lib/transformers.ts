@@ -165,17 +165,51 @@ export const createFlattenedRows = ({
       .map((id) => lookupMaps.bathroomItemsMap.get(id))
       .filter((value): value is string => Boolean(value));
 
-    // Collect unique images across the group (limit to avoid huge payloads)
+    // Collect truly unique images across the group
+    // Only count an image URL once, even if multiple rooms have it
+    // Prioritize images from rooms that are available to sell
     const imageSet = new Set<string>();
+
+    // First, collect images from available rooms
     group.rooms.forEach((room) => {
-      room.images?.forEach((image) => {
-        const url = image.image?.trim();
-        if (url) {
-          imageSet.add(url);
-        }
-      });
+      if (Number(room.number_of_rooms_to_sell) > 0) {
+        room.images?.forEach((image) => {
+          const url = image.image?.trim();
+          if (url) {
+            imageSet.add(url);
+          }
+        });
+      }
     });
-    const uniqueImages = Array.from(imageSet).slice(0, 6);
+
+    // If no images from available rooms, collect from all rooms
+    if (imageSet.size === 0) {
+      group.rooms.forEach((room) => {
+        room.images?.forEach((image) => {
+          const url = image.image?.trim();
+          if (url) {
+            imageSet.add(url);
+          }
+        });
+      });
+    }
+
+    // Convert to array and limit display to max 3 unique images
+    const uniqueImages = Array.from(imageSet).slice(0, 3);
+
+    // Debug logging to help identify issues
+    if (imageSet.size > 1) {
+      console.log(`Group ${key}: ${group.rooms.length} rooms, ${imageSet.size} unique images`, {
+        rooms: group.rooms.map(r => ({
+          roomNumber: r.room_number,
+          totalRooms: r.number_of_rooms,
+          toSell: r.number_of_rooms_to_sell,
+          imageCount: r.images?.length || 0,
+          imageUrls: r.images?.map(img => img.image) || []
+        })),
+        uniqueImages: Array.from(imageSet)
+      });
+    }
 
     // Aggregate room counts from every room in the group
     const totalRoomsInGroup = group.rooms.reduce(

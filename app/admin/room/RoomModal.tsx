@@ -583,7 +583,7 @@ export default function RoomModal({
       <form
         onSubmit={handleSubmit(onSubmit)}
         onClick={(e) => e.stopPropagation()}
-        className="p-6 bg-white border max-w-[840px] w-full max-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl relative mx-auto"
+        className="p-6 bg-white border max-w-3xl w-full max-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl relative mx-auto"
       >
 
         {/* ─── Header + Close Button ───────────────────────────────────────────── */}
@@ -666,11 +666,14 @@ export default function RoomModal({
         {/* ─── Step 1: Basic Room Info ───────────────────────────────────────── */}
         {/* ───────────────────────────────────────────────────────────────────── */}
         {step === 1 && (
-          <div>
-            <section className="flex justify-between mb-4">
+          <div className="space-y-10">
+            {/* Row 1: Room Type & Room Category */}
+            <section className="grid grid-cols-2 gap-10">
               {/* Room Type */}
-              <div className="w-[45%]">
-                <label className="block mb-1">{t('room_type')}</label>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Өрөөний ангилал <span className="text-red-500">*</span>
+                </label>
                 <Select 
                   key={`room_type-${roomToEdit?.id || 'new'}-${watch("room_type")}`}
                   onValueChange={(value) => setValue("room_type", value)} 
@@ -692,15 +695,17 @@ export default function RoomModal({
                   </SelectContent>
                 </Select>
                 {errors.room_type && (
-                  <span className="text-red text-sm">
+                  <span className="text-red-500 text-xs mt-1 block">
                     {errors.room_type.message}
                   </span>
                 )}
               </div>
 
               {/* Room Category */}
-              <div className="w-[45%]">
-                <label className="block mb-1">{t('category')}</label>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Өрөөний төрөл <span className="text-red-500">*</span>
+                </label>
                 <Select 
                   key={`room_category-${roomToEdit?.id || 'new'}-${watch("room_category")}`}
                   onValueChange={(value) => setValue("room_category", value)} 
@@ -722,74 +727,104 @@ export default function RoomModal({
                   </SelectContent>
                 </Select>
                 {errors.room_category && (
-                  <span className="text-red text-sm">
+                  <span className="text-red-500 text-xs mt-1 block">
                     {errors.room_category.message}
                   </span>
                 )}
               </div>
             </section>
 
-            <section className="flex justify-between mb-4">
-              {/* Room Size */}
-              <div className="w-[45%]">
-                <label className="block mb-1">Өрөөний хэмжээ (m²)</label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  {...register("room_size")}
-                />
-                {errors.room_size && (
-                  <span className="text-red text-sm">
-                    {errors.room_size.message}
-                  </span>
-                )}
-              </div>
-
+            {/* Row 2: Occupancy & Room Size */}
+            <section className="grid grid-cols-2 gap-10">
               {/* Occupancy (Adults + Children) */}
-              <div className="w-[45%]">
-                <label className="block mb-1">
-                  Өрөөнд орох боломжтой хүний тоог оруулна уу?
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Өрөөнд орох боломжтой хүний тоог оруулна уу. <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-8">
-                  <div className="flex items-center gap-2">
-                    <User className="text-primary text-xl" />{" "}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 flex-1">
+                    <User className="text-blue-600 w-5 h-5 flex-shrink-0" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        const current = parseInt(watch("adultQty") || "0");
+                        if (current > 0) setValue("adultQty", String(current - 1));
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                     <Input
                       type="number"
                       min="0"
                       placeholder="0"
                       {...register("adultQty")}
-                      className="w-16"
+                      className="w-16 text-center"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Baby className="text-primary text-xl" />{" "}
+                  <div className="flex items-center gap-2 flex-1">
+                    <Baby className="text-pink-600 w-5 h-5 flex-shrink-0" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        const current = parseInt(watch("childQty") || "0");
+                        if (current > 0) setValue("childQty", String(current - 1));
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                     <Input
                       type="number"
                       min="0"
                       placeholder="0"
                       {...register("childQty")}
-                      className="w-16"
+                      className="w-16 text-center"
                     />
                   </div>
                 </div>
                 {(errors.adultQty || errors.childQty) && (
-                  <span className="text-red text-sm">
+                  <span className="text-red-500 text-xs mt-1 block">
                     {errors.adultQty?.message ?? errors.childQty?.message}
+                  </span>
+                )}
+              </div>
+
+              {/* Room Size */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Өрөөний хэмжээ (м2) <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  placeholder="0"
+                  {...register("room_size")}
+                />
+                {errors.room_size && (
+                  <span className="text-red-500 text-xs mt-1 block">
+                    {errors.room_size.message}
                   </span>
                 )}
               </div>
             </section>
 
-            <section className="flex justify-between mb-4">
-              {/* Bed Type */}
-              <div className="w-[45%]">
-                <label className="block mb-1">Орны төрөл</label>
+            {/* Row 3: Bed Type with counter */}
+            <section className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Орны төрөл <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-3">
                 <Select 
                   key={`bed_type-${roomToEdit?.id || 'new'}-${watch("bed_type")}`}
                   onValueChange={(value) => setValue("bed_type", value)} 
                   value={watch("bed_type") || undefined}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="flex-1">
                     <SelectValue placeholder="-- Сонгох --" />
                   </SelectTrigger>
                   <SelectContent>
@@ -800,20 +835,57 @@ export default function RoomModal({
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.bed_type && (
-                  <span className="text-red text-sm">
-                    {errors.bed_type.message}
-                  </span>
-                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10"
+                  onClick={() => {
+                    const current = watch("number_of_rooms") || 1;
+                    if (current > 1) setValue("number_of_rooms", current - 1);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                <Input
+                  type="number"
+                  min="1"
+                  value={watch("number_of_rooms") || 1}
+                  onChange={(e) => setValue("number_of_rooms", parseInt(e.target.value) || 1)}
+                  className="w-20 text-center"
+                  disabled={!!roomToEdit}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10"
+                  onClick={() => {
+                    const current = watch("number_of_rooms") || 1;
+                    setValue("number_of_rooms", current + 1);
+                  }}
+                  disabled={!!roomToEdit}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Badge variant="secondary" className="ml-2">Хос кг</Badge>
               </div>
+              {errors.bed_type && (
+                <span className="text-red-500 text-xs mt-1 block">
+                  {errors.bed_type.message}
+                </span>
+              )}
+            </section>
 
-              {/* Is Bathroom? */}
-              <div className="w-[45%]">
-                <label className="block font-medium mb-1">
-                  Өрөөнд ариун цэврийн өрөө байгаа эсэх
+            {/* Row 4: Is Bathroom? & Smoking Allowed */}
+            <section className="grid grid-cols-2 gap-10">
+              {/* Is Bathroom */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Өрөөнд ариун цэврийн өрөө байгаа эсэх: <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-8 mt-2">
-                  <label className="flex items-center cursor-pointer">
+                <div className="flex gap-3">
+                  <label className="flex items-center cursor-pointer flex-1">
                     <input
                       type="radio"
                       {...register("is_Bathroom", {
@@ -822,11 +894,11 @@ export default function RoomModal({
                       value="true"
                       className="hidden peer"
                     />
-                    <span className="peer-checked:bg-blue-500 peer-checked:text-white border border-gray-300 px-4 py-2 rounded-lg transition">
+                    <span className="peer-checked:bg-blue-500 peer-checked:text-white border border-gray-300 px-4 py-2 rounded-lg transition w-full text-center">
                       Тийм
                     </span>
                   </label>
-                  <label className="flex items-center cursor-pointer">
+                  <label className="flex items-center cursor-pointer flex-1">
                     <input
                       type="radio"
                       {...register("is_Bathroom", {
@@ -835,163 +907,124 @@ export default function RoomModal({
                       value="false"
                       className="hidden peer"
                     />
-                    <span className="peer-checked:bg-blue-500 peer-checked:text-white border border-gray-300 px-4 py-2 rounded-lg transition">
+                    <span className="peer-checked:bg-blue-500 peer-checked:text-white border border-gray-300 px-4 py-2 rounded-lg transition w-full text-center">
                       Үгүй
                     </span>
                   </label>
                 </div>
                 {errors.is_Bathroom && (
-                  <span className="text-red text-sm">
+                  <span className="text-red-500 text-xs mt-1 block">
                     {errors.is_Bathroom.message}
                   </span>
                 )}
               </div>
+
+              {/* Smoking Allowed */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Тамхи зөвшөөрөх эсэх <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-3">
+                  <label className="flex items-center cursor-pointer flex-1">
+                    <input
+                      type="radio"
+                      {...register("smoking_allowed", {
+                        required: "Энэ талбарыг бөглөнө үү",
+                      })}
+                      value="true"
+                      className="hidden peer"
+                    />
+                    <span className="peer-checked:bg-blue-500 peer-checked:text-white border border-gray-300 px-4 py-2 rounded-lg transition w-full text-center">
+                      Тийм
+                    </span>
+                  </label>
+                  <label className="flex items-center cursor-pointer flex-1">
+                    <input
+                      type="radio"
+                      {...register("smoking_allowed", {
+                        required: "Энэ талбарыг бөглөнө үү",
+                      })}
+                      value="false"
+                      className="hidden peer"
+                    />
+                    <span className="peer-checked:bg-blue-500 peer-checked:text-white border border-gray-300 px-4 py-2 rounded-lg transition w-full text-center">
+                      Үгүй
+                    </span>
+                  </label>
+                </div>
+                {errors.smoking_allowed && (
+                  <span className="text-red-500 text-xs mt-1 block">
+                    {errors.smoking_allowed.message}
+                  </span>
+                )}
+              </div>
             </section>
 
-<div className="flex justify-between mb-4">
-            <section className="mb-6 w-[45%]">
-              <h3 className="font-medium mb-2">{t('images')}</h3>
-              <p className="text-xs text-muted-foreground mb-3">{t('images_hint')}</p>
-
-              {/* Minimal image upload interface */}
-              <div className="space-y-3">
-                {fields.map((field, index) => {
-                  const hasImage = watchedEntries[index]?.images;
-
-                  return (
-                    <div key={field.id} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/20">
-                      {hasImage ? (
-                        <img
-                          src={watchedEntries[index].images}
-                          alt={`Preview ${index + 1}`}
-                          className="w-12 h-12 flex-shrink-0 rounded border object-cover"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 flex-shrink-0 rounded border border-dashed border-muted-foreground/30 bg-muted/10 flex items-center justify-center">
-                          <ImageIcon className="h-5 w-5 text-muted-foreground/50" />
+            {/* Row 5: Total Rooms & Rooms to Sell */}
+            {!roomToEdit && (
+              <section className="grid grid-cols-2 gap-10">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Өрөөний нийт тоо <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    {...register("number_of_rooms")}
+                  />
+                  {errors.number_of_rooms && (
+                    <span className="text-red-500 text-xs mt-1 block">
+                      {errors.number_of_rooms.message}
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Манай сайтаар зарах өрөөний тоо <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    {...register("number_of_rooms_to_sell")}
+                  />
+                  {errors.number_of_rooms_to_sell && (
+                    <span className="text-red-500 text-xs mt-1 block">
+                      {errors.number_of_rooms_to_sell.message}
+                    </span>
+                  )}
+                  {/* Show warning if number_of_rooms_to_sell exceeds number_of_rooms */}
+                  {(() => {
+                    const numberOfRooms = watch("number_of_rooms");
+                    const numberOfRoomsToSell = watch("number_of_rooms_to_sell");
+                    if (numberOfRooms && numberOfRoomsToSell && parseInt(numberOfRoomsToSell) > numberOfRooms) {
+                      return (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <span>Зарах өрөөний тоо ({numberOfRoomsToSell}) нийт өрөөний тооноос ({numberOfRooms}) их байж болохгүй!</span>
                         </div>
-                      )}
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              </section>
+            )}
 
-                      <div className="flex-1 min-w-0">
-                        <label className="cursor-pointer">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleImageChange(e, index)}
-                            className="hidden"
-                            id={`image-upload-${index}`}
-                          />
-                          <div className="flex items-center gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-8 text-xs"
-                              onClick={() => document.getElementById(`image-upload-${index}`)?.click()}
-                            >
-                              <Upload className="h-3 w-3 mr-1" />
-                              {hasImage ? 'Change' : 'Choose File'}
-                            </Button>
-                            {hasImage && (
-                              <span className="text-xs text-muted-foreground truncate">
-                                Image {index + 1}
-                              </span>
-                            )}
-                          </div>
-                        </label>
-                        {errors.entries?.[index]?.images && (
-                          <div className="text-red text-xs mt-1">
-                            {errors.entries[index]?.images?.message}
-                          </div>
-                        )}
-                      </div>
-
-                      {fields.length > 1 && (
-                        <Button
-                          type="button"
-                          onClick={() => remove(index)}
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 flex-shrink-0"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
-
-                <Button
-                  type="button"
-                  onClick={() => append({ images: "", descriptions: "" })}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                >
-                  <Plus className="mr-2 h-4 w-4" /> {t('upload_images')}
-                </Button>
-              </div>
-            </section>
-
-            <section className=" w-[45%]">
-               {roomToEdit ? <></>
- :
- <div>
-              <div className="mb-4">
-                <label className="block mb-1 font-medium">Өрөөний нийт тоо</label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  {...register("number_of_rooms")}
-                  className="w-1/2"
-                />
-                {errors.number_of_rooms && (
-                  <span className="text-red text-sm">
-                    {errors.number_of_rooms.message}
-                  </span>
-                )}
-              </div>
-              <div className=" mb-4">
-                <label className="block font-medium">Манай сайтаар зарах өрөөний тоо</label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  {...register("number_of_rooms_to_sell")}
-                  className="w-1/2"
-                />
-                {errors.number_of_rooms_to_sell && (
-                  <span className="text-red text-sm">
-                    {errors.number_of_rooms_to_sell.message}
-                  </span>
-                )}
-                {/* Show warning if number_of_rooms_to_sell exceeds number_of_rooms */}
-                {(() => {
-                  const numberOfRooms = watch("number_of_rooms");
-                  const numberOfRoomsToSell = watch("number_of_rooms_to_sell");
-                  if (numberOfRooms && numberOfRoomsToSell && parseInt(numberOfRoomsToSell) > numberOfRooms) {
-                    return (
-                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
-                        ⚠️ Зарах өрөөний тоо ({numberOfRoomsToSell}) нийт өрөөний тооноос ({numberOfRooms}) их байж болохгүй!
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-              </div>
-              </div>
- }
-                <div className="mb-4">
-              <label className="block  font-medium ">
-        {roomToEdit ? <div>Өрөөний дугаар ( 1 дугаар байна)</div> :  <div> Та өрөө тус бүрийн номерийг бичиж оруулна уу? (таслалаар тусгаарлагдсан)</div>   }  
+            {/* Row 6: Room Numbers */}
+            <section className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                {roomToEdit 
+                  ? "Өрөөний дугаар (1 дугаар байна)" 
+                  : <>Та өрөө тус бүрийн №-ийг бичиж өгнө үү? <span className="text-red-500">*</span> <span className="text-gray-500 font-normal">(таслалаар тусгаарлагдсан)</span></>}
               </label>
               <Input
                 {...register("RoomNo")}
-                placeholder="E.g. 101, 102"
+                placeholder="Жнь: 101, 102, 103 гэх мэт"
               />
               {errors.RoomNo && (
-                <span className="text-red text-sm">{errors.RoomNo.message}</span>
+                <span className="text-red-500 text-xs mt-1 block">{errors.RoomNo.message}</span>
               )}
               {/* Show duplicate room number warning */}
               {(() => {
@@ -1005,8 +1038,9 @@ export default function RoomModal({
                   const { hasDuplicate, duplicates } = checkDuplicateRoomNumbers(roomNumbersArr);
                   if (hasDuplicate) {
                     return (
-                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
-                        ⚠️ Дараах өрөөний дугаар аль хэдийн бүртгэгдсэн байна: {duplicates.join(", ")}
+                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <span>Дараах өрөөний дугаар аль хэдийн бүртгэгдсэн байна: {duplicates.join(", ")}</span>
                       </div>
                     );
                   }
@@ -1017,57 +1051,100 @@ export default function RoomModal({
                   // Only show warning if numberOfRooms is a positive number and doesn't match
                   if (numberOfRoomsNum > 0 && roomNumbersArr.length !== numberOfRoomsNum) {
                     return (
-                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
-                        ⚠️ Өрөөний нийт тоо {numberOfRoomsNum} байхаар оруулсан байна. Та {numberOfRoomsNum} өрөөний дугаар оруулах шаардлагатай. Одоо {roomNumbersArr.length} дугаар оруулсан байна.
+                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700 flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <span>Өрөөний нийт тоо {numberOfRoomsNum} байхаар оруулсан байна. Та {numberOfRoomsNum} өрөөний дугаар оруулах шаардлагатай. Одоо {roomNumbersArr.length} дугаар оруулсан байна.</span>
                       </div>
                     );
                   }
                 }
                 return null;
               })()}
-            </div>
-
-            <div className="mb-4">
-              <label className="block font-medium mb-1">Тамхи зөвшөөрөх эсэх</label>
-              <div className="flex gap-8 mt-2">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    {...register("smoking_allowed", {
-                      required: "Энэ талбарыг бөглөнө үү",
-                    })}
-                    value="true"
-                    className="hidden peer"
-                  />
-                  <span className="peer-checked:bg-blue-500 peer-checked:text-white border border-gray-300 px-4 py-2 rounded-lg transition">
-                    Тийм
-                  </span>
-                </label>
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    {...register("smoking_allowed", {
-                      required: "Энэ талбарыг бөглөнө үү",
-                    })}
-                    value="false"
-                    className="hidden peer"
-                  />
-                  <span className="peer-checked:bg-blue-500 peer-checked:text-white border border-gray-300 px-4 py-2 rounded-lg transition">
-                    Үгүй
-                  </span>
-                </label>
-              </div>
-              {errors.smoking_allowed && (
-                <span className="text-red text-sm">
-                  {errors.smoking_allowed.message}
-                </span>
-              )}
-            </div>
             </section>
-            </div>
 
-          
+            {/* Row 7: Images */}
+            <section className="space-y-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Зураг нэмэх (Хамгийн багадаа 1 зураг) <span className="text-red-500">*</span>
+                </label>
+                <p className="text-xs text-gray-500">
+                  *JPG/ JPEG эсвэл PNG, 47MB-с их үй хэмжээтэй байхаар анхаарна уу.
+                </p>
+              </div>
 
+              {/* Image grid with 4 slots + button */}
+              <div className="grid grid-cols-4 gap-5 mt-3">
+                {/* Show uploaded images */}
+                {fields.slice(0, 4).map((field, index) => {
+                  const hasImage = watchedEntries[index]?.images;
+
+                  return (
+                    <div key={field.id} className="relative aspect-square">
+                      {hasImage ? (
+                        <div className="relative w-full h-full group">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageChange(e, index)}
+                            className="hidden"
+                            id={`image-upload-${index}`}
+                          />
+                          <img
+                            src={watchedEntries[index].images}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-full rounded-lg object-cover border-2 cursor-pointer hover:opacity-80 transition"
+                            onClick={() => document.getElementById(`image-upload-${index}`)?.click()}
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => remove(index)}
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div 
+                          className="w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition"
+                          onClick={() => document.getElementById('add-new-image')?.click()}
+                        >
+                          <Plus className="h-8 w-8 text-gray-400" />
+                        </div>
+                      )}
+                      {errors.entries?.[index]?.images && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.entries[index]?.images?.message}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Hidden input for adding new image */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        const base64Image = reader.result as string;
+                        append({ images: base64Image, descriptions: "" });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                    // Reset input
+                    e.target.value = '';
+                  }}
+                  className="hidden"
+                  id="add-new-image"
+                />
+              </div>
+            </section>
 
             <div className="flex justify-end">
               <Button
