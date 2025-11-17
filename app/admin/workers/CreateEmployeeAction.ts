@@ -1,6 +1,6 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { getAuthToken } from '@/utils/jwt';
 
 export async function createEmployeeAction(formData: {
   name: string;
@@ -11,14 +11,15 @@ export async function createEmployeeAction(formData: {
   user_type: number; // 3 = Manager, 4 = Reception
 }) {
   try {
-    // Get hotel ID from cookies
-    const cookieStore = await cookies();
-    const hotelId = cookieStore.get('hotel')?.value;
-    const token = cookieStore.get('token')?.value;
+    // Get authenticated user info from JWT
+    const payload = await getAuthToken();
 
-    if (!hotelId || !token) {
-      return { error: 'Unauthorized: Missing hotel or token' };
+    if (!payload || !payload.hotel || !payload.backendToken) {
+      return { error: 'Unauthorized: Please sign in again' };
     }
+
+    const hotelId = payload.hotel;
+    const token = payload.backendToken;
 
     const response = await fetch('https://dev.kacc.mn/api/EmployeeRegister/', {
       method: 'POST',

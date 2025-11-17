@@ -447,16 +447,33 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
           );
         } else {
           return (
-            <div className="flex flex-col space-y-1">
-              <span className="font-semibold">{row.original.roomNumberLeaf}</span>
-              <span className="text-sm text-muted-foreground">
-                {row.original.viewDescription}
-              </span>
-            </div>
+            <span className="text-sm text-muted-foreground">
+              {row.original.viewDescription}
+            </span>
           );
         }
       },
       size: 200,
+    },
+
+    // Room Number Column (for expanded leaf rows)
+    {
+      accessorKey: "roomNumberLeaf",
+      header: "Өрөөний дугаар",
+      cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
+        if (row.original.isGroup) {
+          return null;
+        } else {
+          return (
+            <span className="font-semibold text-sm">
+              {row.original.roomNumberLeaf}
+            </span>
+          );
+        }
+      },
+      size: 120,
     },
 
     // Total Rooms Column

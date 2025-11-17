@@ -54,7 +54,6 @@ export default function Sidebar({ isApproved, userApproved }: { isApproved: bool
     { href: "/admin/bookings", icon: ClipboardList, label: "Захиалгын жагсаалт" },
     { href: "/admin/room-blocks", icon: DoorClosed, label: "Өрөө блок" },
     { href: "/admin/billing", icon: Receipt, label: "Төлбөр тооцоо" },
-    { href: "/admin/employees", icon: UserPlus, label: "Ажилтан удирдлага", permission: 'canCreateEmployee' as PermissionKey },
     { href: "/admin/support", icon: MessageSquare, label: "Асуулт хариулт" },
   ];
 
@@ -80,6 +79,7 @@ export default function Sidebar({ isApproved, userApproved }: { isApproved: bool
     { href: "/admin/pricing", icon: DollarSign, label: "Үнийн тохируулга", permission: 'canManagePricing' },
     { href: "/admin/policies", icon: FileText, label: "Нөхцөл бодлого", permission: 'canEditHotel' },
     { href: "/admin/corporate", icon: Users, label: "Гэрээт байгууллага", permission: 'canEditHotel' },
+    { href: "/admin/workers", icon: UserPlus, label: "Ажилчдын жагсаалт", permission: 'canCreateEmployee' },
     { href: "/admin/employees", icon: UserPlus, label: "Ажилтан бүртгэл", permission: 'canCreateEmployee' },
     { href: "/admin/permissions", icon: Shield, label: "Админ эрх", permission: 'canCreateEmployee' },
   ];
@@ -89,6 +89,17 @@ export default function Sidebar({ isApproved, userApproved }: { isApproved: bool
         !item.permission || hasPermission(userType, item.permission)
       )
     : [hotelRegistrationItem];
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Sidebar Debug:', {
+      isApproved,
+      userApproved,
+      userType,
+      settingsItemsCount: settingsItems.length,
+      settingsItems: settingsItems.map(i => i.label)
+    });
+  }, [isApproved, userApproved, userType, settingsItems]);
 
   return (
     <div className="flex h-full w-64 flex-col bg-sidebar border-r border-sidebar-border">

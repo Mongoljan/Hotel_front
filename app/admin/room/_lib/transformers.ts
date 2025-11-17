@@ -11,7 +11,20 @@ export const buildLookupMaps = (rawRooms: RoomData[], lookup: AllData): LookupMa
   const groupMap: LookupMaps["groupMap"] = new Map();
 
   rawRooms.forEach((room) => {
-    const key = `${room.room_type}-${room.room_category}`;
+    // Create a composite key based on:
+    // - room_type and room_category
+    // - number_of_rooms and number_of_rooms_to_sell
+    // - sorted image URLs (to match rooms with same images)
+    const imageUrls = (room.images || [])
+      .map(img => img.image)
+      .filter(url => url && url.trim() !== '')
+      .sort()
+      .join('|');
+    
+    const key = `${room.room_type}-${room.room_category}-${room.number_of_rooms}-${room.number_of_rooms_to_sell}-${imageUrls}`;
+    
+    console.log('🔑 Room grouping key for room', room.id, ':', key);
+    
     if (!groupMap.has(key)) {
       const typeObj = (lookup.room_types ?? []).find((t) => t.id === room.room_type) ?? null;
       const catObj = (lookup.room_category ?? []).find((c) => c.id === room.room_category) ?? null;
@@ -27,6 +40,11 @@ export const buildLookupMaps = (rawRooms: RoomData[], lookup: AllData): LookupMa
     }
 
     groupMap.get(key)!.rooms.push(room);
+  });
+
+  console.log('📊 Total groups created:', groupMap.size);
+  groupMap.forEach((group, key) => {
+    console.log(`  Group "${key}": ${group.rooms.length} rooms`);
   });
 
   const facilitiesMapMn = new Map<number, string>(
@@ -165,14 +183,15 @@ export const createFlattenedRows = ({
       .map((id) => lookupMaps.bathroomItemsMap.get(id))
       .filter((value): value is string => Boolean(value));
 
-    // Get images from the first room only (not all rooms in the group)
-    const firstRoomImages = group.rooms[0]?.images
+    // Get images from the first room (they all have the same images by grouping criteria)
+    const roomImages = group.rooms[0]?.images
       ?.map((image) => image.image)
       .filter((url) => url && url.trim() !== '') || [];
+    
+    const uniqueImages = Array.from(new Set(roomImages));
 
-    const uniqueImages = firstRoomImages.slice(0, 3);
-
-    // Get total rooms and rooms to sell from the first room (they all have the same values)
+    // All rooms in the group have the same number_of_rooms and number_of_rooms_to_sell
+    // So we can just take from the first room
     const totalRoomsInGroup = Number(group.rooms[0]?.number_of_rooms) || 0;
     const totalRoomsToSellInGroup = Number(group.rooms[0]?.number_of_rooms_to_sell) || 0;
 

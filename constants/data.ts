@@ -40,13 +40,6 @@ export const navItems: NavItem[] = [
     shortcut: ['b', 'b'],
   },
   {
-    title: 'Өрөөнүүд',
-    i18nKey: 'rooms',
-    url: '/admin/room',
-    icon: IconBed,
-    shortcut: ['r', 'r'],
-  },
-  {
     title: 'Төлбөр тооцоо',
     i18nKey: 'billing',
     url: '/admin/billing',
@@ -74,6 +67,12 @@ export const navItems: NavItem[] = [
         icon: IconBuilding,
       },
       {
+        title: 'Өрөөнүүд',
+        i18nKey: 'rooms',
+        url: '/admin/room',
+        icon: IconBed,
+      },
+      {
         title: 'Өрөөний үнэ',
         i18nKey: 'roomPrice',
         url: '/admin/room/price',
@@ -96,6 +95,12 @@ export const navItems: NavItem[] = [
         i18nKey: 'corporate',
         url: '/admin/corporate',
         icon: IconUsers,
+      },
+      {
+        title: 'Ажилчид',
+        i18nKey: 'workers',
+        url: '/admin/workers',
+        icon: IconUser,
       },
       {
         title: 'Эрх',

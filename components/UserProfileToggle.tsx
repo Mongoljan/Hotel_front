@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslations } from 'next-intl';
 
 interface UserProfileToggleProps {
   userApproved: boolean;
@@ -27,12 +28,13 @@ interface UserType {
 
 export default function UserProfileToggle({ userApproved, hotelApproved = false }: UserProfileToggleProps) {
   const { user, logout } = useAuth();
+  const t = useTranslations('UserProfile');
   const [userTypes, setUserTypes] = useState<UserType[]>([]);
 
   useEffect(() => {
     const fetchUserTypes = async () => {
       try {
-        const response = await fetch('https://dev.kacc.mn/api/user-types/');
+        const response = await fetch('https://dev.kacc.mn/api/user-type/');
         if (response.ok) {
           const data = await response.json();
           setUserTypes(data);
@@ -90,15 +92,15 @@ export default function UserProfileToggle({ userApproved, hotelApproved = false 
             
             {user.position && (
               <div>
-                <p className="text-xs text-muted-foreground">Албан тушаал</p>
+                <p className="text-xs text-muted-foreground">{t('position')}</p>
                 <p className="text-sm">{user.position}</p>
               </div>
             )}
 
             {user.user_type !== undefined && (
               <div>
-                <p className="text-xs text-muted-foreground">Хэрэглэгчийн түвшин</p>
-                <p className="text-sm">{getUserTypeName(user.user_type)}</p>
+                <p className="text-xs text-muted-foreground">{t('userLevel')}</p>
+                <p className="text-sm font-medium text-primary">{getUserTypeName(user.user_type)}</p>
               </div>
             )}
           </div>
@@ -109,24 +111,24 @@ export default function UserProfileToggle({ userApproved, hotelApproved = false 
         {/* Approval Status Section */}
         <DropdownMenuLabel className="font-normal">
           <div className="space-y-3">
-            <div className="text-xs font-medium text-muted-foreground mb-2">СТАТУС</div>
-            
+            <div className="text-xs font-medium text-muted-foreground mb-2">{t('status')}</div>
+
             {/* User Approval Status */}
             <div className="flex items-center justify-between">
-              <span className="text-sm">Хэрэглэгч</span>
+              <span className="text-sm">{t('user')}</span>
               <div className="flex items-center space-x-1">
                 {userApproved ? (
                   <>
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
-                      Баталгаажсан
+                      {t('approved')}
                     </Badge>
                   </>
                 ) : (
                   <>
                     <XCircle className="h-4 w-4 text-red-500" />
                     <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100">
-                      Хүлээгдэж буй
+                      {t('pending')}
                     </Badge>
                   </>
                 )}
@@ -135,20 +137,20 @@ export default function UserProfileToggle({ userApproved, hotelApproved = false 
 
             {/* Hotel Approval Status */}
             <div className="flex items-center justify-between">
-              <span className="text-sm">Буудал</span>
+              <span className="text-sm">{t('hotel')}</span>
               <div className="flex items-center space-x-1">
                 {hotelApproved ? (
                   <>
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
-                      Баталгаажсан
+                      {t('approved')}
                     </Badge>
                   </>
                 ) : (
                   <>
                     <XCircle className="h-4 w-4 text-orange-500" />
                     <Badge variant="secondary" className="bg-orange-100 text-orange-800 hover:bg-orange-100">
-                      Хүлээгдэж буй
+                      {t('pending')}
                     </Badge>
                   </>
                 )}
@@ -163,7 +165,7 @@ export default function UserProfileToggle({ userApproved, hotelApproved = false 
         {user.contact_number && (
           <>
             <DropdownMenuItem className="flex-col items-start">
-              <div className="text-xs text-muted-foreground">Утас</div>
+              <div className="text-xs text-muted-foreground">{t('phone')}</div>
               <div className="text-sm">{user.contact_number}</div>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -171,7 +173,7 @@ export default function UserProfileToggle({ userApproved, hotelApproved = false 
         )}
 
         <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
-          Системээс гарах
+          {t('logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -25,14 +25,22 @@ import {
 } from '@tabler/icons-react';
 import { ChevronsUpDown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { USER_TYPE_NAMES } from '@/lib/userTypes';
 
 export function UserAvatarProfile() {
   const { isMobile } = useSidebar();
   const { user, logout } = useAuth();
 
-  const userInitials = user?.name 
+  const userInitials = user?.name
     ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     : 'U';
+
+  const userTypeName = user?.user_type ? USER_TYPE_NAMES[user.user_type] : null;
+
+  // Debug logging
+  console.log('UserAvatarProfile - user:', user);
+  console.log('UserAvatarProfile - user_type:', user?.user_type);
+  console.log('UserAvatarProfile - userTypeName:', userTypeName);
 
   return (
     <SidebarMenu>
@@ -78,9 +86,14 @@ export function UserAvatarProfile() {
                   <span className="truncate font-semibold">
                     {user?.name || 'User'}
                   </span>
-                  <span className="truncate text-xs">
+                  <span className="truncate text-xs text-muted-foreground">
                     {user?.email || 'user@example.com'}
                   </span>
+                  {userTypeName && (
+                    <span className="truncate text-xs font-medium text-primary">
+                      {userTypeName}
+                    </span>
+                  )}
                 </div>
               </div>
             </DropdownMenuLabel>
