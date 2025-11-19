@@ -354,14 +354,13 @@ export default function RegisterHotel() {
   ];
 
   return (
-    <div className="space-y-3 ">
-      {/* Hero Card */}
-      <div className="p-1">
+    <div className="space-y-3">
+      {/* Hero Card - COMMENTED OUT FOR NOW */}
+      {/* <div className="p-1">
       {proceed === 2 && (
         <Card className="border-2 overflow-hidden">
           <CardContent className="p-0">
             <div className="grid md:grid-cols-[400px_1fr] gap-0">
-              {/* Left side - Image */}
               <div className="relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
                 {isLoadingData ? (
                   <div className="flex items-center justify-center h-[300px] md:h-[400px]">
@@ -394,10 +393,8 @@ export default function RegisterHotel() {
                 )}
               </div>
 
-              {/* Right side - Hotel Info */}
               <div className="p-6 md:p-8 flex flex-col justify-between">
                 <div className="space-y-6">
-                  {/* Header */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -420,7 +417,6 @@ export default function RegisterHotel() {
                     <span>{hotelDisplayData.propertyType}</span>
                   </div>
 
-                  {/* Stats Grid */}
                   {isLoadingData ? (
                     <div className="grid grid-cols-2 gap-4">
                       {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -493,7 +489,7 @@ export default function RegisterHotel() {
           </CardContent>
         </Card>
       )}
-      </div>
+      </div> */}
 
       {view === 'proceed' && proceed !== 2 && (
         <div className="w-full">

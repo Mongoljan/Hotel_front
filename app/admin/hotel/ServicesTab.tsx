@@ -2,8 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { IconSparkles, IconCheck } from '@tabler/icons-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { IconSparkles, IconCheck, IconPencil } from '@tabler/icons-react';
+import { toast } from 'sonner';
 
 interface Facility {
   id: number;
@@ -14,11 +17,17 @@ interface Facility {
 interface ServicesTabProps {
   facilityIds: number[];
   hotelId: number;
+  propertyDetailId: number | null;
+  onUpdate: () => void;
 }
 
-export default function ServicesTab({ facilityIds, hotelId }: ServicesTabProps) {
+export default function ServicesTab({ facilityIds, hotelId, propertyDetailId, onUpdate }: ServicesTabProps) {
   const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [allFacilities, setAllFacilities] = useState<Facility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedFacilityIds, setSelectedFacilityIds] = useState<number[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const loadFacilities = async () => {
@@ -26,11 +35,18 @@ export default function ServicesTab({ facilityIds, hotelId }: ServicesTabProps) 
         const res = await fetch('https://dev.kacc.mn/api/combined-data/');
         if (res.ok) {
           const data = await res.json();
-          const allFacilities = data.general_facilities || [];
+          // Try both possible field names
+          const allFacs = data.facilities || data.general_facilities || [];
+          console.log('🔧 Combined data keys:', Object.keys(data));
+          console.log('🔧 All available facilities:', allFacs.length);
+          console.log('🔧 First few facilities:', allFacs.slice(0, 3));
+          console.log('✅ Selected facility IDs from property:', facilityIds);
+          setAllFacilities(allFacs);
           // Filter to only show facilities that are in facilityIds
-          const selectedFacilities = allFacilities.filter((f: Facility) =>
+          const selectedFacilities = allFacs.filter((f: Facility) =>
             facilityIds.includes(f.id)
           );
+          console.log('✓ Matched facilities:', selectedFacilities.length);
           setFacilities(selectedFacilities);
         }
       } catch (error) {
@@ -42,6 +58,48 @@ export default function ServicesTab({ facilityIds, hotelId }: ServicesTabProps) 
 
     loadFacilities();
   }, [facilityIds]);
+
+  const handleEdit = () => {
+    setSelectedFacilityIds([...facilityIds]);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!propertyDetailId) {
+      toast.error('Property detail ID олдсонгүй');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const res = await fetch(`https://dev.kacc.mn/api/property-details/${propertyDetailId}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          general_facilities: selectedFacilityIds,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Үйлчилгээ хадгалах үед алдаа гарлаа');
+
+      toast.success('Үйлчилгээ амжилттай хадгалагдлаа');
+      setIsEditDialogOpen(false);
+      onUpdate();
+    } catch (err: any) {
+      toast.error(err.message || 'Алдаа гарлаа');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleFacility = (id: number) => {
+    if (selectedFacilityIds.includes(id)) {
+      setSelectedFacilityIds(selectedFacilityIds.filter(fid => fid !== id));
+    } else {
+      setSelectedFacilityIds([...selectedFacilityIds, id]);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -57,21 +115,79 @@ export default function ServicesTab({ facilityIds, hotelId }: ServicesTabProps) 
 
   if (facilities.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8">
-          <div className="text-center text-muted-foreground">
-            Үйлчилгээний мэдээлэл хараахан нэмэгдээгүй байна
-          </div>
-        </CardContent>
-      </Card>
+      <div className="relative border rounded-lg p-4">
+        <Button
+          variant="outline"
+          size="icon"
+          className="absolute top-3 right-3 h-8 w-8"
+          onClick={handleEdit}
+        >
+          <IconPencil className="h-4 w-4" />
+        </Button>
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center text-muted-foreground">
+              Үйлчилгээний мэдээлэл хараахан нэмэгдээгүй байна
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Ерөнхий үйлчилгээ засах</DialogTitle>
+              <DialogDescription>
+                Буудалд байгаа үйлчилгээ, байгууламжийг сонгоно уу
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+              {allFacilities.map((facility) => (
+                <div key={facility.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`fac-${facility.id}`}
+                    checked={selectedFacilityIds.includes(facility.id)}
+                    onChange={() => toggleFacility(facility.id)}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor={`fac-${facility.id}`} className="cursor-pointer text-sm">
+                    {facility.name_mn} / {facility.name_en}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+                disabled={isSaving}
+              >
+                Болих
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Хадгалж байна...' : 'Хадгалах'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="relative">
+      <Button
+        variant="outline"
+        size="icon"
+        className="absolute top-3 right-3 h-8 w-8 z-10"
+        onClick={handleEdit}
+      >
+        <IconPencil className="h-4 w-4" />
+      </Button>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-cyrillic">
+          <CardTitle className="flex items-center gap-2">
             <IconSparkles className="h-5 w-5 text-primary" />
             Ерөнхий үйлчилгээ, байгууламж
           </CardTitle>
@@ -98,6 +214,46 @@ export default function ServicesTab({ facilityIds, hotelId }: ServicesTabProps) 
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Ерөнхий үйлчилгээ засах</DialogTitle>
+            <DialogDescription>
+              Буудалд байгаа үйлчилгээ, байгууламжийг сонгоно уу
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto p-4 border rounded">
+            {allFacilities.map((facility) => (
+              <div key={facility.id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`fac-${facility.id}`}
+                  checked={selectedFacilityIds.includes(facility.id)}
+                  onChange={() => toggleFacility(facility.id)}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor={`fac-${facility.id}`} className="cursor-pointer text-sm">
+                  {facility.name_mn} / {facility.name_en}
+                </Label>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+              disabled={isSaving}
+            >
+              Болих
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? 'Хадгалж байна...' : 'Хадгалах'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
