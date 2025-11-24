@@ -122,6 +122,20 @@ export const useRoomData = ({
       const lookupPayload = (await allRes.json()) as AllData;
       const roomsPayload = (await roomsRes.json()) as RoomData[];
 
+      // Debug: Check what images the API returns
+      console.log('📦 API Response - Rooms with images:', roomsPayload.map(room => ({
+        id: room.id,
+        room_number: room.room_number,
+        imageCount: room.images?.length || 0,
+        images: room.images?.map((img: any) => ({
+          id: img.id,
+          hasImage: !!img.image,
+          imageLength: img.image?.length || 0,
+          isEmpty: !img.image || img.image.trim() === '',
+          preview: img.image ? (img.image.substring(0, 50) + '...') : 'EMPTY'
+        }))
+      })));
+
       setLookup(lookupPayload);
       setRawRooms(roomsPayload);
 

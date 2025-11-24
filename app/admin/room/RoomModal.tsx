@@ -156,6 +156,8 @@ export default function RoomModal({
   const [step, setStep] = useState<number>(1);
   const t = useTranslations("RoomModal"); // Changed from "Rooms" to "RoomModal"
   const { user } = useAuth(); // Get user from auth hook
+  const [hasDuplicateCombination, setHasDuplicateCombination] = useState(false);
+  const [bedCount, setBedCount] = useState<number>(1); // Separate state for bed count (UI only for now)
 
   // Combined lookup (room types, bed types, etc.)
   const [combinedData, setCombinedData] = useState<CombinedData>({
@@ -193,6 +195,12 @@ export default function RoomModal({
     const childQty = watch("childQty");
     const numberOfRooms = watch("number_of_rooms");
     const numberOfRoomsToSell = watch("number_of_rooms_to_sell");
+
+    // Check for duplicate room_type + category combination
+    const hasDuplicateCombination = checkDuplicateRoomTypeCategoryCombination(roomType, roomCategory);
+    if (hasDuplicateCombination) {
+      return false;
+    }
 
     // Check if at least one image is uploaded
     const hasValidImage = entries?.some(entry => entry.images && entry.images.trim() !== '');
@@ -299,6 +307,20 @@ export default function RoomModal({
     };
   };
 
+  // Helper: check for duplicate room_type + category combination
+  const checkDuplicateRoomTypeCategoryCombination = (roomType: string, roomCategory: string): boolean => {
+    if (!roomType || !roomCategory) return false;
+
+    // When editing, allow the same combination if it's the same room being edited
+    const hasDuplicate = existingRooms.some(room =>
+      room.room_type === Number(roomType) &&
+      room.room_category === Number(roomCategory) &&
+      (!roomToEdit || room.id !== roomToEdit.id)
+    );
+
+    return hasDuplicate;
+  };
+
   // React Hook Form setup
   const {
     register,
@@ -378,6 +400,9 @@ export default function RoomModal({
       // Build a flat FormFields object from RoomData
       const existing = roomToEdit;
 
+      // Reset bed count to 1 when editing (will be API-driven later)
+      setBedCount(1);
+
       // Convert array of existing images into { images: base64|url, descriptions: string }[] form
       // Since the backend returns URLs, we just store the URL here (we assume no re‐upload in edit, or user can re‐upload if they choose).
       const initialEntries = existing.images.map((img) => ({
@@ -415,6 +440,8 @@ export default function RoomModal({
       });
     } else {
       // If creating a brand new room, just reset to defaults
+      setBedCount(1); // Reset bed count to 1
+      
       reset({
         room_type: "",
         room_category: "",
@@ -440,6 +467,19 @@ export default function RoomModal({
       setStep(1); // always start at step 1 for "create" mode
     }
   }, [roomToEdit, reset, isOpen]);
+
+  // Watch for changes in room_type and room_category to check for duplicate combinations
+  const roomTypeValue = watch("room_type");
+  const roomCategoryValue = watch("room_category");
+
+  useEffect(() => {
+    if (roomTypeValue && roomCategoryValue) {
+      const isDuplicate = checkDuplicateRoomTypeCategoryCombination(roomTypeValue, roomCategoryValue);
+      setHasDuplicateCombination(isDuplicate);
+    } else {
+      setHasDuplicateCombination(false);
+    }
+  }, [roomTypeValue, roomCategoryValue, existingRooms]);
 
   // File → Base64 conversion for image previews
   const handleImageChange = (
@@ -470,6 +510,13 @@ export default function RoomModal({
 
   // Submit handler: POST if new, PUT if editing
   const onSubmit: SubmitHandler<FormFields> = async (formData) => {
+    // Check for duplicate room_type + category combination
+    if (checkDuplicateRoomTypeCategoryCombination(formData.room_type, formData.room_category)) {
+      toast.error("Энэ өрөөний төрөл ба ангиллын хослол аль хэдийн бүртгэгдсэн байна. Өөр хослол сонгоно уу.");
+      setStep(1);
+      return;
+    }
+
     // Validate Step 1 fields are filled before moving to Step 2
     const step1Fields = [
       "room_type",
@@ -529,11 +576,32 @@ export default function RoomModal({
       childQty: Number(formData.childQty),
       adultQty: Number(formData.adultQty),
       RoomNo: roomNumbersArr,
-      images: formData.entries.map((entry) => ({
-        image: entry.images,
-        description: "",
-      })),
+      // Only include entries that have actual images
+      images: formData.entries
+        .filter(entry => entry.images && entry.images.trim() !== '')
+        .map((entry) => ({
+          image: entry.images,
+          description: entry.descriptions || "",
+        })),
     };
+
+    // Debug: Check what images are being sent
+    console.log('🖼️ Submitting images:', {
+      totalEntries: formData.entries.length,
+      allEntries: formData.entries.map((entry, idx) => ({
+        index: idx,
+        hasImage: !!entry.images,
+        isEmpty: !entry.images || entry.images.trim() === '',
+        imagePreview: entry.images ? entry.images.substring(0, 50) + '...' : 'empty',
+      })),
+      filteredImages: transformedData.images.length,
+      imageData: transformedData.images.map((img: any, idx: number) => ({
+        index: idx,
+        hasImage: !!img.image,
+        imagePreview: img.image ? img.image.substring(0, 50) + '...' : 'empty',
+        description: img.description
+      }))
+    });
 
     try {
       const token = await getClientBackendToken() || "";
@@ -581,7 +649,10 @@ export default function RoomModal({
       className="fixed inset-0 z-50  bg-black/60 flex items-start md:items-center justify-center p-4"
     >
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, (errors) => {
+          console.log('❌ Form validation failed:', errors);
+          toast.error('Форм бөглөхөд алдаа гарлаа. Талбаруудаа шалгана уу.');
+        })}
         onClick={(e) => e.stopPropagation()}
         className="p-6 bg-white border max-w-3xl w-full max-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl relative mx-auto"
       >
@@ -734,6 +805,17 @@ export default function RoomModal({
               </div>
             </section>
 
+            {/* Alert for duplicate room_type + category combination */}
+            {hasDuplicateCombination && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Анхааруулга: Энэ өрөөний төрөл ба ангиллын хослол аль хэдийн бүртгэгдсэн байна. 
+                  Та өөр хослол сонгох шаардлагатай. Ижил хослолтой өрөө нэмэх боломжгүй.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Row 2: Occupancy & Room Size */}
             <section className="grid grid-cols-2 gap-10">
               {/* Occupancy (Adults + Children) */}
@@ -841,8 +923,7 @@ export default function RoomModal({
                   size="icon"
                   className="h-10 w-10"
                   onClick={() => {
-                    const current = watch("number_of_rooms") || 1;
-                    if (current > 1) setValue("number_of_rooms", current - 1);
+                    if (bedCount > 1) setBedCount(bedCount - 1);
                   }}
                 >
                   <X className="h-4 w-4" />
@@ -850,10 +931,10 @@ export default function RoomModal({
                 <Input
                   type="number"
                   min="1"
-                  value={watch("number_of_rooms") || 1}
-                  onChange={(e) => setValue("number_of_rooms", parseInt(e.target.value) || 1)}
+                  value={bedCount}
+                  onChange={(e) => setBedCount(parseInt(e.target.value) || 1)}
                   className="w-20 text-center"
-                  disabled={!!roomToEdit}
+                  readOnly
                 />
                 <Button
                   type="button"
@@ -861,15 +942,18 @@ export default function RoomModal({
                   size="icon"
                   className="h-10 w-10"
                   onClick={() => {
-                    const current = watch("number_of_rooms") || 1;
-                    setValue("number_of_rooms", current + 1);
+                    setBedCount(bedCount + 1);
                   }}
-                  disabled={!!roomToEdit}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
-                <Badge variant="secondary" className="ml-2">Хос кг</Badge>
+                <Badge variant="secondary" className="ml-2">
+                  {bedCount === 1 ? '1 ор' : `${bedCount} ор`}
+                </Badge>
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Энэ өрөөнд байгаа орны тоо (API-тай холбогдох хүлээгдэж байна)
+              </p>
               {errors.bed_type && (
                 <span className="text-red-500 text-xs mt-1 block">
                   {errors.bed_type.message}
@@ -1073,76 +1157,70 @@ export default function RoomModal({
                 </p>
               </div>
 
-              {/* Image grid with 4 slots + button */}
+              {/* Image grid - dynamically shows uploaded images + add button */}
               <div className="grid grid-cols-4 gap-5 mt-3">
-                {/* Show uploaded images */}
-                {fields.slice(0, 4).map((field, index) => {
-                  const hasImage = watchedEntries[index]?.images;
-
-                  return (
+                {/* Show uploaded images only (filter out empty entries) */}
+                {fields
+                  .map((field, index) => ({ field, index, hasImage: watchedEntries[index]?.images }))
+                  .filter(item => item.hasImage && item.hasImage.trim() !== '')
+                  .map(({ field, index }) => (
                     <div key={field.id} className="relative aspect-square">
-                      {hasImage ? (
-                        <div className="relative w-full h-full group">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleImageChange(e, index)}
-                            className="hidden"
-                            id={`image-upload-${index}`}
-                          />
-                          <img
-                            src={watchedEntries[index].images}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-full rounded-lg object-cover border-2 cursor-pointer hover:opacity-80 transition"
-                            onClick={() => document.getElementById(`image-upload-${index}`)?.click()}
-                          />
-                          <Button
-                            type="button"
-                            onClick={() => remove(index)}
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div 
-                          className="w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition"
-                          onClick={() => document.getElementById('add-new-image')?.click()}
+                      <div className="relative w-full h-full group">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageChange(e, index)}
+                          className="hidden"
+                          id={`image-upload-${index}`}
+                        />
+                        <img
+                          src={watchedEntries[index].images}
+                          alt={`Room image ${index + 1}`}
+                          className="w-full h-full rounded-lg object-cover border-2 cursor-pointer hover:opacity-80 transition"
+                          onClick={() => document.getElementById(`image-upload-${index}`)?.click()}
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => remove(index)}
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition"
                         >
-                          <Plus className="h-8 w-8 text-gray-400" />
-                        </div>
-                      )}
-                      {errors.entries?.[index]?.images && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.entries[index]?.images?.message}
-                        </p>
-                      )}
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  );
-                })}
+                  ))}
 
-                {/* Hidden input for adding new image */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        const base64Image = reader.result as string;
-                        append({ images: base64Image, descriptions: "" });
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                    // Reset input
-                    e.target.value = '';
-                  }}
-                  className="hidden"
-                  id="add-new-image"
-                />
+                {/* Add new image button */}
+                {fields.length < 10 && (
+                  <div 
+                    className="relative aspect-square w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition"
+                    onClick={() => document.getElementById('add-new-image')?.click()}
+                  >
+                    <Plus className="h-8 w-8 text-gray-400" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const base64Image = reader.result as string;
+                            console.log('➕ Adding new image, current entries:', fields.length);
+                            append({ images: base64Image, descriptions: "" });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                        // Reset input
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                      id="add-new-image"
+                    />
+                  </div>
+                )}
               </div>
             </section>
 

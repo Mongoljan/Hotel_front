@@ -104,93 +104,59 @@ export const createFlattenedRows = ({
   const rows: FlattenRow[] = [];
 
   lookupMaps.groupMap.forEach((group, key) => {
+    // Use the first room as the representative for the group
+    // Don't aggregate/sum values from multiple rooms
+    const representativeRoom = group.rooms.find(room => 
+      Number(room.number_of_rooms_to_sell) > 0
+    ) || group.rooms[0];
+
+    // Show all room numbers in the group
     const roomNumbersStr = group.rooms.map((room) => String(room.room_number)).join(", ");
-    const groupHasAdult = group.rooms.some((room) => room.adultQty > 0);
-    const groupHasChild = group.rooms.some((room) => room.childQty > 0);
+    const groupHasAdult = representativeRoom.adultQty > 0;
+    const groupHasChild = representativeRoom.childQty > 0;
 
     let groupHasSingleBed = false;
     let groupHasDoubleBed = false;
 
-    group.rooms.forEach((room) => {
-      const bedName = (lookupMaps.bedTypesMap.get(room.bed_type) ?? "").toLowerCase();
-      if (bedName.includes("2") || bedName.includes("double")) {
-        groupHasDoubleBed = true;
-      } else {
-        groupHasSingleBed = true;
-      }
+    const bedName = (lookupMaps.bedTypesMap.get(representativeRoom.bed_type) ?? "").toLowerCase();
+    if (bedName.includes("2") || bedName.includes("double")) {
+      groupHasDoubleBed = true;
+    } else {
+      groupHasSingleBed = true;
+    }
+
+    const anyWifiInGroup = hasWifiAmenity(representativeRoom.room_Facilities, {
+      facilitiesMapMn: lookupMaps.facilitiesMapMn,
+      facilitiesMapEn: lookupMaps.facilitiesMapEn
     });
 
-    const anyWifiInGroup = group.rooms.some((room) =>
-      hasWifiAmenity(room.room_Facilities, {
-        facilitiesMapMn: lookupMaps.facilitiesMapMn,
-        facilitiesMapEn: lookupMaps.facilitiesMapEn
-      })
-    );
-
-    const intersectLists = (arrays: Array<number[] | undefined>): number[] => {
-      const [first = []] = arrays;
-      return first.filter((id) =>
-        arrays.every((list) => (list ?? []).includes(id))
-      );
-    };
-
-    const facilitiesIntersection = intersectLists(
-      group.rooms.map((room) => room.room_Facilities)
-    );
-    const toiletriesIntersection = intersectLists(
-      group.rooms.map((room) => room.free_Toiletries)
-    );
-    const foodIntersection = intersectLists(
-      group.rooms.map((room) => room.food_And_Drink)
-    );
-    const outdoorIntersection = intersectLists(
-      group.rooms.map((room) => room.outdoor_And_View)
-    );
-    const bathroomIntersection = intersectLists(
-      group.rooms.map((room) => room.bathroom_Items)
-    );
-
+    // Use features from the representative room only, not intersection of all rooms
     const commonFeaturesArr = Array.from(
       new Set(
         [
-          ...facilitiesIntersection.map((id) => lookupMaps.facilitiesMapMn.get(id)),
-          ...toiletriesIntersection.map((id) => lookupMaps.toiletriesMap.get(id)),
-          ...foodIntersection.map((id) => lookupMaps.foodDrinkMap.get(id)),
-          ...outdoorIntersection.map((id) => lookupMaps.outdoorViewMap.get(id))
+          ...(representativeRoom.room_Facilities || []).map((id) => lookupMaps.facilitiesMapMn.get(id)),
+          ...(representativeRoom.free_Toiletries || []).map((id) => lookupMaps.toiletriesMap.get(id)),
+          ...(representativeRoom.food_And_Drink || []).map((id) => lookupMaps.foodDrinkMap.get(id)),
+          ...(representativeRoom.outdoor_And_View || []).map((id) => lookupMaps.outdoorViewMap.get(id))
         ].filter((value): value is string => Boolean(value))
       )
     );
 
-    const commonBathroomArr = bathroomIntersection
+    const commonBathroomArr = (representativeRoom.bathroom_Items || [])
       .map((id) => lookupMaps.bathroomItemsMap.get(id))
       .filter((value): value is string => Boolean(value));
 
-    // Collect truly unique images across the group
-    // Only count an image URL once, even if multiple rooms have it
-    // Prioritize images from rooms that are available to sell
+    // Collect images from the representative room only
     const imageSet = new Set<string>();
 
-    // First, collect images from available rooms
-    group.rooms.forEach((room) => {
-      if (Number(room.number_of_rooms_to_sell) > 0) {
-        room.images?.forEach((image) => {
-          const url = image.image?.trim();
-          if (url) {
-            imageSet.add(url);
-          }
-        });
-      }
-    });
-
-    // If no images from available rooms, collect from all rooms
-    if (imageSet.size === 0) {
-      group.rooms.forEach((room) => {
-        room.images?.forEach((image) => {
-          const url = image.image?.trim();
-          if (url) {
-            imageSet.add(url);
-          }
-        });
+    // Collect images from this single room only
+    if (representativeRoom?.images) {
+      representativeRoom.images.forEach((image) => {
+        const url = image.image?.trim();
+        // Only add valid, non-empty image URLs
+        if (url && url.length > 0 && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/'))) {
+          imageSet.add(url);
+        }
       });
     }
 
@@ -198,28 +164,20 @@ export const createFlattenedRows = ({
     const uniqueImages = Array.from(imageSet).slice(0, 3);
 
     // Debug logging to help identify issues
-    if (imageSet.size > 1) {
-      console.log(`Group ${key}: ${group.rooms.length} rooms, ${imageSet.size} unique images`, {
-        rooms: group.rooms.map(r => ({
-          roomNumber: r.room_number,
-          totalRooms: r.number_of_rooms,
-          toSell: r.number_of_rooms_to_sell,
-          imageCount: r.images?.length || 0,
-          imageUrls: r.images?.map(img => img.image) || []
-        })),
-        uniqueImages: Array.from(imageSet)
+    if (imageSet.size > 0) {
+      console.log(`Group ${key}: Using data from room ${representativeRoom?.room_number}`, {
+        totalRoomsInGroup: group.rooms.length,
+        allRoomNumbers: group.rooms.map(r => r.room_number),
+        representativeRoom: representativeRoom?.room_number,
+        imageCount: imageSet.size,
+        number_of_rooms: representativeRoom?.number_of_rooms,
+        number_of_rooms_to_sell: representativeRoom?.number_of_rooms_to_sell
       });
     }
 
-    // Aggregate room counts from every room in the group
-    const totalRoomsInGroup = group.rooms.reduce(
-      (sum, room) => sum + (Number(room.number_of_rooms) || 0),
-      0
-    );
-    const totalRoomsToSellInGroup = group.rooms.reduce(
-      (sum, room) => sum + (Number(room.number_of_rooms_to_sell) || 0),
-      0
-    );
+    // Use room counts from the representative room, not aggregated sum
+    const totalRoomsInGroup = Number(representativeRoom.number_of_rooms) || 0;
+    const totalRoomsToSellInGroup = Number(representativeRoom.number_of_rooms_to_sell) || 0;
 
     rows.push({
       id: key,
@@ -228,7 +186,7 @@ export const createFlattenedRows = ({
       images: uniqueImages,
       categoryName: group.category,
       typeName: group.type,
-      sizeGroup: group.rooms[0]?.room_size,
+      sizeGroup: representativeRoom?.room_size,
       hasWifiGroup: anyWifiInGroup,
       roomNumbersStr,
       totalRoomsInGroup,

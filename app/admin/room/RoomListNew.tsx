@@ -371,7 +371,18 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       cell: ({ row }) => {
         if (row.original.isPreviewRow) return null;
 
-        const images = row.original.images;
+        // Filter out empty or invalid images
+        const rawImages = row.original.images || [];
+        const images = rawImages.filter((url: string) => {
+          if (!url || typeof url !== 'string') return false;
+          const trimmed = url.trim();
+          return trimmed.length > 0 && (
+            trimmed.startsWith('http://') || 
+            trimmed.startsWith('https://') || 
+            trimmed.startsWith('data:image/')
+          );
+        });
+
         if (row.original.isGroup) {
           // Only show if there are valid images
           if (!images || images.length === 0) {

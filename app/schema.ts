@@ -54,14 +54,24 @@ export const schemaLogin = z.object({
 export const schemaCreateRoom = z.object({
   entries: z.array(
     z.object({
-      images: z
-        .string()
-        .url({ message: 'Image must be a valid URL.' })
-        .min(1, { message: 'Image URL is required.' }),
-      descriptions: z
-        .string(), // Allow empty strings for descriptions
+      images: z.string(),
+      descriptions: z.string(), // Allow empty strings for descriptions
     })
-  ).min(1, { message: 'At least one image is required.' }),
+  )
+  .refine(
+    (entries) => {
+      // At least one entry must have a valid image
+      return entries.some(entry => {
+        const img = entry.images.trim();
+        return img.length > 0 && (
+          img.startsWith('http://') || 
+          img.startsWith('https://') || 
+          img.startsWith('data:image/')
+        );
+      });
+    },
+    { message: 'At least one valid image is required.' }
+  ),
     // room_number: z.string().min(1, { message: "Room number is required" }),
     room_type: z.string().min(1, { message: "Room type is required" }),
     room_category:  z.string().min(1, { message: "Room category is required" }),
