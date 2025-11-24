@@ -199,6 +199,14 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
         const roomsCache = localStorage.getItem("roomData");
         const priceCache = localStorage.getItem(`roomPrices_${hotel}`);
 
+        // Always fetch policy to ensure it's up to date
+        const policyRes = await fetch(`https://dev.kacc.mn/api/property-policies/?property=${hotel}`);
+        if (policyRes.ok) {
+          const policyData = await policyRes.json();
+          const policy = Array.isArray(policyData) ? policyData[0] : policyData;
+          setBreakfastPolicy(policy?.breakfast_policy || 'no');
+        }
+
         if (lookupCache && roomsCache && priceCache && !isRoomAdded) {
           const allData = JSON.parse(lookupCache);
           const roomsData = JSON.parse(roomsCache);
@@ -211,23 +219,16 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
           return;
         }
 
-        const [allRes, roomsRes, pricesRes, hotelRes] = await Promise.all([
+        const [allRes, roomsRes, pricesRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/all-data/`),
           fetch(`https://dev.kacc.mn/api/roomsNew/?token=${token}`),
-          fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}`),
-          fetch(`https://dev.kacc.mn/api/hotel/${hotel}/`)
+          fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}`)
         ]);
         if (!allRes.ok || !roomsRes.ok || !pricesRes.ok) throw new Error("Fetch failed");
 
         const allData = await allRes.json() as AllData;
         const roomsData = await roomsRes.json();
         const pricesData: PriceEntry[] = await pricesRes.json();
-
-        // Fetch hotel data to get breakfast_policy
-        if (hotelRes.ok) {
-          const hotelData = await hotelRes.json();
-          setBreakfastPolicy(hotelData.breakfast_policy || 'no');
-        }
 
         localStorage.setItem("roomLookup", JSON.stringify(allData));
         localStorage.setItem("roomData", JSON.stringify(roomsData));
