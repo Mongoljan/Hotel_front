@@ -215,13 +215,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     async function loadData() {
       const hotelId = user?.hotel;
       if (!hotelId) {
-        console.log('⏸️ SixStepInfo: No hotel ID yet - waiting for user data...');
         return; // Just wait, don't change proceed
       }
 
       try {
         setIsLoading(true);
-        console.log('🔄 SixStepInfo: Loading data for hotel:', hotelId);
         const [detailRes, policyRes, addressRes, basicInfoRes, combinedDataRes, baseRes, imagesRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/property-policies/?property=${hotelId}`),
@@ -232,21 +230,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`),
         ]);
 
-        console.log('📡 SixStepInfo: API responses:', {
-          detailRes: detailRes.ok,
-          policyRes: policyRes.ok,
-          addressRes: addressRes.ok,
-          basicInfoRes: basicInfoRes.ok,
-          baseRes: baseRes.ok
-        });
-
         if (!detailRes.ok || !policyRes.ok || !addressRes.ok || !basicInfoRes.ok || !baseRes.ok) {
           console.error('❌ SixStepInfo: One or more API calls failed - setting proceed to 0');
           setProceed(0);
           return;
         }
-
-        console.log('✅ SixStepInfo: All API calls successful, loading data...');
 
         const [detail] = await detailRes.json();
         const [policy] = await policyRes.json();
@@ -267,11 +255,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         setSoums(combinedData.soum || []);
         setDistricts(combinedData.district || []);
         setLanguages(combinedData.languages || []);
-
-        console.log('🏙️ Loaded provinces:', combinedData.province?.length);
-        console.log('🏘️ Loaded districts:', combinedData.district?.length);
-        console.log('📍 Address data:', fetchedAddress);
-        console.log('🏢 Property detail facilities:', detail?.general_facilities);
 
         if (detail?.Additional_Information && typeof detail.Additional_Information === 'number') {
           const additionalRes = await fetch(`https://dev.kacc.mn/api/additionalInfo/${detail.Additional_Information}/`);

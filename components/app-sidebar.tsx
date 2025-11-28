@@ -73,13 +73,10 @@ export function AppSidebar({ isApproved, userApproved, hotelRegistrationComplete
 
   // Filter navigation items based on approval status and hotel registration completion
   const filteredNavItems = React.useMemo(() => {
-    console.log('Sidebar filtering - isApproved:', isApproved, 'userApproved:', userApproved, 'hotelRegistrationCompleted:', hotelRegistrationCompleted);
 
     if (isApproved && userApproved && hotelRegistrationCompleted) {
-      console.log('All conditions met - showing full menu');
       return navItems;
     } else {
-      console.log('Conditions not met - showing limited menu (hotel info only)');
       // Only show hotel information until 6-step registration is completed
       return [
         {

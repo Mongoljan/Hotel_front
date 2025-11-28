@@ -37,12 +37,6 @@ const handler = NextAuth({
           const hotelData = await hotelRes.json()
           const isApproved = hotelData?.is_approved === true
 
-          console.log('Login data:', { 
-            user_approved: data.approved, 
-            hotel_approved: isApproved,
-            hotel_id: hotelId 
-          });
-
           return {
             id: data.id.toString(),
             email: data.email,

@@ -50,14 +50,12 @@ export function useAuth(): AuthState & {
 
   const fetchSession = async () => {
     try {
-      console.log('useAuth: Fetching session from /api/auth/me')
       const response = await fetch('/api/auth/me', {
         credentials: 'include',
       })
 
       if (response.ok) {
         const data = await response.json()
-        console.log('useAuth: Session data received:', data)
         
         // Initialize user-scoped storage (clears old data if user changed)
         UserStorage.initializeForUser(data.user.id, data.user.hotel)
@@ -75,7 +73,6 @@ export function useAuth(): AuthState & {
           isHotelApproved: data.user.hotelApproved,
           sessionExpiresAt: data.session?.expiresAt || null,
         })
-        console.log('useAuth: Auth state updated with user data')
       } else {
         setAuthState({
           user: null,
@@ -162,7 +159,6 @@ export function useAuth(): AuthState & {
         // Set cookie to expire in the past
         document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       });
-      console.log('🧹 All client cookies cleared');
       
       setAuthState({
         user: null,
@@ -197,8 +193,6 @@ export function useAuth(): AuthState & {
           isHotelApproved: data.user.hotelApproved,
           sessionExpiresAt: data.session?.expiresAt || Date.now() + 30 * 60 * 1000,
         }))
-        
-        console.log('✅ Session refreshed successfully')
         return { success: true }
       } else {
         const errorData = await response.json()
@@ -206,7 +200,6 @@ export function useAuth(): AuthState & {
         
         // Only logout if explicitly expired (401 with auth.expired code)
         if (response.status === 401 && errorData.code === 'auth.expired') {
-          console.log('Session expired, logging out...')
           await logout()
         }
         // For other errors, just return the error without logging out
@@ -238,7 +231,6 @@ export function useAuth(): AuthState & {
       
       // Auto logout when session expires
       if (remaining <= 0) {
-        console.log('⏰ Session expired - auto-logging out')
         logout()
       }
     }
@@ -255,7 +247,6 @@ export function useAuth(): AuthState & {
       if (document.visibilityState === 'visible' && authState.isAuthenticated) {
         const isValid = UserStorage.isSessionValid();
         if (!isValid) {
-          console.log('⏰ Session expired while tab was hidden - auto-logging out');
           logout();
         }
       }
@@ -276,12 +267,9 @@ export function useAuth(): AuthState & {
         
         // If metadata exists but is expired, clean up everything
         if (parsed.expiresAt && parsed.expiresAt < now) {
-          console.log('🧹 Found expired session data on load - cleaning up');
           UserStorage.clearOnLogout();
         }
       } catch (e) {
-        // Invalid metadata, clear it
-        console.log('🧹 Found invalid session metadata - cleaning up');
         UserStorage.clearOnLogout();
       }
     }

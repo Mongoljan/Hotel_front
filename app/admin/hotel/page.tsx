@@ -82,35 +82,19 @@ export default function RegisterHotel() {
 
   // ✅ Determine proceed state based on approval and completion status
   useEffect(() => {
-    console.log('🚀 decideStep effect triggered. Dependencies:', {
-      hotel: user?.hotel,
-      userId: user?.id,
-      userApproved: user?.approved,
-      hotelApproved: hotelApproved,
-      isLoadingData: isLoadingData
-    });
 
     const decideStep = async () => {
       if (!user?.hotel || !user?.id) {
-        console.log('⏸️ Waiting for user data...');
         return; // Wait for user data
       }
 
-      console.log('Deciding proceed step. User approval status:', {
-        userApproved: user?.approved,
-        hotelApproved: hotelApproved, // Use state from API, not JWT
-        hotelApprovedFromJWT: user?.hotelApproved
-      });
-
       // Wait for hotel approval status to be loaded from API
       if (isLoadingData) {
-        console.log('Still loading hotel data, waiting...');
         return;
       }
 
       // 🔥 PRIORITY: If user is not approved or hotel is not approved, show approval waiting
       if (!user?.approved || !hotelApproved) {
-        console.log('User/Hotel not approved - showing Proceed component');
         setProceed(0); // Show approval waiting component
         return;
       }
@@ -120,7 +104,6 @@ export default function RegisterHotel() {
       const cachedStatus = localStorage.getItem(cacheKey);
 
       if (cachedStatus === 'completed') {
-        console.log('💾 Found cached completion status - showing SixStepInfo immediately');
         setProceed(2);
         // Continue to verify with API in background, but don't change proceed if cache exists
       }
@@ -128,19 +111,12 @@ export default function RegisterHotel() {
       // User is approved - now check if 6-step registration is complete
       try {
         const hid = user.hotel;
-        console.log('🔍 Checking property details for hotel:', hid);
 
         if (hid) {
           const res = await fetch(
             `https://dev.kacc.mn/api/property-details/?property=${hid}`,
             { cache: 'no-store' }
           );
-
-          console.log('📡 Property details fetch response:', {
-            ok: res.ok,
-            status: res.status,
-            statusText: res.statusText
-          });
 
           if (!res.ok) {
             console.error('❌ Property details fetch failed:', res.status);
@@ -162,28 +138,16 @@ export default function RegisterHotel() {
             }
             return;
           }
-
-          console.log('🔍 Property details API response:', {
-            hotelId: hid,
-            detailsResponse: details,
-            isArray: Array.isArray(details),
-            length: Array.isArray(details) ? details.length : 'N/A',
-            firstItem: Array.isArray(details) && details.length > 0 ? details[0] : null
-          });
-
           if (Array.isArray(details) && details.length > 0) {
             // Six steps completed - show SixStepInfo
-            console.log('✅ Six steps completed - setting proceed to 2');
             localStorage.setItem(cacheKey, 'completed'); // Cache it
             setProceed(2);
             return;
           } else {
-            console.log('⚠️ Property details not found or empty - user needs to complete 6 steps');
             // Only clear cache and set proceed=0 if we didn't already have cache
             if (cachedStatus !== 'completed') {
               localStorage.removeItem(cacheKey); // Clear invalid cache
             } else {
-              console.log('⚠️ API returned empty but cache exists - trusting cache and keeping proceed=2');
             }
           }
         }
@@ -195,7 +159,6 @@ export default function RegisterHotel() {
           if (propertyDataStr) {
             const pd = JSON.parse(propertyDataStr);
             if (Array.isArray(pd.general_facilities) && pd.general_facilities.length) {
-              console.log('📝 Found incomplete registration data in storage');
               setProceed(1);
               return;
             }
@@ -205,18 +168,15 @@ export default function RegisterHotel() {
         console.error('❌ Error in decideStep:', err);
         // Even on error, if we have cache, trust it
         if (cachedStatus === 'completed') {
-          console.log('⚠️ Error occurred but cache exists - trusting cache');
           return;
         }
       }
 
       // Default: show proceed/start registration
       // But only if we don't have completed cache
-      console.log('🔄 No completion data found - setting proceed to 0');
       if (cachedStatus !== 'completed') {
         setProceed(0);
       } else {
-        console.log('💾 Cache exists, not changing proceed state');
       }
     };
 
@@ -338,13 +298,7 @@ export default function RegisterHotel() {
   if (isLoading || proceed === null) return <div>Loading authentication and page data…</div>;
 
   // Debug info
-  console.log('Current state:', {
-    user: user ? { hotel: user.hotel, approved: user.approved, hotelApproved: user.hotelApproved } : null,
-    proceed,
-    hotelApproved,
-    stepStatus,
-    view
-  });
+ 
 
   const steps = [
     'Хүсэлт илгээсэн',

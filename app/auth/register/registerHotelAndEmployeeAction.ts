@@ -3,12 +3,8 @@
 import { cookies } from 'next/headers';
 
 export async function registerHotelAndEmployeeAction(hotelData: any, employeeData: any) {
-  console.log('=== SERVER ACTION DEBUG ===');
-  console.log('Hotel Data:', JSON.stringify(hotelData, null, 2));
-  console.log('Employee Data:', JSON.stringify(employeeData, null, 2));
   
   try {
-    console.log('Calling hotel registration API: https://dev.kacc.mn/api/properties/create/');
     const hotelResponse = await fetch('https://dev.kacc.mn/api/properties/create/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -16,7 +12,6 @@ export async function registerHotelAndEmployeeAction(hotelData: any, employeeDat
     });
 
     const hotelJson = await hotelResponse.json();
-    console.log('Hotel API Response:', hotelResponse.status, hotelJson);
 
     if (!hotelResponse.ok) {
       // Handle specific error messages
@@ -52,9 +47,6 @@ export async function registerHotelAndEmployeeAction(hotelData: any, employeeDat
       hotel: hotelId,
     };
     
-    console.log('Calling employee registration API: https://dev.kacc.mn/api/EmployeeRegister/');
-    console.log('Employee payload:', JSON.stringify(employeePayload, null, 2));
-    
     const employeeResponse = await fetch('https://dev.kacc.mn/api/EmployeeRegister/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -62,7 +54,6 @@ export async function registerHotelAndEmployeeAction(hotelData: any, employeeDat
     });
 
     const employeeJson = await employeeResponse.json();
-    console.log('Employee API Response:', employeeResponse.status, employeeJson);
 
     if (!employeeResponse.ok) {
       return {

@@ -374,16 +374,6 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
     );
     
     if (!priceEntry) {
-      console.log('Debug - Row:', { 
-        room_type: row.room_type, 
-        room_category: row.room_category,
-        id: row.id 
-      });
-      console.log('Debug - Prices:', prices.map(p => ({ 
-        room_type: p.room_type, 
-        room_category: p.room_category,
-        id: p.id 
-      })));
       toast.error('Үнийн мэдээлэл олдсонгүй. Console лог шалгана уу.');
       return;
     }

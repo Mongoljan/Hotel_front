@@ -131,8 +131,6 @@ export async function clearAuthCookies() {
   cookiesToClear.forEach(cookieName => {
     cookieStore.delete(cookieName);
   });
-  
-  console.log('🧹 All auth cookies cleared');
 }
 
 export async function refreshAuthToken(): Promise<boolean> {

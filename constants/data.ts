@@ -80,7 +80,7 @@ export const navItems: NavItem[] = [
     shortcut: ['g', 'g'],
   },
   {
-    title: 'Дэмжлэг',
+    title: 'Асуулт хариулт',
     i18nKey: 'support',
     url: '/admin/support',
     icon: IconMessageCircle,

@@ -43,7 +43,7 @@ export default function CreateHotel() {
 
   // Handle form submission
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
-    console.log("button clicked")
+   
     setIsSubmitting(true);
     try {
       const requestBody = {
@@ -73,7 +73,6 @@ export default function CreateHotel() {
       } else {
         const errorData = await response.json();
         toast.error('Бүртгэл амжилтгүй: ' + errorData.message);
-        console.log(errorData)
       }
     } catch (error) {
       toast.error('Бүртгэлийн явцад санаандгүй алдаа гарлаа');

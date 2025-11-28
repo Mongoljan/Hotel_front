@@ -40,13 +40,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
 
     checkHotelCompletion();
   }, [user?.hotel]);
-  
-  console.log('SidebarLayout - user state:', {
-    user,
-    hotelApproved: user?.hotelApproved,
-    userApproved: user?.approved,
-    hotelRegistrationCompleted
-  });
+
   
   return (
     <SidebarProvider>

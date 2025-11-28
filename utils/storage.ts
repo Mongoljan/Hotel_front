@@ -26,13 +26,11 @@ class UserStorage {
     
     // Check if session has expired
     if (currentMetadata && currentMetadata.expiresAt < now) {
-      console.log('⏰ Session expired - clearing all localStorage');
       this.clearAll();
     }
     
     // If user has changed, clear ALL localStorage
     if (currentMetadata && currentMetadata.userId !== userId) {
-      console.log('🔄 User changed - clearing all localStorage');
       this.clearAll();
     }
     
@@ -58,7 +56,6 @@ class UserStorage {
     const isValid = metadata.expiresAt > now;
     
     if (!isValid) {
-      console.log('⏰ Session expired - auto-clearing localStorage');
       this.clearAll();
     }
     
@@ -162,7 +159,6 @@ class UserStorage {
    * Clear all data on logout
    */
   static clearOnLogout(): void {
-    console.log('🧹 Clearing all localStorage on logout');
     this.clearAll();
   }
 }

@@ -71,7 +71,6 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
         const initialValues = stored.step4 || existing;
 
         if (initialValues) {
-          console.log('📋 Step 4 data from API/storage:', initialValues);
 
           // Flatten cancellation_fee object
           const normalizedValues = {
@@ -91,8 +90,6 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
             allow_children: initialValues.allow_children || false,
             allow_pets: initialValues.allow_pets || false,
           };
-
-          console.log('✅ Normalized step 4 values:', normalizedValues);
           form.reset(normalizedValues);
 
           stored.step4 = initialValues;

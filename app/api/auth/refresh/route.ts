@@ -37,7 +37,6 @@ export async function POST() {
         isApproved = hotelData?.is_approved === true
       }
     } catch (error) {
-      console.log('Hotel API fetch failed during refresh, keeping current status')
     }
 
     // Create fresh JWT payload with updated data

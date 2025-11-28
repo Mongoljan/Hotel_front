@@ -60,7 +60,6 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       if (propertyDataStr) {
         const stored = JSON.parse(propertyDataStr);
         if (stored.step1) {
-          console.log('📦 Loaded from storage, raw step1:', stored.step1);
           // Ensure data types are correct for form
           const formattedData = {
             ...stored.step1,
@@ -71,7 +70,6 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
             total_hotel_rooms: stored.step1.total_hotel_rooms?.toString() || '',
             available_rooms: stored.step1.available_rooms?.toString() || '',
           };
-          console.log('✨ Formatted data for form:', formattedData);
           setDefaultValues(formattedData);
           return;
         }
@@ -130,7 +128,6 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
   useEffect(() => {
     if (defaultValues) {
-      console.log('🔄 Resetting form with defaultValues:', defaultValues);
       reset(defaultValues);
     }
   }, [defaultValues, reset]);

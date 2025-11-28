@@ -117,8 +117,6 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
         propertyPolicies: propertyData.step4?.id,
         property_photos: Array.isArray(uploadedImageIds) ? [...uploadedImageIds] : [],
       };
-
-      console.log('✅ Final propertyData for storage:', finalDataToStore);
       UserStorage.setItem('propertyData', JSON.stringify(finalDataToStore), userId);
       UserStorage.setItem('currentStep', resumeStep.toString(), userId);
       setCurrentStep(resumeStep);

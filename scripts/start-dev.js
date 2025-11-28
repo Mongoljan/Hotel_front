@@ -44,11 +44,7 @@ async function findAvailablePort(startPort = 3000, maxPort = 3010) {
  */
 async function startDev() {
   try {
-    console.log('🔍 Finding available port...');
     const port = await findAvailablePort(3000, 3010);
-    
-    console.log(`🚀 Starting development server on port ${port}`);
-    console.log(`📱 Open http://localhost:${port} in your browser\n`);
     
     // Start Next.js dev server
     const child = spawn('npx', ['next', 'dev', '-p', port.toString()], {
@@ -58,12 +54,10 @@ async function startDev() {
     
     // Handle process termination
     process.on('SIGINT', () => {
-      console.log('\n🛑 Shutting down development server...');
       child.kill('SIGINT');
     });
     
     process.on('SIGTERM', () => {
-      console.log('\n🛑 Shutting down development server...');
       child.kill('SIGTERM');
     });
     

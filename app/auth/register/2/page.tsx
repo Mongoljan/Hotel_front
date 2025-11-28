@@ -60,30 +60,21 @@ export default function RegisterEmployee() {
   }, [setValue]);
 
   const onError = (formErrors: any) => {
-    console.log('Validation errors:', formErrors);
     toast.error(tErr('form.incomplete'));
   };
 
   const onSubmit: SubmitHandler<FormFields> = async (employeeData) => {
-    console.log('=== FORM SUBMISSION DEBUG ===');
     const hotelData = JSON.parse(localStorage.getItem('hotelFormData') || '{}');
-    console.log('Hotel Data:', hotelData);
-    console.log('Employee Data:', employeeData);
+
 
     if (!hotelData || !hotelData.register) {
-      console.log('ERROR: Missing hotel data');
       toast.error(tErr('hotel.missing'));
       return;
     }
 
     // ✅ Normalize phone number
     employeeData.contact_number = `976${employeeData.contact_number.replace(/\s/g, '')}`;
-    console.log('Normalized phone:', employeeData.contact_number);
-
-    console.log('Calling registerHotelAndEmployeeAction...');
     const result = await registerHotelAndEmployeeAction(hotelData, employeeData);
-    console.log('Registration result:', result);
-
     if (result.success) {
       toast.success(tMsg('register_success_redirect'));
 

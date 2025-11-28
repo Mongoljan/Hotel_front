@@ -88,8 +88,6 @@ export default function PriceSettingsPage() {
           throw new Error("Token not found");
         }
 
-        console.log('🔑 Token acquired, fetching data...');
-
         const [allRes, settingsRes, roomsRes] = await Promise.all([
           fetch(`/api/lookup?token=${token}`),
           fetch(`https://dev.kacc.mn/api/pricesettings/?hotel=${hotel}`),
@@ -104,11 +102,6 @@ export default function PriceSettingsPage() {
         const allData = await allRes.json() as AllData;
         const settings: PriceSetting[] = await settingsRes.json();
         const rooms = roomsRes.ok ? await roomsRes.json() : [];
-
-        console.log('✅ Fetched all-data:', allData);
-        console.log('✅ Fetched price settings:', settings);
-        console.log('✅ Fetched actual rooms from API:', rooms);
-        console.log('🔗 Rooms API URL:', `/api/rooms?token=${token ? '[TOKEN]' : 'MISSING'}`);
 
         setLookup(allData);
         setPriceSettings(settings);
@@ -128,9 +121,6 @@ export default function PriceSettingsPage() {
   }, [isDataRefresh, hotel]);
 
   const buildRoomOptionsFromActualRooms = (allData: AllData, rooms: any[]) => {
-    console.log('🔍 Building room options from rooms array (length:', rooms?.length, ')');
-    console.log('� First room sample:', rooms?.[0]);
-    
     // Get unique room type/category combinations from ACTUAL existing rooms only
     const map = new Map<string, RoomOption>();
     
@@ -169,19 +159,15 @@ export default function PriceSettingsPage() {
           room_category: roomCategoryId,
           count: roomCount
         });
-        console.log(`✅ Added room option: ${typeName} – ${categoryName} (${roomCount} өрөө)`);
       } else {
         // Increment count if we already have this combination
         const existing = map.get(key)!;
         existing.count += roomCount;
         existing.label = `${typeName} – ${categoryName} (${existing.count} өрөө)`;
-        console.log(`➕ Updated room option: ${typeName} – ${categoryName} (now ${existing.count} өрөө)`);
       }
     });
     
     const options = Array.from(map.values());
-    console.log(`✅ Built ${options.length} unique room options from ${rooms.length} room entries`);
-    console.log('📋 Final options:', options);
     setRoomOptions(options);
   };
 

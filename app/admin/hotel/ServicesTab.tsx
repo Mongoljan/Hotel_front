@@ -37,16 +37,11 @@ export default function ServicesTab({ facilityIds, hotelId, propertyDetailId, on
           const data = await res.json();
           // Try both possible field names
           const allFacs = data.facilities || data.general_facilities || [];
-          console.log('🔧 Combined data keys:', Object.keys(data));
-          console.log('🔧 All available facilities:', allFacs.length);
-          console.log('🔧 First few facilities:', allFacs.slice(0, 3));
-          console.log('✅ Selected facility IDs from property:', facilityIds);
           setAllFacilities(allFacs);
           // Filter to only show facilities that are in facilityIds
           const selectedFacilities = allFacs.filter((f: Facility) =>
             facilityIds.includes(f.id)
           );
-          console.log('✓ Matched facilities:', selectedFacilities.length);
           setFacilities(selectedFacilities);
         }
       } catch (error) {

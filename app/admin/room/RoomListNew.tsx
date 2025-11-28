@@ -152,33 +152,39 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     onAuthLost: handleAuthLost
   });
 
-  // Hotel room limits from property-details API
+  // Hotel room limits from property-basic-info API
   const [hotelRoomLimits, setHotelRoomLimits] = useState<HotelRoomLimits | null>(null);
 
-  // Fetch hotel room limits from property-details API
+  // Fetch hotel room limits from property-basic-info API (where total_hotel_rooms and available_rooms are stored)
   useEffect(() => {
     const fetchHotelLimits = async () => {
-      if (!user?.hotel) return;
+      
+      if (!user?.hotel) {
+        return;
+      }
       
       try {
-        const res = await fetch(
-          `https://dev.kacc.mn/api/property-details/?property=${user.hotel}`,
-          { cache: 'no-store' }
-        );
+        // Fetch from property-basic-info API which contains total_hotel_rooms and available_rooms
+        const url = `https://dev.kacc.mn/api/property-basic-info/?property=${user.hotel}`;
+        
+        const res = await fetch(url, { cache: 'no-store' });
         
         if (!res.ok) {
           console.error('Failed to fetch hotel limits:', res.status);
           return;
         }
         
-        const details = await res.json();
+        const basicInfoList = await res.json();
         
-        if (Array.isArray(details) && details.length > 0) {
-          const propertyDetails = details[0];
-          setHotelRoomLimits({
-            totalHotelRooms: propertyDetails.total_hotel_rooms || 0,
-            availableRooms: propertyDetails.available_rooms || 0
-          });
+        if (Array.isArray(basicInfoList) && basicInfoList.length > 0) {
+          const basicInfo = basicInfoList[0];
+          
+          const limits = {
+            totalHotelRooms: basicInfo.total_hotel_rooms || 0,
+            availableRooms: basicInfo.available_rooms || 0
+          };
+          setHotelRoomLimits(limits);
+        } else {
         }
       } catch (error) {
         console.error('Error fetching hotel limits:', error);
@@ -260,7 +266,6 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
 
         // If it's a group row and it's NOT expanded, add a preview row
         if (row.isGroup && row.arrowPlaceholder && !expanded.has(row.arrowPlaceholder)) {
-          console.log('Adding preview row for group:', row.id, 'roomNumbersStr:', row.roomNumbersStr);
           rowsWithPreviews.push({
             ...row,
             id: `${row.id}-preview`,
@@ -462,11 +467,9 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
         // Preview row - thin row showing room numbers when collapsed
         if (row.original.isPreviewRow) {
           const roomNumbers = row.original.roomNumbersStr || "";
-          console.log('Preview row rendering:', row.original.id, 'roomNumbers:', roomNumbers);
           
           // If no room numbers, don't show anything
           if (!roomNumbers.trim()) {
-            console.log('Preview row empty - no roomNumbers');
             return null;
           }
           
@@ -474,7 +477,6 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
           
           // If no valid room numbers after filtering, don't show
           if (roomNumbersArray.length === 0) {
-            console.log('Preview row empty - no valid room numbers after filter');
             return null;
           }
           
@@ -1190,14 +1192,14 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               Устгах ({selectedRoomIds.size})
             </Button>
           )}
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Шинэчлэх
-          </Button>
+          </Button> */}
           <Button
             onClick={openCreateModal}
             disabled={!!authError}
@@ -1236,10 +1238,10 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               searchPlaceholder={t('search.placeholder')}
               title={
                 <div className="flex items-center justify-between w-full">
-                  <span>Өрөөнүүд ({rawRooms.length})</span>
+                  {/* <span>Өрөөнүүд ({rawRooms.length})</span>
                   <Badge variant="outline" className="border-dashed border-muted-foreground/50 bg-muted/20 text-muted-foreground text-xs">
                     {relativeSyncedLabel}
-                  </Badge>
+                  </Badge> */}
                 </div>
               }
               enableExport={true}

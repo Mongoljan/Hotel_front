@@ -37,11 +37,6 @@ export function UserAvatarProfile() {
 
   const userTypeName = user?.user_type ? USER_TYPE_NAMES[user.user_type] : null;
 
-  // Debug logging
-  console.log('UserAvatarProfile - user:', user);
-  console.log('UserAvatarProfile - user_type:', user?.user_type);
-  console.log('UserAvatarProfile - userTypeName:', userTypeName);
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>

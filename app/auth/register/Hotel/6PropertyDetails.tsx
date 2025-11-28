@@ -104,8 +104,6 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
         property: propertyId,
       };
 
-      console.log('Final payload:', JSON.stringify(payload));
-
       const response = await fetch(API_PROPERTY_DETAILS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

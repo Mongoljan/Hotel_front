@@ -198,14 +198,6 @@ export const createFlattenedRows = ({
 
     // Debug logging to help identify issues
     if (imageSet.size > 0) {
-      console.log(`Group ${key}: Using data from room ${representativeRoom?.room_number}`, {
-        totalRoomsInGroup: group.rooms.length,
-        allRoomNumbers: group.rooms.map(r => r.room_number),
-        representativeRoom: representativeRoom?.room_number,
-        imageCount: imageSet.size,
-        number_of_rooms: representativeRoom?.number_of_rooms,
-        number_of_rooms_to_sell: representativeRoom?.number_of_rooms_to_sell
-      });
     }
 
     // Use room counts from the representative room, not aggregated sum

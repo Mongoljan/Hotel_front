@@ -171,6 +171,40 @@ export default function RoomModal({
   const [bedCount, setBedCount] = useState<number>(1); // Separate state for bed count (UI only for now)
   const [roomLimitError, setRoomLimitError] = useState<string | null>(null); // Room limit validation error
 
+  // Helper: Calculate the total number of physical rooms from existing room groups
+  // Rooms are grouped by room_type + room_category. Each room in a group has the same
+  // number_of_rooms value (it's a group property). So we get one room per group and sum their number_of_rooms.
+  const getTotalExistingRooms = (): number => {
+    // Group rooms by room_type + room_category
+    const groupMap = new Map<string, number>();
+    
+    existingRooms.forEach((room) => {
+      const key = `${room.room_type}-${room.room_category}`;
+      // Only set if not already set (take the first room's number_of_rooms as the group's total)
+      if (!groupMap.has(key)) {
+        groupMap.set(key, room.number_of_rooms || 1);
+      }
+    });
+    
+    // Sum up number_of_rooms from each unique group
+    let total = 0;
+    groupMap.forEach((numberOfRooms) => {
+      total += numberOfRooms;
+    });
+    
+    return total;
+  };
+
+  // Calculate max allowed rooms based on hotel limits (computed once, used by inputs)
+  const currentRoomCount = getTotalExistingRooms();
+  const totalHotelRooms = hotelRoomLimits?.totalHotelRooms || 0;
+  const availableRoomsLimit = hotelRoomLimits?.availableRooms || 0;
+  
+  // Max for "number_of_rooms" field - based on total hotel rooms
+  const maxNumberOfRooms = totalHotelRooms > 0 
+    ? Math.max(0, totalHotelRooms - currentRoomCount) 
+    : undefined;
+  
   // Combined lookup (room types, bed types, etc.)
   const [combinedData, setCombinedData] = useState<CombinedData>({
     roomTypes: [],
@@ -254,7 +288,8 @@ export default function RoomModal({
     if (!roomToEdit && numberOfRooms && hotelRoomLimits) {
       const numberOfRoomsNum = Number(numberOfRooms);
       const { totalHotelRooms, availableRooms } = hotelRoomLimits;
-      const currentRoomCount = existingRooms.length;
+      // Count existing rooms by summing number_of_rooms from each record
+      const currentRoomCount = getTotalExistingRooms();
       const afterAddition = currentRoomCount + numberOfRoomsNum;
       
       // Use the stricter limit between totalHotelRooms and availableRooms
@@ -372,8 +407,9 @@ export default function RoomModal({
     
     const { totalHotelRooms, availableRooms } = hotelRoomLimits;
     
-    // Count existing rooms
-    const currentRoomCount = existingRooms.length;
+    // Count existing rooms by summing number_of_rooms from each record
+    // (not just counting records, as each record can represent multiple physical rooms)
+    const currentRoomCount = getTotalExistingRooms();
     const afterAddition = currentRoomCount + numberOfRoomsToAdd;
     
     // Check against total hotel rooms limit (нийт өрөөний тоо)
@@ -662,24 +698,6 @@ export default function RoomModal({
         })),
     };
 
-    // Debug: Check what images are being sent
-    console.log('🖼️ Submitting images:', {
-      totalEntries: formData.entries.length,
-      allEntries: formData.entries.map((entry, idx) => ({
-        index: idx,
-        hasImage: !!entry.images,
-        isEmpty: !entry.images || entry.images.trim() === '',
-        imagePreview: entry.images ? entry.images.substring(0, 50) + '...' : 'empty',
-      })),
-      filteredImages: transformedData.images.length,
-      imageData: transformedData.images.map((img: any, idx: number) => ({
-        index: idx,
-        hasImage: !!img.image,
-        imagePreview: img.image ? img.image.substring(0, 50) + '...' : 'empty',
-        description: img.description
-      }))
-    });
-
     try {
       const token = await getClientBackendToken() || "";
       const isEdit = roomToEdit !== null;
@@ -731,7 +749,6 @@ export default function RoomModal({
     >
       <form
         onSubmit={handleSubmit(onSubmit, (errors) => {
-          console.log('❌ Form validation failed:', errors);
           toast.error('Форм бөглөхөд алдаа гарлаа. Талбаруудаа шалгана уу.');
         })}
         onClick={(e) => e.stopPropagation()}
@@ -824,7 +841,7 @@ export default function RoomModal({
               {/* Room Type */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Өрөөний ангилал <span className="text-red-500">*</span>
+                  {t('room_category')} <span className="text-red-500">*</span>
                 </label>
                 <Select 
                   key={`room_type-${roomToEdit?.id || 'new'}-${watch("room_type")}`}
@@ -857,7 +874,7 @@ export default function RoomModal({
               {/* Room Category */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Өрөөний төрөл <span className="text-red-500">*</span>
+                  {t('room_type')} <span className="text-red-500">*</span>
                 </label>
                 <Select 
                   key={`room_category-${roomToEdit?.id || 'new'}-${watch("room_category")}`}
@@ -893,8 +910,7 @@ export default function RoomModal({
               <Alert variant="destructive" className="mt-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Анхааруулга: Энэ өрөөний төрөл ба ангиллын хослол аль хэдийн бүртгэгдсэн байна. 
-                  Та өөр хослол сонгох шаардлагатай. Ижил хослолтой өрөө нэмэх боломжгүй.
+                  {t('duplicate_combination_warning')}
                 </AlertDescription>
               </Alert>
             )}
@@ -904,7 +920,7 @@ export default function RoomModal({
               {/* Occupancy (Adults + Children) */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Өрөөнд орох боломжтой хүний тоог оруулна уу. <span className="text-red-500">*</span>
+                  {t('capacity_hint')} <span className="text-red-500">*</span>
                 </label>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2 flex-1">
@@ -962,7 +978,7 @@ export default function RoomModal({
               {/* Room Size */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Өрөөний хэмжээ (м2) <span className="text-red-500">*</span>
+                  {t('room_size')} <span className="text-red-500">*</span>
                 </label>
                 <Input
                   type="number"
@@ -981,7 +997,7 @@ export default function RoomModal({
             {/* Row 3: Bed Type with counter */}
             <section className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Орны төрөл <span className="text-red-500">*</span>
+                {t('bed_type')} <span className="text-red-500">*</span>
               </label>
               <div className="flex items-center gap-3">
                 <Select 
@@ -1035,7 +1051,7 @@ export default function RoomModal({
                 </Badge>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Энэ өрөөнд байгаа орны тоо (API-тай холбогдох хүлээгдэж байна)
+                {t('bed_count_hint')}
               </p>
               {errors.bed_type && (
                 <span className="text-red-500 text-xs mt-1 block">
@@ -1049,7 +1065,7 @@ export default function RoomModal({
               {/* Is Bathroom */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Өрөөнд ариун цэврийн өрөө байгаа эсэх: <span className="text-red-500">*</span>
+                  {t('bathroom_available')} <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-3">
                   <label className="flex items-center cursor-pointer flex-1">
@@ -1089,7 +1105,7 @@ export default function RoomModal({
               {/* Smoking Allowed */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Тамхи зөвшөөрөх эсэх <span className="text-red-500">*</span>
+                  {t('smoking_allowed')} <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-3">
                   <label className="flex items-center cursor-pointer flex-1">
@@ -1131,15 +1147,64 @@ export default function RoomModal({
             {!roomToEdit && (
               <section className="grid grid-cols-2 gap-10">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Өрөөний нийт тоо <span className="text-red-500">*</span>
-                  </label>
+                  {(() => {
+                    // Calculate remaining rooms based on hotel limits
+                    const currentRoomCount = getTotalExistingRooms();
+                    const totalHotelRooms = hotelRoomLimits?.totalHotelRooms || 0;
+                    const remainingRooms = totalHotelRooms > 0 ? Math.max(0, totalHotelRooms - currentRoomCount) : null;
+                    
+                    return (
+                      <label className="block text-sm font-medium text-gray-700">
+                        Өрөөний нийт тоо <span className="text-red-500">*</span>
+                        {remainingRooms !== null && (
+                          <span className={`ml-2 font-semibold ${remainingRooms > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                            (Үлдсэн: {remainingRooms})
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })()}
                   <Input
                     type="number"
-                    min="0"
+                    min="1"
+                    max={maxNumberOfRooms}
                     placeholder="0"
-                    {...register("number_of_rooms")}
+                    value={watch("number_of_rooms") || ""}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      // Allow empty input - don't force a value yet
+                      if (inputValue === "") {
+                        setValue("number_of_rooms", "" as any);
+                        return;
+                      }
+                      const value = parseInt(inputValue, 10);
+                      if (isNaN(value)) {
+                        return;
+                      }
+                      // Allow any value within range, only clamp if exceeds max
+                      if (maxNumberOfRooms !== undefined && value > maxNumberOfRooms) {
+                        setValue("number_of_rooms", maxNumberOfRooms);
+                      } else if (value < 1) {
+                        setValue("number_of_rooms", 1);
+                      } else {
+                        setValue("number_of_rooms", value);
+                      }
+                    }}
+                    onBlur={() => {
+                      // On blur, ensure we have a valid value
+                      const current = watch("number_of_rooms");
+                      if (!current || Number(current) < 1) {
+                        setValue("number_of_rooms", 1);
+                      }
+                    }}
+                    disabled={maxNumberOfRooms === 0}
                   />
+                  {maxNumberOfRooms === 0 && (
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <span>Зочид буудлын өрөөний хязгаарт хүрсэн. Та өрөө нэмэх боломжгүй.</span>
+                    </div>
+                  )}
                   {errors.number_of_rooms && (
                     <span className="text-red-500 text-xs mt-1 block">
                       {errors.number_of_rooms.message}
@@ -1147,31 +1212,86 @@ export default function RoomModal({
                   )}
                   {/* Show warning if room limit would be exceeded */}
                   {(() => {
-                    const numberOfRooms = watch("number_of_rooms");
-                    if (numberOfRooms && hotelRoomLimits) {
-                      const { exceeds, errorMessage } = checkRoomLimits(Number(numberOfRooms));
-                      if (exceeds && errorMessage) {
-                        return (
-                          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 flex items-start gap-2">
-                            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                            <span>{errorMessage}</span>
-                          </div>
-                        );
-                      }
+                    const numberOfRoomsValue = watch("number_of_rooms");
+                    const numberOfRooms = Number(numberOfRoomsValue) || 0;
+                    const remainingRooms = maxNumberOfRooms ?? 0;
+                    
+                    // Show error if entered number exceeds remaining capacity
+                    if (totalHotelRooms > 0 && numberOfRooms > remainingRooms) {
+                      return (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <span>
+                            Та зөвхөн {remainingRooms} өрөө нэмэх боломжтой. 
+                            Зочид буудлын нийт өрөөний хязгаар: {totalHotelRooms}, 
+                            Одоо бүртгэгдсэн: {currentRoomCount}
+                          </span>
+                        </div>
+                      );
                     }
                     return null;
                   })()}
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Манай сайтаар зарах өрөөний тоо <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    {...register("number_of_rooms_to_sell")}
-                  />
+                  {(() => {
+                    // Calculate remaining available rooms based on hotel's available_rooms limit
+                    const currentRoomCount = getTotalExistingRooms();
+                    const availableRooms = hotelRoomLimits?.availableRooms || 0;
+                    const remainingAvailable = availableRooms > 0 ? Math.max(0, availableRooms - currentRoomCount) : null;
+                    
+                    return (
+                      <label className="block text-sm font-medium text-gray-700">
+                        Манай сайтаар зарах өрөөний тоо <span className="text-red-500">*</span>
+                        {remainingAvailable !== null && (
+                          <span className={`ml-2 font-semibold ${remainingAvailable > 0 ? 'text-blue-600' : 'text-red-500'}`}>
+                            (Үлдсэн: {remainingAvailable})
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })()}
+                  {(() => {
+                    // Max for "rooms to sell" is simply the "number_of_rooms" entered
+                    const numberOfRoomsValue = Number(watch("number_of_rooms")) || 0;
+                    const maxToSell = numberOfRoomsValue > 0 ? numberOfRoomsValue : undefined;
+                    
+                    return (
+                      <Input
+                        type="number"
+                        min="1"
+                        max={maxToSell}
+                        placeholder="0"
+                        value={watch("number_of_rooms_to_sell") || ""}
+                        onChange={(e) => {
+                          const inputValue = e.target.value;
+                          // Allow empty input - don't force a value yet
+                          if (inputValue === "") {
+                            setValue("number_of_rooms_to_sell", "" as any);
+                            return;
+                          }
+                          const value = parseInt(inputValue, 10);
+                          if (isNaN(value)) {
+                            return;
+                          }
+                          // Allow any value within range, only clamp if exceeds max
+                          if (maxToSell !== undefined && value > maxToSell) {
+                            setValue("number_of_rooms_to_sell", String(maxToSell));
+                          } else if (value < 1) {
+                            setValue("number_of_rooms_to_sell", "1");
+                          } else {
+                            setValue("number_of_rooms_to_sell", String(value));
+                          }
+                        }}
+                        onBlur={() => {
+                          // On blur, ensure we have a valid value
+                          const current = watch("number_of_rooms_to_sell");
+                          if (!current || Number(current) < 1) {
+                            setValue("number_of_rooms_to_sell", "1");
+                          }
+                        }}
+                      />
+                    );
+                  })()}
                   {errors.number_of_rooms_to_sell && (
                     <span className="text-red-500 text-xs mt-1 block">
                       {errors.number_of_rooms_to_sell.message}
@@ -1179,13 +1299,34 @@ export default function RoomModal({
                   )}
                   {/* Show warning if number_of_rooms_to_sell exceeds number_of_rooms */}
                   {(() => {
-                    const numberOfRooms = watch("number_of_rooms");
-                    const numberOfRoomsToSell = watch("number_of_rooms_to_sell");
-                    if (numberOfRooms && numberOfRoomsToSell && parseInt(numberOfRoomsToSell) > numberOfRooms) {
+                    const numberOfRooms = Number(watch("number_of_rooms")) || 0;
+                    const numberOfRoomsToSell = Number(watch("number_of_rooms_to_sell")) || 0;
+                    if (numberOfRooms > 0 && numberOfRoomsToSell > numberOfRooms) {
                       return (
                         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 flex items-start gap-2">
                           <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                           <span>Зарах өрөөний тоо ({numberOfRoomsToSell}) нийт өрөөний тооноос ({numberOfRooms}) их байж болохгүй!</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  {/* Show warning if exceeds available rooms limit */}
+                  {(() => {
+                    const numberOfRoomsToSell = Number(watch("number_of_rooms_to_sell")) || 0;
+                    const availableRooms = hotelRoomLimits?.availableRooms || 0;
+                    const currentRoomCount = getTotalExistingRooms();
+                    const remainingAvailable = availableRooms > 0 ? Math.max(0, availableRooms - currentRoomCount) : 0;
+                    
+                    if (availableRooms > 0 && numberOfRoomsToSell > remainingAvailable) {
+                      return (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <span>
+                            Та зөвхөн {remainingAvailable} өрөө зарах боломжтой. 
+                            Манай сайтаар зарах хязгаар: {availableRooms}, 
+                            Одоо бүртгэгдсэн: {currentRoomCount}
+                          </span>
                         </div>
                       );
                     }
@@ -1200,20 +1341,31 @@ export default function RoomModal({
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex items-start gap-2">
                 <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium">Зочид буудлын өрөөний хязгаар:</p>
-                  <p>• Нийт өрөөний тоо: <span className="font-semibold">{existingRooms.length}/{hotelRoomLimits.totalHotelRooms > 0 ? hotelRoomLimits.totalHotelRooms : "∞"}</span></p>
-                  <p>• Манай сайтаар зарах боломжтой: <span className="font-semibold">{existingRooms.length}/{hotelRoomLimits.availableRooms > 0 ? hotelRoomLimits.availableRooms : "∞"}</span></p>
                   {(() => {
                     const { totalHotelRooms, availableRooms } = hotelRoomLimits;
-                    const effectiveLimit = availableRooms > 0 
-                      ? (totalHotelRooms > 0 ? Math.min(totalHotelRooms, availableRooms) : availableRooms)
-                      : totalHotelRooms;
-                    const remaining = effectiveLimit > 0 ? Math.max(0, effectiveLimit - existingRooms.length) : null;
-                    return remaining !== null ? (
-                      <p className="font-medium mt-1 text-green-700">
-                        ✓ Нэмэх боломжтой: {remaining} өрөө
-                      </p>
-                    ) : null;
+                    const currentRoomCount = getTotalExistingRooms();
+                    const remainingTotal = totalHotelRooms > 0 ? Math.max(0, totalHotelRooms - currentRoomCount) : null;
+                    const remainingAvailable = availableRooms > 0 ? Math.max(0, availableRooms - currentRoomCount) : null;
+                    
+                    return (
+                      <>
+                        <p className="font-medium">Зочид буудлын өрөөний мэдээлэл:</p>
+                        <p>• Нийт өрөөний хязгаар: <span className="font-semibold">{totalHotelRooms > 0 ? totalHotelRooms : "∞"}</span> 
+                          {remainingTotal !== null && (
+                            <span className={`ml-1 ${remainingTotal > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                              (Бүртгэсэн: {currentRoomCount}, Үлдсэн: {remainingTotal})
+                            </span>
+                          )}
+                        </p>
+                        <p>• Манай сайтаар зарах хязгаар: <span className="font-semibold">{availableRooms > 0 ? availableRooms : "∞"}</span>
+                          {remainingAvailable !== null && (
+                            <span className={`ml-1 ${remainingAvailable > 0 ? 'text-blue-600' : 'text-red-500'}`}>
+                              (Бүртгэсэн: {currentRoomCount}, Үлдсэн: {remainingAvailable})
+                            </span>
+                          )}
+                        </p>
+                      </>
+                    );
                   })()}
                 </div>
               </div>
@@ -1269,115 +1421,81 @@ export default function RoomModal({
               })()}
             </section>
 
-            {/* Row 7: Images - Simplified interface */}
-            <section className="space-y-3">
+            {/* Row 7: Images */}
+            <section className="space-y-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Зураг нэмэх <span className="text-red-500">*</span>
+                  Зураг нэмэх (Хамгийн багадаа 1 зураг) <span className="text-red-500">*</span>
                 </label>
-                <p className="text-xs text-muted-foreground">
-                  JPG, JPEG эсвэл PNG • Хамгийн багадаа 1 зураг
+                <p className="text-xs text-gray-500">
+                  *JPG/ JPEG эсвэл PNG, 47MB-с ихгүй хэмжээтэй байхаар анхаарна уу.
                 </p>
               </div>
 
-              {/* Uploaded images list */}
-              <div className="space-y-2">
+              {/* Image grid - dynamically shows uploaded images + add button */}
+              <div className="grid grid-cols-4 gap-5 mt-3">
+                {/* Show uploaded images only (filter out empty entries) */}
                 {fields
                   .map((field, index) => ({ field, index, hasImage: watchedEntries[index]?.images }))
                   .filter(item => item.hasImage && item.hasImage.trim() !== '')
                   .map(({ field, index }) => (
-                    <div 
-                      key={field.id} 
-                      className="flex items-center gap-3 p-2 bg-muted/30 rounded-lg border"
-                    >
-                      {/* Thumbnail */}
-                      <div className="w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted">
-                        <img
-                          src={watchedEntries[index].images}
-                          alt={`Зураг ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">Зураг {index + 1}</p>
-                        <p className="text-xs text-muted-foreground">Амжилттай хуулагдсан</p>
-                      </div>
-                      
-                      {/* Actions */}
-                      <div className="flex items-center gap-1">
+                    <div key={field.id} className="relative aspect-square">
+                      <div className="relative w-full h-full group">
                         <input
                           type="file"
                           accept="image/*"
                           onChange={(e) => handleImageChange(e, index)}
                           className="hidden"
-                          id={`image-change-${index}`}
+                          id={`image-upload-${index}`}
+                        />
+                        <img
+                          src={watchedEntries[index].images}
+                          alt={`Room image ${index + 1}`}
+                          className="w-full h-full rounded-lg object-cover border-2 cursor-pointer hover:opacity-80 transition"
+                          onClick={() => document.getElementById(`image-upload-${index}`)?.click()}
                         />
                         <Button
                           type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-muted-foreground hover:text-foreground"
-                          onClick={() => document.getElementById(`image-change-${index}`)?.click()}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          <span className="text-xs">Солих</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2 text-muted-foreground hover:text-destructive"
                           onClick={() => remove(index)}
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          <span className="text-xs">Устгах</span>
+                          <X className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                   ))}
-              </div>
 
-              {/* Add image button - always visible */}
-              {fields.length < 10 && (
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          const base64Image = reader.result as string;
-                          append({ images: base64Image, descriptions: "" });
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                      e.target.value = '';
-                    }}
-                    className="hidden"
-                    id="add-new-image"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-12 border-dashed"
+                {/* Add new image button */}
+                {fields.length < 10 && (
+                  <div 
+                    className="relative aspect-square w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition"
                     onClick={() => document.getElementById('add-new-image')?.click()}
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Зураг нэмэх
-                  </Button>
-                </div>
-              )}
-
-              {/* Show count */}
-              {fields.filter((_, i) => watchedEntries[i]?.images?.trim()).length > 0 && (
-                <p className="text-xs text-muted-foreground text-right">
-                  {fields.filter((_, i) => watchedEntries[i]?.images?.trim()).length} / 10 зураг
-                </p>
-              )}
+                    <Plus className="h-8 w-8 text-gray-400" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const base64Image = reader.result as string;
+                            append({ images: base64Image, descriptions: "" });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                        // Reset input
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                      id="add-new-image"
+                    />
+                  </div>
+                )}
+              </div>
             </section>
 
             <div className="flex justify-end">

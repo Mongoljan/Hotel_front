@@ -81,7 +81,6 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
         const initialValues = stored.step2 || existing;
 
         if (initialValues) {
-          console.log('🔍 Initial values from API/storage:', initialValues);
 
           // Convert numbers to strings for Select components
           const normalizedValues = {
@@ -93,9 +92,6 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
             total_floor_number: Number(initialValues.total_floor_number || 1),
           };
 
-          console.log('✅ Normalized values:', normalizedValues);
-          console.log('📍 Setting province_city to:', normalizedValues.province_city);
-
           // Set province first, then store soum value to be set after filtering
           form.setValue('province_city', normalizedValues.province_city);
           form.setValue('district', normalizedValues.district);
@@ -104,7 +100,6 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
           // Store soum value to set after filteredSoum is populated
           if (normalizedValues.soum) {
-            console.log('⏳ Pending soum value:', normalizedValues.soum);
             setPendingSoumValue(normalizedValues.soum);
           }
 
@@ -122,16 +117,12 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
   useEffect(() => {
     const provinceId = Number(selectedProvinceId);
     const filtered = combinedData.soum.filter((s) => s.code === provinceId);
-    console.log('🏙️ Province ID:', provinceId, 'Filtered soums:', filtered.length);
     setFilteredSoum(filtered);
 
     // If there's a pending soum value and filtered list is now available, set it
     if (pendingSoumValue && filtered.length > 0) {
-      console.log('🔍 Checking if pending soum exists in filtered list:', pendingSoumValue);
       const soumExists = filtered.some((s) => String(s.id) === pendingSoumValue);
-      console.log('✅ Soum exists:', soumExists, 'Available IDs:', filtered.map(s => String(s.id)));
       if (soumExists) {
-        console.log('✅ Setting soum to:', pendingSoumValue);
         form.setValue('soum', pendingSoumValue);
         setPendingSoumValue(null); // Clear pending value
       } else {
