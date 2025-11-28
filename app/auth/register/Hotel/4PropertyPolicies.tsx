@@ -203,23 +203,18 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                     <div className="flex items-center gap-4">
                     <h4 className="font-medium md:mr-10"> {t('6')}</h4>
                     
-                    <div className="w-32">
                       <FormField
-                    
                         control={form.control}
                         name="check_in_from"
                         render={({ field }) => (
                           <FormItem className="flex-1">
-                           
-                              <FormControl>
-                                <Input type="time" {...field} className="w-32" />
-                              </FormControl>
-                          
+                            <FormControl>
+                              <Input type="time" {...field} className="w-32" />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      </div>
                         <span className="text-sm text-muted-foreground"> - </span>
                       <FormField
                         control={form.control}
@@ -242,23 +237,18 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                
                     <div className="flex items-center gap-4">
                            <h4 className="font-medium md:mr-10">{t('8')}</h4>
-                             <div className="w-32">
                       <FormField
                         control={form.control}
                         name="check_out_from"
                         render={({ field }) => (
                           <FormItem className="flex-1">
-                           
-                              <FormControl>
-                                <Input type="time" {...field} className="w-32" />
-                              </FormControl>
-                             
-                         
+                            <FormControl>
+                              <Input type="time" {...field} className="w-32" />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      </div>
                        <span className="text-sm text-muted-foreground"> - </span>
                       <FormField
                         control={form.control}

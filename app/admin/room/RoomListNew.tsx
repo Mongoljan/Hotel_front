@@ -1,10 +1,17 @@
 // RoomListNew.tsx - Using shadcn components with advanced table functionality
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { useTranslations } from 'next-intl';
 import { getClientBackendToken } from "@/utils/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { ColumnDef } from "@tanstack/react-table";
+
+// Hotel room limits type
+interface HotelRoomLimits {
+  totalHotelRooms: number;
+  availableRooms: number;
+}
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -116,6 +123,7 @@ const StatCard = ({ label, value, helper, icon: Icon, accent }: StatCardProps) =
 
 export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListProps) {
   const t = useTranslations('Rooms');
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const handleAuthLost = useCallback(() => {
     setIsModalOpen(false);
@@ -143,6 +151,42 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     setIsRoomAdded,
     onAuthLost: handleAuthLost
   });
+
+  // Hotel room limits from property-details API
+  const [hotelRoomLimits, setHotelRoomLimits] = useState<HotelRoomLimits | null>(null);
+
+  // Fetch hotel room limits from property-details API
+  useEffect(() => {
+    const fetchHotelLimits = async () => {
+      if (!user?.hotel) return;
+      
+      try {
+        const res = await fetch(
+          `https://dev.kacc.mn/api/property-details/?property=${user.hotel}`,
+          { cache: 'no-store' }
+        );
+        
+        if (!res.ok) {
+          console.error('Failed to fetch hotel limits:', res.status);
+          return;
+        }
+        
+        const details = await res.json();
+        
+        if (Array.isArray(details) && details.length > 0) {
+          const propertyDetails = details[0];
+          setHotelRoomLimits({
+            totalHotelRooms: propertyDetails.total_hotel_rooms || 0,
+            availableRooms: propertyDetails.available_rooms || 0
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching hotel limits:', error);
+      }
+    };
+    
+    fetchHotelLimits();
+  }, [user?.hotel]);
 
   // Which groups are expanded?
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -1181,6 +1225,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
             isRoomAdded={isRoomAdded}
             setIsRoomAdded={setIsRoomAdded}
             existingRooms={rawRooms}
+            hotelRoomLimits={hotelRoomLimits}
           />
 
           {/* Advanced Table with sync status in title row */}

@@ -19,9 +19,22 @@ export async function registerHotelAndEmployeeAction(hotelData: any, employeeDat
     console.log('Hotel API Response:', hotelResponse.status, hotelJson);
 
     if (!hotelResponse.ok) {
+      // Handle specific error messages
+      let errorMessage = 'Зочид буудал бүртгэхэд алдаа гарлаа';
+      
+      const rawError = hotelJson?.register?.[0] || hotelJson?.message || '';
+      
+      // Check for duplicate registration error
+      if (rawError.toLowerCase().includes('already exists') || rawError.toLowerCase().includes('register')) {
+        errorMessage = 'Энэ регистрийн дугаартай зочид буудал аль хэдийн бүртгэгдсэн байна. Өмнөх хуудас руу буцан шалгана уу.';
+      } else if (rawError) {
+        errorMessage = rawError;
+      }
+      
       return {
         success: false,
-        error: hotelJson?.register?.[0] || hotelJson?.message || 'Hotel registration failed',
+        error: errorMessage,
+        code: 'HOTEL_EXISTS'
       };
     }
 

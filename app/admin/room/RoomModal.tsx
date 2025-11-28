@@ -22,7 +22,8 @@ import {
   Bed,
   Upload,
   Image as ImageIcon,
-  AlertCircle
+  AlertCircle,
+  Info
 } from "lucide-react";
 import { getClientBackendToken } from "@/utils/auth";
 import { useTranslations } from "next-intl";
@@ -125,6 +126,12 @@ interface RoomData {
 // The shape of the React Hook Form data (derived from your Zod schema):
 type FormFields = z.infer<typeof schemaCreateRoom>;
 
+// Hotel room limits from property-details API
+interface HotelRoomLimits {
+  totalHotelRooms: number;
+  availableRooms: number;
+}
+
 // Props for the RoomModal component:
 interface RoomModalProps {
   isOpen: boolean;
@@ -139,6 +146,9 @@ interface RoomModalProps {
 
   // Existing rooms data for duplicate validation
   existingRooms: RoomData[];
+  
+  // Hotel room limits for validation (total_hotel_rooms and available_rooms)
+  hotelRoomLimits?: HotelRoomLimits | null;
 }
 
 ///////////////////////////////////////
@@ -152,12 +162,14 @@ export default function RoomModal({
   isRoomAdded,
   setIsRoomAdded,
   existingRooms,
+  hotelRoomLimits,
 }: RoomModalProps) {
   const [step, setStep] = useState<number>(1);
   const t = useTranslations("RoomModal"); // Changed from "Rooms" to "RoomModal"
   const { user } = useAuth(); // Get user from auth hook
   const [hasDuplicateCombination, setHasDuplicateCombination] = useState(false);
   const [bedCount, setBedCount] = useState<number>(1); // Separate state for bed count (UI only for now)
+  const [roomLimitError, setRoomLimitError] = useState<string | null>(null); // Room limit validation error
 
   // Combined lookup (room types, bed types, etc.)
   const [combinedData, setCombinedData] = useState<CombinedData>({
@@ -234,6 +246,21 @@ export default function RoomModal({
     // Validate that number_of_rooms_to_sell is not greater than number_of_rooms
     if (!roomToEdit && numberOfRooms && numberOfRoomsToSell) {
       if (parseInt(numberOfRoomsToSell) > numberOfRooms) {
+        return false;
+      }
+    }
+
+    // Check hotel room limits when creating new rooms
+    if (!roomToEdit && numberOfRooms && hotelRoomLimits) {
+      const numberOfRoomsNum = Number(numberOfRooms);
+      const { totalHotelRooms, availableRooms } = hotelRoomLimits;
+      const currentRoomCount = existingRooms.length;
+      const afterAddition = currentRoomCount + numberOfRoomsNum;
+      
+      // Use the stricter limit between totalHotelRooms and availableRooms
+      const effectiveLimit = availableRooms > 0 ? Math.min(totalHotelRooms, availableRooms) : totalHotelRooms;
+      
+      if (effectiveLimit > 0 && afterAddition > effectiveLimit) {
         return false;
       }
     }
@@ -329,6 +356,45 @@ export default function RoomModal({
     });
 
     return hasDuplicate;
+  };
+
+  // Helper: check if room limits would be exceeded
+  const checkRoomLimits = (numberOfRoomsToAdd: number): { exceeds: boolean; errorMessage: string | null } => {
+    // Only check when creating new rooms (not editing)
+    if (roomToEdit) {
+      return { exceeds: false, errorMessage: null };
+    }
+    
+    // If no limits are set, allow creation
+    if (!hotelRoomLimits) {
+      return { exceeds: false, errorMessage: null };
+    }
+    
+    const { totalHotelRooms, availableRooms } = hotelRoomLimits;
+    
+    // Count existing rooms
+    const currentRoomCount = existingRooms.length;
+    const afterAddition = currentRoomCount + numberOfRoomsToAdd;
+    
+    // Check against total hotel rooms limit (нийт өрөөний тоо)
+    if (totalHotelRooms > 0 && afterAddition > totalHotelRooms) {
+      const remaining = Math.max(0, totalHotelRooms - currentRoomCount);
+      return {
+        exceeds: true,
+        errorMessage: `Та зөвхөн ${remaining} өрөө нэмэх боломжтой. Таны зочид буудлын нийт өрөөний тоо ${totalHotelRooms} байна. (Одоогоор ${currentRoomCount} өрөө бүртгэгдсэн)`
+      };
+    }
+    
+    // Check against available rooms limit (манай сайтаар зарах боломжтой өрөөний тоо)
+    if (availableRooms > 0 && afterAddition > availableRooms) {
+      const remaining = Math.max(0, availableRooms - currentRoomCount);
+      return {
+        exceeds: true,
+        errorMessage: `Та зөвхөн ${remaining} өрөө нэмэх боломжтой. Манай сайтаар зарах боломжтой өрөөний тоо ${availableRooms} байна. (Одоогоор ${currentRoomCount} өрөө бүртгэгдсэн)`
+      };
+    }
+    
+    return { exceeds: false, errorMessage: null };
   };
 
   // React Hook Form setup
@@ -1079,6 +1145,22 @@ export default function RoomModal({
                       {errors.number_of_rooms.message}
                     </span>
                   )}
+                  {/* Show warning if room limit would be exceeded */}
+                  {(() => {
+                    const numberOfRooms = watch("number_of_rooms");
+                    if (numberOfRooms && hotelRoomLimits) {
+                      const { exceeds, errorMessage } = checkRoomLimits(Number(numberOfRooms));
+                      if (exceeds && errorMessage) {
+                        return (
+                          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <span>{errorMessage}</span>
+                          </div>
+                        );
+                      }
+                    }
+                    return null;
+                  })()}
                 </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -1111,6 +1193,30 @@ export default function RoomModal({
                   })()}
                 </div>
               </section>
+            )}
+
+            {/* Show hotel room limits info banner when creating rooms */}
+            {!roomToEdit && hotelRoomLimits && (hotelRoomLimits.totalHotelRooms > 0 || hotelRoomLimits.availableRooms > 0) && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex items-start gap-2">
+                <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">Зочид буудлын өрөөний хязгаар:</p>
+                  <p>• Нийт өрөөний тоо: <span className="font-semibold">{existingRooms.length}/{hotelRoomLimits.totalHotelRooms > 0 ? hotelRoomLimits.totalHotelRooms : "∞"}</span></p>
+                  <p>• Манай сайтаар зарах боломжтой: <span className="font-semibold">{existingRooms.length}/{hotelRoomLimits.availableRooms > 0 ? hotelRoomLimits.availableRooms : "∞"}</span></p>
+                  {(() => {
+                    const { totalHotelRooms, availableRooms } = hotelRoomLimits;
+                    const effectiveLimit = availableRooms > 0 
+                      ? (totalHotelRooms > 0 ? Math.min(totalHotelRooms, availableRooms) : availableRooms)
+                      : totalHotelRooms;
+                    const remaining = effectiveLimit > 0 ? Math.max(0, effectiveLimit - existingRooms.length) : null;
+                    return remaining !== null ? (
+                      <p className="font-medium mt-1 text-green-700">
+                        ✓ Нэмэх боломжтой: {remaining} өрөө
+                      </p>
+                    ) : null;
+                  })()}
+                </div>
+              </div>
             )}
 
             {/* Row 6: Room Numbers */}

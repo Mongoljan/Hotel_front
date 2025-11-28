@@ -43,7 +43,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
     defaultValues: {
       province_city: '',
       soum: '',
-      district: 0,
+      district: 1,
       zipCode: '00000',
       total_floor_number: 1,
     },
@@ -270,9 +270,20 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                     <FormControl>
                       <Input 
                         type="number"
+                        min={1}
+                        step={1}
                         placeholder={t('district_placeholder')}
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value, 10);
+                          field.onChange(isNaN(value) || value < 1 ? 1 : Math.floor(value));
+                        }}
+                        onKeyDown={(e) => {
+                          // Prevent decimal point and minus sign
+                          if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                            e.preventDefault();
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -308,14 +319,14 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                   className="flex-1"
                 >
                   <ChevronLeft className="mr-2 h-4 w-4" />
-                  Back
+                  {t("10")}
                 </Button>
                 <Button
                   type="submit"
                   disabled={form.formState.isSubmitting}
                   className="flex-1"
                 >
-                  Next
+                  {t("11")}
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>

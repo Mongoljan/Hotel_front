@@ -119,8 +119,6 @@ export default function RegisterPage() {
     const dataToSave = { ...data, phone: phoneRaw };
     localStorage.setItem('hotelFormData', JSON.stringify(dataToSave));
 
-    const submitData = { ...data, phone: `976${phoneRaw}` };
-
     toast.success(tMsg('saved_next'));
     setTimeout(() => {
       router.push('/auth/register/2');

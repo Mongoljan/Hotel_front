@@ -773,7 +773,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
             </Button>
           </div>
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-            {additionalInfo?.About || 'Мэдээлэл байхгүй байна.'}
+            {additionalInfo?.About || 'Та өөрийн зочид буудлын талаар мэдээлэл оруулна уу.'}
           </p>
         </div>
 
@@ -807,7 +807,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
             </div>
           ) : (
             <div className="aspect-video bg-gray-100 flex items-center justify-center rounded-md">
-              <p className="text-sm text-muted-foreground">Видео байхгүй</p>
+              <p className="text-sm text-muted-foreground">Та зочид буудлынхаа тухай танилцуулга видео холбоосыг оруулна уу.</p>
             </div>
           )}
         </div>
