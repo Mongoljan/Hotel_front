@@ -1007,7 +1007,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                 />
               </div>
             </div>
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label>Зарах өрөөний хязгаар тавих эсэх</Label>
               <div className="flex gap-3">
                 <button
@@ -1033,9 +1033,9 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                   Үгүй
                 </button>
               </div>
-            </div>
+            </div> */}
             <div className="space-y-2">
-              <Label>Зочдод үйлчлэх болонжтой хэл</Label>
+              <Label>Зочдод үйлчлэх боломжтой хэл</Label>
               <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded p-2">
                 {languages.map((lang) => (
                   <div key={lang.id} className="flex items-center space-x-2">
