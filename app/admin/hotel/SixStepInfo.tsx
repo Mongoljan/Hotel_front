@@ -39,6 +39,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePickerWithValue } from '@/components/ui/date-picker';
 
 interface PropertyPhoto {
   id: number;
@@ -944,11 +945,10 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startDate">Үйл ажиллагаа эхэлсэн огноо</Label>
-                <Input
-                  id="startDate"
-                  type="date"
+                <DatePickerWithValue
                   value={editBasicInfo.start_date}
-                  onChange={(e) => setEditBasicInfo({ ...editBasicInfo, start_date: e.target.value })}
+                  onChange={(value) => setEditBasicInfo({ ...editBasicInfo, start_date: value })}
+                  placeholder="Огноо сонгох"
                 />
               </div>
               <div className="space-y-2">

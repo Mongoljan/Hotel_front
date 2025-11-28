@@ -25,18 +25,44 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+// Map routes to their i18n keys
 const routeI18nKeys: Record<string, string> = {
   '/admin': 'dashboard',
   '/admin/dashboard': 'dashboard',
+  '/admin/reception': 'reception',
   '/admin/bookings': 'bookings',
-  '/admin/room': 'rooms',
-  '/admin/room/price': 'roomPrice',
+  '/admin/housekeeping': 'housekeeping',
+  '/admin/room-blocks': 'roomBlocks',
   '/admin/billing': 'billing',
+  '/admin/guest-registration': 'guestRegistration',
   '/admin/support': 'support',
   '/admin/hotel': 'hotelInfo',
+  '/admin/room': 'rooms',
+  '/admin/room/price': 'roomPrice',
+  '/admin/room/price-settings': 'priceSettings',
   '/admin/policies': 'policies',
   '/admin/corporate': 'corporate',
+  '/admin/additional-services': 'additionalServices',
+  '/admin/currency': 'currency',
+  '/admin/workers': 'workers',
   '/admin/permissions': 'permissions',
+  '/admin/faq': 'faq',
+};
+
+// Map routes to their parent menu i18n key (for nested items under collapsible menus)
+const routeParentKeys: Record<string, string> = {
+  // Routes under "Тохиргоо" (settings)
+  '/admin/hotel': 'settings',
+  '/admin/room': 'settings',
+  '/admin/room/price': 'settings',
+  '/admin/room/price-settings': 'settings',
+  '/admin/policies': 'settings',
+  '/admin/corporate': 'settings',
+  '/admin/additional-services': 'settings',
+  '/admin/currency': 'settings',
+  '/admin/workers': 'settings',
+  '/admin/permissions': 'settings',
+  '/admin/faq': 'settings',
 };
 
 // Format seconds to MM:SS
@@ -51,18 +77,45 @@ export function BreadcrumbHeader() {
   const { user, sessionTimeRemaining, refreshSession, isRefreshing } = useAuth();
   const tNav = useTranslations('Navigation');
   
-  const pathSegments = pathname.split('/').filter(Boolean);
-  const breadcrumbs = pathSegments.map((segment, index) => {
-    const path = '/' + pathSegments.slice(0, index + 1).join('/');
-    const key = routeI18nKeys[path];
-    // Fix admin route to go to dashboard instead
-    const finalPath = path === '/admin' ? '/admin/dashboard' : path;
-    return {
-      name: key ? tNav(key) : segment,
-      path: finalPath,
-      isLast: index === pathSegments.length - 1
-    };
-  });
+  // Build smart breadcrumbs based on menu hierarchy
+  const buildBreadcrumbs = () => {
+    const result: { name: string; path: string; isLast: boolean }[] = [];
+    
+    // Check if this route has a parent menu
+    const parentKey = routeParentKeys[pathname];
+    
+    if (parentKey) {
+      // Add the parent menu item (e.g., "Тохиргоо")
+      result.push({
+        name: tNav(parentKey),
+        path: '#', // Parent is not clickable (it's a dropdown)
+        isLast: false
+      });
+    }
+    
+    // Add the current page
+    const currentKey = routeI18nKeys[pathname];
+    if (currentKey) {
+      result.push({
+        name: tNav(currentKey),
+        path: pathname,
+        isLast: true
+      });
+    } else {
+      // Fallback: use path segment as name
+      const segments = pathname.split('/').filter(Boolean);
+      const lastSegment = segments[segments.length - 1] || 'dashboard';
+      result.push({
+        name: lastSegment,
+        path: pathname,
+        isLast: true
+      });
+    }
+    
+    return result;
+  };
+  
+  const breadcrumbs = buildBreadcrumbs();
 
   // Determine if session is low (less than 5 minutes)
   const isSessionLow = sessionTimeRemaining !== null && sessionTimeRemaining < 300;
@@ -98,6 +151,8 @@ export function BreadcrumbHeader() {
                   <BreadcrumbItem className="hidden md:block">
                     {breadcrumb.isLast ? (
                       <BreadcrumbPage className="text-cyrillic">{breadcrumb.name}</BreadcrumbPage>
+                    ) : breadcrumb.path === '#' ? (
+                      <span className="text-muted-foreground text-cyrillic">{breadcrumb.name}</span>
                     ) : (
                       <BreadcrumbLink href={breadcrumb.path} className="text-cyrillic">
                         {breadcrumb.name}
@@ -151,7 +206,7 @@ export function BreadcrumbHeader() {
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    <p>Сессия сунгах</p>
+                    <p>Session сунгах</p>
                   </TooltipContent>
                 </Tooltip>
               </div>

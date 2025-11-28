@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePickerWithValue } from '@/components/ui/date-picker';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -322,12 +323,10 @@ export default function PriceSettingModal({
               <Label htmlFor="start_date">
                 Эхлэх огноо <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="start_date"
-                type="date"
+              <DatePickerWithValue
                 value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="border-input"
+                onChange={(value) => setFormData({ ...formData, start_date: value })}
+                placeholder="Эхлэх огноо"
               />
             </div>
 
@@ -335,12 +334,10 @@ export default function PriceSettingModal({
               <Label htmlFor="end_date">
                 Дуусах огноо <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="end_date"
-                type="date"
+              <DatePickerWithValue
                 value={formData.end_date}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="border-input"
+                onChange={(value) => setFormData({ ...formData, end_date: value })}
+                placeholder="Дуусах огноо"
               />
             </div>
           </div>

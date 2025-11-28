@@ -1269,82 +1269,115 @@ export default function RoomModal({
               })()}
             </section>
 
-            {/* Row 7: Images */}
-            <section className="space-y-2">
+            {/* Row 7: Images - Simplified interface */}
+            <section className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Зураг нэмэх (Хамгийн багадаа 1 зураг) <span className="text-red-500">*</span>
+                  Зураг нэмэх <span className="text-red-500">*</span>
                 </label>
-                <p className="text-xs text-gray-500">
-                  *JPG/ JPEG эсвэл PNG, 47MB-с их үй хэмжээтэй байхаар анхаарна уу.
+                <p className="text-xs text-muted-foreground">
+                  JPG, JPEG эсвэл PNG • Хамгийн багадаа 1 зураг
                 </p>
               </div>
 
-              {/* Image grid - dynamically shows uploaded images + add button */}
-              <div className="grid grid-cols-4 gap-5 mt-3">
-                {/* Show uploaded images only (filter out empty entries) */}
+              {/* Uploaded images list */}
+              <div className="space-y-2">
                 {fields
                   .map((field, index) => ({ field, index, hasImage: watchedEntries[index]?.images }))
                   .filter(item => item.hasImage && item.hasImage.trim() !== '')
                   .map(({ field, index }) => (
-                    <div key={field.id} className="relative aspect-square">
-                      <div className="relative w-full h-full group">
+                    <div 
+                      key={field.id} 
+                      className="flex items-center gap-3 p-2 bg-muted/30 rounded-lg border"
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+                        <img
+                          src={watchedEntries[index].images}
+                          alt={`Зураг ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">Зураг {index + 1}</p>
+                        <p className="text-xs text-muted-foreground">Амжилттай хуулагдсан</p>
+                      </div>
+                      
+                      {/* Actions */}
+                      <div className="flex items-center gap-1">
                         <input
                           type="file"
                           accept="image/*"
                           onChange={(e) => handleImageChange(e, index)}
                           className="hidden"
-                          id={`image-upload-${index}`}
-                        />
-                        <img
-                          src={watchedEntries[index].images}
-                          alt={`Room image ${index + 1}`}
-                          className="w-full h-full rounded-lg object-cover border-2 cursor-pointer hover:opacity-80 transition"
-                          onClick={() => document.getElementById(`image-upload-${index}`)?.click()}
+                          id={`image-change-${index}`}
                         />
                         <Button
                           type="button"
-                          onClick={() => remove(index)}
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                          onClick={() => document.getElementById(`image-change-${index}`)?.click()}
                         >
-                          <X className="h-4 w-4" />
+                          <Edit className="h-4 w-4 mr-1" />
+                          <span className="text-xs">Солих</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-muted-foreground hover:text-destructive"
+                          onClick={() => remove(index)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          <span className="text-xs">Устгах</span>
                         </Button>
                       </div>
                     </div>
                   ))}
+              </div>
 
-                {/* Add new image button */}
-                {fields.length < 10 && (
-                  <div 
-                    className="relative aspect-square w-full h-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition"
+              {/* Add image button - always visible */}
+              {fields.length < 10 && (
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64Image = reader.result as string;
+                          append({ images: base64Image, descriptions: "" });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                      e.target.value = '';
+                    }}
+                    className="hidden"
+                    id="add-new-image"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-12 border-dashed"
                     onClick={() => document.getElementById('add-new-image')?.click()}
                   >
-                    <Plus className="h-8 w-8 text-gray-400" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            const base64Image = reader.result as string;
-                            console.log('➕ Adding new image, current entries:', fields.length);
-                            append({ images: base64Image, descriptions: "" });
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                        // Reset input
-                        e.target.value = '';
-                      }}
-                      className="hidden"
-                      id="add-new-image"
-                    />
-                  </div>
-                )}
-              </div>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Зураг нэмэх
+                  </Button>
+                </div>
+              )}
+
+              {/* Show count */}
+              {fields.filter((_, i) => watchedEntries[i]?.images?.trim()).length > 0 && (
+                <p className="text-xs text-muted-foreground text-right">
+                  {fields.filter((_, i) => watchedEntries[i]?.images?.trim()).length} / 10 зураг
+                </p>
+              )}
             </section>
 
             <div className="flex justify-end">
