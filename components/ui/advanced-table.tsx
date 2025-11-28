@@ -40,29 +40,39 @@ import {
 import { 
   ChevronDown, 
   Download, 
-  Eye, 
   Search,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
   Settings2,
-  Filter
+  FileSpreadsheet
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+
+// Export column configuration type
+export interface ExportColumn<TData> {
+  header: string;
+  getValue: (data: TData) => unknown;
+}
 
 interface AdvancedTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   searchKey?: string;
   searchPlaceholder?: string;
-  title?: string;
+  title?: string | React.ReactNode;
   description?: string;
   onRowClick?: (row: TData) => void;
   actions?: React.ReactNode;
   enableExport?: boolean;
   enableColumnFilter?: boolean;
   enableGlobalSearch?: boolean;
+  /** Custom export columns configuration. If not provided, uses default column-based export */
+  exportColumns?: ExportColumn<TData>[];
+  /** Filter function to determine which rows to export */
+  exportRowFilter?: (data: TData) => boolean;
 }
 
 export function AdvancedTable<TData, TValue>({
@@ -77,6 +87,8 @@ export function AdvancedTable<TData, TValue>({
   enableExport = true,
   enableColumnFilter = true,
   enableGlobalSearch = true,
+  exportColumns,
+  exportRowFilter,
 }: AdvancedTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -106,39 +118,141 @@ export function AdvancedTable<TData, TValue>({
     },
   });
 
+  /**
+   * Professional CSV Export with proper encoding and data handling
+   * Uses exportColumns prop if provided, otherwise generates from visible table columns
+   */
   const exportToCSV = () => {
     const rows = table.getRowModel().rows;
-    const headers = table.getAllColumns()
-      .filter(column => column.getIsVisible() && column.id !== 'actions')
-      .map(column => column.columnDef.header as string);
     
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row =>
-        table.getAllColumns()
-          .filter(column => column.getIsVisible() && column.id !== 'actions')
-          .map(column => {
-            const cellValue = row.getValue(column.id);
-            // Handle different data types
-            if (cellValue === null || cellValue === undefined) return '';
-            if (typeof cellValue === 'string') return `"${cellValue.replace(/"/g, '""')}"`;
-            return String(cellValue);
-          })
-          .join(',')
-      ),
-    ].join('\n');
+    // Helper function to escape CSV values
+    const escapeCSV = (value: unknown): string => {
+      if (value === null || value === undefined) return '';
+      
+      // Handle arrays - join with semicolon for readability
+      if (Array.isArray(value)) {
+        const joined = value
+          .filter(v => v !== null && v !== undefined && v !== '')
+          .join('; ');
+        if (!joined) return '';
+        return `"${joined.replace(/"/g, '""')}"`;
+      }
+      
+      // Handle booleans
+      if (typeof value === 'boolean') {
+        return value ? 'Тийм' : 'Үгүй';
+      }
+      
+      // Handle numbers
+      if (typeof value === 'number') {
+        return String(value);
+      }
+      
+      // Handle objects - skip them (likely React components)
+      if (typeof value === 'object') {
+        return '';
+      }
+      
+      // Handle strings - escape quotes and wrap if contains special chars
+      const str = String(value);
+      if (str.includes(',') || str.includes('\n') || str.includes('"') || str.includes('\r')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `${title || 'table-data'}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    // Filter rows using custom filter or default filter
+    const dataRows = rows.filter(row => {
+      if (exportRowFilter) {
+        return exportRowFilter(row.original);
+      }
+      // Default: exclude common non-data rows
+      const original = row.original as Record<string, unknown>;
+      return !original.isGroup && !original.isPreviewRow;
+    });
+
+    if (dataRows.length === 0) {
+      toast.error('Экспортлох өгөгдөл байхгүй');
+      return;
     }
+
+    // Build CSV content
+    const csvRows: string[] = [];
+
+    if (exportColumns && exportColumns.length > 0) {
+      // Use custom export columns
+      csvRows.push(exportColumns.map(col => escapeCSV(col.header)).join(','));
+      
+      dataRows.forEach(row => {
+        const rowData = exportColumns.map(col => {
+          const value = col.getValue(row.original);
+          return escapeCSV(value);
+        });
+        csvRows.push(rowData.join(','));
+      });
+    } else {
+      // Fallback: generate from visible table columns
+      const exportableColumns = table.getAllColumns().filter(column => {
+        const id = column.id;
+        return column.getIsVisible() && !['actions', 'select', 'expand'].includes(id);
+      });
+
+      // Build headers
+      const headers = exportableColumns.map(column => {
+        const header = column.columnDef.header;
+        if (typeof header === 'string') return header;
+        return column.id;
+      });
+      csvRows.push(headers.map(h => escapeCSV(h)).join(','));
+
+      // Add data rows
+      dataRows.forEach(row => {
+        const original = row.original as Record<string, unknown>;
+        const rowData = exportableColumns.map(column => {
+          let value = row.getValue(column.id);
+          if (value === undefined || value === null) {
+            const accessorKey = (column.columnDef as { accessorKey?: string }).accessorKey;
+            if (accessorKey) {
+              value = original[accessorKey];
+            }
+          }
+          return escapeCSV(value);
+        });
+        csvRows.push(rowData.join(','));
+      });
+    }
+
+    const csvContent = csvRows.join('\n');
+    
+    // Add BOM for proper UTF-8 encoding (important for Mongolian characters)
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { 
+      type: 'text/csv;charset=utf-8;' 
+    });
+    
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const baseTitle = typeof title === 'string' ? title : 'export';
+    const safeTitle = baseTitle.replace(/[^a-zA-Z0-9\u0400-\u04FF\s-]/g, '').trim() || 'data';
+    const filename = `${safeTitle}_${timestamp}.csv`;
+    
+    // Create download link
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up the URL object
+    URL.revokeObjectURL(url);
+    
+    // Show success notification
+    toast.success(`${dataRows.length} мөр экспортлогдлоо`, {
+      description: filename,
+    });
   };
 
   return (
@@ -146,8 +260,12 @@ export function AdvancedTable<TData, TValue>({
       {(title || description) && (
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              {title && <CardTitle>{title}</CardTitle>}
+            <div className="flex-1">
+              {title && (
+                <CardTitle>
+                  {typeof title === 'string' ? title : <div className="w-full">{title}</div>}
+                </CardTitle>
+              )}
               {description && <p className="text-sm text-muted-foreground">{description}</p>}
             </div>
             <div className="flex items-center space-x-2">
@@ -221,9 +339,15 @@ export function AdvancedTable<TData, TValue>({
 
             {/* Export */}
             {enableExport && (
-              <Button variant="outline" size="sm" onClick={exportToCSV}>
-                <Download className="mr-2 h-4 w-4" />
-                CSV
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={exportToCSV}
+                className="gap-2"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                <span className="hidden sm:inline">Экспорт</span>
+                <span className="sm:hidden">CSV</span>
               </Button>
             )}
           </div>

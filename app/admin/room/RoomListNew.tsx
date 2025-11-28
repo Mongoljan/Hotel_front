@@ -10,12 +10,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AdvancedTable } from "@/components/ui/advanced-table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AdvancedTable, ExportColumn } from "@/components/ui/advanced-table";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   Dialog,
   DialogContent,
@@ -114,6 +121,15 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     setIsModalOpen(false);
   }, [setIsModalOpen]);
   
+  // Auto-update sync time label every 60 seconds
+  const [tick, setTick] = useState(0);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((prev) => prev + 1);
+    }, 60000); // Update every 60 seconds
+    return () => clearInterval(interval);
+  }, []);
+  
   const {
     rawRooms,
     lookup,
@@ -142,6 +158,10 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
   // Delete confirmation state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState<number | null>(null);
+  
+  // Bulk delete state
+  const [selectedRoomIds, setSelectedRoomIds] = useState<Set<number>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   // Keyboard navigation for image carousel
   React.useEffect(() => {
@@ -209,6 +229,14 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     [lookupMaps, expanded]
   );
 
+  // Calculate totals from group rows (not individual rooms)
+  const groupTotals = useMemo(() => {
+    const groupRows = rows.filter(row => row.isGroup && !row.isPreviewRow);
+    const totalRooms = groupRows.reduce((sum, row) => sum + (row.totalRoomsInGroup ?? 0), 0);
+    const totalForSale = groupRows.reduce((sum, row) => sum + (row.totalRoomsToSellInGroup ?? 0), 0);
+    return { totalRooms, totalForSale };
+  }, [rows]);
+
   const insights = useMemo<RoomInsights>(
     () =>
       calculateRoomInsights(rawRooms, {
@@ -219,8 +247,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
   );
 
   const relativeSyncedLabel = useMemo(
-    () => getRelativeSyncedLabel(lastSynced),
-    [lastSynced]
+    () => getRelativeSyncedLabel(lastSynced, t),
+    [lastSynced, tick, t] // Include tick to auto-update every 60 seconds
   );
 
   const handleRefresh = () => {
@@ -249,6 +277,73 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     if (roomId == null) return;
     setRoomToDelete(roomId);
     setDeleteDialogOpen(true);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allRoomIds = new Set(rawRooms.map(room => room.id));
+      setSelectedRoomIds(allRoomIds);
+    } else {
+      setSelectedRoomIds(new Set());
+    }
+  };
+
+  const handleSelectRoom = (roomId: number, checked: boolean) => {
+    const newSelected = new Set(selectedRoomIds);
+    if (checked) {
+      newSelected.add(roomId);
+    } else {
+      newSelected.delete(roomId);
+    }
+    setSelectedRoomIds(newSelected);
+  };
+
+  const handleBulkDeleteClick = () => {
+    if (selectedRoomIds.size === 0) return;
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const handleBulkDelete = async () => {
+    const token = await getClientBackendToken();
+    if (!token) {
+      const message = "Authentication required. Please sign in again to delete rooms.";
+      setAuthError(message);
+      toast.error(message);
+      setBulkDeleteDialogOpen(false);
+      return;
+    }
+
+    const deletePromises = Array.from(selectedRoomIds).map(async (roomId) => {
+      try {
+        const response = await fetch(`/api/rooms?id=${roomId}&token=${token}`, {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || errorData.details || `Failed to delete room ${roomId}`;
+          throw new Error(errorMessage);
+        }
+        return { success: true, roomId };
+      } catch (error) {
+        console.error(`Error deleting room ${roomId}:`, error);
+        return { success: false, roomId, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    });
+
+    const results = await Promise.all(deletePromises);
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+
+    if (successCount > 0) {
+      toast.success(`${successCount} өрөө амжилттай устгагдлаа`);
+      setIsRoomAdded(true);
+    }
+    if (failCount > 0) {
+      toast.error(`${failCount} өрөө устгахад алдаа гарлаа`);
+    }
+
+    setSelectedRoomIds(new Set());
+    setBulkDeleteDialogOpen(false);
   };
 
   const handleDelete = async () => {
@@ -287,6 +382,33 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
 
   // Column definitions for shadcn table
   const columns: ColumnDef<FlattenRow>[] = [
+    // Checkbox Column
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={selectedRoomIds.size === rawRooms.length && rawRooms.length > 0}
+          onCheckedChange={(checked) => handleSelectAll(!!checked)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => {
+        if (row.original.isPreviewRow || row.original.isGroup) return null;
+        const roomId = row.original.leafRoomId;
+        if (!roomId) return null;
+        
+        return (
+          <Checkbox
+            checked={selectedRoomIds.has(roomId)}
+            onCheckedChange={(checked) => handleSelectRoom(roomId, !!checked)}
+            aria-label="Select row"
+          />
+        );
+      },
+      enableSorting: false,
+      size: 40,
+    },
+    
     // Expand/Collapse Column
     {
       id: "expand",
@@ -366,7 +488,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     
     // Images Column
     {
-      accessorKey: "images",
+      accessorKey: "roomNumberLeaf",
       header: "Зураг",
       cell: ({ row }) => {
         if (row.original.isPreviewRow) return null;
@@ -425,10 +547,21 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               )}
             </div>
           );
+        } else {
+          // For individual rooms, show room number
+          return (
+            <span className="font-semibold text-sm">
+              {row.original.roomNumberLeaf}
+            </span>
+          );
         }
-        return null;
       },
-      enableSorting: false,
+      enableSorting: true,
+      sortingFn: (rowA, rowB) => {
+        const a = rowA.original.roomNumberLeaf ? parseInt(rowA.original.roomNumberLeaf) : 0;
+        const b = rowB.original.roomNumberLeaf ? parseInt(rowB.original.roomNumberLeaf) : 0;
+        return a - b;
+      },
       size: 220,
     },
 
@@ -457,103 +590,59 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
             </div>
           );
         } else {
+          // For individual rooms, show size, wifi, and smoking icons
           return (
-            <span className="text-sm text-muted-foreground">
-              {row.original.viewDescription}
-            </span>
+            <div className="flex items-center gap-2">
+              {row.original.leafSize && (
+                <span className="text-sm">{row.original.leafSize} м²</span>
+              )}
+              {row.original.hasWifi ? (
+                <Wifi className="h-4 w-4 text-green-600" />
+              ) : (
+                <Wifi className="h-4 w-4 text-gray-400" />
+              )}
+              {row.original.smokingAllowed ? (
+                <GiCigarette className="h-4 w-4" />
+              ) : (
+                <LiaSmokingBanSolid className="h-4 w-4 text-red-500" />
+              )}
+            </div>
           );
         }
       },
       size: 200,
     },
 
-    // Room Number Column (for expanded leaf rows)
-    {
-      accessorKey: "roomNumberLeaf",
-      header: "Өрөөний дугаар",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
 
-        if (row.original.isGroup) {
-          return null;
-        } else {
-          return (
-            <span className="font-semibold text-sm">
-              {row.original.roomNumberLeaf}
-            </span>
-          );
-        }
-      },
-      size: 120,
-    },
 
-    // Total Rooms Column
+    // Combined Rooms Column (Total / For Sale)
     {
       accessorKey: "totalRoomsInGroup",
-      header: "Нийт өрөөний тоо",
+      header: "Нийт / Зарах",
       cell: ({ row }) => {
         if (row.original.isPreviewRow) return null;
 
         if (row.original.isGroup) {
+          const total = row.original.totalRoomsInGroup ?? 0;
+          const forSale = row.original.totalRoomsToSellInGroup ?? 0;
+          
           return (
-            <span className="text-sm font-medium">
-              {row.original.totalRoomsInGroup ?? 0}
-            </span>
-          );
-        } else {
-          return (
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold">
-                {row.original.leafTotalRooms ?? 0}
-              </span>
-              {row.original.leafSize && (
-                <span className="text-xs text-muted-foreground">
-                  {row.original.leafSize} м²
-                </span>
-              )}
-            </div>
-          );
-        }
-      },
-      size: 120,
-    },
-
-    // Rooms for Sale Column
-    {
-      accessorKey: "totalRoomsToSellInGroup",
-      header: "Зарах өрөөний тоо",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        if (row.original.isGroup) {
-          return (
-            <span className="text-sm font-medium text-muted-foreground">
-              {row.original.totalRoomsToSellInGroup ?? 0}
-            </span>
-          );
-        } else {
-          return (
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-semibold">
-                {row.original.leafRoomsToSell ?? 0}
-              </span>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                {row.original.smokingAllowed ? (
-                  <GiCigarette className="h-4 w-4" />
-                ) : (
-                  <LiaSmokingBanSolid className="h-4 w-4 text-red-500" />
-                )}
-                {row.original.hasWifi ? (
-                  <Wifi className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Wifi className="h-4 w-4 text-gray-400" />
-                )}
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-1 text-sm">
+                <span className="font-medium">{total}</span>
+                <span className="text-xs text-muted-foreground">нийт</span>
+              </div>
+              <div className="flex items-center gap-1 text-sm">
+                <span className="font-medium text-green-600">{forSale}</span>
+                <span className="text-xs text-muted-foreground">зарах</span>
               </div>
             </div>
           );
+        } else {
+          return null;
         }
       },
-      size: 120,
+      size: 110,
     },
 
     // Capacity Column
@@ -596,37 +685,55 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       size: 200,
     },
 
-    // Features Column
+    // Facilities Column (Тохижилт)
     {
-      accessorKey: "commonFeaturesArr",
-      header: "Ерөнхий онцлог зүйлс",
+      accessorKey: "commonFacilitiesArr",
+      header: "Тохижилт",
       cell: ({ row }) => {
         if (row.original.isPreviewRow) return null;
 
         const features = row.original.isGroup
-          ? row.original.commonFeaturesArr
-          : row.original.thisRoomExtraFeaturesArr || [];
+          ? row.original.commonFacilitiesArr
+          : row.original.thisRoomExtraFacilitiesArr || [];
 
         if (!features?.length) return null;
 
+        const displayFeatures = features.slice(0, 3);
+        const hasMore = features.length > 3;
+
         return (
           <div className="flex flex-col gap-1">
-            {features.slice(0, 3).map((feat: string, idx: number) => (
+            {displayFeatures.map((feat: string, idx: number) => (
               <div key={idx} className="flex items-center gap-1 text-sm">
                 <FaCheck className="h-3 w-3 text-green-600" />
                 <span className="truncate">{feat}</span>
               </div>
             ))}
-            {features.length > 3 && (
-              <span className="text-xs text-muted-foreground">
-                +{features.length - 3} more
-              </span>
+            {hasMore && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
+                    +{features.length - 3} илүү
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="right" className="w-64 max-h-60 overflow-y-auto">
+                  <div className="flex flex-col gap-1">
+                    <h4 className="font-medium text-sm mb-2">Бүх тохижилт</h4>
+                    {features.map((feat: string, idx: number) => (
+                      <div key={idx} className="flex items-center gap-1 text-sm">
+                        <FaCheck className="h-3 w-3 text-green-600" />
+                        <span>{feat}</span>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
         );
       },
       enableSorting: false,
-      size: 250,
+      size: 200,
     },
 
     // Bathroom Column
@@ -642,18 +749,189 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
 
         if (!bathFeatures?.length) return null;
 
+        const displayFeatures = bathFeatures.slice(0, 3);
+        const hasMore = bathFeatures.length > 3;
+
         return (
           <div className="flex flex-col gap-1">
-            {bathFeatures.slice(0, 3).map((item: string, idx: number) => (
+            {displayFeatures.map((item: string, idx: number) => (
               <div key={idx} className="flex items-center gap-1 text-sm">
                 <FaCheck className="h-3 w-3 text-green-600" />
                 <span className="truncate">{item}</span>
               </div>
             ))}
-            {bathFeatures.length > 3 && (
-              <span className="text-xs text-muted-foreground">
-                +{bathFeatures.length - 3} more
-              </span>
+            {hasMore && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
+                    +{bathFeatures.length - 3} илүү
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="right" className="w-64 max-h-60 overflow-y-auto">
+                  <div className="flex flex-col gap-1">
+                    <h4 className="font-medium text-sm mb-2">Угаалгын өрөөнд</h4>
+                    {bathFeatures.map((item: string, idx: number) => (
+                      <div key={idx} className="flex items-center gap-1 text-sm">
+                        <FaCheck className="h-3 w-3 text-green-600" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
+        );
+      },
+      enableSorting: false,
+      size: 200,
+    },
+
+    // Toiletries Column (Ариун цэврийн хэрэгсэл)
+    {
+      accessorKey: "commonToiletriesArr",
+      header: "Ариун цэврийн хэрэгсэл",
+      cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
+        const features = row.original.isGroup
+          ? row.original.commonToiletriesArr
+          : row.original.thisRoomExtraToiletriesArr || [];
+
+        if (!features?.length) return null;
+
+        const displayFeatures = features.slice(0, 3);
+        const hasMore = features.length > 3;
+
+        return (
+          <div className="flex flex-col gap-1">
+            {displayFeatures.map((item: string, idx: number) => (
+              <div key={idx} className="flex items-center gap-1 text-sm">
+                <FaCheck className="h-3 w-3 text-green-600" />
+                <span className="truncate">{item}</span>
+              </div>
+            ))}
+            {hasMore && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
+                    +{features.length - 3} илүү
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="right" className="w-64 max-h-60 overflow-y-auto">
+                  <div className="flex flex-col gap-1">
+                    <h4 className="font-medium text-sm mb-2">Ариун цэврийн хэрэгсэл</h4>
+                    {features.map((item: string, idx: number) => (
+                      <div key={idx} className="flex items-center gap-1 text-sm">
+                        <FaCheck className="h-3 w-3 text-green-600" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
+        );
+      },
+      enableSorting: false,
+      size: 200,
+    },
+
+    // Food & Drink Column (Хоол, ундаа)
+    {
+      accessorKey: "commonFoodDrinkArr",
+      header: "Хоол, ундаа",
+      cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
+        const features = row.original.isGroup
+          ? row.original.commonFoodDrinkArr
+          : row.original.thisRoomExtraFoodDrinkArr || [];
+
+        if (!features?.length) return null;
+
+        const displayFeatures = features.slice(0, 3);
+        const hasMore = features.length > 3;
+
+        return (
+          <div className="flex flex-col gap-1">
+            {displayFeatures.map((item: string, idx: number) => (
+              <div key={idx} className="flex items-center gap-1 text-sm">
+                <FaCheck className="h-3 w-3 text-green-600" />
+                <span className="truncate">{item}</span>
+              </div>
+            ))}
+            {hasMore && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
+                    +{features.length - 3} илүү
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="right" className="w-64 max-h-60 overflow-y-auto">
+                  <div className="flex flex-col gap-1">
+                    <h4 className="font-medium text-sm mb-2">Хоол, ундаа</h4>
+                    {features.map((item: string, idx: number) => (
+                      <div key={idx} className="flex items-center gap-1 text-sm">
+                        <FaCheck className="h-3 w-3 text-green-600" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
+        );
+      },
+      enableSorting: false,
+      size: 200,
+    },
+
+    // Outdoor & View Column (Байршил ба үзэмж)
+    {
+      accessorKey: "commonOutdoorViewArr",
+      header: "Байршил ба үзэмж",
+      cell: ({ row }) => {
+        if (row.original.isPreviewRow) return null;
+
+        const features = row.original.isGroup
+          ? row.original.commonOutdoorViewArr
+          : row.original.thisRoomExtraOutdoorViewArr || [];
+
+        if (!features?.length) return null;
+
+        const displayFeatures = features.slice(0, 3);
+        const hasMore = features.length > 3;
+
+        return (
+          <div className="flex flex-col gap-1">
+            {displayFeatures.map((item: string, idx: number) => (
+              <div key={idx} className="flex items-center gap-1 text-sm">
+                <FaCheck className="h-3 w-3 text-green-600" />
+                <span className="truncate">{item}</span>
+              </div>
+            ))}
+            {hasMore && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
+                    +{features.length - 3} илүү
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="right" className="w-64 max-h-60 overflow-y-auto">
+                  <div className="flex flex-col gap-1">
+                    <h4 className="font-medium text-sm mb-2">Байршил ба үзэмж</h4>
+                    {features.map((item: string, idx: number) => (
+                      <div key={idx} className="flex items-center gap-1 text-sm">
+                        <FaCheck className="h-3 w-3 text-green-600" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
         );
@@ -697,24 +975,163 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     },
   ];
 
+  // Create a map to lookup group data by group key for export
+  const groupDataMap = useMemo(() => {
+    const map = new Map<string, FlattenRow>();
+    rows.forEach(row => {
+      if (row.isGroup && row.arrowPlaceholder) {
+        map.set(row.arrowPlaceholder, row);
+      }
+    });
+    return map;
+  }, [rows]);
+
+  // Helper function to get parent group's common items
+  const getParentGroupData = useCallback((leafRow: FlattenRow): FlattenRow | undefined => {
+    // Leaf row ID format: "groupKey-roomNumber", extract group key
+    const rowId = leafRow.id;
+    const lastDashIndex = rowId.lastIndexOf('-');
+    if (lastDashIndex > 0) {
+      const groupKey = rowId.substring(0, lastDashIndex);
+      return groupDataMap.get(groupKey);
+    }
+    return undefined;
+  }, [groupDataMap]);
+
+  // Export columns configuration for CSV export
+  const exportColumns: ExportColumn<FlattenRow>[] = useMemo(() => [
+    { 
+      header: 'Өрөөний дугаар', 
+      getValue: (d) => d.roomNumberLeaf || '' 
+    },
+    { 
+      header: 'Категори', 
+      getValue: (d) => {
+        if (d.categoryName) return d.categoryName;
+        const parent = getParentGroupData(d);
+        return parent?.categoryName || '';
+      }
+    },
+    { 
+      header: 'Төрөл', 
+      getValue: (d) => {
+        if (d.typeName) return d.typeName;
+        const parent = getParentGroupData(d);
+        return parent?.typeName || '';
+      }
+    },
+    { 
+      header: 'Хэмжээ (м²)', 
+      getValue: (d) => d.leafSize || d.sizeGroup || '' 
+    },
+    { 
+      header: 'WiFi', 
+      getValue: (d) => d.hasWifi ?? d.hasWifiGroup ?? false
+    },
+    { 
+      header: 'Тамхи зөвшөөрөх', 
+      getValue: (d) => d.smokingAllowed ?? false
+    },
+    { 
+      header: 'Том хүн', 
+      getValue: (d) => d.adultQty ?? '' 
+    },
+    { 
+      header: 'Хүүхэд', 
+      getValue: (d) => d.childQty ?? '' 
+    },
+    { 
+      header: 'Орны төрөл', 
+      getValue: (d) => {
+        if (d.bedType === 2) return 'Давхар ор';
+        if (d.bedType === 1) return 'Ганц ор';
+        return '';
+      }
+    },
+    { 
+      header: 'Тохижилт', 
+      getValue: (d) => {
+        const parent = getParentGroupData(d);
+        const common = parent?.commonFacilitiesArr || d.commonFacilitiesArr || [];
+        const extra = d.thisRoomExtraFacilitiesArr || [];
+        return [...common, ...extra];
+      }
+    },
+    { 
+      header: 'Угаалгын өрөөнд', 
+      getValue: (d) => {
+        const parent = getParentGroupData(d);
+        const common = parent?.commonBathroomArr || d.commonBathroomArr || [];
+        const extra = d.thisRoomExtraBathroomArr || [];
+        return [...common, ...extra];
+      }
+    },
+    { 
+      header: 'Ариун цэврийн хэрэгсэл', 
+      getValue: (d) => {
+        const parent = getParentGroupData(d);
+        const common = parent?.commonToiletriesArr || d.commonToiletriesArr || [];
+        const extra = d.thisRoomExtraToiletriesArr || [];
+        return [...common, ...extra];
+      }
+    },
+    { 
+      header: 'Хоол ундаа', 
+      getValue: (d) => {
+        const parent = getParentGroupData(d);
+        const common = parent?.commonFoodDrinkArr || d.commonFoodDrinkArr || [];
+        const extra = d.thisRoomExtraFoodDrinkArr || [];
+        return [...common, ...extra];
+      }
+    },
+    { 
+      header: 'Байршил ба үзэмж', 
+      getValue: (d) => {
+        const parent = getParentGroupData(d);
+        const common = parent?.commonOutdoorViewArr || d.commonOutdoorViewArr || [];
+        const extra = d.thisRoomExtraOutdoorViewArr || [];
+        return [...common, ...extra];
+      }
+    },
+  ], [getParentGroupData]);
+
+  // Filter function for export - only export leaf rows (actual rooms)
+  const exportRowFilter = useCallback((row: FlattenRow) => {
+    return !row.isGroup && !row.isPreviewRow && row.leafRoomId != null;
+  }, []);
+
   return (
     <div className="">
       {/* Header with metrics */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between  pb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-3 mb-1">
             <Building2 className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold">Өрөөний удирдлага</h1>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>{formatNumber(insights.totalInventory)} өрөө</span>
-            <span>•</span>
-            <span>{formatNumber(insights.available)} боломжтой</span>
-            <span>•</span>
-            <span>{insights.occupancyRate}% эзэлхүүн</span>
+            <h1 className="text-xl font-semibold">{t('table.title')}</h1>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span className="font-medium text-foreground">{groupTotals.totalRooms}</span>
+                <span>нийт</span>
+              </span>
+              <span className="text-border">|</span>
+              <span className="flex items-center gap-1">
+                <span className="font-medium text-green-600">{groupTotals.totalForSale}</span>
+                <span>зарах</span>
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
+          {selectedRoomIds.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDeleteClick}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Устгах ({selectedRoomIds.size})
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -752,33 +1169,38 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
             existingRooms={rawRooms}
           />
 
-          <div className="flex items-center justify-between">
-            <Badge variant="outline" className="border-dashed border-muted-foreground/50 bg-muted/20 text-muted-foreground">
-              {relativeSyncedLabel}
-            </Badge>
-          </div>
-
-          {/* Advanced Table */}
-          <AdvancedTable
-            data={rows}
-            columns={columns}
-            searchPlaceholder="Search rooms, descriptions, amenities..."
-            title={`Өрөөнүүд (${rows.length})`}
-            enableExport={true}
-            enableColumnFilter={true}
-            enableGlobalSearch={true}
-          />
+          {/* Advanced Table with sync status in title row */}
+          <TooltipProvider>
+            <AdvancedTable
+              data={rows}
+              columns={columns}
+              searchPlaceholder={t('search.placeholder')}
+              title={
+                <div className="flex items-center justify-between w-full">
+                  <span>Өрөөнүүд ({rawRooms.length})</span>
+                  <Badge variant="outline" className="border-dashed border-muted-foreground/50 bg-muted/20 text-muted-foreground text-xs">
+                    {relativeSyncedLabel}
+                  </Badge>
+                </div>
+              }
+              enableExport={true}
+              enableColumnFilter={true}
+              enableGlobalSearch={true}
+              exportColumns={exportColumns}
+              exportRowFilter={exportRowFilter}
+            />
+          </TooltipProvider>
         </>
       )}
 
       {/* Image Preview Modal with Carousel Indicators */}
       <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
         <DialogContent className="max-w-5xl">
-          <DialogHeader>
+          <DialogHeader className="pt-2">
             <DialogTitle className="flex items-center justify-between">
-              <span>Room Images</span>
-              <span className="text-sm font-normal text-muted-foreground">
-                {currentImageIndex + 1} of {previewImages.length}
+              <span>Өрөөний зургууд</span>
+              <span className="text-sm font-normal text-muted-foreground mr-6">
+                {currentImageIndex + 1} / {previewImages.length}
               </span>
             </DialogTitle>
           </DialogHeader>
@@ -831,10 +1253,10 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                 <button
                   key={index}
                   className={cn(
-                    "w-3 h-3 rounded-full transition-all duration-200 hover:scale-110",
+                    "w-3 h-3 rounded-full transition-all duration-200 hover:scale-110 border",
                     index === currentImageIndex
-                      ? "bg-primary scale-110"
-                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                      ? "bg-primary border-primary scale-110"
+                      : "bg-gray-300 dark:bg-gray-600 border-gray-400 dark:border-gray-500 hover:bg-gray-400 dark:hover:bg-gray-500"
                   )}
                   onClick={() => setCurrentImageIndex(index)}
                   aria-label={`Go to image ${index + 1}`}
@@ -873,16 +1295,6 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               </div>
             </div>
           )}
-
-          <DialogFooter className="justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <ImageIcon className="h-4 w-4" />
-              <span>Use arrow keys or click dots to navigate</span>
-            </div>
-            <Button variant="outline" onClick={() => setIsImageModalOpen(false)}>
-              Close
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -900,6 +1312,25 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
             <AlertDialogCancel>Цуцлах</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Устгах
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Олон өрөө устгах</AlertDialogTitle>
+            <AlertDialogDescription>
+              Та үнэхээр {selectedRoomIds.size} өрөөг устгахыг хүсэж байна уу? Энэ үйлдэл буцалтгүй бөгөөд 
+              сонгосон өрөөнүүдтэй холбоотой бүх мэдээлэл устах болно.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Цуцлах</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Бүгдийг устгах
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

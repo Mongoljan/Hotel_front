@@ -103,10 +103,17 @@ export interface FlattenRow extends GridValidRowModel {
   adultQty?: number;
   childQty?: number;
   bedType?: number;
-  commonFeaturesArr: string[];
-  thisRoomExtraFeaturesArr?: string[];
+  // Separate feature arrays for each category
+  commonFacilitiesArr: string[];
+  thisRoomExtraFacilitiesArr?: string[];
   commonBathroomArr: string[];
   thisRoomExtraBathroomArr?: string[];
+  commonToiletriesArr: string[];
+  thisRoomExtraToiletriesArr?: string[];
+  commonFoodDrinkArr: string[];
+  thisRoomExtraFoodDrinkArr?: string[];
+  commonOutdoorViewArr: string[];
+  thisRoomExtraOutdoorViewArr?: string[];
   leafRoomId?: number;
 }
 

@@ -220,8 +220,8 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
         }
 
         const [allRes, roomsRes, pricesRes] = await Promise.all([
-          fetch(`https://dev.kacc.mn/api/all-data/`),
-          fetch(`https://dev.kacc.mn/api/roomsNew/?token=${token}`),
+          fetch(`/api/lookup?token=${token}`),
+          fetch(`/api/rooms?token=${token}`),
           fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}`)
         ]);
         if (!allRes.ok || !roomsRes.ok || !pricesRes.ok) throw new Error("Fetch failed");

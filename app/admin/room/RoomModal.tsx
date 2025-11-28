@@ -49,8 +49,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const API_COMBINED_DATA = "https://dev.kacc.mn/api/all-data/";
-const API_CREATE_ROOM = "https://dev.kacc.mn/api/roomsNew/";
+const API_COMBINED_DATA = "/api/lookup";
+const API_CREATE_ROOM = "/api/rooms";
 
 ///////////////////////////////////////
 //–– Types & Interfaces ––//
@@ -196,10 +196,12 @@ export default function RoomModal({
     const numberOfRooms = watch("number_of_rooms");
     const numberOfRoomsToSell = watch("number_of_rooms_to_sell");
 
-    // Check for duplicate room_type + category combination
-    const hasDuplicateCombination = checkDuplicateRoomTypeCategoryCombination(roomType, roomCategory);
-    if (hasDuplicateCombination) {
-      return false;
+    // Check for duplicate room_type + category combination (only when creating new room)
+    if (!roomToEdit) {
+      const hasDuplicateCombination = checkDuplicateRoomTypeCategoryCombination(roomType, roomCategory);
+      if (hasDuplicateCombination) {
+        return false;
+      }
     }
 
     // Check if at least one image is uploaded
@@ -312,11 +314,19 @@ export default function RoomModal({
     if (!roomType || !roomCategory) return false;
 
     // When editing, allow the same combination if it's the same room being edited
-    const hasDuplicate = existingRooms.some(room =>
-      room.room_type === Number(roomType) &&
-      room.room_category === Number(roomCategory) &&
-      (!roomToEdit || room.id !== roomToEdit.id)
-    );
+    const hasDuplicate = existingRooms.some(room => {
+      const isSameType = room.room_type === Number(roomType);
+      const isSameCategory = room.room_category === Number(roomCategory);
+      const isSameRoom = roomToEdit && room.id === roomToEdit.id;
+      
+      // If we're editing and this is the same room, don't count it as duplicate
+      if (isSameRoom) {
+        return false;
+      }
+      
+      // Otherwise, check if type + category match
+      return isSameType && isSameCategory;
+    });
 
     return hasDuplicate;
   };
@@ -367,10 +377,11 @@ export default function RoomModal({
 
   // When the modal opens (or roomToEdit changes), fetch combined lookup data & possibly pre‐fill form
   useEffect(() => {
-    // 1) Fetch /api/all-data/
+    // 1) Fetch /api/lookup with token
     const fetchCombined = async () => {
       try {
-        const resp = await fetch(API_COMBINED_DATA);
+        const token = await getClientBackendToken() || "";
+        const resp = await fetch(`${API_COMBINED_DATA}?token=${encodeURIComponent(token)}`);
         const data = await resp.json();
         setCombinedData({
           roomTypes: data.room_types || [],
@@ -510,8 +521,8 @@ export default function RoomModal({
 
   // Submit handler: POST if new, PUT if editing
   const onSubmit: SubmitHandler<FormFields> = async (formData) => {
-    // Check for duplicate room_type + category combination
-    if (checkDuplicateRoomTypeCategoryCombination(formData.room_type, formData.room_category)) {
+    // Check for duplicate room_type + category combination (only when creating new room)
+    if (!roomToEdit && checkDuplicateRoomTypeCategoryCombination(formData.room_type, formData.room_category)) {
       toast.error("Энэ өрөөний төрөл ба ангиллын хослол аль хэдийн бүртгэгдсэн байна. Өөр хослол сонгоно уу.");
       setStep(1);
       return;
@@ -607,22 +618,26 @@ export default function RoomModal({
       const token = await getClientBackendToken() || "";
       const isEdit = roomToEdit !== null;
 
-      // If editing, do PUT /api/roomsNew/<id>/?token=
-      // If creating, do POST /api/roomsNew/?token=
-      const url = isEdit
-        ? `${API_CREATE_ROOM}${roomToEdit!.id}/?token=${token}`
-        : `${API_CREATE_ROOM}?token=${token}`;
+      // If editing, do PUT /api/rooms with id in body
+      // If creating, do POST /api/rooms
+      const url = `${API_CREATE_ROOM}?token=${token}`;
       const method = isEdit ? "PUT" : "POST";
+
+      // For PUT, include id in the body
+      const bodyData = isEdit ? { ...transformedData, id: roomToEdit!.id } : transformedData;
 
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(transformedData),
+        body: JSON.stringify(bodyData),
       });
 
       if (!response.ok) {
         const err = await response.json();
-        throw new Error(err.RoomNo || "Unknown server error");
+        // Handle various error response formats
+        const errorMessage = err.RoomNo || err.message || err.error || err.detail || `Server error: ${response.status}`;
+        console.error("Server error response:", err);
+        throw new Error(errorMessage);
       }
 
       // Success
@@ -749,6 +764,7 @@ export default function RoomModal({
                   key={`room_type-${roomToEdit?.id || 'new'}-${watch("room_type")}`}
                   onValueChange={(value) => setValue("room_type", value)} 
                   value={watch("room_type") || undefined}
+                  disabled={!!roomToEdit}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="-- Сонгох --" />
@@ -781,6 +797,7 @@ export default function RoomModal({
                   key={`room_category-${roomToEdit?.id || 'new'}-${watch("room_category")}`}
                   onValueChange={(value) => setValue("room_category", value)} 
                   value={watch("room_category") || undefined}
+                  disabled={!!roomToEdit}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="-- Сонгох --" />
@@ -805,8 +822,8 @@ export default function RoomModal({
               </div>
             </section>
 
-            {/* Alert for duplicate room_type + category combination */}
-            {hasDuplicateCombination && (
+            {/* Alert for duplicate room_type + category combination - only show when creating new room */}
+            {hasDuplicateCombination && !roomToEdit && (
               <Alert variant="destructive" className="mt-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>

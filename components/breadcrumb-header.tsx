@@ -49,8 +49,8 @@ export function BreadcrumbHeader() {
   });
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
-      <div className="flex items-center justify-between w-full px-8 md:px-16 lg:px-24 xl:px-32 2xl:px-40 max-w-screen-2xl mx-auto">
+    <header className="flex h-10 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-9 border-b">
+      <div className="flex items-center justify-between w-full px-1 md:px-1.5 lg:px-2 xl:px-3 2xl:px-4 max-w-screen-2xl mx-auto">
         <div className="flex items-center gap-2">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />

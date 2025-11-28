@@ -11,7 +11,12 @@ import {
   IconUsers,
   IconShield,
   IconUser,
-  IconLogin
+  IconLogin,
+  IconDoor,
+  IconSparkles,
+  IconUserPlus,
+  IconCoins,
+  IconHelp
 } from '@tabler/icons-react';
 
 export type NavItem = {
@@ -33,6 +38,13 @@ export const navItems: NavItem[] = [
     shortcut: ['d', 'd'],
   },
   {
+    title: 'Ресепшн',
+    i18nKey: 'reception',
+    url: '/admin/reception',
+    icon: IconUsers,
+    shortcut: ['r', 'r'],
+  },
+  {
     title: 'Захиалгууд',
     i18nKey: 'bookings',
     url: '/admin/bookings',
@@ -40,11 +52,32 @@ export const navItems: NavItem[] = [
     shortcut: ['b', 'b'],
   },
   {
+    title: 'Цэвэрлэгээ',
+    i18nKey: 'housekeeping',
+    url: '/admin/housekeeping',
+    icon: IconSparkles,
+    shortcut: ['h', 'h'],
+  },
+  {
+    title: 'Өрөө блок',
+    i18nKey: 'roomBlocks',
+    url: '/admin/room-blocks',
+    icon: IconDoor,
+    shortcut: ['k', 'k'],
+  },
+  {
     title: 'Төлбөр тооцоо',
     i18nKey: 'billing',
     url: '/admin/billing',
     icon: IconReceipt,
     shortcut: ['p', 'p'],
+  },
+  {
+    title: 'Зочны бүртгэл',
+    i18nKey: 'guestRegistration',
+    url: '/admin/guest-registration',
+    icon: IconUserPlus,
+    shortcut: ['g', 'g'],
   },
   {
     title: 'Дэмжлэг',
@@ -97,16 +130,42 @@ export const navItems: NavItem[] = [
         icon: IconUsers,
       },
       {
-        title: 'Ажилчид',
-        i18nKey: 'workers',
-        url: '/admin/workers',
-        icon: IconUser,
+        title: 'Нэмэлт үйлчилгээ',
+        i18nKey: 'additionalServices',
+        url: '/admin/additional-services',
+        icon: IconSparkles,
       },
       {
-        title: 'Эрх',
-        i18nKey: 'permissions',
-        url: '/admin/permissions',
+        title: 'Валют',
+        i18nKey: 'currency',
+        url: '/admin/currency',
+        icon: IconCoins,
+      },
+      {
+        title: 'Админ эрх',
+        i18nKey: 'adminRights',
+        url: '#',
         icon: IconShield,
+        items: [
+          {
+            title: 'Ажилчид',
+            i18nKey: 'workers',
+            url: '/admin/workers',
+            icon: IconUser,
+          },
+          {
+            title: 'Эрх',
+            i18nKey: 'permissions',
+            url: '/admin/permissions',
+            icon: IconShield,
+          },
+        ],
+      },
+      {
+        title: 'Түгээмэл асуулт',
+        i18nKey: 'faq',
+        url: '/admin/faq',
+        icon: IconHelp,
       },
     ],
   },

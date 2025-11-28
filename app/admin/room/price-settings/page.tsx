@@ -91,9 +91,9 @@ export default function PriceSettingsPage() {
         console.log('🔑 Token acquired, fetching data...');
 
         const [allRes, settingsRes, roomsRes] = await Promise.all([
-          fetch(`https://dev.kacc.mn/api/all-data/`),
+          fetch(`/api/lookup?token=${token}`),
           fetch(`https://dev.kacc.mn/api/pricesettings/?hotel=${hotel}`),
-          fetch(`https://dev.kacc.mn/api/roomsNew/?token=${token}`) // Correct endpoint with token
+          fetch(`/api/rooms?token=${token}`) // Use local API with token
         ]);
 
         if (!allRes.ok || !settingsRes.ok) {
@@ -108,7 +108,7 @@ export default function PriceSettingsPage() {
         console.log('✅ Fetched all-data:', allData);
         console.log('✅ Fetched price settings:', settings);
         console.log('✅ Fetched actual rooms from API:', rooms);
-        console.log('🔗 Rooms API URL:', `https://dev.kacc.mn/api/roomsNew/?token=${token ? '[TOKEN]' : 'MISSING'}`);
+        console.log('🔗 Rooms API URL:', `/api/rooms?token=${token ? '[TOKEN]' : 'MISSING'}`);
 
         setLookup(allData);
         setPriceSettings(settings);

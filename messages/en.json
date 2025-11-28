@@ -201,11 +201,32 @@
     "signOut":"Sign Out"
     },
     "Sidebar":{
+      "dashboard": "Dashboard",
+      "reception": "Reception",
+      "bookings": "Booking List",
+      "housekeeping": "Housekeeping",
+      "roomBlocks": "Room Blocks",
+      "billing": "Billing",
+      "guestRegistration": "Guest Registration",
+      "support": "Q&A",
+      "settings": {
+        "title": "Settings",
+        "hotelInfo": "Hotel Information",
+        "roomRegistration": "Room Registration",
+        "roomPrice": "Room Price",
+        "priceSettings": "Price Settings",
+        "internalRules": "Internal Rules",
+        "corporatePartners": "Corporate Partners",
+        "additionalServices": "Additional Services",
+        "currency": "Currency",
+        "adminRights": "Admin Rights",
+        "faq": "FAQ"
+      },
       "hotelManagement":"Hotel management",
       "rooms":"Rooms",
-       "addRooms":"Add rooms",
-        "roomPrice":"Rooms' price"
-      },
+      "addRooms":"Add rooms",
+      "roomPrice":"Rooms' price"
+    },
       
     
  
@@ -238,7 +259,7 @@
   },
   "Rooms": {
     "table": {
-      "title": "Room management",
+      "title": "Rooms",
       "caption": "Track availability, amenities, and housekeeping status for every room."
     },
     "columns": {
@@ -267,6 +288,16 @@
       "dataRefreshed": "Room data refreshed",
       "next": "Next"
     },
+    "sync": {
+      "notSynced": "Not synced yet",
+      "justNow": "Synced just now",
+      "minutesAgo": "{minutes} minutes ago",
+      "hoursAgo": "{hours} hours ago",
+      "daysAgo": "{days} days ago"
+    },
+    "search": {
+      "placeholder": "Search rooms, descriptions, amenities..."
+    },
     "empty": {
       "title": "No rooms yet",
       "caption": "Add your first room to start managing inventory and pricing.",
@@ -280,18 +311,26 @@
   "Navigation": {
     "platform": "Platform",
     "dashboard": "Dashboard",
+    "reception": "Reception",
     "bookings": "Bookings",
-    "rooms": "Rooms",
+    "housekeeping": "Housekeeping",
+    "roomBlocks": "Room Blocks",
     "billing": "Billing",
+    "guestRegistration": "Guest Registration",
     "support": "Support",
     "settings": "Settings",
     "hotelInfo": "Hotel Information",
+    "rooms": "Rooms",
     "roomPrice": "Room Price",
     "priceSettings": "Price Settings",
     "policies": "Policies",
     "corporate": "Corporate",
+    "additionalServices": "Additional Services",
+    "currency": "Currency",
+    "adminRights": "Admin Rights",
     "workers": "Workers",
     "permissions": "Permissions",
+    "faq": "FAQ",
     "sidebarMobileTitle": "Sidebar navigation",
     "waitingApproval": "Waiting for approval...",
     "completeRegistration": "Complete hotel registration to unlock all features"
@@ -947,5 +986,13 @@
     "authRequired": "Authentication required",
     "fillAllFields": "Please fill all fields",
     "invalidEmail": "Invalid email address"
+  },
+  "Export": {
+    "button": "Export",
+    "csv": "Download CSV",
+    "success": "{count} rows exported",
+    "noData": "No data to export",
+    "yes": "Yes",
+    "no": "No"
   }
 }

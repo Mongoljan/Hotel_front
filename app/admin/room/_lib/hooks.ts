@@ -47,6 +47,8 @@ export const useRoomData = ({
   const [authError, setAuthError] = useState<string | null>(null);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const fetchInProgressRef = useRef(false);
 
   useEffect(() => {
     onAuthLostRef.current = onAuthLost;
@@ -66,6 +68,12 @@ export const useRoomData = ({
   }, []);
 
   const fetchRooms = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (fetchInProgressRef.current) {
+      return;
+    }
+    
+    fetchInProgressRef.current = true;
     setLoading(true);
     let usedCache = false;
 
@@ -90,7 +98,7 @@ export const useRoomData = ({
       setAuthError(null);
 
       const [allRes, roomsRes] = await Promise.all([
-        fetch(ROOM_API_ENDPOINTS.lookup),
+        fetch(`${ROOM_API_ENDPOINTS.lookup}?token=${encodeURIComponent(token)}`),
         fetch(`${ROOM_API_ENDPOINTS.rooms}?token=${encodeURIComponent(token)}`)
       ]);
 
@@ -142,7 +150,11 @@ export const useRoomData = ({
       const now = Date.now();
       setLastSynced(new Date(now));
       writeRoomCache({ lookup: lookupPayload, rooms: roomsPayload, syncedAt: now });
-      toast.success(t('Rooms.actions.dataRefreshed'));
+      
+      // Only show toast on explicit refresh (not initial load or when adding a room)
+      if (!isInitialLoad && !isRoomAdded) {
+        toast.success(t('Rooms.actions.dataRefreshed'));
+      }
     } catch (error) {
       console.error("Room data fetch failed", error);
       if (!usedCache) {
@@ -154,11 +166,13 @@ export const useRoomData = ({
       }
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
+      fetchInProgressRef.current = false;
       if (isRoomAdded) {
         setIsRoomAdded(false);
       }
     }
-  }, [hydrateFromCache, isRoomAdded, setIsRoomAdded]);
+  }, [hydrateFromCache, isRoomAdded, setIsRoomAdded, isInitialLoad, t]);
 
   useEffect(() => {
     fetchRooms();

@@ -227,11 +227,32 @@
   },
   
   "Sidebar":{
+    "dashboard": "Дашбоард",
+    "reception": "Ресепшн",
+    "bookings": "Захиалгын жагсаалт",
+    "housekeeping": "Цэвэрлэгээ",
+    "roomBlocks": "Өрөө блок",
+    "billing": "Төлбөр тооцоо",
+    "guestRegistration": "Зочны бүртгэл",
+    "support": "Асуулт хариулт",
+    "settings": {
+      "title": "Тохиргоо",
+      "hotelInfo": "Буудлын мэдээлэл",
+      "roomRegistration": "Өрөө бүртгэл",
+      "roomPrice": "Өрөөний үнэ",
+      "priceSettings": "Үнийн тохиргоо",
+      "internalRules": "Дотоод журам",
+      "corporatePartners": "Гэрээт байгууллага",
+      "additionalServices": "Нэмэлт үйлчилгээ",
+      "currency": "Валют",
+      "adminRights": "Админ эрх",
+      "faq": "Түгээмэл асуулт, хариулт"
+    },
     "hotelManagement":"Буудлын бүртгэл",
     "rooms":"Буудлын өрөөнүүд",
     "addRooms":"Өрөө нэмэх",
-        "roomPrice":"Өрөөнүүдийн үнэ"
-    },
+    "roomPrice":"Өрөөнүүдийн үнэ"
+  },
   "AuthLogin":{
     "signIn":"Нэвтрэх",
      "signUp":"Бүртгүүлэх",
@@ -254,7 +275,7 @@
   },
   "Rooms": {
     "table": {
-      "title": "Өрөөний удирдлага",
+      "title": "Өрөөнүүд",
       "caption": "Өрөө тус бүрийн нөөц, онцлог, үйлчилгээний байдлыг хянаарай."
     },
     "columns": {
@@ -282,6 +303,16 @@
       "syncData": "Өгөгдөл синхрон хийх",
       "dataRefreshed": "Өрөөний өгөгдөл шинэчлэгдлээ",
       "next": "Дараах"
+    },
+    "sync": {
+      "notSynced": "Синхрон хийгээгүй",
+      "justNow": "Саяхан шинэчлэгдсэн",
+      "minutesAgo": "{minutes} минутын өмнө",
+      "hoursAgo": "{hours} цагийн өмнө",
+      "daysAgo": "{days} өдрийн өмнө"
+    },
+    "search": {
+      "placeholder": "Өрөө, тайлбар, тохижилт хайх..."
     },
     "hero": {
       "badge": "Өрөөний үйл ажиллагаа",
@@ -317,18 +348,26 @@
   "Navigation": {
     "platform": "Платформ",
     "dashboard": "Хянах самбар",
+    "reception": "Ресепшн",
     "bookings": "Захиалгууд",
-    "rooms": "Өрөөнүүд",
+    "housekeeping": "Цэвэрлэгээ",
+    "roomBlocks": "Өрөө блок",
     "billing": "Төлбөр тооцоо",
+    "guestRegistration": "Зочны бүртгэл",
     "support": "Дэмжлэг",
     "settings": "Тохиргоо",
     "hotelInfo": "Буудлын мэдээлэл",
+    "rooms": "Өрөөнүүд",
     "roomPrice": "Өрөөний үнэ",
     "priceSettings": "Үнийн тохиргоо",
     "policies": "Бодлого",
     "corporate": "Байгууллага",
+    "additionalServices": "Нэмэлт үйлчилгээ",
+    "currency": "Валют",
+    "adminRights": "Админ эрх",
     "workers": "Ажилчид",
     "permissions": "Эрх",
+    "faq": "Түгээмэл асуулт, хариулт",
     "sidebarMobileTitle": "Хажуугийн цэс",
     "waitingApproval": "Зөвшөөрөл хүлээгдэж байна...",
     "completeRegistration": "Буудлын бүртгэлийг дуусгаснаар бүх цэс нээгдэнэ"
@@ -984,5 +1023,13 @@
     "authRequired": "Нэвтрэх шаардлагатай",
     "fillAllFields": "Бүх талбарыг бөглөнө үү",
     "invalidEmail": "И-мэйл буруу байна"
+  },
+  "Export": {
+    "button": "Экспорт",
+    "csv": "CSV татах",
+    "success": "{count} мөр экспортлогдлоо",
+    "noData": "Экспортлох өгөгдөл байхгүй",
+    "yes": "Тийм",
+    "no": "Үгүй"
   }
 }

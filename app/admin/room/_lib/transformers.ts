@@ -79,6 +79,23 @@ export const buildLookupMaps = (rawRooms: RoomData[], lookup: AllData): LookupMa
   };
 };
 
+// Helper to find intersection of arrays
+const intersectLists = (arrays: string[][]): string[] => {
+  if (arrays.length === 0) return [];
+  if (arrays.length === 1) return arrays[0];
+  
+  const firstSet = new Set(arrays[0]);
+  const result: string[] = [];
+  
+  for (const item of firstSet) {
+    if (arrays.every(arr => arr.includes(item))) {
+      result.push(item);
+    }
+  }
+  
+  return result;
+};
+
 type FlattenRowsParams = {
   lookupMaps: LookupMaps;
   expandedKeys: Set<string>;
@@ -130,21 +147,37 @@ export const createFlattenedRows = ({
       facilitiesMapEn: lookupMaps.facilitiesMapEn
     });
 
-    // Use features from the representative room only, not intersection of all rooms
-    const commonFeaturesArr = Array.from(
-      new Set(
-        [
-          ...(representativeRoom.room_Facilities || []).map((id) => lookupMaps.facilitiesMapMn.get(id)),
-          ...(representativeRoom.free_Toiletries || []).map((id) => lookupMaps.toiletriesMap.get(id)),
-          ...(representativeRoom.food_And_Drink || []).map((id) => lookupMaps.foodDrinkMap.get(id)),
-          ...(representativeRoom.outdoor_And_View || []).map((id) => lookupMaps.outdoorViewMap.get(id))
-        ].filter((value): value is string => Boolean(value))
-      )
-    );
+    // Calculate intersection of features across ALL rooms in this group
+    const collectNames = (
+      ids: number[] | undefined,
+      map: Map<number, string>
+    ): string[] => Array.from(new Set((ids ?? []).map((id) => map.get(id)).filter(Boolean))) as string[];
 
-    const commonBathroomArr = (representativeRoom.bathroom_Items || [])
-      .map((id) => lookupMaps.bathroomItemsMap.get(id))
-      .filter((value): value is string => Boolean(value));
+    // Calculate intersections for each feature type separately
+    const allRoomFacilitiesSets = group.rooms.map(room =>
+      collectNames(room.room_Facilities, lookupMaps.facilitiesMapMn)
+    );
+    const commonFacilitiesArr = intersectLists(allRoomFacilitiesSets);
+
+    const allRoomBathroomSets = group.rooms.map(room =>
+      collectNames(room.bathroom_Items, lookupMaps.bathroomItemsMap)
+    );
+    const commonBathroomArr = intersectLists(allRoomBathroomSets);
+
+    const allRoomToiletriesSets = group.rooms.map(room =>
+      collectNames(room.free_Toiletries, lookupMaps.toiletriesMap)
+    );
+    const commonToiletriesArr = intersectLists(allRoomToiletriesSets);
+
+    const allRoomFoodDrinkSets = group.rooms.map(room =>
+      collectNames(room.food_And_Drink, lookupMaps.foodDrinkMap)
+    );
+    const commonFoodDrinkArr = intersectLists(allRoomFoodDrinkSets);
+
+    const allRoomOutdoorViewSets = group.rooms.map(room =>
+      collectNames(room.outdoor_And_View, lookupMaps.outdoorViewMap)
+    );
+    const commonOutdoorViewArr = intersectLists(allRoomOutdoorViewSets);
 
     // Collect images from the representative room only
     const imageSet = new Set<string>();
@@ -201,10 +234,16 @@ export const createFlattenedRows = ({
       adultQty: undefined,
       childQty: undefined,
       bedType: undefined,
-      commonFeaturesArr,
-      thisRoomExtraFeaturesArr: undefined,
+      commonFacilitiesArr,
+      thisRoomExtraFacilitiesArr: undefined,
       commonBathroomArr,
       thisRoomExtraBathroomArr: undefined,
+      commonToiletriesArr,
+      thisRoomExtraToiletriesArr: undefined,
+      commonFoodDrinkArr,
+      thisRoomExtraFoodDrinkArr: undefined,
+      commonOutdoorViewArr,
+      thisRoomExtraOutdoorViewArr: undefined,
       leafRoomId: undefined
     });
 
@@ -226,21 +265,26 @@ export const createFlattenedRows = ({
         map: Map<number, string>
       ): string[] => Array.from(new Set((ids ?? []).map((id) => map.get(id)).filter(Boolean))) as string[];
 
-      const fullFeatureSet = new Set<string>([
-        ...collectNames(room.room_Facilities, lookupMaps.facilitiesMapMn),
-        ...collectNames(room.free_Toiletries, lookupMaps.toiletriesMap),
-        ...collectNames(room.food_And_Drink, lookupMaps.foodDrinkMap),
-        ...collectNames(room.outdoor_And_View, lookupMaps.outdoorViewMap)
-      ]);
+      // Calculate extras for each feature type separately
+      const roomFacilities = new Set<string>(collectNames(room.room_Facilities, lookupMaps.facilitiesMapMn));
+      commonFacilitiesArr.forEach((item: string) => roomFacilities.delete(item));
+      const thisRoomExtraFacilitiesArr = Array.from(roomFacilities);
 
-      commonFeaturesArr.forEach((feature) => fullFeatureSet.delete(feature));
-      const thisRoomExtraFeaturesArr = Array.from(fullFeatureSet);
+      const roomBathroom = new Set<string>(collectNames(room.bathroom_Items, lookupMaps.bathroomItemsMap));
+      commonBathroomArr.forEach((item: string) => roomBathroom.delete(item));
+      const thisRoomExtraBathroomArr = Array.from(roomBathroom);
 
-      const fullBathroomSet = new Set<string>(
-        collectNames(room.bathroom_Items, lookupMaps.bathroomItemsMap)
-      );
-      commonBathroomArr.forEach((bath) => fullBathroomSet.delete(bath));
-      const thisRoomExtraBathroomArr = Array.from(fullBathroomSet);
+      const roomToiletries = new Set<string>(collectNames(room.free_Toiletries, lookupMaps.toiletriesMap));
+      commonToiletriesArr.forEach((item: string) => roomToiletries.delete(item));
+      const thisRoomExtraToiletriesArr = Array.from(roomToiletries);
+
+      const roomFoodDrink = new Set<string>(collectNames(room.food_And_Drink, lookupMaps.foodDrinkMap));
+      commonFoodDrinkArr.forEach((item: string) => roomFoodDrink.delete(item));
+      const thisRoomExtraFoodDrinkArr = Array.from(roomFoodDrink);
+
+      const roomOutdoorView = new Set<string>(collectNames(room.outdoor_And_View, lookupMaps.outdoorViewMap));
+      commonOutdoorViewArr.forEach((item: string) => roomOutdoorView.delete(item));
+      const thisRoomExtraOutdoorViewArr = Array.from(roomOutdoorView);
 
       rows.push({
         id: `${key}-${room.room_number}`,
@@ -266,10 +310,16 @@ export const createFlattenedRows = ({
         adultQty: room.adultQty,
         childQty: room.childQty,
         bedType: bedTypeForIcon,
-        commonFeaturesArr: [],
-        thisRoomExtraFeaturesArr,
+        commonFacilitiesArr: [],
+        thisRoomExtraFacilitiesArr,
         commonBathroomArr: [],
         thisRoomExtraBathroomArr,
+        commonToiletriesArr: [],
+        thisRoomExtraToiletriesArr,
+        commonFoodDrinkArr: [],
+        thisRoomExtraFoodDrinkArr,
+        commonOutdoorViewArr: [],
+        thisRoomExtraOutdoorViewArr,
         leafRoomId: room.id
       });
     });
@@ -341,18 +391,36 @@ export const calculateRoomInsights = (
   };
 };
 
-export const getRelativeSyncedLabel = (lastSynced: Date | null): string => {
-  if (!lastSynced) return "Not synced yet";
+type SyncTranslationFn = (key: string, values?: Record<string, number>) => string;
+
+export const getRelativeSyncedLabel = (
+  lastSynced: Date | null,
+  t?: SyncTranslationFn
+): string => {
+  // Fallback to hardcoded strings if translation function is not provided
+  if (!t) {
+    if (!lastSynced) return "Синхрон хийгээгүй";
+    const diffMs = Date.now() - lastSynced.getTime();
+    if (diffMs < 60_000) return "Саяхан шинэчлэгдсэн";
+    const minutes = Math.round(diffMs / 60_000);
+    if (minutes < 60) return `${minutes} минутын өмнө`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `${hours} цагийн өмнө`;
+    const days = Math.round(hours / 24);
+    return `${days} өдрийн өмнө`;
+  }
+
+  if (!lastSynced) return t('sync.notSynced');
 
   const diffMs = Date.now() - lastSynced.getTime();
-  if (diffMs < 60_000) return "Synced just now";
+  if (diffMs < 60_000) return t('sync.justNow');
 
   const minutes = Math.round(diffMs / 60_000);
-  if (minutes < 60) return `Synced ${minutes} min ago`;
+  if (minutes < 60) return t('sync.minutesAgo', { minutes });
 
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `Synced ${hours} hr${hours > 1 ? "s" : ""} ago`;
+  if (hours < 24) return t('sync.hoursAgo', { hours });
 
   const days = Math.round(hours / 24);
-  return `Synced ${days} day${days > 1 ? "s" : ""} ago`;
+  return t('sync.daysAgo', { days });
 };

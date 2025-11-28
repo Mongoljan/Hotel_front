@@ -1,13 +1,11 @@
-'use client';
-
-import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import LoginForm from './LoginForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
 
-export default function LoginPage() {
-  const t = useTranslations('AuthLogin');
-  const tFooter = useTranslations('Footer');
+export default async function LoginPage() {
+  const t = await getTranslations('AuthLogin');
+  const tFooter = await getTranslations('Footer');
   const year = new Date().getFullYear();
 
   return (

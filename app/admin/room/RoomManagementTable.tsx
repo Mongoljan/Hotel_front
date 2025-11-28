@@ -147,7 +147,7 @@ export function RoomManagementTable({ rooms, lookups, onEdit, onDeleted, loading
     try {
       const token = await getClientBackendToken();
       if (!token) throw new Error("Missing token");
-      const response = await fetch(`https://dev.kacc.mn/api/roomsNew/${roomToDelete}/?token=${token}`, {
+      const response = await fetch(`/api/rooms?id=${roomToDelete}&token=${token}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete");

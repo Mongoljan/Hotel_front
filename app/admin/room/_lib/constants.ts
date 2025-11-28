@@ -7,6 +7,6 @@ export const ROOM_CACHE_KEYS = {
 } as const;
 
 export const ROOM_API_ENDPOINTS = {
-  lookup: "https://dev.kacc.mn/api/all-data/",
-  rooms: "https://dev.kacc.mn/api/roomsNew/"
+  lookup: "/api/lookup",
+  rooms: "/api/rooms"
 } as const;
