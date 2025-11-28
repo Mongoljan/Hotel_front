@@ -216,11 +216,12 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
 
         // If it's a group row and it's NOT expanded, add a preview row
         if (row.isGroup && row.arrowPlaceholder && !expanded.has(row.arrowPlaceholder)) {
+          console.log('Adding preview row for group:', row.id, 'roomNumbersStr:', row.roomNumbersStr);
           rowsWithPreviews.push({
             ...row,
             id: `${row.id}-preview`,
             isPreviewRow: true,
-          } as any);
+          } as FlattenRow);
         }
       });
 
@@ -414,40 +415,53 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       id: "expand",
       header: "",
       cell: ({ row, table }) => {
-        // Preview row - return special marker that we'll handle in custom table rendering
+        // Preview row - thin row showing room numbers when collapsed
         if (row.original.isPreviewRow) {
           const roomNumbers = row.original.roomNumbersStr || "";
-          const roomNumbersArray = roomNumbers.split(",").map(n => n.trim());
+          console.log('Preview row rendering:', row.original.id, 'roomNumbers:', roomNumbers);
+          
+          // If no room numbers, don't show anything
+          if (!roomNumbers.trim()) {
+            console.log('Preview row empty - no roomNumbers');
+            return null;
+          }
+          
+          const roomNumbersArray = roomNumbers.split(",").map(n => n.trim()).filter(n => n);
+          
+          // If no valid room numbers after filtering, don't show
+          if (roomNumbersArray.length === 0) {
+            console.log('Preview row empty - no valid room numbers after filter');
+            return null;
+          }
+          
           const shouldTruncate = roomNumbersArray.length > 10;
           const displayNumbers = shouldTruncate
             ? roomNumbersArray.slice(0, 10).join(", ") + "..."
-            : roomNumbers;
+            : roomNumbersArray.join(", ");
 
           return (
-            <div className="preview-row-content py-2 px-4 ">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="font-medium text-muted-foreground whitespace-nowrap">Өрөөний №:</span>
-                <span className="text-muted-foreground/80">{displayNumbers}</span>
-                {shouldTruncate && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 w-5 p-0 rounded-full hover:bg-muted"
-                      >
-                        <Info className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-sm">Бүх өрөөний дугаарууд</h4>
-                        <p className="text-sm text-muted-foreground">{roomNumbers}</p>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
-              </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-medium text-muted-foreground whitespace-nowrap">Өрөөний №:</span>
+              <span className="text-foreground/70">{displayNumbers}</span>
+              {shouldTruncate && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-1.5 text-xs rounded hover:bg-muted"
+                    >
+                      <span className="text-muted-foreground">+{roomNumbersArray.length - 10} бусад</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Бүх өрөөний дугаарууд ({roomNumbersArray.length})</h4>
+                      <p className="text-sm text-muted-foreground">{roomNumbersArray.join(", ")}</p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           );
         }

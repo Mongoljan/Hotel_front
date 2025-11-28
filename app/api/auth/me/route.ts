@@ -14,7 +14,12 @@ export async function GET() {
       )
     }
 
-    // Return non-sensitive user info
+    // Calculate remaining session time
+    const now = Math.floor(Date.now() / 1000)
+    const expiresIn = payload.exp ? payload.exp - now : 0
+    const expiresAt = payload.exp ? payload.exp * 1000 : Date.now() + 30 * 60 * 1000
+
+    // Return non-sensitive user info with session info
     return NextResponse.json({
       user: {
         id: payload.id,
@@ -26,6 +31,10 @@ export async function GET() {
         approved: payload.approved,
         hotelApproved: payload.hotelApproved,
         user_type: payload.user_type
+      },
+      session: {
+        expiresAt,
+        expiresIn, // seconds remaining
       }
     })
 

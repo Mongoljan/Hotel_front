@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// ISR Configuration - Revalidate every 24 hours (reference data rarely changes)
-export const revalidate = 86400; // 24 hours in seconds
+// Force dynamic rendering - this route uses request.url which requires dynamic rendering
+export const dynamic = 'force-dynamic';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn';
 

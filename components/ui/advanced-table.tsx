@@ -399,12 +399,16 @@ export function AdvancedTable<TData, TValue>({
                   const isPreviewRow = (row.original as any)?.isPreviewRow;
 
                   if (isPreviewRow) {
-                    // Render preview row spanning all columns
-                    const firstCell = row.getVisibleCells()[0];
+                    // Render preview row spanning all columns - thin row for room numbers
+                    // Find the cell that has the preview content (usually the expand column)
+                    const cells = row.getVisibleCells();
+                    const expandCell = cells.find(cell => cell.column.id === 'expand');
+                    const cellToRender = expandCell || cells[0];
+                    
                     return (
-                      <TableRow key={row.id}>
-                        <TableCell colSpan={row.getVisibleCells().length}>
-                          {firstCell && flexRender(firstCell.column.columnDef.cell, firstCell.getContext())}
+                      <TableRow key={row.id} className="border-b border-border/30">
+                        <TableCell colSpan={cells.length} className="py-1.5 px-4">
+                          {cellToRender && flexRender(cellToRender.column.columnDef.cell, cellToRender.getContext())}
                         </TableCell>
                       </TableRow>
                     );

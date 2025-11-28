@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import UserStorage from '@/utils/storage'
 
@@ -23,12 +23,15 @@ interface AuthState {
   hotel: string | null
   isUserApproved: boolean
   isHotelApproved: boolean
+  sessionExpiresAt: number | null  // timestamp in ms
 }
 
 export function useAuth(): AuthState & {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; code?: string }>
   logout: () => Promise<void>
-  refreshSession: () => Promise<void>
+  refreshSession: () => Promise<{ success: boolean; error?: string }>
+  sessionTimeRemaining: number | null  // seconds remaining
+  isRefreshing: boolean
 } {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
@@ -38,7 +41,10 @@ export function useAuth(): AuthState & {
     hotel: null,
     isUserApproved: false,
     isHotelApproved: false,
+    sessionExpiresAt: null,
   })
+  const [sessionTimeRemaining, setSessionTimeRemaining] = useState<number | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const router = useRouter()
 
@@ -67,6 +73,7 @@ export function useAuth(): AuthState & {
           hotel: data.user.hotel,
           isUserApproved: data.user.approved,
           isHotelApproved: data.user.hotelApproved,
+          sessionExpiresAt: data.session?.expiresAt || null,
         })
         console.log('useAuth: Auth state updated with user data')
       } else {
@@ -78,6 +85,7 @@ export function useAuth(): AuthState & {
           hotel: null,
           isUserApproved: false,
           isHotelApproved: false,
+          sessionExpiresAt: null,
         })
       }
     } catch (error) {
@@ -90,6 +98,7 @@ export function useAuth(): AuthState & {
         hotel: null,
         isUserApproved: false,
         isHotelApproved: false,
+        sessionExpiresAt: null,
       })
     }
   }
@@ -120,6 +129,7 @@ export function useAuth(): AuthState & {
           hotel: data.user.hotel,
           isUserApproved: data.user.approved,
           isHotelApproved: data.user.hotelApproved,
+          sessionExpiresAt: data.session?.expiresAt || Date.now() + 30 * 60 * 1000,
         })
         return { success: true }
       } else {
@@ -162,13 +172,52 @@ export function useAuth(): AuthState & {
         hotel: null,
         isUserApproved: false,
         isHotelApproved: false,
+        sessionExpiresAt: null,
       })
       router.push('/auth/login')
     }
   }
 
-  const refreshSession = async () => {
-    await fetchSession()
+  const refreshSession = async (): Promise<{ success: boolean; error?: string }> => {
+    setIsRefreshing(true)
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        
+        // Update auth state with refreshed data
+        setAuthState(prev => ({
+          ...prev,
+          user: data.user,
+          isUserApproved: data.user.approved,
+          isHotelApproved: data.user.hotelApproved,
+          sessionExpiresAt: data.session?.expiresAt || Date.now() + 30 * 60 * 1000,
+        }))
+        
+        console.log('✅ Session refreshed successfully')
+        return { success: true }
+      } else {
+        const errorData = await response.json()
+        console.error('❌ Refresh failed:', errorData)
+        
+        // Only logout if explicitly expired (401 with auth.expired code)
+        if (response.status === 401 && errorData.code === 'auth.expired') {
+          console.log('Session expired, logging out...')
+          await logout()
+        }
+        // For other errors, just return the error without logging out
+        return { success: false, error: errorData.error || 'Refresh failed' }
+      }
+    } catch (error) {
+      console.error('Refresh session error:', error)
+      return { success: false, error: 'Network error' }
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   // Initial session fetch
@@ -176,28 +225,29 @@ export function useAuth(): AuthState & {
     fetchSession()
   }, [])
 
-  // 🔥 NEW: Auto-check session expiry every minute
+  // Update session time remaining every second
   useEffect(() => {
-    if (!authState.isAuthenticated || !authState.user) return;
+    if (!authState.sessionExpiresAt) {
+      setSessionTimeRemaining(null)
+      return
+    }
 
-    const checkSessionExpiry = () => {
-      // Check if localStorage session is still valid
-      const isValid = UserStorage.isSessionValid();
+    const updateTimeRemaining = () => {
+      const remaining = Math.max(0, Math.floor((authState.sessionExpiresAt! - Date.now()) / 1000))
+      setSessionTimeRemaining(remaining)
       
-      if (!isValid) {
-        console.log('⏰ Session expired - auto-logging out');
-        logout(); // This will clear cookies AND localStorage
+      // Auto logout when session expires
+      if (remaining <= 0) {
+        console.log('⏰ Session expired - auto-logging out')
+        logout()
       }
-    };
+    }
 
-    // Check immediately
-    checkSessionExpiry();
+    updateTimeRemaining()
+    const intervalId = setInterval(updateTimeRemaining, 1000)
 
-    // Then check every 60 seconds (1 minute)
-    const intervalId = setInterval(checkSessionExpiry, 60 * 1000);
-
-    return () => clearInterval(intervalId);
-  }, [authState.isAuthenticated, authState.user]);
+    return () => clearInterval(intervalId)
+  }, [authState.sessionExpiresAt])
 
   // 🔥 NEW: Clear expired data on visibility change (when user returns to tab)
   useEffect(() => {
@@ -242,5 +292,7 @@ export function useAuth(): AuthState & {
     login,
     logout,
     refreshSession,
+    sessionTimeRemaining,
+    isRefreshing,
   }
 }
