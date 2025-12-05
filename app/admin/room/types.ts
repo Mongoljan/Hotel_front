@@ -21,6 +21,11 @@ export interface RoomLookupPayload {
   outdoor_and_view: RoomAmenityLookup[];
 }
 
+export interface RoomBed {
+  bed_type: number;
+  quantity: number;
+}
+
 export interface RoomApiResponse {
   id: number;
   hotel: number;
@@ -28,7 +33,9 @@ export interface RoomApiResponse {
   room_type: number;
   room_category: number;
   room_size: string;
-  bed_type: number;
+  bed_type?: number; // Legacy field
+  room_beds?: RoomBed[]; // Alternative field name
+  bed_details?: RoomBed[]; // API returns this field name
   is_Bathroom: boolean;
   room_Facilities: number[];
   bathroom_Items: number[];

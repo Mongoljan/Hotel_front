@@ -4,8 +4,59 @@ import type {
   FlattenRow,
   LookupMaps,
   RoomData,
-  RoomInsights
+  RoomInsights,
+  RoomBed
 } from "./types";
+
+// Helper function to get bed info from bed_details/room_beds or fallback to bed_type
+const getBedInfo = (
+  room: RoomData,
+  bedTypesMap: Map<number, string>
+): { hasSingleBed: boolean; hasDoubleBed: boolean; roomBeds: { bed_type: number; quantity: number; bedTypeName?: string }[] } => {
+  let hasSingleBed = false;
+  let hasDoubleBed = false;
+  const roomBeds: { bed_type: number; quantity: number; bedTypeName?: string }[] = [];
+
+  // Prefer bed_details (API field name), then room_beds, then legacy bed_type
+  const bedData = room.bed_details || room.room_beds;
+  
+  if (bedData && bedData.length > 0) {
+    bedData.forEach(bed => {
+      const bedName = (bedTypesMap.get(bed.bed_type) ?? "").toLowerCase();
+      const isDouble = bedName.includes("2") || bedName.includes("double") || bedName.includes("давхар");
+      
+      if (isDouble) {
+        hasDoubleBed = true;
+      } else {
+        hasSingleBed = true;
+      }
+      
+      roomBeds.push({
+        bed_type: bed.bed_type,
+        quantity: bed.quantity,
+        bedTypeName: bedTypesMap.get(bed.bed_type)
+      });
+    });
+  } else if (room.bed_type !== undefined) {
+    // Fallback to legacy bed_type field
+    const bedName = (bedTypesMap.get(room.bed_type) ?? "").toLowerCase();
+    const isDouble = bedName.includes("2") || bedName.includes("double") || bedName.includes("давхар");
+    
+    if (isDouble) {
+      hasDoubleBed = true;
+    } else {
+      hasSingleBed = true;
+    }
+    
+    roomBeds.push({
+      bed_type: room.bed_type,
+      quantity: 1,
+      bedTypeName: bedTypesMap.get(room.bed_type)
+    });
+  }
+
+  return { hasSingleBed, hasDoubleBed, roomBeds };
+};
 
 export const buildLookupMaps = (rawRooms: RoomData[], lookup: AllData): LookupMaps => {
   const groupMap: LookupMaps["groupMap"] = new Map();
@@ -132,15 +183,11 @@ export const createFlattenedRows = ({
     const groupHasAdult = representativeRoom.adultQty > 0;
     const groupHasChild = representativeRoom.childQty > 0;
 
-    let groupHasSingleBed = false;
-    let groupHasDoubleBed = false;
-
-    const bedName = (lookupMaps.bedTypesMap.get(representativeRoom.bed_type) ?? "").toLowerCase();
-    if (bedName.includes("2") || bedName.includes("double")) {
-      groupHasDoubleBed = true;
-    } else {
-      groupHasSingleBed = true;
-    }
+    // Use the new helper function for bed type detection
+    const { hasSingleBed: groupHasSingleBed, hasDoubleBed: groupHasDoubleBed, roomBeds: groupRoomBeds } = getBedInfo(
+      representativeRoom,
+      lookupMaps.bedTypesMap
+    );
 
     const anyWifiInGroup = hasWifiAmenity(representativeRoom.room_Facilities, {
       facilitiesMapMn: lookupMaps.facilitiesMapMn,
@@ -200,9 +247,50 @@ export const createFlattenedRows = ({
     if (imageSet.size > 0) {
     }
 
-    // Use room counts from the representative room, not aggregated sum
-    const totalRoomsInGroup = Number(representativeRoom.number_of_rooms) || 0;
-    const totalRoomsToSellInGroup = Number(representativeRoom.number_of_rooms_to_sell) || 0;
+    // Calculate total rooms in this group
+    // The actual number of rooms is simply the count of room records
+    // number_of_rooms_to_sell should be summed from unique batches (consecutive IDs with same value)
+    const calculateGroupTotals = (rooms: typeof group.rooms): { totalRooms: number; totalToSell: number } => {
+      if (rooms.length === 0) return { totalRooms: 0, totalToSell: 0 };
+      
+      // Total rooms is simply the count of room records
+      const totalRooms = rooms.length;
+      
+      // For totalToSell, we need to detect batches and sum once per batch
+      // Rooms created together have consecutive IDs and same number_of_rooms_to_sell value
+      const sortedRooms = [...rooms].sort((a, b) => a.id - b.id);
+      
+      let totalToSell = 0;
+      let i = 0;
+      
+      while (i < sortedRooms.length) {
+        const currentRoom = sortedRooms[i];
+        const batchToSellValue = Number(currentRoom.number_of_rooms_to_sell) || 0;
+        const batchNumberOfRooms = Number(currentRoom.number_of_rooms) || 1;
+        
+        // Count how many consecutive rooms belong to this batch
+        // They should have consecutive IDs and same number_of_rooms/number_of_rooms_to_sell values
+        let batchSize = 1;
+        while (
+          i + batchSize < sortedRooms.length &&
+          sortedRooms[i + batchSize].id === currentRoom.id + batchSize &&
+          Number(sortedRooms[i + batchSize].number_of_rooms) === batchNumberOfRooms &&
+          Number(sortedRooms[i + batchSize].number_of_rooms_to_sell) === batchToSellValue
+        ) {
+          batchSize++;
+        }
+        
+        // Add this batch's to_sell count (only once per batch)
+        totalToSell += batchToSellValue;
+        
+        // Move to next batch
+        i += batchSize;
+      }
+      
+      return { totalRooms, totalToSell };
+    };
+    
+    const { totalRooms: totalRoomsInGroup, totalToSell: totalRoomsToSellInGroup } = calculateGroupTotals(group.rooms);
 
     rows.push({
       id: key,
@@ -226,6 +314,7 @@ export const createFlattenedRows = ({
       adultQty: undefined,
       childQty: undefined,
       bedType: undefined,
+      roomBeds: groupRoomBeds, // Include room beds info for the group
       commonFacilitiesArr,
       thisRoomExtraFacilitiesArr: undefined,
       commonBathroomArr,
@@ -244,8 +333,9 @@ export const createFlattenedRows = ({
     }
 
     group.rooms.forEach((room) => {
-      const bedName = (lookupMaps.bedTypesMap.get(room.bed_type) ?? "").toLowerCase();
-      const bedTypeForIcon = bedName.includes("2") || bedName.includes("double") ? 2 : 1;
+      // Use the helper function for bed type detection
+      const { hasSingleBed, hasDoubleBed, roomBeds: leafRoomBeds } = getBedInfo(room, lookupMaps.bedTypesMap);
+      const bedTypeForIcon = hasDoubleBed ? 2 : 1;
 
       const leafHasWifi = hasWifiAmenity(room.room_Facilities, {
         facilitiesMapMn: lookupMaps.facilitiesMapMn,
@@ -302,6 +392,7 @@ export const createFlattenedRows = ({
         adultQty: room.adultQty,
         childQty: room.childQty,
         bedType: bedTypeForIcon,
+        roomBeds: leafRoomBeds, // Include room beds info for the individual room
         commonFacilitiesArr: [],
         thisRoomExtraFacilitiesArr,
         commonBathroomArr: [],

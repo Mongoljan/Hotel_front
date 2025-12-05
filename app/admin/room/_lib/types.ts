@@ -30,6 +30,11 @@ export interface RoomImage {
   description: string;
 }
 
+export interface RoomBed {
+  bed_type: number;
+  quantity: number;
+}
+
 export interface RoomData {
   id: number;
   hotel: number;
@@ -37,7 +42,9 @@ export interface RoomData {
   room_type: number;
   room_category: number;
   room_size: string;
-  bed_type: number;
+  bed_type?: number; // Legacy field, use room_beds/bed_details instead
+  room_beds?: RoomBed[]; // Alternative field name
+  bed_details?: RoomBed[]; // API returns this field name
   is_Bathroom: boolean;
 
   room_Facilities: number[];
@@ -103,6 +110,7 @@ export interface FlattenRow extends GridValidRowModel {
   adultQty?: number;
   childQty?: number;
   bedType?: number;
+  roomBeds?: { bed_type: number; quantity: number; bedTypeName?: string }[]; // Multiple bed types with quantities
   // Separate feature arrays for each category
   commonFacilitiesArr: string[];
   thisRoomExtraFacilitiesArr?: string[];

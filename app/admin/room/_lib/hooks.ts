@@ -130,7 +130,6 @@ export const useRoomData = ({
       const lookupPayload = (await allRes.json()) as AllData;
       const roomsPayload = (await roomsRes.json()) as RoomData[];
 
-      // Debug: Check what images the API returns
       setLookup(lookupPayload);
       setRawRooms(roomsPayload);
 

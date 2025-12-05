@@ -20,10 +20,10 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AdvancedTable, ExportColumn } from "@/components/ui/advanced-table";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   Tooltip,
   TooltipContent,
@@ -199,6 +199,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
 
   // ─── Modal state for Create / Edit ─────────────────────────────────────────
   const [selectedRoom, setSelectedRoom] = useState<RoomData | null>(null);
+  const [addToGroupMode, setAddToGroupMode] = useState(false); // For adding rooms to existing group
 
   // Image preview state
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -308,6 +309,29 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
 
   const openCreateModal = () => {
     setSelectedRoom(null);
+    setAddToGroupMode(false);
+    setIsModalOpen(true);
+  };
+
+  // Handler for adding rooms to an existing group
+  const handleAddToGroup = (groupKey: string) => {
+    // groupKey format is "room_type-room_category", find a representative room from that group
+    const [roomTypeStr, roomCategoryStr] = groupKey.split("-");
+    const roomType = parseInt(roomTypeStr, 10);
+    const roomCategory = parseInt(roomCategoryStr, 10);
+    
+    // Find any room from this group to use as template
+    const templateRoom = rawRooms.find(
+      (r) => r.room_type === roomType && r.room_category === roomCategory
+    );
+    
+    if (!templateRoom) {
+      console.warn("No template room found for group:", groupKey);
+      return;
+    }
+    
+    setSelectedRoom(templateRoom);
+    setAddToGroupMode(true);
     setIsModalOpen(true);
   };
 
@@ -320,6 +344,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       return;
     }
     setSelectedRoom(found);
+    setAddToGroupMode(false);
     setIsModalOpen(true);
   };
 
@@ -490,8 +515,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               <span className="font-medium text-muted-foreground whitespace-nowrap">Өрөөний №:</span>
               <span className="text-foreground/70">{displayNumbers}</span>
               {shouldTruncate && (
-                <Popover>
-                  <PopoverTrigger asChild>
+                <HoverCard>
+                  <HoverCardTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -499,14 +524,14 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                     >
                       <span className="text-muted-foreground">+{roomNumbersArray.length - 10} бусад</span>
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
+                  </HoverCardTrigger>
+                  <HoverCardContent align="start" className="w-80 p-3">
                     <div className="space-y-2">
                       <h4 className="font-medium text-sm">Бүх өрөөний дугаарууд ({roomNumbersArray.length})</h4>
                       <p className="text-sm text-muted-foreground">{roomNumbersArray.join(", ")}</p>
                     </div>
-                  </PopoverContent>
-                </Popover>
+                  </HoverCardContent>
+                </HoverCard>
               )}
             </div>
           );
@@ -717,8 +742,25 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
             <div className="flex items-center gap-3">
               {row.original.groupHasAdult && <IoPerson className="h-4 w-4" />}
               {row.original.groupHasChild && <FaChild className="h-4 w-4" />}
-              {row.original.groupHasSingleBed && <LuBedSingle className="h-4 w-4" />}
-              {row.original.groupHasDoubleBed && <LuBedDouble className="h-4 w-4" />}
+              {/* Display multiple bed types for groups */}
+              {row.original.roomBeds && row.original.roomBeds.length > 0 ? (
+                row.original.roomBeds.map((bed: { bed_type: number; quantity: number; bedTypeName?: string }, idx: number) => {
+                  const isDouble = (bed.bedTypeName ?? "").toLowerCase().includes("2") || 
+                                   (bed.bedTypeName ?? "").toLowerCase().includes("double") ||
+                                   (bed.bedTypeName ?? "").toLowerCase().includes("давхар");
+                  return (
+                    <div key={idx} className="flex items-center gap-0.5">
+                      {isDouble ? <LuBedDouble className="h-4 w-4" /> : <LuBedSingle className="h-4 w-4" />}
+                      {bed.quantity > 1 && <span className="text-xs">×{bed.quantity}</span>}
+                    </div>
+                  );
+                })
+              ) : (
+                <>
+                  {row.original.groupHasSingleBed && <LuBedSingle className="h-4 w-4" />}
+                  {row.original.groupHasDoubleBed && <LuBedDouble className="h-4 w-4" />}
+                </>
+              )}
             </div>
           );
         } else {
@@ -732,10 +774,25 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                 <FaChild className="h-4 w-4" />
                 <span>{row.original.childQty}</span>
               </div>
-              {row.original.bedType === 2 ? (
-                <LuBedDouble className="h-4 w-4" />
+              {/* Display multiple bed types for individual rooms */}
+              {row.original.roomBeds && row.original.roomBeds.length > 0 ? (
+                row.original.roomBeds.map((bed: { bed_type: number; quantity: number; bedTypeName?: string }, idx: number) => {
+                  const isDouble = (bed.bedTypeName ?? "").toLowerCase().includes("2") || 
+                                   (bed.bedTypeName ?? "").toLowerCase().includes("double") ||
+                                   (bed.bedTypeName ?? "").toLowerCase().includes("давхар");
+                  return (
+                    <div key={idx} className="flex items-center gap-0.5">
+                      {isDouble ? <LuBedDouble className="h-4 w-4" /> : <LuBedSingle className="h-4 w-4" />}
+                      {bed.quantity > 1 && <span className="text-xs">×{bed.quantity}</span>}
+                    </div>
+                  );
+                })
               ) : (
-                <LuBedSingle className="h-4 w-4" />
+                row.original.bedType === 2 ? (
+                  <LuBedDouble className="h-4 w-4" />
+                ) : (
+                  <LuBedSingle className="h-4 w-4" />
+                )
               )}
             </div>
           );
@@ -770,13 +827,13 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               </div>
             ))}
             {hasMore && (
-              <Popover>
-                <PopoverTrigger asChild>
+              <HoverCard>
+                <HoverCardTrigger asChild>
                   <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
                     +{features.length - 3} илүү
                   </button>
-                </PopoverTrigger>
-                <PopoverContent side="right" className="w-64 max-h-60 overflow-y-auto">
+                </HoverCardTrigger>
+                <HoverCardContent side="bottom" align="start" className="w-64 max-h-60 overflow-y-auto p-3">
                   <div className="flex flex-col gap-1">
                     <h4 className="font-medium text-sm mb-2">Бүх тохижилт</h4>
                     {features.map((feat: string, idx: number) => (
@@ -786,8 +843,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                       </div>
                     ))}
                   </div>
-                </PopoverContent>
-              </Popover>
+                </HoverCardContent>
+              </HoverCard>
             )}
           </div>
         );
@@ -821,13 +878,13 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               </div>
             ))}
             {hasMore && (
-              <Popover>
-                <PopoverTrigger asChild>
+              <HoverCard>
+                <HoverCardTrigger asChild>
                   <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
                     +{bathFeatures.length - 3} илүү
                   </button>
-                </PopoverTrigger>
-                <PopoverContent side="right" className="w-64 max-h-60 overflow-y-auto">
+                </HoverCardTrigger>
+                <HoverCardContent side="bottom" align="start" className="w-64 max-h-60 overflow-y-auto p-3">
                   <div className="flex flex-col gap-1">
                     <h4 className="font-medium text-sm mb-2">Угаалгын өрөөнд</h4>
                     {bathFeatures.map((item: string, idx: number) => (
@@ -837,8 +894,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                       </div>
                     ))}
                   </div>
-                </PopoverContent>
-              </Popover>
+                </HoverCardContent>
+              </HoverCard>
             )}
           </div>
         );
@@ -872,13 +929,13 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               </div>
             ))}
             {hasMore && (
-              <Popover>
-                <PopoverTrigger asChild>
+              <HoverCard>
+                <HoverCardTrigger asChild>
                   <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
                     +{features.length - 3} илүү
                   </button>
-                </PopoverTrigger>
-                <PopoverContent side="right" className="w-64 max-h-60 overflow-y-auto">
+                </HoverCardTrigger>
+                <HoverCardContent side="bottom" align="start" className="w-64 max-h-60 overflow-y-auto p-3">
                   <div className="flex flex-col gap-1">
                     <h4 className="font-medium text-sm mb-2">Ариун цэврийн хэрэгсэл</h4>
                     {features.map((item: string, idx: number) => (
@@ -888,8 +945,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                       </div>
                     ))}
                   </div>
-                </PopoverContent>
-              </Popover>
+                </HoverCardContent>
+              </HoverCard>
             )}
           </div>
         );
@@ -923,13 +980,13 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               </div>
             ))}
             {hasMore && (
-              <Popover>
-                <PopoverTrigger asChild>
+              <HoverCard>
+                <HoverCardTrigger asChild>
                   <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
                     +{features.length - 3} илүү
                   </button>
-                </PopoverTrigger>
-                <PopoverContent side="right" className="w-64 max-h-60 overflow-y-auto">
+                </HoverCardTrigger>
+                <HoverCardContent side="bottom" align="start" className="w-64 max-h-60 overflow-y-auto p-3">
                   <div className="flex flex-col gap-1">
                     <h4 className="font-medium text-sm mb-2">Хоол, ундаа</h4>
                     {features.map((item: string, idx: number) => (
@@ -939,8 +996,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                       </div>
                     ))}
                   </div>
-                </PopoverContent>
-              </Popover>
+                </HoverCardContent>
+              </HoverCard>
             )}
           </div>
         );
@@ -974,13 +1031,13 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               </div>
             ))}
             {hasMore && (
-              <Popover>
-                <PopoverTrigger asChild>
+              <HoverCard>
+                <HoverCardTrigger asChild>
                   <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
                     +{features.length - 3} илүү
                   </button>
-                </PopoverTrigger>
-                <PopoverContent side="right" className="w-64 max-h-60 overflow-y-auto">
+                </HoverCardTrigger>
+                <HoverCardContent side="bottom" align="start" className="w-64 max-h-60 overflow-y-auto p-3">
                   <div className="flex flex-col gap-1">
                     <h4 className="font-medium text-sm mb-2">Байршил ба үзэмж</h4>
                     {features.map((item: string, idx: number) => (
@@ -990,8 +1047,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                       </div>
                     ))}
                   </div>
-                </PopoverContent>
-              </Popover>
+                </HoverCardContent>
+              </HoverCard>
             )}
           </div>
         );
@@ -1006,6 +1063,22 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       header: "Засах",
       cell: ({ row }) => {
         if (row.original.isPreviewRow) return null;
+
+        // For group rows - show "+" button to add more rooms to this group
+        if (row.original.isGroup && row.original.arrowPlaceholder) {
+          return (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleAddToGroup(row.original.arrowPlaceholder)}
+                title="Энэ бүлэгт өрөө нэмэх"
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+          );
+        }
 
         if (!row.original.isGroup && row.original.leafRoomId != null) {
           const roomId = row.original.leafRoomId;
@@ -1103,6 +1176,14 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     { 
       header: 'Орны төрөл', 
       getValue: (d) => {
+        // Use roomBeds if available
+        if (d.roomBeds && d.roomBeds.length > 0) {
+          return d.roomBeds.map((bed: { bed_type: number; quantity: number; bedTypeName?: string }) => {
+            const name = bed.bedTypeName || (bed.bed_type === 2 ? 'Давхар ор' : 'Ганц ор');
+            return bed.quantity > 1 ? `${name} ×${bed.quantity}` : name;
+          }).join(', ');
+        }
+        // Fallback to legacy bedType
         if (d.bedType === 2) return 'Давхар ор';
         if (d.bedType === 1) return 'Ганц ор';
         return '';
@@ -1221,13 +1302,18 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       ) : (
         <>
           <RoomModal
+            key={addToGroupMode ? 'add-to-group' : 'normal'}
             isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
+            onClose={() => {
+              setIsModalOpen(false);
+              setAddToGroupMode(false);
+            }}
             roomToEdit={selectedRoom}
             isRoomAdded={isRoomAdded}
             setIsRoomAdded={setIsRoomAdded}
             existingRooms={rawRooms}
             hotelRoomLimits={hotelRoomLimits}
+            addToGroupMode={addToGroupMode}
           />
 
           {/* Advanced Table with sync status in title row */}

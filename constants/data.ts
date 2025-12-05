@@ -16,7 +16,8 @@ import {
   IconSparkles,
   IconUserPlus,
   IconCoins,
-  IconHelp
+  IconHelp,
+  IconScale
 } from '@tabler/icons-react';
 
 export type NavItem = {
@@ -116,6 +117,12 @@ export const navItems: NavItem[] = [
         i18nKey: 'priceSettings',
         url: '/admin/room/price-settings',
         icon: IconCurrencyDollar,
+      },
+      {
+        title: 'Дотоод журам',
+        i18nKey: 'internalRules',
+        url: '/admin/internal-rules',
+        icon: IconScale,
       },
       {
         title: 'Бодлого',

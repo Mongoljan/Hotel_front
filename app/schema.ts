@@ -76,7 +76,13 @@ export const schemaCreateRoom = z.object({
     room_type: z.string().min(1, { message: "Room type is required" }),
     room_category:  z.string().min(1, { message: "Room category is required" }),
     room_size: z.string().min(1, { message: "Room size must be at least 5m²" }),
-    bed_type: z.string().min(1, { message: "Bed type is required" }),
+    // New: room_beds array for multiple bed types with quantities
+    room_beds: z.array(
+      z.object({
+        bed_type: z.string().min(1, { message: "Bed type is required" }),
+        quantity: z.number().min(1, { message: "Quantity must be at least 1" }),
+      })
+    ).min(1, { message: "At least one bed type is required" }),
     is_Bathroom: z.string().min(1, { message: "Нэгийг сонгонo уу?"}),
     room_Facilities: z.array(z.string()).min(1, { message: "Select at least one facility" }),
     bathroom_Items: z.array(z.string()).min(1, { message: "Select at least one facility" }),
@@ -104,10 +110,46 @@ export const schemaCreateRoom = z.object({
     path: ["number_of_rooms_to_sell"], // Attach error to this field
 });
 
-  
-  
+// Simplified schema for addToGroupMode - only validates room numbers and counts
+export const schemaAddToGroup = z.object({
+  RoomNo: z.string().min(1, { message: "Enter valid room numbers" }),
+  number_of_rooms: z.preprocess(
+    (val) => Number(val),
+    z.number()
+      .int({ message: "Must be a whole number" })
+      .min(1, { message: "Must be a natural number (1 or greater)" })
+  ),
+  number_of_rooms_to_sell: z.string().min(1, { message: "Rooms to sell is required" })
+    .regex(/^\d+$/, { message: "Must be a valid number" }),
+  // Include other fields as optional so we can pass them through
+  room_type: z.string().optional(),
+  room_category: z.string().optional(),
+  room_size: z.string().optional(),
+  room_beds: z.array(z.object({
+    bed_type: z.string(),
+    quantity: z.number(),
+  })).optional(),
+  is_Bathroom: z.string().optional(),
+  room_Facilities: z.array(z.string()).optional(),
+  bathroom_Items: z.array(z.string()).optional(),
+  free_Toiletries: z.array(z.string()).optional(),
+  food_And_Drink: z.array(z.string()).optional(),
+  outdoor_And_View: z.array(z.string()).optional(),
+  adultQty: z.string().optional(),
+  childQty: z.string().optional(),
+  room_Description: z.string().optional(),
+  smoking_allowed: z.string().optional(),
+  entries: z.array(z.object({
+    images: z.string(),
+    descriptions: z.string(),
+  })).optional(),
+}).refine((data) => {
+  return parseInt(data.number_of_rooms_to_sell, 10) <= data.number_of_rooms;
+}, {
+  message: "Rooms to sell cannot exceed total number of rooms",
+  path: ["number_of_rooms_to_sell"],
+});
 
-  
 export const schemaRegistration = z
 .object({
   email: z
