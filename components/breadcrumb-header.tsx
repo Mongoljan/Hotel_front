@@ -47,6 +47,7 @@ const routeI18nKeys: Record<string, string> = {
   '/admin/workers': 'workers',
   '/admin/permissions': 'permissions',
   '/admin/faq': 'faq',
+  '/admin/internal-rules': 'internalRules',
 };
 
 // Map routes to their parent menu i18n key (for nested items under collapsible menus)
@@ -63,6 +64,7 @@ const routeParentKeys: Record<string, string> = {
   '/admin/workers': 'settings',
   '/admin/permissions': 'settings',
   '/admin/faq': 'settings',
+  '/admin/internal-rules': 'settings',
 };
 
 // Format seconds to MM:SS
