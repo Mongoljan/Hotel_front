@@ -56,8 +56,6 @@ const formatTime = (time: string | undefined) => {
   return time.slice(0, 5);
 };
 
-type PolicyFormFields = z.infer<typeof schemaHotelSteps3>;
-
 export default function InternalRulesPage() {
   const { user } = useAuth();
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);

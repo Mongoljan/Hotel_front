@@ -4,17 +4,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import {
-  IconBed,
-  IconCalendar,
-  IconCar,
-  IconChevronLeft,
-  IconChevronRight,
-  IconFileInfo,
-  IconInfoCircle,
-  IconMoodKid,
   IconPhoto,
-  IconEdit,
   IconPencil,
+  IconFileInfo,
+  IconCalendar,
+  IconBed,
+  IconMoodKid,
+  IconCar,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
 
@@ -22,11 +19,8 @@ import ServicesTab from './ServicesTab';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -41,86 +35,33 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePickerWithValue } from '@/components/ui/date-picker';
 
-interface PropertyPhoto {
-  id: number;
-  image: string;
-  description: string;
-}
+// Import types
+import type {
+  PropertyPhoto,
+  PropertyDetail,
+  AdditionalInformation,
+  PropertyPolicy,
+  Address,
+  BasicInfo,
+  PropertyBaseInfo,
+  Province,
+  Soum,
+  District,
+  PropertyType,
+} from './types';
 
-interface PropertyDetail {
-  id: number;
-  propertyBasicInfo: number;
-  confirmAddress: number;
-  propertyPolicies: number;
-  google_map: string;
-  parking_situation: string;
-  property: number;
-  general_facilities: number[];
-  Additional_Information: number | null;
-}
-
-interface AdditionalInformation {
-  id: number;
-  About: string;
-  YoutubeUrl: string;
-}
-
-interface PropertyPolicy {
-  id: number;
-  check_in_from: string;
-  check_in_until: string;
-  check_out_from: string;
-  check_out_until: string;
-  breakfast_policy: string;
-  allow_children: boolean;
-  allow_pets: boolean;
-  cancellation_fee: {
-    cancel_time: string;
-    single_before_time_percentage: string;
-    single_after_time_percentage: string;
-    multi_5days_before_percentage: string;
-    multi_3days_before_percentage: string;
-    multi_2days_before_percentage: string;
-    multi_1day_before_percentage: string;
-  };
-}
-
-interface Address {
-  id: number;
-  zipCode?: string;
-  total_floor_number: number;
-  province_city: number;
-  soum?: number;
-  district?: number;
-}
-
-interface BasicInfo {
-  id: number;
-  property_name_mn: string;
-  property_name_en: string;
-  start_date: string;
-  total_hotel_rooms: number;
-  available_rooms: number;
-  star_rating: number;
-  part_of_group: boolean;
-  group_name?: string;
-  sales_room_limitation: boolean;
-  languages: number[];
-}
-
-interface PropertyBaseInfo {
-  pk: number;
-  register: string;
-  CompanyName: string;
-  PropertyName: string;
-  location: string;
-  property_type: number;
-  phone: string;
-  mail: string;
-  is_approved: boolean;
-  created_at: string;
-  groupName?: string;
-}
+// Import extracted components
+import {
+  LoadingSkeleton,
+  HotelHeader,
+  AboutVideoSection,
+  EditAboutVideoDialog,
+  EditMapDialog,
+  ImageLightbox,
+  EditBasicInfoDialog,
+  EditLocationDialog,
+  EditImagesDialog,
+} from './components';
 
 interface ProceedProps {
   proceed: number;
@@ -139,11 +80,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [address, setAddress] = useState<Address | null>(null);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
   const [propertyBaseInfo, setPropertyBaseInfo] = useState<PropertyBaseInfo | null>(null);
-  const [propertyTypes, setPropertyTypes] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
+  const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInformation | null>(null);
-  const [provinces, setProvinces] = useState<{ id: number; name: string }[]>([]);
-  const [soums, setSoums] = useState<{ id: number; name: string; code: number }[]>([]);
-  const [districts, setDistricts] = useState<{ id: number; name: string; code: number }[]>([]);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [soums, setSoums] = useState<Soum[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
 
   // Edit dialog state for About & Video
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -552,39 +493,27 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   return (
     <div className="w-full max-w-full space-y-4">
       {/* Hotel Name Header */}
-      <div className="flex items-center justify-between py-2">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || 'Шангри-Ла Улаанбаатар Зочид Буудал'}
-          </h1>
-          {basicInfo?.property_name_en && (
-            <p className="text-sm text-muted-foreground">{basicInfo.property_name_en}</p>
-          )}
-        </div>
-        <Badge
-          variant="default"
-          className="bg-green-600 hover:bg-green-600 cursor-default px-4 py-2 text-sm font-medium"
-        >
-          Баталгаажсан ✓
-        </Badge>
-      </div>
+      <HotelHeader basicInfo={basicInfo} propertyBaseInfo={propertyBaseInfo} />
 
-      {/* Row 1: Image Gallery - 1 large + 4 smaller */}
-      <div className="relative border rounded-lg overflow-hidden">
-        <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
-          <span className="text-base font-semibold bg-white/90 backdrop-blur px-2 py-1 rounded">
-            Зурагнууд
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 bg-white/90 backdrop-blur"
-            onClick={() => setIsImagesDialogOpen(true)}
-          >
-            <IconPencil className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="grid grid-cols-2 gap-3 p-3 h-[400px]">
+      {/* Main Layout: Left content + Right sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-4">
+        {/* Left Column: Image Gallery */}
+        <div>
+          <div className="relative border rounded-lg overflow-hidden">
+            <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
+              <span className="text-base font-semibold bg-white/90 backdrop-blur px-2 py-1 rounded">
+                Зурагнууд
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 bg-white/90 backdrop-blur"
+                onClick={() => setIsImagesDialogOpen(true)}
+              >
+                <IconPencil className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 p-3 h-[400px]">
           {/* Left: Large Image */}
           <div
             className="relative rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
@@ -641,542 +570,77 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         </div>
       </div>
 
-      {/* Row 2: Бидний тухай - 2.5:1 ratio (About text : Video) */}
-      <div className="grid grid-cols-[2.5fr_1fr] gap-4">
-        <div className="relative border rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold">Бидний тухай</h3>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleEditAboutVideo}
-            >
-              <IconPencil className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-            {additionalInfo?.About || 'Та өөрийн зочид буудлын талаар мэдээлэл оруулна уу.'}
-          </p>
-        </div>
+          {/* Tabbed Information - inside left column */}
+          <div className="border rounded-lg p-4 mt-4">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="space-y-4">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="basic">1. Үндсэн мэдээлэл</TabsTrigger>
+                <TabsTrigger value="location">2. Байршил</TabsTrigger>
+                <TabsTrigger value="map">3. Google map</TabsTrigger>
+                <TabsTrigger value="services">4. Ерөнхий үйлчилгээ</TabsTrigger>
+              </TabsList>
 
-        <div className="relative border rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold">Видео</h3>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleEditAboutVideo}
-            >
-              <IconPencil className="h-4 w-4" />
-            </Button>
-          </div>
-          {additionalInfo?.YoutubeUrl ? (
-            <div className="space-y-2">
-              <div className="aspect-video rounded-md overflow-hidden">
-                <iframe
-                  className="w-full h-full"
-                  src={(() => {
-                    const match = additionalInfo.YoutubeUrl.match(
-                      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-                    );
-                    return match ? `https://www.youtube.com/embed/${match[1]}` : '';
-                  })()}
-                  allowFullScreen
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">Hotel Introduction</p>
-            </div>
-          ) : (
-            <div className="aspect-video bg-gray-100 flex items-center justify-center rounded-md">
-              <p className="text-sm text-muted-foreground">Та зочид буудлынхаа тухай танилцуулга видео холбоосыг оруулна уу.</p>
-            </div>
-          )}
-        </div>
-      </div>
-
+              {/* TabsContent will continue from here */}
       {/* Edit Dialog for About & Video */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Бидний тухай болон Видео засах</DialogTitle>
-            <DialogDescription>
-              Зочид буудлын танилцуулга болон видео холбоосыг шинэчилнэ үү
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="about">Бидний тухай</Label>
-              <Textarea
-                id="about"
-                value={editAbout}
-                onChange={(e) => setEditAbout(e.target.value)}
-                placeholder="Буудлын дэлгэрэнгүй мэдээллийг оруулна уу"
-                className="min-h-[150px]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="youtube">YouTube Video URL</Label>
-              <Input
-                id="youtube"
-                type="url"
-                value={editYoutubeUrl}
-                onChange={(e) => setEditYoutubeUrl(e.target.value)}
-                placeholder="https://youtube.com/watch?v=..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Youtube бичлэгийн Share-ээс холбоосыг хуулна уу
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-              disabled={isSaving}
-            >
-              Болих
-            </Button>
-            <Button onClick={handleSaveAboutVideo} disabled={isSaving}>
-              {isSaving ? 'Хадгалж байна...' : 'Хадгалах'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditAboutVideoDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        about={editAbout}
+        youtubeUrl={editYoutubeUrl}
+        onAboutChange={setEditAbout}
+        onYoutubeUrlChange={setEditYoutubeUrl}
+        onSave={handleSaveAboutVideo}
+        isSaving={isSaving}
+      />
 
       {/* Edit Dialog for Google Map */}
-      <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Google Map засах</DialogTitle>
-            <DialogDescription>
-              Google Maps-ээс холбоос хуулж оруулна уу
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="googleMap">Google Maps Embed URL</Label>
-              <Input
-                id="googleMap"
-                type="url"
-                value={editGoogleMap}
-                onChange={(e) => setEditGoogleMap(e.target.value)}
-                placeholder="https://www.google.com/maps/embed?pb=..."
-              />
-              <p className="text-xs text-muted-foreground">
-                Google Maps дээр Share → Embed a map → Copy HTML код дотрх src холбоосыг хуулна уу
-              </p>
-            </div>
-            {editGoogleMap && (
-              <div className="aspect-video rounded-md overflow-hidden border">
-                <iframe
-                  src={editGoogleMap}
-                  className="w-full h-full"
-                  allowFullScreen
-                  loading="lazy"
-                />
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsMapDialogOpen(false)}
-              disabled={isMapSaving}
-            >
-              Болих
-            </Button>
-            <Button onClick={handleSaveGoogleMap} disabled={isMapSaving}>
-              {isMapSaving ? 'Хадгалж байна...' : 'Хадгалах'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditMapDialog
+        open={isMapDialogOpen}
+        onOpenChange={setIsMapDialogOpen}
+        googleMap={editGoogleMap}
+        onGoogleMapChange={setEditGoogleMap}
+        onSave={handleSaveGoogleMap}
+        isSaving={isMapSaving}
+      />
 
       {/* Edit Dialog for Basic Info */}
-      <Dialog open={isBasicInfoDialogOpen} onOpenChange={setIsBasicInfoDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Үндсэн мэдээлэл засах</DialogTitle>
-            <DialogDescription>
-              Зочид буудлын үндсэн мэдээллийг шинэчилнэ үү
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="nameMn">Буудлын нэр (монголоор)</Label>
-                <Input
-                  id="nameMn"
-                  value={editBasicInfo.property_name_mn}
-                  onChange={(e) => setEditBasicInfo({ ...editBasicInfo, property_name_mn: e.target.value })}
-                  placeholder="Шангри-Ла Улаанбаатар Зочид Буудал"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nameEn">Буудлын нэр (англиар)</Label>
-                <Input
-                  id="nameEn"
-                  value={editBasicInfo.property_name_en}
-                  onChange={(e) => setEditBasicInfo({ ...editBasicInfo, property_name_en: e.target.value })}
-                  placeholder="Shangri-La Ulaanbaatar Hotel"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="startDate">Үйл ажиллагаа эхэлсэн огноо</Label>
-                <DatePickerWithValue
-                  value={editBasicInfo.start_date}
-                  onChange={(value) => setEditBasicInfo({ ...editBasicInfo, start_date: value })}
-                  placeholder="Огноо сонгох"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rating">Буудлын зэрэглэл</Label>
-                <Input
-                  id="rating"
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={editBasicInfo.star_rating}
-                  onChange={(e) => setEditBasicInfo({ ...editBasicInfo, star_rating: e.target.value })}
-                  placeholder="5"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Танай буудал сүлжээ буудал эсэх</Label>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setEditBasicInfo({ ...editBasicInfo, part_of_group: true })}
-                  className={`px-8 py-2 rounded-md text-sm font-medium transition-all border ${
-                    editBasicInfo.part_of_group === true
-                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                      : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                >
-                  Тийм
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditBasicInfo({ ...editBasicInfo, part_of_group: false, group_name: '' })}
-                  className={`px-8 py-2 rounded-md text-sm font-medium transition-all border ${
-                    editBasicInfo.part_of_group === false
-                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                      : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                >
-                  Үгүй
-                </button>
-              </div>
-              {editBasicInfo.part_of_group && (
-                <div className="space-y-2 mt-3">
-                  <Label htmlFor="groupName">Сүлжээ буудлын нэр</Label>
-                  <Input
-                    id="groupName"
-                    value={editBasicInfo.group_name}
-                    onChange={(e) => setEditBasicInfo({ ...editBasicInfo, group_name: e.target.value })}
-                    placeholder="Marriott, Hilton гэх мэт"
-                  />
-                </div>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="totalRooms">Нийт өрөөний тоо</Label>
-                <Input
-                  id="totalRooms"
-                  type="number"
-                  value={editBasicInfo.total_hotel_rooms}
-                  onChange={(e) => setEditBasicInfo({ ...editBasicInfo, total_hotel_rooms: e.target.value })}
-                  placeholder="200"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="availableRooms">Манай сайтаар зарах өрөө</Label>
-                <Input
-                  id="availableRooms"
-                  type="number"
-                  value={editBasicInfo.available_rooms}
-                  onChange={(e) => setEditBasicInfo({ ...editBasicInfo, available_rooms: e.target.value })}
-                  placeholder="50"
-                />
-              </div>
-            </div>
-            {/* <div className="space-y-2">
-              <Label>Зарах өрөөний хязгаар тавих эсэх</Label>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setEditBasicInfo({ ...editBasicInfo, sales_room_limitation: true })}
-                  className={`px-8 py-2 rounded-md text-sm font-medium transition-all border ${
-                    editBasicInfo.sales_room_limitation === true
-                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                      : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                >
-                  Тийм
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditBasicInfo({ ...editBasicInfo, sales_room_limitation: false })}
-                  className={`px-8 py-2 rounded-md text-sm font-medium transition-all border ${
-                    editBasicInfo.sales_room_limitation === false
-                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                      : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                >
-                  Үгүй
-                </button>
-              </div>
-            </div> */}
-            <div className="space-y-2">
-              <Label>Зочдод үйлчлэх боломжтой хэл</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded p-2">
-                {languages.map((lang) => (
-                  <div key={lang.id} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={`lang-${lang.id}`}
-                      checked={editBasicInfo.languages.includes(lang.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setEditBasicInfo({ ...editBasicInfo, languages: [...editBasicInfo.languages, lang.id] });
-                        } else {
-                          setEditBasicInfo({ ...editBasicInfo, languages: editBasicInfo.languages.filter(id => id !== lang.id) });
-                        }
-                      }}
-                      className="h-4 w-4"
-                    />
-                    <Label htmlFor={`lang-${lang.id}`} className="cursor-pointer text-sm">{lang.languages_name_mn}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsBasicInfoDialogOpen(false)}
-              disabled={isBasicInfoSaving}
-            >
-              Болих
-            </Button>
-            <Button onClick={handleSaveBasicInfo} disabled={isBasicInfoSaving}>
-              {isBasicInfoSaving ? 'Хадгалж байна...' : 'Хадгалах'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditBasicInfoDialog
+        open={isBasicInfoDialogOpen}
+        onOpenChange={setIsBasicInfoDialogOpen}
+        editBasicInfo={editBasicInfo}
+        onEditBasicInfoChange={setEditBasicInfo}
+        languages={languages}
+        onSave={handleSaveBasicInfo}
+        isSaving={isBasicInfoSaving}
+      />
 
       {/* Edit Dialog for Location */}
-      <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Байршил засах</DialogTitle>
-            <DialogDescription>
-              Буудлын байршлын мэдээллийг шинэчилнэ үү
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="province">Хот/Аймаг</Label>
-              <Select
-                value={editLocation.province_city}
-                onValueChange={(value) => {
-                  setEditLocation({ ...editLocation, province_city: value, soum: '' });
-                  // Filter soums based on selected province
-                  const filtered = soums.filter((s) => s.code === Number(value)).concat(
-                    districts.filter((d) => d.code === Number(value))
-                  );
-                  setFilteredSoums(filtered);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Хот/Аймаг сонгох" />
-                </SelectTrigger>
-                <SelectContent>
-                  {provinces.map((prov) => (
-                    <SelectItem key={prov.id} value={String(prov.id)}>
-                      {prov.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="soum">Дүүрэг/Сум</Label>
-              <Select
-                value={editLocation.soum}
-                onValueChange={(value) => setEditLocation({ ...editLocation, soum: value })}
-                disabled={!editLocation.province_city || filteredSoums.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Дүүрэг/Сум сонгох" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredSoums.map((item) => (
-                    <SelectItem key={item.id} value={String(item.id)}>
-                      {item.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="floors">Давхрын тоо</Label>
-              <Input
-                id="floors"
-                type="number"
-                value={editLocation.total_floor_number}
-                onChange={(e) => setEditLocation({ ...editLocation, total_floor_number: e.target.value })}
-                placeholder="10"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsLocationDialogOpen(false)}
-              disabled={isLocationSaving}
-            >
-              Болих
-            </Button>
-            <Button onClick={handleSaveLocation} disabled={isLocationSaving}>
-              {isLocationSaving ? 'Хадгалж байна...' : 'Хадгалах'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditLocationDialog
+        open={isLocationDialogOpen}
+        onOpenChange={setIsLocationDialogOpen}
+        editLocation={editLocation}
+        onEditLocationChange={setEditLocation}
+        provinces={provinces}
+        filteredSoums={filteredSoums}
+        onProvinceChange={(value) => {
+          setEditLocation({ ...editLocation, province_city: value, soum: '' });
+          const filtered = soums.filter((s) => s.code === Number(value)).concat(
+            districts.filter((d) => d.code === Number(value))
+          );
+          setFilteredSoums(filtered);
+        }}
+        onSave={handleSaveLocation}
+        isSaving={isLocationSaving}
+      />
 
       {/* Edit Dialog for Images */}
-      <Dialog open={isImagesDialogOpen} onOpenChange={setIsImagesDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Зургууд засах</DialogTitle>
-            <DialogDescription>
-              Буудлын зургийг оруулах, устгах боломжтой
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Upload new image */}
-            <div className="border-2 border-dashed rounded-lg p-6">
-              <Label htmlFor="imageUpload" className="cursor-pointer">
-                <div className="flex flex-col items-center gap-2">
-                  <IconPhoto className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm font-medium">Зураг оруулах</p>
-                  <p className="text-xs text-muted-foreground">Хамгийн багадаа 100KB</p>
-                </div>
-              </Label>
-              <input
-                id="imageUpload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-
-                  const fileSizeKB = file.size / 1024;
-                  if (fileSizeKB < 100) {
-                    toast.error('Зургийн хэмжээ хамгийн багадаа 100KB байх ёстой');
-                    e.target.value = '';
-                    return;
-                  }
-
-                  const reader = new FileReader();
-                  reader.onloadend = async () => {
-                    try {
-                      const base64Image = reader.result as string;
-                      const res = await fetch('https://dev.kacc.mn/api/property-images/', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          property: user?.hotel,
-                          image: base64Image,
-                          description: '',
-                        }),
-                      });
-
-                      if (!res.ok) throw new Error('Зураг оруулахад алдаа гарлаа');
-
-                      toast.success('Зураг амжилттай нэмэгдлээ');
-                      // Reload images
-                      const imagesRes = await fetch(`https://dev.kacc.mn/api/property-images/?property=${user?.hotel}`);
-                      if (imagesRes.ok) {
-                        const images = await imagesRes.json();
-                        setPropertyImages(images);
-                      }
-                      e.target.value = '';
-                    } catch (err: any) {
-                      toast.error(err.message || 'Алдаа гарлаа');
-                    }
-                  };
-                  reader.readAsDataURL(file);
-                }}
-              />
-            </div>
-
-            {/* Existing images */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {propertyImages.map((img, idx) => (
-                <div key={img.id} className="relative aspect-video rounded-lg overflow-hidden border group">
-                  <Image
-                    src={img.image}
-                    alt={img.description || `Image ${idx + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={async () => {
-                      if (!confirm('Энэ зургийг устгах уу?')) return;
-
-                      try {
-                        const res = await fetch(`https://dev.kacc.mn/api/property-images/${img.id}/`, {
-                          method: 'DELETE',
-                        });
-
-                        if (!res.ok) throw new Error('Зураг устгахад алдаа гарлаа');
-
-                        toast.success('Зураг амжилттай устгагдлаа');
-                        setPropertyImages(propertyImages.filter(i => i.id !== img.id));
-                      } catch (err: any) {
-                        toast.error(err.message || 'Алдаа гарлаа');
-                      }
-                    }}
-                  >
-                    ×
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsImagesDialogOpen(false)}
-            >
-              Хаах
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Row 3: Tabbed Information */}
-      <div className="border rounded-lg p-4">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="basic">1. Үндсэн мэдээлэл</TabsTrigger>
-            <TabsTrigger value="location">2. Байршил</TabsTrigger>
-            <TabsTrigger value="map">3. Google map</TabsTrigger>
-            <TabsTrigger value="services">4. Ерөнхий үйлчилгээ</TabsTrigger>
-          </TabsList>
+      <EditImagesDialog
+        open={isImagesDialogOpen}
+        onOpenChange={setIsImagesDialogOpen}
+        propertyImages={propertyImages}
+        onImagesChange={setPropertyImages}
+        hotelId={user?.hotel}
+      />
 
               {/* Үндсэн мэдээлэл Tab */}
               <TabsContent value="basic" className="mt-4">
@@ -1327,118 +791,25 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
               </TabsContent>
           </Tabs>
         </div>
+        </div>
+
+        {/* Right Column: Бидний тухай + Видео */}
+        <AboutVideoSection
+          additionalInfo={additionalInfo}
+          onEdit={handleEditAboutVideo}
+        />
+      </div>
 
         {/* Image Lightbox Modal */}
-        <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-          <DialogContent className="max-w-7xl w-[95vw] h-[95vh] p-2">
-            <DialogTitle className="sr-only">Hotel Image Gallery</DialogTitle>
-            <div className="relative w-full h-full flex flex-col items-center justify-center gap-4">
-              {/* Main Image */}
-              <div className="relative w-full flex-1 flex items-center justify-center">
-                {lightboxImage && (
-                  <>
-                    <Image
-                      src={lightboxImage}
-                      alt="Hotel image full view"
-                      fill
-                      className="object-contain"
-                      priority
-                    />
-                    
-                    {/* Navigation Buttons */}
-                    {propertyImages.length > 1 && (
-                      <>
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          className="absolute left-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-black/50 hover:bg-black/70 text-white"
-                          onClick={() => {
-                            const currentIndex = propertyImages.findIndex(img => img.image === lightboxImage);
-                            const prevIndex = currentIndex > 0 ? currentIndex - 1 : propertyImages.length - 1;
-                            setLightboxImage(propertyImages[prevIndex].image);
-                          }}
-                        >
-                          <IconChevronLeft className="h-6 w-6" />
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          className="absolute right-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-black/50 hover:bg-black/70 text-white"
-                          onClick={() => {
-                            const currentIndex = propertyImages.findIndex(img => img.image === lightboxImage);
-                            const nextIndex = currentIndex < propertyImages.length - 1 ? currentIndex + 1 : 0;
-                            setLightboxImage(propertyImages[nextIndex].image);
-                          }}
-                        >
-                          <IconChevronRight className="h-6 w-6" />
-                        </Button>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-              
-              {/* Image Indicators (Dots) */}
-              {propertyImages.length > 1 && (
-                <div className="flex gap-2 pb-4">
-                  {propertyImages.map((img, index) => (
-                    <button
-                      key={img.id}
-                      className={`h-2 rounded-full transition-all ${
-                        img.image === lightboxImage 
-                          ? 'w-8 bg-white' 
-                          : 'w-2 bg-white/50 hover:bg-white/70'
-                      }`}
-                      onClick={() => setLightboxImage(img.image)}
-                      aria-label={`View image ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+        <ImageLightbox
+          open={lightboxOpen}
+          onOpenChange={setLightboxOpen}
+          images={propertyImages}
+          currentImage={lightboxImage}
+          onImageChange={setLightboxImage}
+        />
+
     </div>
   );
 }
 
-
-
-function LoadingSkeleton() {
-  return (
-    <div className="flex-1 space-y-6 pt-6">
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-6 w-1/2" />
-            </div>
-            <Skeleton className="h-10 w-32" />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-64" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function EmptyState({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/20 p-10 text-center">
-      <IconInfoCircle className="h-6 w-6 text-muted-foreground" />
-      <p className="text-base font-semibold text-foreground">{title}</p>
-      <p className="max-w-md text-sm text-muted-foreground">{description}</p>
-    </div>
-  );
-}
