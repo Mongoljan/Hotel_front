@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyCRpSZHhUVyo4krpECehgN3Kg7GaT_8xaQ';
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 const DefaultLocation = { lat: 47.918873, lng: 106.917017 }; // Ulaanbaatar center
 const DefaultZoom = 12;
 
