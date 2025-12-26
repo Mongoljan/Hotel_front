@@ -171,7 +171,15 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         setPropertyBaseInfo(baseInfo);
         setPropertyTypes(combinedData.property_types || []);
         setPropertyImages(imageJson);
-        setProvinces(combinedData.province || []);
+        
+        // Sort provinces to show Улаанбаатар first
+        const sortedProvinces = [...(combinedData.province || [])].sort((a, b) => {
+          if (a.name === 'Улаанбаатар') return -1;
+          if (b.name === 'Улаанбаатар') return 1;
+          return 0;
+        });
+        
+        setProvinces(sortedProvinces);
         setSoums(combinedData.soum || []);
         setDistricts(combinedData.district || []);
         setLanguages(combinedData.languages || []);

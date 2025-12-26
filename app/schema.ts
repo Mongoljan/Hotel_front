@@ -280,15 +280,15 @@ export const schemaHotelSteps1 = z
     property_name_mn: z
       .string()
       .min(1, { message: "Монгол нэрийг оруулна уу." })
-      .regex(/^[А-Яа-яӨөҮүЁё0-9\s]+$/, {
-        message: "Зөвхөн кирилл үсэг болон тоо бичнэ үү.",
+      .regex(/^[А-Яа-яӨөҮүЁё0-9\s.,'-]+$/, {
+        message: "Зөвхөн кирилл үсэг ашиглана уу. Латин үсэг оруулсан байна.",
       }),
 
     property_name_en: z
       .string()
       .min(1, { message: "Англи нэрийг оруулна уу." })
-      .regex(/^[A-Za-z0-9\s]+$/, {
-        message: "Зөвхөн латин үсэг болон тоо бичнэ үү.",
+      .regex(/^[A-Za-z0-9\s.,'-]+$/, {
+        message: "Зөвхөн латин үсэг ашиглана уу. Кирилл үсэг оруулсан байна.",
       }),
 
     start_date: z.string().refine((date) => !isNaN(Date.parse(date)), {

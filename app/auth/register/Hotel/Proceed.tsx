@@ -58,6 +58,8 @@ const Proceed: React.FC<ProceedProps> = ({
   getPropertyTypeName 
 }) => {
   const t = useTranslations('Proceed');
+  const tLoading = useTranslations('Loading');
+  const tError = useTranslations('Error');
   const locale = useLocale();
   const { user } = useAuth();
   const [hotelData, setHotelData] = useState<HotelDataType | null>(null);
@@ -69,7 +71,7 @@ const Proceed: React.FC<ProceedProps> = ({
     const fetchData = async () => {
       const currentHotelId = hotelId || user?.hotel;
       if (!currentHotelId) {
-        setError('Hotel ID is missing');
+        setError(tError('hotelIdMissing'));
         setIsLoading(false);
         return;
       }
@@ -98,8 +100,8 @@ const Proceed: React.FC<ProceedProps> = ({
         setPropertyTypes(combinedData.property_types || []);
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError('Failed to load hotel information');
-        toast.error('Зочид буудлын мэдээлэл ачааллахад алдаа гарлаа');
+        setError(tError('failedToLoadHotelInfo'));
+        toast.error(tError('failedToLoadHotelInfo'));
       } finally {
         setIsLoading(false);
       }
@@ -157,7 +159,7 @@ const Proceed: React.FC<ProceedProps> = ({
         <Card className="max-w-2xl mx-auto">
           <CardContent className="flex flex-col items-center justify-center p-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-            <p className="text-muted-foreground">Loading hotel information...</p>
+            <p className="text-muted-foreground">{tLoading('loadingHotelInfo')}</p>
           </CardContent>
         </Card>
       </div>
@@ -173,9 +175,9 @@ const Proceed: React.FC<ProceedProps> = ({
               <Building className="h-8 w-8 text-destructive" />
             </div>
             <CardTitle className="text-lg text-destructive mb-2">
-              Error loading hotel information
+              {tError('errorLoadingHotelInfo')}
             </CardTitle>
-            <p className="text-sm text-muted-foreground">{error || 'Hotel data not found'}</p>
+            <p className="text-sm text-muted-foreground">{error || tLoading('hotelDataNotFound')}</p>
           </CardContent>
         </Card>
       </div>
@@ -204,7 +206,7 @@ const Proceed: React.FC<ProceedProps> = ({
           ) : (
             <>
               <Clock className="w-4 h-4 mr-2" />
-              Pending Approval
+              {t('pendingApproval')}
             </>
           )}
         </Badge>
@@ -231,18 +233,20 @@ const Proceed: React.FC<ProceedProps> = ({
               <p className="font-medium">{isApproved ? 'Yes' : 'No'}</p>
             </div>
           </div>
+
+          {/* Status Message inside card */}
+          {!isApproved && (
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
+                <Clock className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-amber-800">
+                  {t('tooltip_wait_approval')}
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Status Message */}
-      {!isApproved && (
-        <div className="text-center p-4 bg-amber-50 border border-amber-200 rounded-lg">
-          <Clock className="h-5 w-5 text-amber-600 mx-auto mb-2" />
-          <p className="text-sm text-amber-800">
-            {t('tooltip_wait_approval')}
-          </p>
-        </div>
-      )}
 
       {/* Continue Button */}
       {isApproved && (

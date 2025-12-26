@@ -37,6 +37,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
   const [combinedData, setCombinedData] = useState<CombinedData>({ province: [], soum: [], district: [] });
   const [filteredSoum, setFilteredSoum] = useState<Soum[]>([]);
   const [pendingSoumValue, setPendingSoumValue] = useState<string | null>(null);
+  const [initialValues, setInitialValues] = useState<FormFields | null>(null);
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps2),
@@ -56,7 +57,18 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       try {
         const res = await fetch(API_COMBINED_DATA);
         const data = await res.json();
-        setCombinedData(data);
+        
+        // Sort provinces to show Улаанбаатар first
+        const sortedProvinces = [...(data.province || [])].sort((a, b) => {
+          if (a.name === 'Улаанбаатар') return -1;
+          if (b.name === 'Улаанбаатар') return 1;
+          return 0;
+        });
+        
+        setCombinedData({
+          ...data,
+          province: sortedProvinces
+        });
       } catch (err) {
         console.error('Error fetching combined data:', err);
       }
@@ -91,6 +103,9 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
             zipCode: initialValues.zipCode || '00000',
             total_floor_number: Number(initialValues.total_floor_number || 1),
           };
+
+          // Store initial values for comparison
+          setInitialValues(normalizedValues);
 
           // Set province first, then store soum value to be set after filtering
           form.setValue('province_city', normalizedValues.province_city);
@@ -135,6 +150,21 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
     if (!user?.id || !user?.hotel) {
       toast.error('User information missing');
       return;
+    }
+
+    // Check if data has changed
+    if (initialValues) {
+      const hasChanged = 
+        data.province_city !== initialValues.province_city ||
+        data.soum !== initialValues.soum ||
+        data.district !== initialValues.district ||
+        data.total_floor_number !== initialValues.total_floor_number;
+
+      if (!hasChanged) {
+        // No changes, just go to next step
+        onNext();
+        return;
+      }
     }
 
     const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
@@ -266,8 +296,22 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                         placeholder={t('district_placeholder')}
                         {...field}
                         onChange={(e) => {
+                          const value = e.target.value;
+                          // Allow empty string while typing
+                          if (value === '') {
+                            field.onChange('');
+                          } else {
+                            const numValue = parseInt(value, 10);
+                            field.onChange(isNaN(numValue) ? '' : Math.floor(numValue));
+                          }
+                        }}
+                        onBlur={(e) => {
+                          // Enforce minimum of 1 when field loses focus
                           const value = parseInt(e.target.value, 10);
-                          field.onChange(isNaN(value) || value < 1 ? 1 : Math.floor(value));
+                          if (isNaN(value) || value < 1) {
+                            field.onChange(1);
+                          }
+                          field.onBlur();
                         }}
                         onKeyDown={(e) => {
                           // Prevent decimal point and minus sign
@@ -294,7 +338,29 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                         min={1}
                         placeholder={t('floors_placeholder')}
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Allow empty string while typing
+                          if (value === '') {
+                            field.onChange('');
+                          } else {
+                            field.onChange(Number(value));
+                          }
+                        }}
+                        onBlur={(e) => {
+                          // Enforce minimum of 1 when field loses focus
+                          const value = Number(e.target.value);
+                          if (isNaN(value) || value < 1) {
+                            field.onChange(1);
+                          }
+                          field.onBlur();
+                        }}
+                        onKeyDown={(e) => {
+                          // Prevent decimal point and minus sign
+                          if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                            e.preventDefault();
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />

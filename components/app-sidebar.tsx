@@ -43,6 +43,12 @@ function SidebarStatusMessage({ isApproved, userApproved, hotelRegistrationCompl
       ? tNav('completeRegistration') || 'Буудлын бүртгэлийг дуусгаснаар бүх цэс нээгдэнэ'
       : '';
 
+  const tooltipMessage = !isApproved || !userApproved
+    ? tNav('waitingApprovalTooltip') || 'Зөвшөөрөл авсны дараа цэсүүд харагдана. Админы зөвшөөрлийг түр хүлээнэ үү.'
+    : !hotelRegistrationCompleted
+      ? tNav('completeRegistration') || 'Буудлын бүртгэлийг дуусгаснаар бүх цэс нээгдэнэ'
+      : '';
+
   if (isCollapsed) {
     return (
       <TooltipProvider>
@@ -53,7 +59,7 @@ function SidebarStatusMessage({ isApproved, userApproved, hotelRegistrationCompl
             </div>
           </TooltipTrigger>
           <TooltipContent side="right" className="max-w-[250px]">
-            <p className="text-xs">{message}</p>
+            <p className="text-xs">{tooltipMessage}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -61,9 +67,18 @@ function SidebarStatusMessage({ isApproved, userApproved, hotelRegistrationCompl
   }
 
   return (
-    <div className="px-4 py-3 mt-4 text-xs text-muted-foreground bg-muted/50 rounded-lg mx-3">
-      {message}
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="px-4 py-3 mt-4 text-xs text-muted-foreground bg-muted/50 rounded-lg mx-3 cursor-help">
+            {message}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="max-w-[250px]">
+          <p className="text-xs">{tooltipMessage}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

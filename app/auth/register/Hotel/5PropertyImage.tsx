@@ -29,6 +29,7 @@ type Props = {
 export default function RegisterHotel5({ onNext, onBack }: Props) {
   const t = useTranslations('5PropertyImages');
   const { user } = useAuth();
+  const [initialValues, setInitialValues] = React.useState<FormFields | null>(null);
 
   const propertyDataStr = user?.id ? UserStorage.getItem<string>('propertyData', user.id) : null;
   const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
@@ -61,6 +62,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         descriptions: item.description,
       }));
       replace(restored);
+      setInitialValues({ entries: restored });
     }
   }, [replace, user?.id]);
 
@@ -87,6 +89,12 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     if (!user?.id || !user?.hotel) {
       toast.error('User information missing');
+      return;
+    }
+
+    // Check if data has changed
+    if (initialValues && JSON.stringify(data) === JSON.stringify(initialValues)) {
+      onNext();
       return;
     }
 

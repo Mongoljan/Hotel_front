@@ -3,7 +3,10 @@
     "loading": "Loading...",
     "please_wait": "Please wait",
     "initializing": "Initializing...",
-    "setting_up_dashboard": "Setting up your dashboard"
+    "setting_up_dashboard": "Setting up your dashboard",
+    "loadingHotelInfo": "Loading hotel information...",
+    "noHotelInfo": "No hotel info available",
+    "hotelDataNotFound": "Hotel data not found"
   },
 
   "Proceed":{
@@ -13,13 +16,20 @@
     "3":"Email",
     "4":"Approved",
     "5":"Proceed",
- "tooltip_wait_approval": "Та бүртгүүлсэн зочид буудлын зөвшөөрлийг хүлээнэ үү."
-
+    "tooltip_wait_approval": "Please wait for approval of your registered hotel.",
+    "pendingApproval": "Pending Approval"
   },
 
   "3GoogleMap":{
-    "title":"Google map",
-     "1": "Back",
+    "title":"Google Map Location",
+    "description": "Click on the map to select your hotel's location",
+    "location_saved": "Location saved successfully",
+    "location_updated": "Location updated",
+    "selected_location": "Selected Location:",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "view_on_google_maps": "View on Google Maps",
+    "1": "Back",
     "2": "Next"
   },
 
@@ -39,10 +49,10 @@
     "12":"Allow Pets",
     "13": "Back",
     "14": "Next",
-    "16":"Сонгох",
-    "17":"Байхгүй",
-    "18":"Үнэд багтсан",
-    "19":"Тусдаа үнэтэй",
+    "16":"Select",
+    "17":"None",
+    "18":"Included in price",
+    "19":"Separately priced",
     "20":"Proceed",
     "from": "from",
     "to": "to",
@@ -195,6 +205,8 @@
   "title": "Hotel Basic Information",
   "1": "Name in Mongolian",
   "2": "Name in English",
+  "property_name_mn_placeholder": "Enter hotel name in Cyrillic",
+  "property_name_en_placeholder": "Enter hotel name in Latin",
   "3": "Start Date",
   "4": "Star Rating",
   "5": "Part of a Group",
@@ -366,6 +378,7 @@
     "faq": "FAQ",
     "sidebarMobileTitle": "Sidebar navigation",
     "waitingApproval": "Waiting for approval...",
+    "waitingApprovalTooltip": "Menus will appear after receiving approval. Please wait for administrator approval.",
     "completeRegistration": "Complete hotel registration to unlock all features"
   },
   "Language": {
@@ -402,6 +415,15 @@
   },
   "TopbarAuth": {
     "title": "Hotel Admin"
+  },
+  "BrandName": {
+    "hotelAdmin": "Hotel Admin",
+    "managementSystem": "Management System",
+    "professional": "Professional",
+    "enterprise": "Enterprise",
+    "chainHotels": "Chain Hotels",
+    "teams": "Teams",
+    "addTeam": "Add team"
   },
   "Footer": {
     "copyright": "© {year} Hotel Admin System. All rights reserved."
@@ -1027,5 +1049,10 @@
     "noData": "No data to export",
     "yes": "Yes",
     "no": "No"
+  },
+  "Error": {
+    "hotelIdMissing": "Hotel ID is missing",
+    "failedToLoadHotelInfo": "Failed to load hotel information",
+    "errorLoadingHotelInfo": "Error loading hotel information"
   }
 }

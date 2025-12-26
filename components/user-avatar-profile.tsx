@@ -95,7 +95,7 @@ export function UserAvatarProfile() {
             
             <DropdownMenuSeparator />
             
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem className="gap-2">
                 <IconUser className="size-4" />
                 Profile
@@ -117,7 +117,7 @@ export function UserAvatarProfile() {
               Billing
             </DropdownMenuItem>
             
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator /> */}
             
             <DropdownMenuItem 
               className="gap-2 text-red-600 focus:text-red-600"

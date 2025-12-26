@@ -3,6 +3,7 @@
 import * as React from "react"
 import { format, parse } from "date-fns"
 import { CalendarIcon } from "lucide-react"
+import { useLocale } from 'next-intl'
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -12,6 +13,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface DatePickerProps {
   date?: Date
@@ -45,6 +53,34 @@ export function DatePicker({
   displayFormat = "yyyy.MM.dd",
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false)
+  const locale = useLocale()
+  
+  const [selectedYear, setSelectedYear] = React.useState<number>(
+    date ? date.getFullYear() : new Date().getFullYear()
+  )
+  const [selectedMonth, setSelectedMonth] = React.useState<number>(
+    date ? date.getMonth() : new Date().getMonth()
+  )
+
+  // Generate year options
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: currentYear - 1949 }, (_, i) => currentYear - i)
+  
+  // Localized month names
+  const monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const monthsMn = ['1-р сар', '2-р сар', '3-р сар', '4-р сар', '5-р сар', '6-р сар', '7-р сар', '8-р сар', '9-р сар', '10-р сар', '11-р сар', '12-р сар']
+  const months = locale === 'mn' ? monthsMn : monthsEn
+
+  // Localized formatters
+  const formattersEn = {
+    formatWeekdayName: (date: Date) => ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][date.getDay()],
+    formatCaption: (date: Date) => `${monthsEn[date.getMonth()]} ${date.getFullYear()}`
+  }
+  const formattersMn = {
+    formatWeekdayName: (date: Date) => ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'][date.getDay()],
+    formatCaption: (date: Date) => `${date.getFullYear()} оны ${monthsMn[date.getMonth()]}`
+  }
+  const formatters = locale === 'mn' ? formattersMn : formattersEn
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -63,13 +99,49 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
+        <div className="p-3 space-y-2 border-b">
+          <div className="flex gap-2">
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={(value) => setSelectedYear(parseInt(value))}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={selectedMonth.toString()}
+              onValueChange={(value) => setSelectedMonth(parseInt(value))}
+            >
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month, index) => (
+                  <SelectItem key={index} value={index.toString()}>{month}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <Calendar
           mode="single"
           selected={date}
           onSelect={(selectedDate) => {
             onSelect?.(selectedDate)
-            setIsOpen(false) // Close popover after selection - fixes Safari issue
+            setIsOpen(false)
           }}
+          month={new Date(selectedYear, selectedMonth)}
+          onMonthChange={(date) => {
+            setSelectedYear(date.getFullYear())
+            setSelectedMonth(date.getMonth())
+          }}
+          formatters={formatters}
           initialFocus
         />
       </PopoverContent>
@@ -90,6 +162,7 @@ export function DatePickerWithValue({
   displayFormat = "yyyy.MM.dd",
 }: DatePickerWithValueProps) {
   const [isOpen, setIsOpen] = React.useState(false)
+  const locale = useLocale()
 
   // Convert string to Date for the calendar
   const dateValue = React.useMemo(() => {
@@ -100,6 +173,33 @@ export function DatePickerWithValue({
       return undefined
     }
   }, [value])
+
+  const [selectedYear, setSelectedYear] = React.useState<number>(
+    dateValue ? dateValue.getFullYear() : new Date().getFullYear()
+  )
+  const [selectedMonth, setSelectedMonth] = React.useState<number>(
+    dateValue ? dateValue.getMonth() : new Date().getMonth()
+  )
+
+  // Generate year options
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: currentYear - 1949 }, (_, i) => currentYear - i)
+  
+  // Localized month names
+  const monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const monthsMn = ['1-р сар', '2-р сар', '3-р сар', '4-р сар', '5-р сар', '6-р сар', '7-р сар', '8-р сар', '9-р сар', '10-р сар', '11-р сар', '12-р сар']
+  const months = locale === 'mn' ? monthsMn : monthsEn
+
+  // Localized formatters
+  const formattersEn = {
+    formatWeekdayName: (date: Date) => ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][date.getDay()],
+    formatCaption: (date: Date) => `${monthsEn[date.getMonth()]} ${date.getFullYear()}`
+  }
+  const formattersMn = {
+    formatWeekdayName: (date: Date) => ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'][date.getDay()],
+    formatCaption: (date: Date) => `${date.getFullYear()} оны ${monthsMn[date.getMonth()]}`
+  }
+  const formatters = locale === 'mn' ? formattersMn : formattersEn
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -118,18 +218,53 @@ export function DatePickerWithValue({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
+        <div className="p-3 space-y-2 border-b">
+          <div className="flex gap-2">
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={(value) => setSelectedYear(parseInt(value))}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={selectedMonth.toString()}
+              onValueChange={(value) => setSelectedMonth(parseInt(value))}
+            >
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month, index) => (
+                  <SelectItem key={index} value={index.toString()}>{month}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <Calendar
           mode="single"
           selected={dateValue}
           onSelect={(selectedDate) => {
             if (selectedDate) {
-              // Convert back to YYYY-MM-DD string format
               onChange?.(format(selectedDate, 'yyyy-MM-dd'))
             } else {
               onChange?.('')
             }
-            setIsOpen(false) // Close popover after selection - fixes Safari issue
+            setIsOpen(false)
           }}
+          month={new Date(selectedYear, selectedMonth)}
+          onMonthChange={(date) => {
+            setSelectedYear(date.getFullYear())
+            setSelectedMonth(date.getMonth())
+          }}
+          formatters={formatters}
           initialFocus
         />
       </PopoverContent>

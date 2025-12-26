@@ -29,6 +29,7 @@ type Props = {
 export default function RegisterHotel4({ onNext, onBack }: Props) {
   const t = useTranslations('4PropertyPolicies');
   const { user } = useAuth();
+  const [initialValues, setInitialValues] = React.useState<FormFields | null>(null);
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps3),
@@ -90,6 +91,8 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
             allow_children: initialValues.allow_children || false,
             allow_pets: initialValues.allow_pets || false,
           };
+          
+          setInitialValues(normalizedValues);
           form.reset(normalizedValues);
 
           stored.step4 = initialValues;
@@ -107,6 +110,17 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
     if (!user?.id || !user?.hotel) {
       toast.error('User information missing');
       return;
+    }
+
+    // Check if data has changed
+    if (initialValues) {
+      const hasChanged = JSON.stringify(data) !== JSON.stringify(initialValues);
+      
+      if (!hasChanged) {
+        // No changes, just go to next step
+        onNext();
+        return;
+      }
     }
 
     const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);

@@ -7,7 +7,7 @@ import { schemaHotelSteps1 } from '../../../schema';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Building2, Star } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 
@@ -33,6 +33,7 @@ type FormFields = z.infer<typeof schemaHotelSteps1>;
 
 export default function RegisterHotel1({ onNext, onBack }: Props) {
   const t = useTranslations('1BasicInfo');
+  const locale = useLocale();
   const { user } = useAuth(); // Get user from auth hook
   const [languages, setLanguages] = useState<LanguageType[]>([]);
   const [ratings, setRatings] = useState<RatingType[]>([]);
@@ -110,6 +111,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps1),
+    mode: 'onBlur',
     defaultValues: defaultValues || {
       property_name_mn: '',
       property_name_en: '',
@@ -137,6 +139,17 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
     if (!user?.id || !user?.hotel) {
       toast.error('User information missing');
       return;
+    }
+
+    // Check if data has changed
+    if (defaultValues) {
+      const hasChanged = JSON.stringify(data) !== JSON.stringify(defaultValues);
+      
+      if (!hasChanged) {
+        // No changes, just go to next step
+        onNext();
+        return;
+      }
     }
 
     const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
@@ -203,15 +216,10 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                     <FormControl>
                       <Input
                         {...field}
-                        onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                          const input = e.currentTarget;
-                          const value = input.value;
-                          // Remove any non-Cyrillic characters (keep Cyrillic, numbers, and spaces)
-                          const filtered = value.replace(/[^А-Яа-яӨөҮүЁё0-9\s]/g, '');
-                          if (value !== filtered) {
-                            input.value = filtered;
-                            field.onChange(filtered);
-                          }
+                        placeholder={t('property_name_mn_placeholder')}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          form.trigger('property_name_mn');
                         }}
                       />
                     </FormControl>
@@ -229,15 +237,10 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                     <FormControl>
                       <Input
                         {...field}
-                        onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                          const input = e.currentTarget;
-                          const value = input.value;
-                          // Remove any non-Latin characters (keep Latin, numbers, and spaces)
-                          const filtered = value.replace(/[^A-Za-z0-9\s]/g, '');
-                          if (value !== filtered) {
-                            input.value = filtered;
-                            field.onChange(filtered);
-                          }
+                        placeholder={t('property_name_en_placeholder')}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          form.trigger('property_name_en');
                         }}
                       />
                     </FormControl>
@@ -251,6 +254,45 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 name="start_date"
                 render={({ field }) => {
                   const [isOpen, setIsOpen] = React.useState(false);
+                  const [selectedYear, setSelectedYear] = React.useState<number>(
+                    field.value ? new Date(field.value).getFullYear() : new Date().getFullYear()
+                  );
+                  const [selectedMonth, setSelectedMonth] = React.useState<number>(
+                    field.value ? new Date(field.value).getMonth() : new Date().getMonth()
+                  );
+
+                  // Generate year options (from 1950 to current year)
+                  const currentYear = new Date().getFullYear();
+                  const years = Array.from({ length: currentYear - 1949 }, (_, i) => currentYear - i);
+                  
+                  // Localized month names
+                  const monthsEn = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                  ];
+                  const monthsMn = [
+                    '1-р сар', '2-р сар', '3-р сар', '4-р сар', '5-р сар', '6-р сар',
+                    '7-р сар', '8-р сар', '9-р сар', '10-р сар', '11-р сар', '12-р сар'
+                  ];
+                  const months = locale === 'mn' ? monthsMn : monthsEn;
+
+                  // Localized day names for Calendar
+                  const formattersEn = {
+                    formatWeekdayName: (date: Date) => ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][date.getDay()],
+                    formatCaption: (date: Date) => {
+                      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                      return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+                    }
+                  };
+                  const formattersMn = {
+                    formatWeekdayName: (date: Date) => ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'][date.getDay()],
+                    formatCaption: (date: Date) => {
+                      const monthNames = ['1-р сар', '2-р сар', '3-р сар', '4-р сар', '5-р сар', '6-р сар', '7-р сар', '8-р сар', '9-р сар', '10-р сар', '11-р сар', '12-р сар'];
+                      return `${date.getFullYear()} оны ${monthNames[date.getMonth()]}`;
+                    }
+                  };
+                  const formatters = locale === 'mn' ? formattersMn : formattersEn;
+
                   return (
                     <FormItem>
                       <FormLabel>{t('3')}</FormLabel>
@@ -265,18 +307,63 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                               )}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value ? format(new Date(field.value), "yyyy-MM-dd") : <span>Огноо сонгох</span>}
+                              {field.value ? format(new Date(field.value), "yyyy-MM-dd") : <span>{locale === 'mn' ? 'Огноо сонгох' : 'Select date'}</span>}
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
+                          <div className="p-3 space-y-2 border-b">
+                            <div className="flex gap-2">
+                              <Select
+                                value={selectedYear.toString()}
+                                onValueChange={(value) => {
+                                  const year = parseInt(value);
+                                  setSelectedYear(year);
+                                }}
+                              >
+                                <SelectTrigger className="w-[120px]">
+                                  <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px]">
+                                  {years.map((year) => (
+                                    <SelectItem key={year} value={year.toString()}>
+                                      {year}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Select
+                                value={selectedMonth.toString()}
+                                onValueChange={(value) => {
+                                  setSelectedMonth(parseInt(value));
+                                }}
+                              >
+                                <SelectTrigger className="w-[130px]">
+                                  <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {months.map((month, index) => (
+                                    <SelectItem key={index} value={index.toString()}>
+                                      {month}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                           <Calendar
                             mode="single"
                             selected={field.value ? new Date(field.value) : undefined}
                             onSelect={(date) => {
                               field.onChange(date ? format(date, "yyyy-MM-dd") : "");
-                              setIsOpen(false); // Close popover after selection
+                              setIsOpen(false);
                             }}
+                            month={new Date(selectedYear, selectedMonth)}
+                            onMonthChange={(date) => {
+                              setSelectedYear(date.getFullYear());
+                              setSelectedMonth(date.getMonth());
+                            }}
+                            formatters={formatters}
                             initialFocus
                           />
                         </PopoverContent>

@@ -18,22 +18,25 @@ import {
 } from '@/components/ui/sidebar';
 import { IconBuilding, IconPlus } from '@tabler/icons-react';
 import { ChevronsUpDown } from 'lucide-react';
-
-const teams = [
-  {
-    name: 'Hotel Admin',
-    logo: IconBuilding,
-    plan: 'Professional',
-  },
-  {
-    name: 'Chain Hotels',
-    logo: IconBuilding,
-    plan: 'Enterprise',
-  },
-];
+import { useTranslations } from 'next-intl';
 
 export function OrgSwitcher() {
   const { isMobile } = useSidebar();
+  const t = useTranslations('BrandName');
+  
+  const teams = [
+    {
+      name: t('hotelAdmin'),
+      logo: IconBuilding,
+      plan: t('professional'),
+    },
+    {
+      name: t('chainHotels'),
+      logo: IconBuilding,
+      plan: t('enterprise'),
+    },
+  ];
+  
   const [activeTeam, setActiveTeam] = React.useState(teams[0]);
 
   return (
@@ -63,7 +66,7 @@ export function OrgSwitcher() {
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Teams
+              {t('teams')}
             </DropdownMenuLabel>
             {teams.map((team, index) => (
               <DropdownMenuItem
@@ -83,7 +86,7 @@ export function OrgSwitcher() {
               <div className="flex size-6 items-center justify-center rounded-md border bg-background">
                 <IconPlus className="size-4" />
               </div>
-              <div className="font-medium text-muted-foreground">Add team</div>
+              <div className="font-medium text-muted-foreground">{t('addTeam')}</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

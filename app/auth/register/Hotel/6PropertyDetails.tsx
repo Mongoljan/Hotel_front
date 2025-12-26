@@ -34,6 +34,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
   const locale = useLocale();
   const { user } = useAuth();
   const [facilities, setFacilities] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
+  const [initialValues, setInitialValues] = useState<FormFields | null>(null);
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps6),
@@ -63,10 +64,12 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
     const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
     
     if (stored.step6) {
-      form.reset({
+      const values = {
         google_map: stored.step6.google_map || '',
         general_facilities: (stored.step6.general_facilities || []).map(String),
-      });
+      };
+      form.reset(values);
+      setInitialValues(values);
     }
   }, [form, user?.id]);
 
@@ -80,6 +83,12 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
     try {
       if (!user?.id || !user?.hotel) {
         toast.error(t('user_info_missing') || 'User information is missing');
+        return;
+      }
+
+      // Check if data has changed
+      if (initialValues && JSON.stringify(data) === JSON.stringify(initialValues)) {
+        onNext();
         return;
       }
 
