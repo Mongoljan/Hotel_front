@@ -14,6 +14,7 @@ import {
   IconInfoCircle,
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 import ServicesTab from './ServicesTab';
 import { useAuth } from '@/hooks/useAuth';
@@ -68,6 +69,25 @@ interface ProceedProps {
   setProceed: (value: number) => void;
 }
 
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+
+const mapContainerStyle = {
+  width: '100%',
+  height: '400px',
+  borderRadius: '8px',
+};
+
+// Helper function to extract coordinates from Google Maps URL
+const extractCoordinates = (url: string | null | undefined): { lat: number; lng: number } | null => {
+  if (!url) return null;
+  const match = url.match(/q=([-\d.]+),([-\d.]+)/);
+  if (match) {
+    const [, lat, lng] = match;
+    return { lat: parseFloat(lat), lng: parseFloat(lng) };
+  }
+  return null;
+};
+
 export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const t = useTranslations('SixStepInfo');
   const { user } = useAuth();
@@ -85,6 +105,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [soums, setSoums] = useState<Soum[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
+
+  const { isLoaded: isMapLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+  });
 
   // Edit dialog state for About & Video
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -691,7 +716,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                         </div>
                         <div className="flex flex-col gap-1">
                           <p className="text-sm text-muted-foreground">Танай буудал сүлжээ буудал эсэх:</p>
-                          <p className="font-medium">{propertyBaseInfo?.groupName ? `Тийм /${propertyBaseInfo.groupName}/` : '—'}</p>
+                          <p className="font-medium">
+                            {basicInfo?.part_of_group
+                              ? `Тийм${basicInfo.group_name ? ` /${basicInfo.group_name}/` : ''}`
+                              : 'Үгүй'}
+                          </p>
                         </div>
                         <div className="flex flex-col gap-1">
                           <p className="text-sm text-muted-foreground">Зочдод үйлчлэх болонжтой хэл:</p>
@@ -761,20 +790,45 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                     <IconPencil className="h-4 w-4" />
                   </Button>
                   <div>
-                    {propertyDetail?.google_map ? (
-                      <div className="aspect-video rounded-md overflow-hidden">
-                        <iframe
-                          src={propertyDetail.google_map}
-                          className="w-full h-full border-0"
-                          allowFullScreen
-                          loading="lazy"
-                        />
-                      </div>
-                    ) : (
-                      <div className="aspect-video bg-muted flex items-center justify-center rounded-md">
-                        <p className="text-muted-foreground">Google Map байхгүй</p>
-                      </div>
-                    )}
+                    {(() => {
+                      const coordinates = extractCoordinates(propertyDetail?.google_map);
+                      console.log('Google Map URL:', propertyDetail?.google_map);
+                      console.log('Extracted Coordinates:', coordinates);
+
+                      if (coordinates) {
+                        return (
+                          <div>
+                            {isMapLoaded ? (
+                              <GoogleMap
+                                mapContainerStyle={mapContainerStyle}
+                                center={coordinates}
+                                zoom={15}
+                                options={{
+                                  streetViewControl: false,
+                                  mapTypeControl: true,
+                                  fullscreenControl: true,
+                                }}
+                              >
+                                <Marker position={coordinates} />
+                              </GoogleMap>
+                            ) : (
+                              <div className="w-full h-[400px] bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                                <p className="text-sm text-gray-500">Loading Google Maps...</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div className="w-full h-[400px] bg-muted flex items-center justify-center rounded-md">
+                            <p className="text-muted-foreground">Google Map байхгүй</p>
+                            {propertyDetail?.google_map && (
+                              <p className="text-xs text-muted-foreground mt-2">URL: {propertyDetail.google_map}</p>
+                            )}
+                          </div>
+                        );
+                      }
+                    })()}
                   </div>
                 </div>
               </TabsContent>

@@ -402,12 +402,6 @@ export const schemaHotelSteps5 = z.object({
 
 
 export const schemaHotelSteps6 = z.object({
-  google_map: z
-    .string()
-    .url({ message: 'Please enter a valid Google Maps URL' }),
-  // parking_situation: z
-  //   .string()
-  //   .min(2, {message:"enter valid reason"}),
   general_facilities: z
     .array(z.string())
     .min(1, { message: 'Select at least one general facility' }),

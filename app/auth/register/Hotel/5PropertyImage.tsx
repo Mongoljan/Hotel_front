@@ -69,6 +69,14 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Check file type
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Зөвхөн PNG, JPG, JPEG, WebP форматтай зураг оруулна уу.');
+        event.target.value = '';
+        return;
+      }
+
       // Check file size (minimum 100KB)
       const fileSizeKB = file.size / 1024;
       if (fileSizeKB < 100) {
@@ -171,7 +179,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
             {t('title')}
           </CardTitle>
           <CardDescription className="text-center">
-            Буудлынхаа зураг болон тайлбарыг оруулна уу
+            {t('description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -180,6 +188,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>Хамгийн багадаа <strong>5 зураг</strong> оруулна уу</li>
                 <li>Зураг бүр хамгийн багадаа <strong>100KB</strong> хэмжээтэй байх ёстой</li>
+                <li>Зөвхөн <strong>PNG, JPG, JPEG, WebP</strong> форматтай зураг оруулна уу</li>
               </ul>
               <div className="mt-3 text-sm font-medium">
                 Оруулсан зургийн тоо: <span className={`${watchedEntries.filter(e => e.images).length >= 5 ? 'text-green-600' : 'text-orange-600'}`}>{watchedEntries.filter(e => e.images).length}</span> / 5 (хамгийн бага)
@@ -208,7 +217,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                               <FormControl>
                                 <Input
                                   type="file"
-                                  accept="image/*"
+                                  accept="image/png,image/jpeg,image/jpg,image/webp"
                                   onChange={(e) => handleImageChange(e, index)}
                                   className="cursor-pointer"
                                 />

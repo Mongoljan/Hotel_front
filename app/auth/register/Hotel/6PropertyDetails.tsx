@@ -4,16 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, MapPin, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { schemaHotelSteps6 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations, useLocale } from 'next-intl';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 
@@ -39,7 +37,6 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps6),
     defaultValues: {
-      google_map: '',
       general_facilities: [],
     },
   });
@@ -65,7 +62,6 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
     
     if (stored.step6) {
       const values = {
-        google_map: stored.step6.google_map || '',
         general_facilities: (stored.step6.general_facilities || []).map(String),
       };
       form.reset(values);
@@ -101,6 +97,12 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
         return;
       }
 
+      // Get google_map URL from step3
+      const googleMapUrl = stored.step3?.googleMapsUrl || stored.step6?.google_map || '';
+
+      console.log('Step 3 data:', stored.step3);
+      console.log('Google Map URL to send:', googleMapUrl);
+
       const payload = {
         propertyBasicInfo: getStepId(stored.step1),
         confirmAddress: getStepId(stored.step2),
@@ -108,16 +110,36 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
         property_photos: Array.isArray(stored.property_photos)
           ? stored.property_photos
           : [stored.property_photos],
-        google_map: data.google_map,
+        google_map: googleMapUrl,
         general_facilities: [...data.general_facilities].map(Number),
         property: propertyId,
       };
 
-      const response = await fetch(API_PROPERTY_DETAILS, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      console.log('Payload being sent:', payload);
+
+      // Check if property detail already exists
+      const checkRes = await fetch(`${API_PROPERTY_DETAILS}?property=${propertyId}`);
+      const existingDetails = checkRes.ok ? await checkRes.json() : [];
+
+      let response;
+      if (existingDetails.length > 0 && existingDetails[0]?.id) {
+        // Update existing record using PATCH
+        const existingId = existingDetails[0].id;
+        console.log('Updating existing property detail:', existingId);
+        response = await fetch(`${API_PROPERTY_DETAILS}${existingId}/`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // Create new record using POST
+        console.log('Creating new property detail');
+        response = await fetch(API_PROPERTY_DETAILS, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
 
       if (!response.ok) throw new Error('Property detail submission failed.');
 
@@ -149,32 +171,6 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              
-              <FormField
-                control={form.control}
-                name="google_map"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      {t('1')}
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="url"
-                        placeholder="https://maps.google.com/..."
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t('google_maps_instruction')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Separator />
 
               <div className="space-y-6">
                 <div>

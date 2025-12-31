@@ -173,7 +173,7 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
             proceed={proceed}
             setProceed={setProceed}
             onNext={() => {
-              toast.success('Бүртгэл дуусгагдлаа!');
+              toast.success('Буудлын мэдээлэл амжилттай хадгалагдлаа! Одоо өрөөнүүдээ нэмнэ үү.');
               setTimeout(() => {
                 UserStorage.removeItem('currentStep');
                 if (user?.id && user?.hotel) {

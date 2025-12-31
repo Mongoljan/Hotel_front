@@ -430,17 +430,47 @@ export default function PriceSettingModal({
             ) : (
               <Input
                 id="value"
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={formData.value}
-                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value;
+
+                  // Allow empty string for clearing
+                  if (val === '') {
+                    setFormData({ ...formData, value: val });
+                    return;
+                  }
+
+                  // Only allow numbers and decimal point
+                  if (!/^\d*\.?\d*$/.test(val)) {
+                    return;
+                  }
+
+                  const numVal = parseFloat(val);
+
+                  // If it's a valid number, check range
+                  if (!isNaN(numVal)) {
+                    if (numVal > 100) {
+                      toast.error('Хувь 100-аас хэтрэхгүй байх ёстой');
+                      return;
+                    }
+                    if (numVal < 0) {
+                      toast.error('Хувь сөрөг тоо байж болохгүй');
+                      return;
+                    }
+                  }
+
+                  // Allow partial input like "10." for decimals
+                  setFormData({ ...formData, value: val });
+                }}
                 placeholder="10"
                 className="border-input"
               />
             )}
             <p className="text-xs text-muted-foreground">
               {formData.value_type === 'PERCENT'
-                ? 'Хувиар илэрхийлнэ (жишээ нь: 10 гэж оруулбал 10% нэмэгдэнэ)'
+                ? 'Хувиар илэрхийлнэ (0-100 хооронд, жишээ нь: 10 гэж оруулбал 10% нэмэгдэнэ)'
                 : "Төгрөгөөр илэрхийлнэ (жишээ нь: 50'000 гэж оруулбал 50,000₮ нэмэгдэнэ)"}
             </p>
           </div>

@@ -73,6 +73,7 @@
 
   "5PropertyImages":{
     "title":"Property Images",
+    "description":"Upload your property images and descriptions",
     "1":"Upload Image",
     "2":"Description",
     "3":"Remove",
