@@ -56,6 +56,7 @@ export default function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
     resolver: zodResolver(schemaHotelRegistration2),
+    mode: 'onChange',
     defaultValues: parsedDefaults,
   });
 

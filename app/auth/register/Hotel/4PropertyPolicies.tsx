@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslations } from 'next-intl';
 import { cn } from "@/lib/utils";
+import { NumericFormat } from 'react-number-format';
 
 const API_URL = 'https://dev.kacc.mn/api/property-policies/';
 
@@ -34,6 +35,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps3),
+    mode: 'onChange',
     defaultValues: {
       // Check-in/Check-out times
       check_in_from: '',
@@ -584,12 +586,12 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                             <div className="flex items-center gap-4">
                               <FormLabel className="min-w-[150px]">Үнэ (₮)</FormLabel>
                               <FormControl>
-                                <Input
-                                  type="number"
+                                <NumericFormat
+                                  thousandSeparator=","
                                   placeholder="0"
-                                  {...field}
                                   value={field.value || ''}
-                                  onChange={(e) => field.onChange(e.target.value || null)}
+                                  onValueChange={(values) => field.onChange(values.value || null)}
+                                  customInput={Input}
                                   className="w-40"
                                 />
                               </FormControl>
@@ -674,12 +676,12 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                           <FormItem>
                             <FormLabel>Үнэ (₮)</FormLabel>
                             <FormControl>
-                              <Input
-                                type="number"
+                              <NumericFormat
+                                thousandSeparator=","
                                 placeholder="0"
-                                {...field}
                                 value={field.value || ''}
-                                onChange={(e) => field.onChange(e.target.value || null)}
+                                onValueChange={(values) => field.onChange(values.value || null)}
+                                customInput={Input}
                                 className="w-32"
                               />
                             </FormControl>
@@ -753,12 +755,12 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                           <FormItem>
                             <FormLabel>Үнэ (₮)</FormLabel>
                             <FormControl>
-                              <Input
-                                type="number"
+                              <NumericFormat
+                                thousandSeparator=","
                                 placeholder="0"
-                                {...field}
                                 value={field.value || ''}
-                                onChange={(e) => field.onChange(e.target.value || null)}
+                                onValueChange={(values) => field.onChange(values.value || null)}
+                                customInput={Input}
                                 className="w-32"
                               />
                             </FormControl>
@@ -934,12 +936,12 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                           <div className="flex items-center gap-4">
                             <FormLabel className="min-w-[200px]">Нэмэлт орны үнэ (₮)</FormLabel>
                             <FormControl>
-                              <Input
-                                type="number"
+                              <NumericFormat
+                                thousandSeparator=","
                                 placeholder="0"
-                                {...field}
                                 value={field.value || ''}
-                                onChange={(e) => field.onChange(e.target.value || null)}
+                                onValueChange={(values) => field.onChange(values.value || null)}
+                                customInput={Input}
                                 className="w-40"
                               />
                             </FormControl>

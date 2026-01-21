@@ -19,7 +19,6 @@ interface PropertyPolicy {
   check_in_until: string;
   check_out_from: string;
   check_out_until: string;
-  allow_children: boolean;
   cancellation_fee: {
     cancel_time: string;
     single_before_time_percentage: string;
@@ -28,7 +27,29 @@ interface PropertyPolicy {
     multi_3days_before_percentage: string;
     multi_2days_before_percentage: string;
     multi_1day_before_percentage: string;
-  };
+  } | null;
+  breakfast_policy: {
+    status: 'no' | 'free' | 'paid';
+    start_time: string | null;
+    end_time: string | null;
+    price: string | null;
+    breakfast_type: 'buffet' | 'room' | 'plate' | null;
+  } | null;
+  parking_policy: {
+    outdoor_parking: 'no' | 'free' | 'paid';
+    outdoor_fee_type: 'hour' | 'day' | null;
+    outdoor_price: string | null;
+    indoor_parking: 'no' | 'free' | 'paid';
+    indoor_fee_type: 'hour' | 'day' | null;
+    indoor_price: string | null;
+  } | null;
+  child_policy: {
+    allow_children: boolean;
+    max_child_age: number | null;
+    child_bed_available: 'yes' | 'no' | null;
+    allow_extra_bed: boolean;
+    extra_bed_price: string | null;
+  } | null;
 }
 
 interface BasicInfo {
@@ -214,6 +235,7 @@ export default function AboutHotel({
             </div>
 
             {/* Cancellation Policy */}
+            {propertyPolicy.cancellation_fee && (
             <div className="mt-6">
               <div className="font-semibold mb-4 text-[17px]">Цуцлалтын бодлого</div>
 
@@ -283,6 +305,118 @@ export default function AboutHotel({
                 </div>
               </div>
             </div>
+            )}
+
+            {/* Breakfast Policy */}
+            {propertyPolicy.breakfast_policy && (
+              <div className="mt-6">
+                <div className="font-semibold mb-4 text-[17px]">Өглөөний цай</div>
+                <div className="pl-4 space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Төлөв:</span>
+                    <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                      {propertyPolicy.breakfast_policy.status === 'no' ? 'Байхгүй' : 
+                       propertyPolicy.breakfast_policy.status === 'free' ? 'Үнэгүй' : 'Төлбөртэй'}
+                    </span>
+                  </div>
+                  {propertyPolicy.breakfast_policy.status !== 'no' && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Цаг:</span>
+                        <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                          {formatTime(propertyPolicy.breakfast_policy.start_time || '')} - {formatTime(propertyPolicy.breakfast_policy.end_time || '')}
+                        </span>
+                      </div>
+                      {propertyPolicy.breakfast_policy.breakfast_type && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Төрөл:</span>
+                          <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                            {propertyPolicy.breakfast_policy.breakfast_type === 'buffet' ? 'Buffet' :
+                             propertyPolicy.breakfast_policy.breakfast_type === 'room' ? 'Өрөөнд' : 'Тавагтай'}
+                          </span>
+                        </div>
+                      )}
+                      {propertyPolicy.breakfast_policy.status === 'paid' && propertyPolicy.breakfast_policy.price && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Үнэ:</span>
+                          <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                            {propertyPolicy.breakfast_policy.price}₮
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Parking Policy */}
+            {propertyPolicy.parking_policy && (
+              <div className="mt-6">
+                <div className="font-semibold mb-4 text-[17px]">Зогсоол</div>
+                <div className="pl-4 space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Гадна зогсоол:</span>
+                    <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                      {propertyPolicy.parking_policy.outdoor_parking === 'no' ? 'Байхгүй' :
+                       propertyPolicy.parking_policy.outdoor_parking === 'free' ? 'Үнэгүй' : 
+                       `Төлбөртэй ${propertyPolicy.parking_policy.outdoor_price ? `(${propertyPolicy.parking_policy.outdoor_price}₮/${propertyPolicy.parking_policy.outdoor_fee_type === 'hour' ? 'цаг' : 'өдөр'})` : ''}`}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Дотор зогсоол:</span>
+                    <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                      {propertyPolicy.parking_policy.indoor_parking === 'no' ? 'Байхгүй' :
+                       propertyPolicy.parking_policy.indoor_parking === 'free' ? 'Үнэгүй' : 
+                       `Төлбөртэй ${propertyPolicy.parking_policy.indoor_price ? `(${propertyPolicy.parking_policy.indoor_price}₮/${propertyPolicy.parking_policy.indoor_fee_type === 'hour' ? 'цаг' : 'өдөр'})` : ''}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Child Policy */}
+            {propertyPolicy.child_policy && (
+              <div className="mt-6">
+                <div className="font-semibold mb-4 text-[17px]">Хүүхдийн бодлого</div>
+                <div className="pl-4 space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Хүүхэд үйлчлүүлэх боломжтой:</span>
+                    <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                      {propertyPolicy.child_policy.allow_children ? 'Тийм' : 'Үгүй'}
+                    </span>
+                  </div>
+                  {propertyPolicy.child_policy.allow_children && (
+                    <>
+                      {propertyPolicy.child_policy.max_child_age && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Хүүхдийн дээд нас:</span>
+                          <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                            {propertyPolicy.child_policy.max_child_age} нас
+                          </span>
+                        </div>
+                      )}
+                      {propertyPolicy.child_policy.child_bed_available && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Хүүхдийн ор:</span>
+                          <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                            {propertyPolicy.child_policy.child_bed_available === 'yes' ? 'Байгаа' : 'Байхгүй'}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Нэмэлт ор:</span>
+                    <span className="border border-cloud p-1 px-3 rounded-[8px] font-medium">
+                      {propertyPolicy.child_policy.allow_extra_bed ? 
+                        `Тийм ${propertyPolicy.child_policy.extra_bed_price ? `(${propertyPolicy.child_policy.extra_bed_price}₮)` : ''}` : 
+                        'Үгүй'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

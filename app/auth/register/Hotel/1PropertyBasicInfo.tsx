@@ -111,7 +111,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps1),
-    mode: 'onBlur',
+    mode: 'onChange',
     defaultValues: defaultValues || {
       property_name_mn: '',
       property_name_en: '',

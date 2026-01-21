@@ -616,11 +616,12 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           {/* Tabbed Information - inside left column */}
           <div className="border rounded-lg p-4 mt-4">
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="basic">1. Үндсэн мэдээлэл</TabsTrigger>
                 <TabsTrigger value="location">2. Байршил</TabsTrigger>
                 <TabsTrigger value="map">3. Google map</TabsTrigger>
-                <TabsTrigger value="services">4. Ерөнхий үйлчилгээ</TabsTrigger>
+                <TabsTrigger value="policy">4. Дотоод журам</TabsTrigger>
+                <TabsTrigger value="services">5. Ерөнхий үйлчилгээ</TabsTrigger>
               </TabsList>
 
               {/* TabsContent will continue from here */}
@@ -840,6 +841,180 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                       }
                     })()}
                   </div>
+                </div>
+              </TabsContent>
+
+              {/* Дотоод журам Tab */}
+              <TabsContent value="policy" className="mt-4">
+                <div className="border rounded-lg p-4 space-y-6">
+                  {propertyPolicy ? (
+                    <>
+                      {/* Check-in / Check-out Times */}
+                      <div>
+                        <h4 className="font-semibold mb-3">Бүртгэх болон гарах цаг</h4>
+                        <div className="grid grid-cols-2 gap-4 pl-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Бүртгэх цаг:</p>
+                            <p className="font-medium">
+                              {formatTime(propertyPolicy.check_in_from)} - {formatTime(propertyPolicy.check_in_until)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Гарах цаг:</p>
+                            <p className="font-medium">
+                              {formatTime(propertyPolicy.check_out_from)} - {formatTime(propertyPolicy.check_out_until)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cancellation Policy */}
+                      {propertyPolicy.cancellation_fee && (
+                        <div>
+                          <h4 className="font-semibold mb-3">Цуцлалтын бодлого</h4>
+                          <div className="pl-4 space-y-2 text-sm">
+                            <p className="text-muted-foreground mb-2">
+                              Цуцлах боломжтой цаг: <span className="font-medium text-foreground">{formatTime(propertyPolicy.cancellation_fee.cancel_time)}</span>
+                            </p>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-muted-foreground">1 өрөөний цуцлалт (өмнө):</p>
+                                <p className="font-medium">{propertyPolicy.cancellation_fee.single_before_time_percentage}%</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">1 өрөөний цуцлалт (хойш):</p>
+                                <p className="font-medium">{propertyPolicy.cancellation_fee.single_after_time_percentage}%</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">5 хоногийн өмнө:</p>
+                                <p className="font-medium">{propertyPolicy.cancellation_fee.multi_5days_before_percentage}%</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">3 хоногийн өмнө:</p>
+                                <p className="font-medium">{propertyPolicy.cancellation_fee.multi_3days_before_percentage}%</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">2 хоногийн өмнө:</p>
+                                <p className="font-medium">{propertyPolicy.cancellation_fee.multi_2days_before_percentage}%</p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">1 хоногийн өмнө:</p>
+                                <p className="font-medium">{propertyPolicy.cancellation_fee.multi_1day_before_percentage}%</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Breakfast Policy */}
+                      <div>
+                        <h4 className="font-semibold mb-3">Өглөөний цай</h4>
+                        <div className="pl-4 space-y-2 text-sm">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-muted-foreground">Төлөв:</p>
+                              <p className="font-medium">
+                                {propertyPolicy.breakfast_policy?.status === 'no' ? 'Байхгүй' : 
+                                 propertyPolicy.breakfast_policy?.status === 'free' ? 'Үнэгүй' : 
+                                 propertyPolicy.breakfast_policy?.status === 'paid' ? 'Төлбөртэй' : '—'}
+                              </p>
+                            </div>
+                            {propertyPolicy.breakfast_policy?.status !== 'no' && propertyPolicy.breakfast_policy && (
+                              <>
+                                <div>
+                                  <p className="text-muted-foreground">Цаг:</p>
+                                  <p className="font-medium">
+                                    {formatTime(propertyPolicy.breakfast_policy.start_time)} - {formatTime(propertyPolicy.breakfast_policy.end_time)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">Төрөл:</p>
+                                  <p className="font-medium">
+                                    {propertyPolicy.breakfast_policy.breakfast_type === 'buffet' ? 'Buffet' :
+                                     propertyPolicy.breakfast_policy.breakfast_type === 'room' ? 'Өрөөнд' :
+                                     propertyPolicy.breakfast_policy.breakfast_type === 'plate' ? 'Тавгаар' : '—'}
+                                  </p>
+                                </div>
+                                {propertyPolicy.breakfast_policy.status === 'paid' && propertyPolicy.breakfast_policy.price && (
+                                  <div>
+                                    <p className="text-muted-foreground">Үнэ:</p>
+                                    <p className="font-medium">{propertyPolicy.breakfast_policy.price}₮</p>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Parking Policy */}
+                      <div>
+                        <h4 className="font-semibold mb-3">Зогсоол</h4>
+                        <div className="pl-4 space-y-2 text-sm">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-muted-foreground">Гадна зогсоол:</p>
+                              <p className="font-medium">
+                                {propertyPolicy.parking_policy?.outdoor_parking === 'no' ? 'Байхгүй' :
+                                 propertyPolicy.parking_policy?.outdoor_parking === 'free' ? 'Үнэгүй' :
+                                 propertyPolicy.parking_policy?.outdoor_parking === 'paid' ? 
+                                   `Төлбөртэй ${propertyPolicy.parking_policy.outdoor_price ? `(${propertyPolicy.parking_policy.outdoor_price}₮/${propertyPolicy.parking_policy.outdoor_fee_type === 'hour' ? 'цаг' : 'хоног'})` : ''}` : '—'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Дотор зогсоол:</p>
+                              <p className="font-medium">
+                                {propertyPolicy.parking_policy?.indoor_parking === 'no' ? 'Байхгүй' :
+                                 propertyPolicy.parking_policy?.indoor_parking === 'free' ? 'Үнэгүй' :
+                                 propertyPolicy.parking_policy?.indoor_parking === 'paid' ? 
+                                   `Төлбөртэй ${propertyPolicy.parking_policy.indoor_price ? `(${propertyPolicy.parking_policy.indoor_price}₮/${propertyPolicy.parking_policy.indoor_fee_type === 'hour' ? 'цаг' : 'хоног'})` : ''}` : '—'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Child Policy */}
+                      <div>
+                        <h4 className="font-semibold mb-3">Хүүхэд болон нэмэлт ор</h4>
+                        <div className="pl-4 space-y-2 text-sm">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-muted-foreground">Хүүхэд үйлчлүүлэх боломжтой:</p>
+                              <p className="font-medium">{propertyPolicy.child_policy?.allow_children ? 'Тийм' : 'Үгүй'}</p>
+                            </div>
+                            {propertyPolicy.child_policy?.allow_children && (
+                              <>
+                                <div>
+                                  <p className="text-muted-foreground">Хүүхдийн дээд нас:</p>
+                                  <p className="font-medium">{propertyPolicy.child_policy.max_child_age || '—'}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">Хүүхдийн ор байгаа эсэх:</p>
+                                  <p className="font-medium">
+                                    {propertyPolicy.child_policy.child_bed_available === 'yes' ? 'Тийм' :
+                                     propertyPolicy.child_policy.child_bed_available === 'no' ? 'Үгүй' : '—'}
+                                  </p>
+                                </div>
+                              </>
+                            )}
+                            <div>
+                              <p className="text-muted-foreground">Нэмэлт ор:</p>
+                              <p className="font-medium">
+                                {propertyPolicy.child_policy?.allow_extra_bed ? 
+                                  `Тийм ${propertyPolicy.child_policy.extra_bed_price ? `(${propertyPolicy.child_policy.extra_bed_price}₮)` : ''}` : 
+                                  'Үгүй'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Дотоод журмын мэдээлэл байхгүй байна
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 

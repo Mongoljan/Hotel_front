@@ -49,6 +49,7 @@ export default function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
     resolver: zodResolver(schemaRegistrationEmployee),
+    mode: 'onChange',
   });
 
   // Fetch user types on component mount and filter out "Owner" and "SuperAdmin"

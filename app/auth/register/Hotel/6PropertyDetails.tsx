@@ -36,6 +36,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps6),
+    mode: 'onChange',
     defaultValues: {
       general_facilities: [],
     },

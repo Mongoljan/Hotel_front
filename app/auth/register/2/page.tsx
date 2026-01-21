@@ -34,6 +34,7 @@ export default function RegisterEmployee() {
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaRegistrationEmployee2),
+    mode: 'onChange',
     defaultValues: {
       contact_person_name: '',
       position: '',

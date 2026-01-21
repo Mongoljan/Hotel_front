@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,6 +51,51 @@ export function EditBasicInfoDialog({
   onSave,
   isSaving,
 }: EditBasicInfoDialogProps) {
+  // Real-time validation errors
+  const validationErrors = useMemo(() => {
+    const errors: Record<string, string> = {};
+    
+    // Validate property name (Mongolian)
+    if (editBasicInfo.property_name_mn && !/^[А-Яа-яӨөҮүЁё0-9\s.,'-]+$/.test(editBasicInfo.property_name_mn)) {
+      errors.property_name_mn = 'Зөвхөн кирилл үсэг ашиглана уу';
+    }
+    
+    // Validate property name (English)
+    if (editBasicInfo.property_name_en && !/^[A-Za-z0-9\s.,'-]+$/.test(editBasicInfo.property_name_en)) {
+      errors.property_name_en = 'Зөвхөн латин үсэг ашиглана уу';
+    }
+    
+    // Validate star rating
+    const rating = parseInt(editBasicInfo.star_rating);
+    if (editBasicInfo.star_rating && (isNaN(rating) || rating < 1 || rating > 5)) {
+      errors.star_rating = 'Зэрэглэл 1-5 хооронд байх ёстой';
+    }
+    
+    // Validate total rooms
+    const totalRooms = parseInt(editBasicInfo.total_hotel_rooms);
+    if (editBasicInfo.total_hotel_rooms && (isNaN(totalRooms) || totalRooms < 1)) {
+      errors.total_hotel_rooms = 'Нийт өрөөний тоо хамгийн багадаа 1 байх ёстой';
+    }
+    
+    // Validate available rooms
+    const availableRooms = parseInt(editBasicInfo.available_rooms);
+    if (editBasicInfo.available_rooms && (isNaN(availableRooms) || availableRooms < 1)) {
+      errors.available_rooms = 'Боломжит өрөөний тоог оруулна уу';
+    }
+    
+    // Validate available rooms <= total rooms
+    if (!isNaN(totalRooms) && !isNaN(availableRooms) && availableRooms > totalRooms) {
+      errors.available_rooms = 'Боломжит өрөөний тоо нь нийт өрөөний тооноос их байж болохгүй';
+    }
+    
+    // Validate group name when part_of_group is true
+    if (editBasicInfo.part_of_group && (!editBasicInfo.group_name || editBasicInfo.group_name.trim() === '')) {
+      errors.group_name = 'Бүлгийн нэрийг заавал оруулна уу';
+    }
+    
+    return errors;
+  }, [editBasicInfo]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -68,7 +114,11 @@ export function EditBasicInfoDialog({
                 value={editBasicInfo.property_name_mn}
                 onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, property_name_mn: e.target.value })}
                 placeholder="Шангри-Ла Улаанбаатар Зочид Буудал"
+                className={validationErrors.property_name_mn ? 'border-destructive' : ''}
               />
+              {validationErrors.property_name_mn && (
+                <p className="text-sm text-destructive">{validationErrors.property_name_mn}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="nameEn">Буудлын нэр (англиар)</Label>
@@ -77,7 +127,11 @@ export function EditBasicInfoDialog({
                 value={editBasicInfo.property_name_en}
                 onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, property_name_en: e.target.value })}
                 placeholder="Shangri-La Ulaanbaatar Hotel"
+                className={validationErrors.property_name_en ? 'border-destructive' : ''}
               />
+              {validationErrors.property_name_en && (
+                <p className="text-sm text-destructive">{validationErrors.property_name_en}</p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -99,7 +153,11 @@ export function EditBasicInfoDialog({
                 value={editBasicInfo.star_rating}
                 onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, star_rating: e.target.value })}
                 placeholder="5"
+                className={validationErrors.star_rating ? 'border-destructive' : ''}
               />
+              {validationErrors.star_rating && (
+                <p className="text-sm text-destructive">{validationErrors.star_rating}</p>
+              )}
             </div>
           </div>
           <div className="space-y-2">
@@ -136,7 +194,11 @@ export function EditBasicInfoDialog({
                   value={editBasicInfo.group_name}
                   onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, group_name: e.target.value })}
                   placeholder="Marriott, Hilton гэх мэт"
+                  className={validationErrors.group_name ? 'border-destructive' : ''}
                 />
+                {validationErrors.group_name && (
+                  <p className="text-sm text-destructive">{validationErrors.group_name}</p>
+                )}
               </div>
             )}
           </div>
@@ -149,7 +211,11 @@ export function EditBasicInfoDialog({
                 value={editBasicInfo.total_hotel_rooms}
                 onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, total_hotel_rooms: e.target.value })}
                 placeholder="200"
+                className={validationErrors.total_hotel_rooms ? 'border-destructive' : ''}
               />
+              {validationErrors.total_hotel_rooms && (
+                <p className="text-sm text-destructive">{validationErrors.total_hotel_rooms}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="availableRooms">Манай сайтаар зарах өрөө</Label>
@@ -159,7 +225,11 @@ export function EditBasicInfoDialog({
                 value={editBasicInfo.available_rooms}
                 onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, available_rooms: e.target.value })}
                 placeholder="50"
+                className={validationErrors.available_rooms ? 'border-destructive' : ''}
               />
+              {validationErrors.available_rooms && (
+                <p className="text-sm text-destructive">{validationErrors.available_rooms}</p>
+              )}
             </div>
           </div>
           <div className="space-y-2">
@@ -194,7 +264,7 @@ export function EditBasicInfoDialog({
           >
             Болих
           </Button>
-          <Button onClick={onSave} disabled={isSaving}>
+          <Button onClick={onSave} disabled={isSaving || Object.keys(validationErrors).length > 0}>
             {isSaving ? 'Хадгалж байна...' : 'Хадгалах'}
           </Button>
         </DialogFooter>
