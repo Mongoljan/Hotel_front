@@ -367,6 +367,13 @@ export const schemaHotelSteps2 = z.object({
 
 
 export const schemaHotelSteps3 = z.object({
+  // Check-in/Check-out times
+  check_in_from: z.string(),
+  check_in_until: z.string(),
+  check_out_from: z.string(),
+  check_out_until: z.string(),
+
+  // Cancellation fee
   cancel_time: z.string(),
   single_before_time_percentage: z.string(),
   single_after_time_percentage: z.string(),
@@ -374,14 +381,28 @@ export const schemaHotelSteps3 = z.object({
   multi_3days_before_percentage: z.string(),
   multi_2days_before_percentage: z.string(),
   multi_1day_before_percentage: z.string(),
-  check_in_from: z.string(),
-  check_in_until: z.string(),
-  check_out_from: z.string(),
-  check_out_until: z.string(),
-  breakfast_policy: z.enum(['no', 'free', 'paid']),
-  parking_situation: z.enum(['no', 'free', 'paid']),
+
+  // Breakfast policy
+  breakfast_status: z.enum(['no', 'free', 'paid']),
+  breakfast_start_time: z.string().optional(),
+  breakfast_end_time: z.string().optional(),
+  breakfast_price: z.string().nullable().optional(),
+  breakfast_type: z.enum(['buffet', 'room', 'plate']).optional(),
+
+  // Parking policy
+  outdoor_parking: z.enum(['no', 'free', 'paid']),
+  outdoor_fee_type: z.enum(['hour', 'day']).nullable().optional(),
+  outdoor_price: z.string().nullable().optional(),
+  indoor_parking: z.enum(['no', 'free', 'paid']),
+  indoor_fee_type: z.enum(['hour', 'day']).nullable().optional(),
+  indoor_price: z.string().nullable().optional(),
+
+  // Child policy
   allow_children: z.boolean(),
-  allow_pets: z.boolean(),
+  max_child_age: z.number().optional(),
+  child_bed_available: z.enum(['yes', 'no']).optional(),
+  allow_extra_bed: z.boolean().optional(),
+  extra_bed_price: z.string().nullable().optional(),
 });
 
 

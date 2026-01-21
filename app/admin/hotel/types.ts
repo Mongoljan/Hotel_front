@@ -26,14 +26,13 @@ export interface AdditionalInformation {
 
 export interface PropertyPolicy {
   id: number;
+  property: number;
   check_in_from: string;
   check_in_until: string;
   check_out_from: string;
   check_out_until: string;
-  breakfast_policy: string;
-  allow_children: boolean;
-  allow_pets: boolean;
   cancellation_fee: {
+    property: number;
     cancel_time: string;
     single_before_time_percentage: string;
     single_after_time_percentage: string;
@@ -41,6 +40,28 @@ export interface PropertyPolicy {
     multi_3days_before_percentage: string;
     multi_2days_before_percentage: string;
     multi_1day_before_percentage: string;
+  };
+  breakfast_policy: {
+    status: 'no' | 'free' | 'paid';
+    start_time: string | null;
+    end_time: string | null;
+    price: string | null;
+    breakfast_type: 'buffet' | 'room' | 'plate' | null;
+  };
+  parking_policy: {
+    outdoor_parking: 'no' | 'free' | 'paid';
+    outdoor_fee_type: 'hour' | 'day' | null;
+    outdoor_price: string | null;
+    indoor_parking: 'no' | 'free' | 'paid';
+    indoor_fee_type: 'hour' | 'day' | null;
+    indoor_price: string | null;
+  };
+  child_policy: {
+    allow_children: boolean;
+    max_child_age: number | null;
+    child_bed_available: 'yes' | 'no' | null;
+    allow_extra_bed: boolean;
+    extra_bed_price: string | null;
   };
 }
 

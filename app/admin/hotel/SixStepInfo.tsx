@@ -472,17 +472,27 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       },
       {
         label: 'Хүүхэд үйлчлүүлэх боломжтой эсэх',
-        value: propertyPolicy?.allow_children ?? null,
+        value: propertyPolicy?.child_policy?.allow_children ?? null,
         icon: IconMoodKid,
         type: 'boolean' as const,
       },
       {
         label: 'Зогсоолын нөхцөл',
-        value: propertyDetail?.parking_situation ?? '—',
+        value: (() => {
+          const outdoor = propertyPolicy?.parking_policy?.outdoor_parking;
+          const indoor = propertyPolicy?.parking_policy?.indoor_parking;
+          if (!outdoor && !indoor) return '—';
+          const parts = [];
+          if (outdoor === 'free') parts.push('Гадна (үнэгүй)');
+          else if (outdoor === 'paid') parts.push('Гадна (төлбөртэй)');
+          if (indoor === 'free') parts.push('Дотор (үнэгүй)');
+          else if (indoor === 'paid') parts.push('Дотор (төлбөртэй)');
+          return parts.length > 0 ? parts.join(', ') : 'Байхгүй';
+        })(),
         icon: IconCar,
       },
     ],
-    [basicInfo, getPropertyTypeName, propertyDetail?.parking_situation, propertyPolicy?.allow_children, propertyBaseInfo?.property_type]
+    [basicInfo, getPropertyTypeName, propertyPolicy?.parking_policy, propertyPolicy?.child_policy?.allow_children, propertyBaseInfo?.property_type]
   );
 
   const policyItems = useMemo(
