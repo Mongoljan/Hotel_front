@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
-import { IconPencil, IconX, IconLoader2, IconInfoCircle, IconCoffee, IconCar, IconMoodKid } from '@tabler/icons-react';
+import { IconPencil, IconX, IconLoader2, IconInfoCircle, IconCoffee, IconCar, IconMoodKid, IconBed } from '@tabler/icons-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,13 @@ import { schemaHotelSteps3 } from '@/app/schema';
 import { cn } from '@/lib/utils';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { PropertyPolicy } from '@/app/admin/hotel/types';
+import { NumericFormat } from 'react-number-format';
+
+// Generate time options for dropdowns (00:00 to 23:00)
+const timeOptions = Array.from({ length: 24 }, (_, i) => {
+  const hour = i.toString().padStart(2, '0');
+  return { value: `${hour}:00`, label: `${hour} : 00` };
+});
 
 const API_URL = 'https://dev.kacc.mn/api/property-policies/';
 
@@ -73,8 +80,8 @@ export default function InternalRulesPage() {
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editSection, setEditSection] = useState<'time' | 'breakfast' | 'parking' | 'children' | null>(null);
-  const [activeMenuItem, setActiveMenuItem] = useState<'time' | 'breakfast' | 'parking' | 'children'>('time');
+  const [editSection, setEditSection] = useState<'time' | 'breakfast' | 'parking' | 'children' | 'extrabed' | null>(null);
+  const [activeMenuItem, setActiveMenuItem] = useState<'time' | 'breakfast' | 'parking' | 'children' | 'extrabed'>('time');
 
   // React Hook Form with Zod validation
   const form = useForm<PolicyFormFields>({
@@ -177,7 +184,7 @@ export default function InternalRulesPage() {
   }, [user?.hotel, form]);
 
   // Initialize edit form when opening dialog
-  const openEditDialog = (section: 'time' | 'breakfast' | 'parking' | 'children') => {
+  const openEditDialog = (section: 'time' | 'breakfast' | 'parking' | 'children' | 'extrabed') => {
     setEditSection(section);
     setIsEditDialogOpen(true);
   };
@@ -343,7 +350,18 @@ export default function InternalRulesPage() {
                 )}
                 onClick={() => setActiveMenuItem('children')}
               >
-                Хүүхэд болон нэмэлт ор
+                Хүүхдийн бодлого
+              </p>
+              <p
+                className={cn(
+                  "py-2 px-3 rounded-md cursor-pointer transition-colors",
+                  activeMenuItem === 'extrabed'
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+                onClick={() => setActiveMenuItem('extrabed')}
+              >
+                Нэмэлт ор
               </p>
             </div>
           </CardContent>
@@ -569,7 +587,7 @@ export default function InternalRulesPage() {
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <IconMoodKid className="h-5 w-5" />
-                        <h3 className="font-semibold">Хүүхэд болон нэмэлт ор</h3>
+                        <h3 className="font-semibold">Хүүхдийн бодлого</h3>
                       </div>
                       <Button
                         variant="ghost"
@@ -584,29 +602,54 @@ export default function InternalRulesPage() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-muted-foreground">Хүүхэд үйлчлүүлэх боломжтой эсэх</p>
+                          <p className="text-sm text-muted-foreground">Зочин хүүхдийн хамт үйлчлүүлэх боломжтой эсэх</p>
                           <p className="font-medium">{propertyPolicy.child_policy?.allow_children ? 'Тийм' : 'Үгүй'}</p>
                         </div>
                         {propertyPolicy.child_policy?.allow_children && (
                           <>
                             <div>
-                              <p className="text-sm text-muted-foreground">Хүүхдийн дээд нас</p>
-                              <p className="font-medium">{propertyPolicy.child_policy?.max_child_age || '—'}</p>
+                              <p className="text-sm text-muted-foreground">Хүүхдийн насны хязгаар</p>
+                              <p className="font-medium">{propertyPolicy.child_policy?.max_child_age ? `${propertyPolicy.child_policy.max_child_age} хүртэлх` : '—'}</p>
                             </div>
                             <div>
-                              <p className="text-sm text-muted-foreground">Хүүхдийн ор</p>
-                              <p className="font-medium">{propertyPolicy.child_policy?.child_bed_available === 'yes' ? 'Тийм' : 'Үгүй'}</p>
+                              <p className="text-sm text-muted-foreground">Хүүхдийн ор байгаа эсэх</p>
+                              <p className="font-medium">{propertyPolicy.child_policy?.child_bed_available === 'yes' ? 'Байгаа' : 'Байхгүй'}</p>
                             </div>
                           </>
                         )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Extra Bed Section */}
+                {activeMenuItem === 'extrabed' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <IconBed className="h-5 w-5" />
+                        <h3 className="font-semibold">Нэмэлт ор</h3>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => openEditDialog('extrabed')}
+                      >
+                        <IconPencil className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-muted-foreground">Нэмэлт ор</p>
+                          <p className="text-sm text-muted-foreground">Зочдод нэмэлт ороор үйлчлэх боломжтой юу?</p>
                           <p className="font-medium">{propertyPolicy.child_policy?.allow_extra_bed ? 'Тийм' : 'Үгүй'}</p>
                         </div>
                         {propertyPolicy.child_policy?.allow_extra_bed && (
                           <div>
                             <p className="text-sm text-muted-foreground">Нэмэлт орны үнэ</p>
-                            <p className="font-medium">{propertyPolicy.child_policy?.extra_bed_price} ₮</p>
+                            <p className="font-medium">{Number(propertyPolicy.child_policy?.extra_bed_price || 0).toLocaleString()} ₮</p>
                           </div>
                         )}
                       </div>
@@ -629,14 +672,12 @@ export default function InternalRulesPage() {
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editSection === 'time' && 'Цаг ба цуцлалтын бодлого засах'}
-              {editSection === 'breakfast' && 'Өглөөний цай засах'}
-              {editSection === 'parking' && 'Зогсоолын мэдээлэл засах'}
-              {editSection === 'children' && 'Хүүхэд болон нэмэлт ор засах'}
+              {editSection === 'time' && 'Цаг, цуцлалтын бодлого'}
+              {editSection === 'breakfast' && 'Өглөөний цай'}
+              {editSection === 'parking' && 'Зогсоол'}
+              {editSection === 'children' && 'Хүүхдийн бодлого'}
+              {editSection === 'extrabed' && 'Нэмэлт ор'}
             </DialogTitle>
-            <DialogDescription>
-              Мэдээллийг шинэчилж хадгална уу
-            </DialogDescription>
           </DialogHeader>
 
           <Form {...form}>
@@ -645,16 +686,29 @@ export default function InternalRulesPage() {
               {editSection === 'time' && (
                 <>
                   <div className="space-y-4">
-                    <h4 className="font-medium">Орох цаг (check in)</h4>
+                    <p className="text-sm text-muted-foreground">Та өөрийн буудлын дотоод журмын дагуу өрөөнд орох болон гарах цагийг тохируулна уу.</p>
+                    
                     <div className="flex items-center gap-4">
+                      <FormLabel className="min-w-[140px]">Орох цаг / Check-in :</FormLabel>
                       <FormField
                         control={form.control}
                         name="check_in_from"
                         render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input type="time" {...field} className="w-32" />
-                            </FormControl>
+                          <FormItem>
+                            <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                              <FormControl>
+                                <SelectTrigger className="w-[100px]">
+                                  <SelectValue placeholder="00:00" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {timeOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -664,30 +718,48 @@ export default function InternalRulesPage() {
                         control={form.control}
                         name="check_in_until"
                         render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input type="time" {...field} className="w-32" />
-                            </FormControl>
+                          <FormItem>
+                            <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                              <FormControl>
+                                <SelectTrigger className="w-[100px]">
+                                  <SelectValue placeholder="00:00" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {timeOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
-                  </div>
 
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Гарах цаг (check out)</h4>
                     <div className="flex items-center gap-4">
+                      <FormLabel className="min-w-[140px]">Гарах цаг / Check-out :</FormLabel>
                       <FormField
                         control={form.control}
                         name="check_out_from"
                         render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input type="time" {...field} className="w-32" />
-                            </FormControl>
+                          <FormItem>
+                            <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                              <FormControl>
+                                <SelectTrigger className="w-[100px]">
+                                  <SelectValue placeholder="00:00" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {timeOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -697,10 +769,21 @@ export default function InternalRulesPage() {
                         control={form.control}
                         name="check_out_until"
                         render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input type="time" {...field} className="w-32" />
-                            </FormControl>
+                          <FormItem>
+                            <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                              <FormControl>
+                                <SelectTrigger className="w-[100px]">
+                                  <SelectValue placeholder="00:00" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {timeOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -713,34 +796,50 @@ export default function InternalRulesPage() {
                   <div className="space-y-4">
                     <h4 className="font-medium">Цуцлалтын бодлого</h4>
 
-                    <FormField
-                      control={form.control}
-                      name="cancel_time"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Цуцлах боломжтой цаг</FormLabel>
-                          <FormControl>
-                            <Input type="time" {...field} className="w-40" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="flex items-center gap-4">
+                      <FormLabel className="min-w-[140px]">Цуцлах боломжтой цаг:</FormLabel>
+                      <FormField
+                        control={form.control}
+                        name="cancel_time"
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                              <FormControl>
+                                <SelectTrigger className="w-[100px]">
+                                  <SelectValue placeholder="00:00" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {timeOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
                     <div className="space-y-3">
-                      <p className="text-sm font-medium">1 өрөөний захиалгад:</p>
-                      <div className="grid grid-cols-2 gap-4">
+                      <p className="text-sm font-medium">1 өрөөний захиалгад нийт төлбөрөөс суутгах хураамжийн хувь:</p>
+                      <div className="space-y-2">
                         <FormField
                           control={form.control}
                           name="single_before_time_percentage"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">
-                                {displayCancelTime || '...'} цагаас өмнө (%)
-                              </FormLabel>
-                              <FormControl>
-                                <Input type="number" placeholder="0" {...field} />
-                              </FormControl>
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-sm">• Өмнөх өдрийн {displayCancelTime || '12:00'} цагаас өмнө цуцалвал:</span>
+                                <div className="flex items-center gap-2">
+                                  <FormControl>
+                                    <Input type="number" placeholder="0" {...field} className="w-20 text-right" />
+                                  </FormControl>
+                                  <span className="text-sm text-muted-foreground">%</span>
+                                </div>
+                              </div>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -750,12 +849,15 @@ export default function InternalRulesPage() {
                           name="single_after_time_percentage"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">
-                                {displayCancelTime || '...'} цагаас хойш (%)
-                              </FormLabel>
-                              <FormControl>
-                                <Input type="number" placeholder="0" {...field} />
-                              </FormControl>
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-sm">• Өмнөх өдрийн {displayCancelTime || '12:00'} цагаас хойш цуцалвал:</span>
+                                <div className="flex items-center gap-2">
+                                  <FormControl>
+                                    <Input type="number" placeholder="0" {...field} className="w-20 text-right" />
+                                  </FormControl>
+                                  <span className="text-sm text-muted-foreground">%</span>
+                                </div>
+                              </div>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -764,17 +866,22 @@ export default function InternalRulesPage() {
                     </div>
 
                     <div className="space-y-3">
-                      <p className="text-sm font-medium">2+ өрөөнд:</p>
-                      <div className="grid grid-cols-2 gap-4">
+                      <p className="text-sm font-medium">2 болон түүнээс дээш өрөөнд нийт төлбөрөөс суутгах хураамжийн хувь:</p>
+                      <div className="space-y-2">
                         <FormField
                           control={form.control}
                           name="multi_5days_before_percentage"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">5 хоногийн өмнө (%)</FormLabel>
-                              <FormControl>
-                                <Input type="number" placeholder="0" {...field} />
-                              </FormControl>
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-sm">• Ирэх өдрөөсөө <strong>5</strong> хоногийн өмнө цуцалвал:</span>
+                                <div className="flex items-center gap-2">
+                                  <FormControl>
+                                    <Input type="number" placeholder="0" {...field} className="w-20 text-right" />
+                                  </FormControl>
+                                  <span className="text-sm text-muted-foreground">%</span>
+                                </div>
+                              </div>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -784,23 +891,15 @@ export default function InternalRulesPage() {
                           name="multi_3days_before_percentage"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">3 хоногийн өмнө (%)</FormLabel>
-                              <FormControl>
-                                <Input type="number" placeholder="0" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="multi_2days_before_percentage"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">2 хоногийн өмнө (%)</FormLabel>
-                              <FormControl>
-                                <Input type="number" placeholder="0" {...field} />
-                              </FormControl>
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-sm">• Ирэх өдрөөсөө <strong>3</strong> хоногийн өмнө цуцалвал:</span>
+                                <div className="flex items-center gap-2">
+                                  <FormControl>
+                                    <Input type="number" placeholder="0" {...field} className="w-20 text-right" />
+                                  </FormControl>
+                                  <span className="text-sm text-muted-foreground">%</span>
+                                </div>
+                              </div>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -810,10 +909,15 @@ export default function InternalRulesPage() {
                           name="multi_1day_before_percentage"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">1 хоногийн өмнө (%)</FormLabel>
-                              <FormControl>
-                                <Input type="number" placeholder="0" {...field} />
-                              </FormControl>
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-sm">• Ирэх өдрөөсөө <strong>1</strong> хоногийн өмнө цуцалвал:</span>
+                                <div className="flex items-center gap-2">
+                                  <FormControl>
+                                    <Input type="number" placeholder="0" {...field} className="w-20 text-right" />
+                                  </FormControl>
+                                  <span className="text-sm text-muted-foreground">%</span>
+                                </div>
+                              </div>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -826,30 +930,51 @@ export default function InternalRulesPage() {
 
               {/* Breakfast Edit */}
               {editSection === 'breakfast' && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <FormField
                     control={form.control}
                     name="breakfast_status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Өглөөний цай</FormLabel>
+                        <FormLabel>Өглөөний цай байгаа эсэх</FormLabel>
                         <FormControl>
-                          <div className="flex gap-3">
-                            {(['no', 'free', 'paid'] as const).map((value) => (
-                              <button
-                                key={value}
-                                type="button"
-                                onClick={() => field.onChange(value)}
-                                className={cn(
-                                  "px-6 py-2 rounded-md text-sm font-medium transition-all border",
-                                  field.value === value
-                                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                                )}
-                              >
-                                {value === 'no' ? 'Байхгүй' : value === 'free' ? 'Үнэгүй' : 'Төлбөртэй'}
-                              </button>
-                            ))}
+                          <div className="flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() => field.onChange('no')}
+                              className={cn(
+                                "px-6 py-2 rounded-md text-sm font-medium transition-all border",
+                                field.value === 'no'
+                                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                  : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                              )}
+                            >
+                              Байхгүй
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => field.onChange('free')}
+                              className={cn(
+                                "px-6 py-2 rounded-md text-sm font-medium transition-all border",
+                                field.value === 'free'
+                                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                  : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                              )}
+                            >
+                              Байгаа, үнэд багтсан
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => field.onChange('paid')}
+                              className={cn(
+                                "px-6 py-2 rounded-md text-sm font-medium transition-all border",
+                                field.value === 'paid'
+                                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                  : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                              )}
+                            >
+                              Байгаа, төлбөртэй
+                            </button>
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -859,57 +984,58 @@ export default function InternalRulesPage() {
 
                   {breakfastStatus !== 'no' && (
                     <>
-                      <div className="flex items-center gap-4">
-                        <FormLabel className="min-w-[100px]">Цаг</FormLabel>
-                        <FormField
-                          control={form.control}
-                          name="breakfast_start_time"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input type="time" {...field} className="w-32" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <span>-</span>
-                        <FormField
-                          control={form.control}
-                          name="breakfast_end_time"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input type="time" {...field} className="w-32" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <div className="space-y-2">
+                        <FormLabel>Өглөөний цайны цаг</FormLabel>
+                        <div className="flex items-center gap-4">
+                          <FormField
+                            control={form.control}
+                            name="breakfast_start_time"
+                            render={({ field }) => (
+                              <FormItem>
+                                <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                                  <FormControl>
+                                    <SelectTrigger className="w-[100px]">
+                                      <SelectValue placeholder="00:00" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {timeOptions.map((option) => (
+                                      <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <span>-</span>
+                          <FormField
+                            control={form.control}
+                            name="breakfast_end_time"
+                            render={({ field }) => (
+                              <FormItem>
+                                <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                                  <FormControl>
+                                    <SelectTrigger className="w-[100px]">
+                                      <SelectValue placeholder="00:00" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {timeOptions.map((option) => (
+                                      <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
-
-                      <FormField
-                        control={form.control}
-                        name="breakfast_type"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Төрөл</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="w-[200px]">
-                                  <SelectValue placeholder="Сонгоно уу" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="buffet">Buffet</SelectItem>
-                                <SelectItem value="room">Өрөөнд</SelectItem>
-                                <SelectItem value="plate">Тавгаар</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
                       {breakfastStatus === 'paid' && (
                         <FormField
@@ -917,22 +1043,76 @@ export default function InternalRulesPage() {
                           name="breakfast_price"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Үнэ (₮)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  {...field}
-                                  value={field.value || ''}
-                                  onChange={(e) => field.onChange(e.target.value || null)}
-                                  className="w-40"
-                                />
-                              </FormControl>
+                              <FormLabel>Өглөөний цайны үнэ</FormLabel>
+                              <div className="flex items-center gap-2">
+                                <FormControl>
+                                  <NumericFormat
+                                    thousandSeparator=","
+                                    placeholder="0"
+                                    value={field.value || ''}
+                                    onValueChange={(values) => field.onChange(values.value || null)}
+                                    customInput={Input}
+                                    className="w-48"
+                                  />
+                                </FormControl>
+                                <span className="text-sm text-muted-foreground">₮</span>
+                              </div>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       )}
+
+                      <FormField
+                        control={form.control}
+                        name="breakfast_type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Өглөөний цайны төрөл</FormLabel>
+                            <FormControl>
+                              <div className="flex gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange('buffet')}
+                                  className={cn(
+                                    "px-6 py-2 rounded-md text-sm font-medium transition-all border",
+                                    field.value === 'buffet'
+                                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                                  )}
+                                >
+                                  Буффет
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange('room')}
+                                  className={cn(
+                                    "px-6 py-2 rounded-md text-sm font-medium transition-all border",
+                                    field.value === 'room'
+                                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                                  )}
+                                >
+                                  Өрөөнд
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange('plate')}
+                                  className={cn(
+                                    "px-6 py-2 rounded-md text-sm font-medium transition-all border",
+                                    field.value === 'plate'
+                                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                                  )}
+                                >
+                                  Тавгаар
+                                </button>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </>
                   )}
                 </div>
@@ -943,7 +1123,7 @@ export default function InternalRulesPage() {
                 <div className="space-y-6">
                   {/* Outdoor */}
                   <div className="space-y-4">
-                    <h4 className="font-medium">Гадна зогсоол</h4>
+                    <FormLabel>Гадна зогсоол байгаа эсэх</FormLabel>
                     <FormField
                       control={form.control}
                       name="outdoor_parking"
@@ -974,57 +1154,58 @@ export default function InternalRulesPage() {
                     />
 
                     {outdoorParking === 'paid' && (
-                      <div className="flex gap-4">
-                        <FormField
-                          control={form.control}
-                          name="outdoor_fee_type"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Нэгж</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value || undefined}>
-                                <FormControl>
-                                  <SelectTrigger className="w-[120px]">
-                                    <SelectValue placeholder="Сонгох" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="hour">Цагаар</SelectItem>
-                                  <SelectItem value="day">Хоногоор</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="outdoor_price"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Үнэ (₮)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  {...field}
-                                  value={field.value || ''}
-                                  onChange={(e) => field.onChange(e.target.value || null)}
-                                  className="w-32"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <div className="space-y-2">
+                        <FormLabel>Гадна зогсоолын төлбөр</FormLabel>
+                        <div className="flex items-center gap-4">
+                          <FormField
+                            control={form.control}
+                            name="outdoor_fee_type"
+                            render={({ field }) => (
+                              <FormItem>
+                                <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                  <FormControl>
+                                    <SelectTrigger className="w-[100px]">
+                                      <SelectValue placeholder="Сонгох" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="hour">Цагийн</SelectItem>
+                                    <SelectItem value="day">Хоногийн</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="outdoor_price"
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-center gap-2">
+                                  <FormControl>
+                                    <NumericFormat
+                                      thousandSeparator=","
+                                      placeholder="0"
+                                      value={field.value || ''}
+                                      onValueChange={(values) => field.onChange(values.value || null)}
+                                      customInput={Input}
+                                      className="w-24"
+                                    />
+                                  </FormControl>
+                                  <span className="text-sm text-muted-foreground">₮</span>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  <Separator />
-
-                  {/* Indoor */}
                   <div className="space-y-4">
-                    <h4 className="font-medium">Дотор зогсоол</h4>
+                    <FormLabel>Дотор зогсоол байгаа эсэх</FormLabel>
                     <FormField
                       control={form.control}
                       name="indoor_parking"
@@ -1055,48 +1236,52 @@ export default function InternalRulesPage() {
                     />
 
                     {indoorParking === 'paid' && (
-                      <div className="flex gap-4">
-                        <FormField
-                          control={form.control}
-                          name="indoor_fee_type"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Нэгж</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value || undefined}>
-                                <FormControl>
-                                  <SelectTrigger className="w-[120px]">
-                                    <SelectValue placeholder="Сонгох" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="hour">Цагаар</SelectItem>
-                                  <SelectItem value="day">Хоногоор</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="indoor_price"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Үнэ (₮)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  {...field}
-                                  value={field.value || ''}
-                                  onChange={(e) => field.onChange(e.target.value || null)}
-                                  className="w-32"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <div className="space-y-2">
+                        <FormLabel>Дотор зогсоолын төлбөр</FormLabel>
+                        <div className="flex items-center gap-4">
+                          <FormField
+                            control={form.control}
+                            name="indoor_fee_type"
+                            render={({ field }) => (
+                              <FormItem>
+                                <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                  <FormControl>
+                                    <SelectTrigger className="w-[100px]">
+                                      <SelectValue placeholder="Сонгох" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="hour">Цагийн</SelectItem>
+                                    <SelectItem value="day">Хоногийн</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="indoor_price"
+                            render={({ field }) => (
+                              <FormItem>
+                                <div className="flex items-center gap-2">
+                                  <FormControl>
+                                    <NumericFormat
+                                      thousandSeparator=","
+                                      placeholder="0"
+                                      value={field.value || ''}
+                                      onValueChange={(values) => field.onChange(values.value || null)}
+                                      customInput={Input}
+                                      className="w-24"
+                                    />
+                                  </FormControl>
+                                  <span className="text-sm text-muted-foreground">₮</span>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1105,13 +1290,13 @@ export default function InternalRulesPage() {
 
               {/* Children Edit */}
               {editSection === 'children' && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <FormField
                     control={form.control}
                     name="allow_children"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Хүүхэд үйлчлүүлэх боломжтой эсэх</FormLabel>
+                        <FormLabel>Зочин хүүхдийн хамт үйлчлүүлэх боломжтой эсэх</FormLabel>
                         <FormControl>
                           <div className="flex gap-3">
                             <button
@@ -1152,17 +1337,24 @@ export default function InternalRulesPage() {
                         name="max_child_age"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Хүүхдийн дээд нас</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="17"
-                                {...field}
-                                value={field.value || ''}
-                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                className="w-32"
-                              />
-                            </FormControl>
+                            <FormLabel>Хүүхдийн насны хязгаар</FormLabel>
+                            <Select 
+                              onValueChange={(value) => field.onChange(Number(value))} 
+                              value={field.value?.toString() || ''}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-[150px]">
+                                  <SelectValue placeholder="Сонгоно уу" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {Array.from({ length: 18 }, (_, i) => i + 1).map((age) => (
+                                  <SelectItem key={age} value={age.toString()}>
+                                    {age} хүртэлх
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1178,18 +1370,6 @@ export default function InternalRulesPage() {
                               <div className="flex gap-3">
                                 <button
                                   type="button"
-                                  onClick={() => field.onChange('yes')}
-                                  className={cn(
-                                    "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                                    field.value === 'yes'
-                                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                                  )}
-                                >
-                                  Тийм
-                                </button>
-                                <button
-                                  type="button"
                                   onClick={() => field.onChange('no')}
                                   className={cn(
                                     "px-8 py-2 rounded-md text-sm font-medium transition-all border",
@@ -1198,7 +1378,19 @@ export default function InternalRulesPage() {
                                       : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
                                   )}
                                 >
-                                  Үгүй
+                                  Байхгүй
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => field.onChange('yes')}
+                                  className={cn(
+                                    "px-8 py-2 rounded-md text-sm font-medium transition-all border",
+                                    field.value === 'yes'
+                                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                                  )}
+                                >
+                                  Байгаа
                                 </button>
                               </div>
                             </FormControl>
@@ -1208,13 +1400,18 @@ export default function InternalRulesPage() {
                       />
                     </>
                   )}
+                </div>
+              )}
 
+              {/* Extra Bed Edit */}
+              {editSection === 'extrabed' && (
+                <div className="space-y-6">
                   <FormField
                     control={form.control}
                     name="allow_extra_bed"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Нэмэлт ор тавих боломжтой эсэх</FormLabel>
+                        <FormLabel>Зочдод нэмэлт ороор үйлчлэх боломжтой юу?</FormLabel>
                         <FormControl>
                           <div className="flex gap-3">
                             <button
@@ -1254,17 +1451,20 @@ export default function InternalRulesPage() {
                       name="extra_bed_price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Нэмэлт орны үнэ (₮)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="0"
-                              {...field}
-                              value={field.value || ''}
-                              onChange={(e) => field.onChange(e.target.value || null)}
-                              className="w-40"
-                            />
-                          </FormControl>
+                          <FormLabel>Нэмэлт орны үнэ</FormLabel>
+                          <div className="flex items-center gap-2">
+                            <FormControl>
+                              <NumericFormat
+                                thousandSeparator=","
+                                placeholder="0"
+                                value={field.value || ''}
+                                onValueChange={(values) => field.onChange(values.value || null)}
+                                customInput={Input}
+                                className="w-32"
+                              />
+                            </FormControl>
+                            <span className="text-sm text-muted-foreground">₮</span>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
