@@ -26,10 +26,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import type { PropertyPolicy } from '@/app/admin/hotel/types';
 import { NumericFormat } from 'react-number-format';
 
-// Generate time options for dropdowns (00:00 to 23:00)
-const timeOptions = Array.from({ length: 24 }, (_, i) => {
-  const hour = i.toString().padStart(2, '0');
-  return { value: `${hour}:00`, label: `${hour} : 00` };
+// Generate time options for dropdowns (00:00 to 23:45 in 15-minute intervals)
+const timeOptions = Array.from({ length: 96 }, (_, i) => {
+  const hour = Math.floor(i / 4).toString().padStart(2, '0');
+  const minute = ((i % 4) * 15).toString().padStart(2, '0');
+  return { value: `${hour}:${minute}`, label: `${hour} : ${minute}` };
 });
 
 const API_URL = 'https://dev.kacc.mn/api/property-policies/';
@@ -83,21 +84,23 @@ export default function InternalRulesPage() {
   const [editSection, setEditSection] = useState<'time' | 'breakfast' | 'parking' | 'children' | 'extrabed' | null>(null);
   const [activeMenuItem, setActiveMenuItem] = useState<'time' | 'breakfast' | 'parking' | 'children' | 'extrabed'>('time');
 
-  // React Hook Form with Zod validation
+  // React Hook Form with Zod validation - only validate on submit for edit mode
   const form = useForm<PolicyFormFields>({
     resolver: zodResolver(schemaHotelSteps3),
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
     defaultValues: {
-      check_in_from: '',
-      check_in_until: '',
-      check_out_from: '',
-      check_out_until: '',
-      cancel_time: '',
-      single_before_time_percentage: '',
-      single_after_time_percentage: '',
-      multi_5days_before_percentage: '',
-      multi_3days_before_percentage: '',
-      multi_2days_before_percentage: '',
-      multi_1day_before_percentage: '',
+      check_in_from: '00:00',
+      check_in_until: '00:00',
+      check_out_from: '00:00',
+      check_out_until: '00:00',
+      cancel_time: '00:00',
+      single_before_time_percentage: '0',
+      single_after_time_percentage: '0',
+      multi_5days_before_percentage: '0',
+      multi_3days_before_percentage: '0',
+      multi_2days_before_percentage: '0',
+      multi_1day_before_percentage: '0',
       breakfast_status: 'no',
       breakfast_start_time: '',
       breakfast_end_time: '',
@@ -142,17 +145,17 @@ export default function InternalRulesPage() {
 
           // Populate form with existing data
           const normalizedValues: PolicyFormFields = {
-            check_in_from: policy.check_in_from || '',
-            check_in_until: policy.check_in_until || '',
-            check_out_from: policy.check_out_from || '',
-            check_out_until: policy.check_out_until || '',
-            cancel_time: policy.cancellation_fee?.cancel_time || '',
-            single_before_time_percentage: policy.cancellation_fee?.single_before_time_percentage || '',
-            single_after_time_percentage: policy.cancellation_fee?.single_after_time_percentage || '',
-            multi_5days_before_percentage: policy.cancellation_fee?.multi_5days_before_percentage || '',
-            multi_3days_before_percentage: policy.cancellation_fee?.multi_3days_before_percentage || '',
-            multi_2days_before_percentage: policy.cancellation_fee?.multi_2days_before_percentage || '',
-            multi_1day_before_percentage: policy.cancellation_fee?.multi_1day_before_percentage || '',
+            check_in_from: policy.check_in_from ? policy.check_in_from.slice(0, 5) : '00:00',
+            check_in_until: policy.check_in_until ? policy.check_in_until.slice(0, 5) : '00:00',
+            check_out_from: policy.check_out_from ? policy.check_out_from.slice(0, 5) : '00:00',
+            check_out_until: policy.check_out_until ? policy.check_out_until.slice(0, 5) : '00:00',
+            cancel_time: policy.cancellation_fee?.cancel_time ? policy.cancellation_fee.cancel_time.slice(0, 5) : '00:00',
+            single_before_time_percentage: String(Math.floor(parseFloat(policy.cancellation_fee?.single_before_time_percentage || '0'))),
+            single_after_time_percentage: String(Math.floor(parseFloat(policy.cancellation_fee?.single_after_time_percentage || '0'))),
+            multi_5days_before_percentage: String(Math.floor(parseFloat(policy.cancellation_fee?.multi_5days_before_percentage || '0'))),
+            multi_3days_before_percentage: String(Math.floor(parseFloat(policy.cancellation_fee?.multi_3days_before_percentage || '0'))),
+            multi_2days_before_percentage: String(Math.floor(parseFloat(policy.cancellation_fee?.multi_2days_before_percentage || '0'))),
+            multi_1day_before_percentage: String(Math.floor(parseFloat(policy.cancellation_fee?.multi_1day_before_percentage || '0'))),
             breakfast_status: policy.breakfast_policy?.status || 'no',
             breakfast_start_time: policy.breakfast_policy?.start_time || '',
             breakfast_end_time: policy.breakfast_policy?.end_time || '',
@@ -183,8 +186,59 @@ export default function InternalRulesPage() {
     fetchPolicyData();
   }, [user?.hotel, form]);
 
-  // Initialize edit form when opening dialog
+  // Initialize edit form when opening dialog - populate with existing data
   const openEditDialog = (section: 'time' | 'breakfast' | 'parking' | 'children' | 'extrabed') => {
+    if (propertyPolicy) {
+      console.log('Property Policy Data:', propertyPolicy);
+      
+      // Helper to format time (remove seconds if present)
+      const formatTimeValue = (time: string | undefined | null, defaultValue: string = '00:00') => {
+        if (!time) return defaultValue;
+        return time.slice(0, 5); // "14:00:00" -> "14:00"
+      };
+      
+      // Helper to ensure percentage is a string
+      const formatPercentage = (val: string | number | undefined | null) => {
+        if (val === null || val === undefined || val === '') return '0';
+        // Parse the value to handle decimal strings like "10.00" from backend
+        const numValue = typeof val === 'string' ? parseFloat(val) : val;
+        return String(Math.floor(numValue)); // Convert to integer string
+      };
+      
+      // Populate ALL form fields with existing data to pass validation
+      const formData = {
+        check_in_from: formatTimeValue(propertyPolicy.check_in_from),
+        check_in_until: formatTimeValue(propertyPolicy.check_in_until),
+        check_out_from: formatTimeValue(propertyPolicy.check_out_from),
+        check_out_until: formatTimeValue(propertyPolicy.check_out_until),
+        cancel_time: formatTimeValue(propertyPolicy.cancellation_fee?.cancel_time),
+        single_before_time_percentage: formatPercentage(propertyPolicy.cancellation_fee?.single_before_time_percentage),
+        single_after_time_percentage: formatPercentage(propertyPolicy.cancellation_fee?.single_after_time_percentage),
+        multi_5days_before_percentage: formatPercentage(propertyPolicy.cancellation_fee?.multi_5days_before_percentage),
+        multi_3days_before_percentage: formatPercentage(propertyPolicy.cancellation_fee?.multi_3days_before_percentage),
+        multi_2days_before_percentage: formatPercentage(propertyPolicy.cancellation_fee?.multi_2days_before_percentage),
+        multi_1day_before_percentage: formatPercentage(propertyPolicy.cancellation_fee?.multi_1day_before_percentage),
+        breakfast_status: propertyPolicy.breakfast_policy?.status || 'no',
+        breakfast_start_time: formatTimeValue(propertyPolicy.breakfast_policy?.start_time, ''),
+        breakfast_end_time: formatTimeValue(propertyPolicy.breakfast_policy?.end_time, ''),
+        breakfast_price: propertyPolicy.breakfast_policy?.price || null,
+        breakfast_type: propertyPolicy.breakfast_policy?.breakfast_type || undefined,
+        outdoor_parking: propertyPolicy.parking_policy?.outdoor_parking || 'no',
+        outdoor_fee_type: propertyPolicy.parking_policy?.outdoor_fee_type || null,
+        outdoor_price: propertyPolicy.parking_policy?.outdoor_price || null,
+        indoor_parking: propertyPolicy.parking_policy?.indoor_parking || 'no',
+        indoor_fee_type: propertyPolicy.parking_policy?.indoor_fee_type || null,
+        indoor_price: propertyPolicy.parking_policy?.indoor_price || null,
+        allow_children: propertyPolicy.child_policy?.allow_children || false,
+        max_child_age: propertyPolicy.child_policy?.max_child_age || undefined,
+        child_bed_available: propertyPolicy.child_policy?.child_bed_available || undefined,
+        allow_extra_bed: propertyPolicy.child_policy?.allow_extra_bed || false,
+        extra_bed_price: propertyPolicy.child_policy?.extra_bed_price || null,
+      };
+      
+      console.log('Form Data to Reset:', formData);
+      form.reset(formData);
+    }
     setEditSection(section);
     setIsEditDialogOpen(true);
   };
@@ -196,47 +250,48 @@ export default function InternalRulesPage() {
     try {
       const stripSeconds = (time: string) => time ? time.slice(0, 5) : time;
 
+      // Build the payload based on current form data, not just edited section
       const formattedData = {
         property: user.hotel,
-        check_in_from: stripSeconds(data.check_in_from),
-        check_in_until: stripSeconds(data.check_in_until),
-        check_out_from: stripSeconds(data.check_out_from),
-        check_out_until: stripSeconds(data.check_out_until),
+        check_in_from: stripSeconds(data.check_in_from || propertyPolicy.check_in_from),
+        check_in_until: stripSeconds(data.check_in_until || propertyPolicy.check_in_until),
+        check_out_from: stripSeconds(data.check_out_from || propertyPolicy.check_out_from),
+        check_out_until: stripSeconds(data.check_out_until || propertyPolicy.check_out_until),
         
         cancellation_fee: {
           property: user.hotel,
-          cancel_time: stripSeconds(data.cancel_time),
-          single_before_time_percentage: data.single_before_time_percentage,
-          single_after_time_percentage: data.single_after_time_percentage,
-          multi_5days_before_percentage: data.multi_5days_before_percentage,
-          multi_3days_before_percentage: data.multi_3days_before_percentage,
-          multi_2days_before_percentage: data.multi_2days_before_percentage,
-          multi_1day_before_percentage: data.multi_1day_before_percentage,
+          cancel_time: stripSeconds(data.cancel_time || propertyPolicy.cancellation_fee?.cancel_time || ''),
+          single_before_time_percentage: data.single_before_time_percentage || propertyPolicy.cancellation_fee?.single_before_time_percentage || '',
+          single_after_time_percentage: data.single_after_time_percentage || propertyPolicy.cancellation_fee?.single_after_time_percentage || '',
+          multi_5days_before_percentage: data.multi_5days_before_percentage || propertyPolicy.cancellation_fee?.multi_5days_before_percentage || '',
+          multi_3days_before_percentage: data.multi_3days_before_percentage || propertyPolicy.cancellation_fee?.multi_3days_before_percentage || '',
+          multi_2days_before_percentage: data.multi_2days_before_percentage || propertyPolicy.cancellation_fee?.multi_2days_before_percentage || '',
+          multi_1day_before_percentage: data.multi_1day_before_percentage || propertyPolicy.cancellation_fee?.multi_1day_before_percentage || '',
         },
         
         breakfast_policy: {
-          status: data.breakfast_status,
-          start_time: data.breakfast_status !== 'no' ? stripSeconds(data.breakfast_start_time || '') : null,
-          end_time: data.breakfast_status !== 'no' ? stripSeconds(data.breakfast_end_time || '') : null,
-          price: data.breakfast_status === 'paid' ? data.breakfast_price : null,
-          breakfast_type: data.breakfast_status !== 'no' ? data.breakfast_type : null,
+          status: data.breakfast_status || propertyPolicy.breakfast_policy?.status || 'no',
+          start_time: data.breakfast_status !== 'no' ? stripSeconds(data.breakfast_start_time || '') : propertyPolicy.breakfast_policy?.start_time,
+          end_time: data.breakfast_status !== 'no' ? stripSeconds(data.breakfast_end_time || '') : propertyPolicy.breakfast_policy?.end_time,
+          price: data.breakfast_status === 'paid' ? data.breakfast_price : propertyPolicy.breakfast_policy?.price,
+          breakfast_type: data.breakfast_status !== 'no' ? data.breakfast_type : propertyPolicy.breakfast_policy?.breakfast_type,
         },
         
         parking_policy: {
-          outdoor_parking: data.outdoor_parking,
-          outdoor_fee_type: data.outdoor_parking === 'paid' ? data.outdoor_fee_type : null,
-          outdoor_price: data.outdoor_parking === 'paid' ? data.outdoor_price : null,
-          indoor_parking: data.indoor_parking,
-          indoor_fee_type: data.indoor_parking === 'paid' ? data.indoor_fee_type : null,
-          indoor_price: data.indoor_parking === 'paid' ? data.indoor_price : null,
+          outdoor_parking: data.outdoor_parking || propertyPolicy.parking_policy?.outdoor_parking || 'no',
+          outdoor_fee_type: data.outdoor_parking === 'paid' ? data.outdoor_fee_type : propertyPolicy.parking_policy?.outdoor_fee_type,
+          outdoor_price: data.outdoor_parking === 'paid' ? data.outdoor_price : propertyPolicy.parking_policy?.outdoor_price,
+          indoor_parking: data.indoor_parking || propertyPolicy.parking_policy?.indoor_parking || 'no',
+          indoor_fee_type: data.indoor_parking === 'paid' ? data.indoor_fee_type : propertyPolicy.parking_policy?.indoor_fee_type,
+          indoor_price: data.indoor_parking === 'paid' ? data.indoor_price : propertyPolicy.parking_policy?.indoor_price,
         },
         
         child_policy: {
-          allow_children: data.allow_children,
-          max_child_age: data.allow_children ? data.max_child_age : null,
-          child_bed_available: data.allow_children ? data.child_bed_available : null,
-          allow_extra_bed: data.allow_extra_bed || false,
-          extra_bed_price: data.allow_extra_bed ? data.extra_bed_price : null,
+          allow_children: data.allow_children ?? propertyPolicy.child_policy?.allow_children ?? false,
+          max_child_age: data.allow_children ? data.max_child_age : propertyPolicy.child_policy?.max_child_age,
+          child_bed_available: data.allow_children ? data.child_bed_available : propertyPolicy.child_policy?.child_bed_available,
+          allow_extra_bed: data.allow_extra_bed ?? propertyPolicy.child_policy?.allow_extra_bed ?? false,
+          extra_bed_price: data.allow_extra_bed ? data.extra_bed_price : propertyPolicy.child_policy?.extra_bed_price,
         },
       };
 
@@ -253,17 +308,17 @@ export default function InternalRulesPage() {
 
       // Update form with new values
       const normalizedValues: PolicyFormFields = {
-        check_in_from: result.check_in_from || '',
-        check_in_until: result.check_in_until || '',
-        check_out_from: result.check_out_from || '',
-        check_out_until: result.check_out_until || '',
-        cancel_time: result.cancellation_fee?.cancel_time || '',
-        single_before_time_percentage: result.cancellation_fee?.single_before_time_percentage || '',
-        single_after_time_percentage: result.cancellation_fee?.single_after_time_percentage || '',
-        multi_5days_before_percentage: result.cancellation_fee?.multi_5days_before_percentage || '',
-        multi_3days_before_percentage: result.cancellation_fee?.multi_3days_before_percentage || '',
-        multi_2days_before_percentage: result.cancellation_fee?.multi_2days_before_percentage || '',
-        multi_1day_before_percentage: result.cancellation_fee?.multi_1day_before_percentage || '',
+        check_in_from: result.check_in_from ? result.check_in_from.slice(0, 5) : '00:00',
+        check_in_until: result.check_in_until ? result.check_in_until.slice(0, 5) : '00:00',
+        check_out_from: result.check_out_from ? result.check_out_from.slice(0, 5) : '00:00',
+        check_out_until: result.check_out_until ? result.check_out_until.slice(0, 5) : '00:00',
+        cancel_time: result.cancellation_fee?.cancel_time ? result.cancellation_fee.cancel_time.slice(0, 5) : '00:00',
+        single_before_time_percentage: String(Math.floor(parseFloat(result.cancellation_fee?.single_before_time_percentage || '0'))),
+        single_after_time_percentage: String(Math.floor(parseFloat(result.cancellation_fee?.single_after_time_percentage || '0'))),
+        multi_5days_before_percentage: String(Math.floor(parseFloat(result.cancellation_fee?.multi_5days_before_percentage || '0'))),
+        multi_3days_before_percentage: String(Math.floor(parseFloat(result.cancellation_fee?.multi_3days_before_percentage || '0'))),
+        multi_2days_before_percentage: String(Math.floor(parseFloat(result.cancellation_fee?.multi_2days_before_percentage || '0'))),
+        multi_1day_before_percentage: String(Math.floor(parseFloat(result.cancellation_fee?.multi_1day_before_percentage || '0'))),
         breakfast_status: result.breakfast_policy?.status || 'no',
         breakfast_start_time: result.breakfast_policy?.start_time || '',
         breakfast_end_time: result.breakfast_policy?.end_time || '',
@@ -695,10 +750,10 @@ export default function InternalRulesPage() {
                         name="check_in_from"
                         render={({ field }) => (
                           <FormItem>
-                            <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                            <Select onValueChange={field.onChange} value={field.value || undefined} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger className="w-[100px]">
-                                  <SelectValue placeholder="00:00" />
+                                  <SelectValue placeholder="00:00">{field.value || '00:00'}</SelectValue>
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -719,10 +774,10 @@ export default function InternalRulesPage() {
                         name="check_in_until"
                         render={({ field }) => (
                           <FormItem>
-                            <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                            <Select onValueChange={field.onChange} value={field.value || undefined} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger className="w-[100px]">
-                                  <SelectValue placeholder="00:00" />
+                                  <SelectValue placeholder="00:00">{field.value || '00:00'}</SelectValue>
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -746,10 +801,10 @@ export default function InternalRulesPage() {
                         name="check_out_from"
                         render={({ field }) => (
                           <FormItem>
-                            <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                            <Select onValueChange={field.onChange} value={field.value || undefined} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger className="w-[100px]">
-                                  <SelectValue placeholder="00:00" />
+                                  <SelectValue placeholder="00:00">{field.value || '00:00'}</SelectValue>
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -770,10 +825,10 @@ export default function InternalRulesPage() {
                         name="check_out_until"
                         render={({ field }) => (
                           <FormItem>
-                            <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                            <Select onValueChange={field.onChange} value={field.value || undefined} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger className="w-[100px]">
-                                  <SelectValue placeholder="00:00" />
+                                  <SelectValue placeholder="00:00">{field.value || '00:00'}</SelectValue>
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -803,10 +858,10 @@ export default function InternalRulesPage() {
                         name="cancel_time"
                         render={({ field }) => (
                           <FormItem>
-                            <Select onValueChange={field.onChange} value={field.value?.slice(0, 5) || ''}>
+                            <Select onValueChange={field.onChange} value={field.value || undefined} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger className="w-[100px]">
-                                  <SelectValue placeholder="00:00" />
+                                  <SelectValue placeholder="00:00">{field.value || '00:00'}</SelectValue>
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -835,7 +890,13 @@ export default function InternalRulesPage() {
                                 <span className="text-sm">• Өмнөх өдрийн {displayCancelTime || '12:00'} цагаас өмнө цуцалвал:</span>
                                 <div className="flex items-center gap-2">
                                   <FormControl>
-                                    <Input type="number" placeholder="0" {...field} className="w-20 text-right" />
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0" 
+                                      {...field} 
+                                      onChange={(e) => field.onChange(e.target.value || '0')}
+                                      className="w-20 text-right" 
+                                    />
                                   </FormControl>
                                   <span className="text-sm text-muted-foreground">%</span>
                                 </div>
@@ -853,7 +914,13 @@ export default function InternalRulesPage() {
                                 <span className="text-sm">• Өмнөх өдрийн {displayCancelTime || '12:00'} цагаас хойш цуцалвал:</span>
                                 <div className="flex items-center gap-2">
                                   <FormControl>
-                                    <Input type="number" placeholder="0" {...field} className="w-20 text-right" />
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0" 
+                                      {...field} 
+                                      onChange={(e) => field.onChange(e.target.value || '0')}
+                                      className="w-20 text-right" 
+                                    />
                                   </FormControl>
                                   <span className="text-sm text-muted-foreground">%</span>
                                 </div>
@@ -877,7 +944,13 @@ export default function InternalRulesPage() {
                                 <span className="text-sm">• Ирэх өдрөөсөө <strong>5</strong> хоногийн өмнө цуцалвал:</span>
                                 <div className="flex items-center gap-2">
                                   <FormControl>
-                                    <Input type="number" placeholder="0" {...field} className="w-20 text-right" />
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0" 
+                                      {...field} 
+                                      onChange={(e) => field.onChange(e.target.value || '0')}
+                                      className="w-20 text-right" 
+                                    />
                                   </FormControl>
                                   <span className="text-sm text-muted-foreground">%</span>
                                 </div>
@@ -895,7 +968,13 @@ export default function InternalRulesPage() {
                                 <span className="text-sm">• Ирэх өдрөөсөө <strong>3</strong> хоногийн өмнө цуцалвал:</span>
                                 <div className="flex items-center gap-2">
                                   <FormControl>
-                                    <Input type="number" placeholder="0" {...field} className="w-20 text-right" />
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0" 
+                                      {...field} 
+                                      onChange={(e) => field.onChange(e.target.value || '0')}
+                                      className="w-20 text-right" 
+                                    />
                                   </FormControl>
                                   <span className="text-sm text-muted-foreground">%</span>
                                 </div>
@@ -913,7 +992,13 @@ export default function InternalRulesPage() {
                                 <span className="text-sm">• Ирэх өдрөөсөө <strong>1</strong> хоногийн өмнө цуцалвал:</span>
                                 <div className="flex items-center gap-2">
                                   <FormControl>
-                                    <Input type="number" placeholder="0" {...field} className="w-20 text-right" />
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0" 
+                                      {...field} 
+                                      onChange={(e) => field.onChange(e.target.value || '0')}
+                                      className="w-20 text-right" 
+                                    />
                                   </FormControl>
                                   <span className="text-sm text-muted-foreground">%</span>
                                 </div>
@@ -1482,7 +1567,17 @@ export default function InternalRulesPage() {
                 >
                   Болих
                 </Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
+                <Button 
+                  type="submit" 
+                  disabled={form.formState.isSubmitting}
+                  onClick={async (e) => {
+                    // Check for validation errors
+                    const errors = form.formState.errors;
+                    if (Object.keys(errors).length > 0) {
+                      console.log('Form validation errors:', errors);
+                    }
+                  }}
+                >
                   {form.formState.isSubmitting ? (
                     <>
                       <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -1,60 +1,81 @@
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";  // Import from next/navigation
-import Cookies from "js-cookie";  // Import js-cookie
-// import LanguageToggle from "../components/languageToggle";
+'use client';
 
-export default function Topbar({ toggleSidebar, sideBarOpen, }: { toggleSidebar: () => void; sideBarOpen: boolean}) {
-  const pathname = usePathname();  // Get current path using usePathname
-  const router = useRouter();      // Get router for navigation
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  IconMenu2,
+  IconUser,
+  IconLogout,
+  IconSettings,
+} from "@tabler/icons-react";
 
-  // Function to change the language in the current route
-  const changeLanguage = (newLang: string) => {
-    const segments = pathname.split('/').filter(Boolean);
-    if (['en', 'mn'].includes(segments[0])) {
-      segments[0] = newLang;  // Replace existing language
-    } else {
-      segments.unshift(newLang);  // Add new language at the start
-    }
-    router.push(`/${segments.join('/')}`);
-  };
+export default function Topbar({
+  toggleSidebar,
+  sideBarOpen,
+}: {
+  toggleSidebar: () => void;
+  sideBarOpen: boolean;
+}) {
+  const { user, logout } = useAuth();
+  const router = useRouter();
 
-  // Logout handler
-  const handleLogout = () => {
-    Cookies.remove('jwtToken');  // Remove the JWT token cookie
-    window.location.href = '/auth/login';  // Redirect to sign-in page (or your desired route)
+  const handleLogout = async () => {
+    await logout();
+    router.push('/auth/login');
   };
 
   return (
-    <div>
-      <div className="h-[50px] border-b-[1px] bg-white px-[50px] text-black flex justify-end items-center">
-        <div className="mr-2">
-       {/* <LanguageToggle/> */}
-       </div>
-        <div className="flex gap-4 items-center">
-          <button
-            onClick={handleLogout}  // Attach the logout handler
-            className="rounded-sm border border-solid text-xs border-blue-500 transition-colors flex items-center justify-center hover:bg-blue-500 hover:border-transparent sm:text-base h-7 sm:h-8 px-2 sm:px-2 sm:min-w-36 text-blue-500 hover:text-white"
-          >
-          Гарах
-          </button>
-          <Link
-            className="rounded-sm border border-solid border-blue-500 transition-colors flex items-center justify-center hover:bg-blue-500 hover:border-transparent text-xs sm:text-base h-7 sm:h-8 px-2 sm:px-2 sm:min-w-36 text-blue-500 hover:text-white"
-            href="/auth/register"
-          >
-       Нэвтрэх
-          </Link>
+    <div className="sticky top-0 z-40 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-full items-center justify-between px-4">
+        {/* Left side - Menu toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="h-10 w-10"
+        >
+          <IconMenu2 className="h-5 w-5" />
+          <span className="sr-only">Toggle sidebar</span>
+        </Button>
+
+        {/* Right side - User menu */}
+        <div className="flex items-center gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <IconUser className="h-4 w-4" />
+                </div>
+                <div className="hidden text-left md:block">
+                  <p className="text-sm font-medium">{user?.name || 'SuperAdmin'}</p>
+                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Миний бүртгэл</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <IconSettings className="mr-2 h-4 w-4" />
+                <span>Тохиргоо</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <IconLogout className="mr-2 h-4 w-4" />
+                <span>Гарах</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        {/* <button onClick={toggleSidebar} className="flex  ml-4 flex-col justify-center items-center mr-4">
-          <span
-            className={`bg-primary block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "rotate-45 translate-y-1" : "-translate-y-0.5"}`}
-          ></span>
-          <span
-            className={`bg-primary block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${sideBarOpen ? "opacity-0" : "opacity-100"}`}
-          ></span>
-          <span
-            className={`bg-primary block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${sideBarOpen ? "-rotate-45 -translate-y-1" : "translate-y-0.5"}`}
-          ></span>
-        </button> */}
       </div>
     </div>
   );

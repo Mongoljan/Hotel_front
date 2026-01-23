@@ -30,6 +30,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   const t = useTranslations('5PropertyImages');
   const { user } = useAuth();
   const [initialValues, setInitialValues] = React.useState<FormFields | null>(null);
+  const [existingImages, setExistingImages] = React.useState<any[]>([]);
 
   const propertyDataStr = user?.id ? UserStorage.getItem<string>('propertyData', user.id) : null;
   const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
@@ -52,20 +53,62 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   });
 
   useEffect(() => {
-    if (!user?.id) return;
-    
-    const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
-    const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
-    
-    if (stored?.step5?.raw) {
-      const restored = stored.step5.raw.map((item: any) => ({
-        images: item.image,
-        descriptions: item.description,
-      }));
-      replace(restored);
-      setInitialValues({ entries: restored });
-    }
-  }, [replace, user?.id]);
+    const fetchExistingImages = async () => {
+      if (!user?.id || !user?.hotel) return;
+      
+      const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
+      const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
+      const propertyId = stored.propertyId || user.hotel;
+
+      // First check localStorage
+      if (stored?.step5?.raw) {
+        const restored = stored.step5.raw.map((item: any) => ({
+          images: item.image,
+          descriptions: item.description,
+        }));
+        replace(restored);
+        setInitialValues({ entries: restored });
+        setExistingImages(stored.step5.raw); // Store existing image data
+        return;
+      }
+
+      // If not in localStorage, fetch from API
+      try {
+        const res = await fetch(`${API_URL}?property=${propertyId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const restored = data.map((item: any) => ({
+              images: item.image,
+              descriptions: item.description || '',
+            }));
+            replace(restored);
+            setInitialValues({ entries: restored });
+            setExistingImages(data); // Store existing image data
+
+            // Save to localStorage
+            const step5Data = {
+              entries: restored,
+              property_photos: data.map((img: any) => img.id),
+              raw: data,
+            };
+            UserStorage.setItem(
+              'propertyData',
+              JSON.stringify({
+                ...stored,
+                step5: step5Data,
+              }),
+              user.id
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch existing images:', error);
+      }
+    };
+
+    fetchExistingImages();
+  }, [replace, user?.id, user?.hotel]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -118,37 +161,66 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       }
 
       const result: any[] = [];
+      const allImageIds: number[] = [];
 
-      for (const entry of data.entries) {
-        const formData = new FormData();
-        formData.append('property', propertyId.toString());
-        formData.append('description', entry.descriptions);
+      for (let i = 0; i < data.entries.length; i++) {
+        const entry = data.entries[i];
+        const existingImage = existingImages[i];
 
-        const base64 = entry.images;
-        const blob = await (await fetch(base64)).blob();
-        formData.append('image', blob, `image_${Date.now()}.jpeg`);
+        // Check if this is a new image (base64) or existing image (URL)
+        const isNewImage = entry.images.startsWith('data:');
 
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          body: formData,
-        });
+        if (isNewImage) {
+          // Upload new image
+          const formData = new FormData();
+          formData.append('property', propertyId.toString());
+          formData.append('description', entry.descriptions);
 
-        if (!res.ok) throw new Error('One of the image uploads failed.');
-        const json = await res.json();
+          const base64 = entry.images;
+          const blob = await (await fetch(base64)).blob();
+          formData.append('image', blob, `image_${Date.now()}_${i}.jpeg`);
 
-        // ✅ FIXED: flatten response array
-        if (Array.isArray(json)) {
-          result.push(...json);
-        } else {
-          result.push(json);
+          const res = await fetch(API_URL, {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!res.ok) throw new Error('One of the image uploads failed.');
+          const json = await res.json();
+
+          if (Array.isArray(json)) {
+            result.push(...json);
+            allImageIds.push(...json.map((img: any) => img.id));
+          } else {
+            result.push(json);
+            allImageIds.push(json.id);
+          }
+        } else if (existingImage) {
+          // Keep existing image, update description if changed
+          if (existingImage.description !== entry.descriptions) {
+            // Update description
+            const updateRes = await fetch(`${API_URL}${existingImage.id}/`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ description: entry.descriptions }),
+            });
+
+            if (updateRes.ok) {
+              const updatedImage = await updateRes.json();
+              result.push(updatedImage);
+            } else {
+              result.push(existingImage);
+            }
+          } else {
+            result.push(existingImage);
+          }
+          allImageIds.push(existingImage.id);
         }
       }
 
-      const uploadedImageIds = result.map((img) => img.id);
-
       const step5Data = {
         entries: data.entries,
-        property_photos: uploadedImageIds,
+        property_photos: allImageIds,
         raw: result,
       };
 
@@ -157,7 +229,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         JSON.stringify({
           ...stored,
           step5: step5Data,
-          property_photos: uploadedImageIds,
+          property_photos: allImageIds,
         }),
         user.id
       );

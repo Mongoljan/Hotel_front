@@ -125,12 +125,6 @@ export const navItems: NavItem[] = [
         icon: IconScale,
       },
       {
-        title: 'Бодлого',
-        i18nKey: 'policies',
-        url: '/admin/policies',
-        icon: IconFileText,
-      },
-      {
         title: 'Байгууллага',
         i18nKey: 'corporate',
         url: '/admin/corporate',

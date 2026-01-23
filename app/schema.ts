@@ -367,20 +367,66 @@ export const schemaHotelSteps2 = z.object({
 
 
 export const schemaHotelSteps3 = z.object({
-  // Check-in/Check-out times
-  check_in_from: z.string(),
-  check_in_until: z.string(),
-  check_out_from: z.string(),
-  check_out_until: z.string(),
+  // Check-in/Check-out times with proper time format validation
+  check_in_from: z.string()
+    .min(1, { message: "Бүртгэх цагийн эхлэх хугацааг сонгоно уу" })
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Цагийн формат буруу байна (ЦЦ:ММ)" }),
+  check_in_until: z.string()
+    .min(1, { message: "Бүртгэх цагийн дуусах хугацааг сонгоно уу" })
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Цагийн формат буруу байна (ЦЦ:ММ)" }),
+  check_out_from: z.string()
+    .min(1, { message: "Гарах цагийн эхлэх хугацааг сонгоно уу" })
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Цагийн формат буруу байна (ЦЦ:ММ)" }),
+  check_out_until: z.string()
+    .min(1, { message: "Гарах цагийн дуусах хугацааг сонгоно уу" })
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Цагийн формат буруу байна (ЦЦ:ММ)" }),
 
-  // Cancellation fee
-  cancel_time: z.string(),
-  single_before_time_percentage: z.string(),
-  single_after_time_percentage: z.string(),
-  multi_5days_before_percentage: z.string(),
-  multi_3days_before_percentage: z.string(),
-  multi_2days_before_percentage: z.string(),
-  multi_1day_before_percentage: z.string(),
+  // Cancellation fee with number validation and percentage range (natural numbers only)
+  cancel_time: z.string()
+    .min(1, { message: "Цуцлах боломжтой цагийг сонгоно уу" })
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Цагийн формат буруу байна (ЦЦ:ММ)" }),
+  single_before_time_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  single_after_time_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  multi_5days_before_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  multi_3days_before_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  multi_2days_before_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  multi_1day_before_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
 
   // Breakfast policy
   breakfast_status: z.enum(['no', 'free', 'paid']),
@@ -399,10 +445,91 @@ export const schemaHotelSteps3 = z.object({
 
   // Child policy
   allow_children: z.boolean(),
-  max_child_age: z.number().optional(),
+  max_child_age: z.number()
+    .min(0, { message: "Хүүхдийн нас 0-с их байх ёстой" })
+    .max(18, { message: "Хүүхдийн нас 18-аас бага байх ёстой" })
+    .optional(),
   child_bed_available: z.enum(['yes', 'no']).optional(),
   allow_extra_bed: z.boolean().optional(),
   extra_bed_price: z.string().nullable().optional(),
+}).refine((data) => {
+  // Validate breakfast times when breakfast is not 'no'
+  if (data.breakfast_status !== 'no') {
+    if (!data.breakfast_start_time || !data.breakfast_end_time) {
+      return false;
+    }
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timeRegex.test(data.breakfast_start_time) && timeRegex.test(data.breakfast_end_time);
+  }
+  return true;
+}, {
+  message: "Өглөөний цайны цагийг зөв оруулна уу",
+  path: ["breakfast_start_time"],
+}).refine((data) => {
+  // Validate breakfast type when breakfast is not 'no'
+  if (data.breakfast_status !== 'no' && !data.breakfast_type) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Өглөөний цайны төрлийг сонгоно уу",
+  path: ["breakfast_type"],
+}).refine((data) => {
+  // Validate breakfast price when breakfast is 'paid'
+  if (data.breakfast_status === 'paid') {
+    if (!data.breakfast_price) return false;
+    const price = parseFloat(data.breakfast_price);
+    return !isNaN(price) && price > 0;
+  }
+  return true;
+}, {
+  message: "Өглөөний цайны үнийг оруулна уу",
+  path: ["breakfast_price"],
+}).refine((data) => {
+  // Validate outdoor parking price when outdoor parking is 'paid'
+  if (data.outdoor_parking === 'paid') {
+    if (!data.outdoor_fee_type) return false;
+    if (!data.outdoor_price) return false;
+    const price = parseFloat(data.outdoor_price);
+    return !isNaN(price) && price > 0;
+  }
+  return true;
+}, {
+  message: "Гадна зогсоолын төлбөрийн мэдээллийг бүрэн оруулна уу",
+  path: ["outdoor_price"],
+}).refine((data) => {
+  // Validate indoor parking price when indoor parking is 'paid'
+  if (data.indoor_parking === 'paid') {
+    if (!data.indoor_fee_type) return false;
+    if (!data.indoor_price) return false;
+    const price = parseFloat(data.indoor_price);
+    return !isNaN(price) && price > 0;
+  }
+  return true;
+}, {
+  message: "Дотор зогсоолын төлбөрийн мэдээллийг бүрэн оруулна уу",
+  path: ["indoor_price"],
+}).refine((data) => {
+  // Validate child age when children are allowed
+  if (data.allow_children) {
+    if (!data.max_child_age) return false;
+    if (!data.child_bed_available) return false;
+  }
+  return true;
+}, {
+  message: "Хүүхдийн дээд нас болон хүүхдийн орны мэдээллийг оруулна уу",
+  path: ["max_child_age"],
+}).refine((data) => {
+  // Validate extra bed price when extra bed is allowed
+  if (data.allow_extra_bed) {
+    if (!data.extra_bed_price) return false;
+    const price = parseFloat(data.extra_bed_price);
+    return !isNaN(price) && price > 0;
+  }
+  return true;
+}, {
+  message: "Нэмэлт орны үнийг оруулна уу",
+  path: ["extra_bed_price"],
 });
 
 

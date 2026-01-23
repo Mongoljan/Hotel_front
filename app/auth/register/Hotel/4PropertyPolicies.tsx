@@ -385,7 +385,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                             Өмнөх өдрийн <span className="text-blue-500 mr-1">{displayCancelTime || '...'}</span> цагаас өмнө цуцалвал
                           </FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0" {...field} className="w-32" />
+                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
                           </FormControl>
                         </div>
                         <FormMessage />
@@ -403,7 +403,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                             Өмнөх өдрийн <span className="text-blue-500 mr-1">{displayCancelTime || '...'}</span> цагаас хойш цуцалвал
                           </FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0" {...field} className="w-32" />
+                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
                           </FormControl>
                         </div>
                         <FormMessage />
@@ -426,7 +426,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                         <div className="flex items-center gap-4">
                           <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 5 хоногийн өмнөх хувь</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0" {...field} className="w-32" />
+                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
                           </FormControl>
                         </div>
                         <FormMessage />
@@ -442,7 +442,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                         <div className="flex items-center gap-4">
                           <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 3 хоногийн өмнөх хувь</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0" {...field} className="w-32" />
+                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
                           </FormControl>
                         </div>
                         <FormMessage />
@@ -458,7 +458,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                         <div className="flex items-center gap-4">
                           <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 2 хоногийн өмнөх хувь</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0" {...field} className="w-32" />
+                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
                           </FormControl>
                         </div>
                         <FormMessage />
@@ -474,7 +474,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                         <div className="flex items-center gap-4">
                           <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 1 хоногийн өмнөх хувь</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0" {...field} className="w-32" />
+                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
                           </FormControl>
                         </div>
                         <FormMessage />
@@ -834,6 +834,9 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                               <Input
                                 type="number"
                                 placeholder="17"
+                                min="0"
+                                max="18"
+                                step="1"
                                 {...field}
                                 value={field.value || ''}
                                 onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}

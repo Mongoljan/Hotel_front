@@ -17,6 +17,26 @@ export function middleware(req: NextRequest) {
     isValidToken = !!payload
   }
 
+  // ===== SUPERADMIN ROUTES =====
+  // Protect /superadmin/*: only SuperAdmin (user_type=1) can access
+  if (pathname.startsWith('/superadmin')) {
+    if (!isValidToken) {
+      return NextResponse.redirect(new URL('/auth/login', req.url))
+    }
+    if (userType !== 1) {
+      return NextResponse.redirect(new URL('/unauthorized', req.url))
+    }
+    // SuperAdmin doesn't need user/hotel approval checks
+    return NextResponse.next()
+  }
+
+  // ===== SUPERADMIN SHOULD NOT ACCESS /admin/* =====
+  // Redirect SuperAdmin from /admin/* to /superadmin/dashboard
+  if (pathname.startsWith('/admin') && isValidToken && userType === 1) {
+    return NextResponse.redirect(new URL('/superadmin/dashboard', req.url))
+  }
+
+  // ===== ADMIN ROUTES =====
   // Role-based route protection
   // Only Owner (2) and SuperAdmin (1) can create employees
   if (pathname.startsWith('/admin/employees') && isValidToken) {
@@ -25,13 +45,20 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // 1. If at root "/" and logged in, send to /admin/hotel
+  // 1. If at root "/" and logged in, redirect based on user type
   if (pathname === '/' && isValidToken) {
+    if (userType === 1) {
+      return NextResponse.redirect(new URL('/superadmin/dashboard', req.url))
+    }
     return NextResponse.redirect(new URL('/admin/hotel', req.url))
   }
 
-  // 2. If logged in and trying to access auth pages, redirect to appropriate admin page
+  // 2. If logged in and trying to access auth pages, redirect to appropriate page
   if (pathname.startsWith('/auth') && isValidToken) {
+    // SuperAdmin goes to superadmin dashboard
+    if (userType === 1) {
+      return NextResponse.redirect(new URL('/superadmin/dashboard', req.url))
+    }
     // If both user and hotel are approved, go to dashboard
     if (userApproved && hotelApproved) {
       return NextResponse.redirect(new URL('/admin/dashboard', req.url))
@@ -46,19 +73,21 @@ export function middleware(req: NextRequest) {
   }
 
   // 4. If logged in but EITHER user or hotel isn't approved → lock to /admin/hotel
+  // (Skip this check for SuperAdmin - they should already be redirected above)
   if (
     pathname.startsWith('/admin') &&
     isValidToken &&
+    userType !== 1 &&
     (!userApproved || !hotelApproved) &&
     pathname !== '/admin/hotel'
   ) {
     return NextResponse.redirect(new URL('/admin/hotel', req.url))
   }
 
-  // 4. Otherwise allow
+  // 5. Otherwise allow
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/', '/admin/:path*', '/auth/:path*'],
+  matcher: ['/', '/admin/:path*', '/auth/:path*', '/superadmin/:path*'],
 }
