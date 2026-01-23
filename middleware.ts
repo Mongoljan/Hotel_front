@@ -38,9 +38,9 @@ export function middleware(req: NextRequest) {
 
   // ===== ADMIN ROUTES =====
   // Role-based route protection
-  // Only Owner (2) and SuperAdmin (1) can create employees
+  // Only Owner (2) can create employees in the admin panel
   if (pathname.startsWith('/admin/employees') && isValidToken) {
-    if (userType !== 1 && userType !== 2) {
+    if (userType !== 2) {
       return NextResponse.redirect(new URL('/admin/dashboard', req.url))
     }
   }

@@ -10,6 +10,8 @@ import {
   IconChevronDown,
   IconChevronRight,
   IconUserCheck,
+  IconClipboardCheck,
+  IconFileText,
 } from "@tabler/icons-react";
 
 interface MenuItem {
@@ -26,6 +28,11 @@ const menuItems: MenuItem[] = [
     icon: <IconDashboard className="h-5 w-5" />,
   },
   {
+    label: "Зөвшөөрлийн удирдлага",
+    href: "/superadmin/approvals",
+    icon: <IconClipboardCheck className="h-5 w-5" />,
+  },
+  {
     label: "Эзэдийн удирдлага",
     href: "/superadmin/owners",
     icon: <IconUserCheck className="h-5 w-5" />,
@@ -34,6 +41,11 @@ const menuItems: MenuItem[] = [
     label: "Зочид буудлууд",
     href: "/superadmin/hotels",
     icon: <IconBuilding className="h-5 w-5" />,
+  },
+  {
+    label: "Гэрээний үнэ",
+    href: "/superadmin/commissions",
+    icon: <IconFileText className="h-5 w-5" />,
   },
   {
     label: "Хэрэглэгчид",

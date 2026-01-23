@@ -5,7 +5,7 @@ import Topbar from "./TopbarAdmin";
 import Sidebar from "./Sidebar";
 
 export default function Layout({ children,}: { children: React.ReactNode;}) {
-  const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const [isSidebarVisible, setSidebarVisible] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
 
   // Ensure this runs only on the client-side after the component has mounted

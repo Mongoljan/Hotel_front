@@ -37,15 +37,20 @@ export default function Topbar({
     <div className="sticky top-0 z-40 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-full items-center justify-between px-4">
         {/* Left side - Menu toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="h-10 w-10"
-        >
-          <IconMenu2 className="h-5 w-5" />
-          <span className="sr-only">Toggle sidebar</span>
-        </Button>
+        <div className="relative z-50">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="h-10 w-10 transition-transform duration-300"
+            style={{
+              transform: sideBarOpen ? 'translateX(320px)' : 'translateX(0)'
+            }}
+          >
+            <IconMenu2 className="h-5 w-5" />
+            <span className="sr-only">Toggle sidebar</span>
+          </Button>
+        </div>
 
         {/* Right side - User menu */}
         <div className="flex items-center gap-4">
