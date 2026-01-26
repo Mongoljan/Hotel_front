@@ -289,9 +289,8 @@
       "internalRules": "Дотоод журам",
       "corporatePartners": "Гэрээт байгууллага",
       "additionalServices": "Нэмэлт үйлчилгээ",
-      "currency": "Валют",
-      "adminRights": "Админ эрх",
-      "faq": "Түгээмэл асуулт, хариулт"
+      "currencyPayment": "Валют, төлбөрийн хэрэгсэл",
+      "userSettings": "Хэрэглэгчийн тохиргоо"
     },
     "hotelManagement":"Буудлын бүртгэл",
     "rooms":"Буудлын өрөөнүүд",
@@ -409,11 +408,8 @@
 
     "corporate": "Гэрээт байгууллага",
     "additionalServices": "Нэмэлт үйлчилгээ",
-    "currency": "Валют",
-    "adminRights": "Админ эрх",
-    "workers": "Ажилчид",
-    "permissions": "Эрх",
-    "faq": "Түгээмэл асуулт, хариулт",
+    "currencyPayment": "Валют, төлбөрийн хэрэгсэл",
+    "userSettings": "Хэрэглэгчийн тохиргоо",
     "sidebarMobileTitle": "Хажуугийн цэс",
     "waitingApproval": "Зөвшөөрөл хүлээгдэж байна...",
     "waitingApprovalTooltip": "Зөвшөөрөл авсны дараа цэсүүд харагдана. Админы зөвшөөрлийг түр хүлээнэ үү.",
@@ -906,5 +902,140 @@
     "hotelIdMissing": "Зочид буудлын ID байхгүй байна",
     "failedToLoadHotelInfo": "Зочид буудлын мэдээлэл ачааллахад алдаа гарлаа",
     "errorLoadingHotelInfo": "Зочид буудлын мэдээлэл ачааллахад алдаа гарлаа"
+  },
+  "AdditionalServices": {
+    "title": "Нэмэлт үйлчилгээ",
+    "addServiceType": "Үйлчилгээний төрөл нэмэх",
+    "addService": "Нэмэх",
+    "search": "Хайх",
+    "noServices": "Үйлчилгээ олдсонгүй",
+    "addNewService": "Шинэ үйлчилгээ нэмэх",
+    "serviceTypeModal": {
+      "title": "Үйлчилгээний төрөл",
+      "editTitle": "Үйлчилгээний төрөл засах",
+      "placeholder": "Жишээ нь: Цэвэрлэгээ гэх мэт"
+    },
+    "serviceModal": {
+      "serviceName": "Үйлчилгээний нэр",
+      "serviceNamePlaceholder": "Жишээ нь: Өглөөний цай",
+      "price": "Үнэ (₮)",
+      "category": "Ангилал",
+      "categoryPlaceholder": "Сонгох",
+      "isCountable": "Тоолох боломжтой эсэх",
+      "quantity": "Тоо ширхэг",
+      "productCode": "Бараанын код"
+    },
+    "actions": {
+      "save": "Хадгалах",
+      "edit": "Засах",
+      "delete": "Устгах"
+    },
+    "messages": {
+      "typeNameRequired": "Үйлчилгээний төрлийн нэр оруулна уу",
+      "serviceNameRequired": "Үйлчилгээний нэр оруулна уу",
+      "typeCreated": "Үйлчилгээний төрөл нэмэгдлээ",
+      "typeUpdated": "Үйлчилгээний төрөл шинэчлэгдлээ",
+      "typeDeleted": "Үйлчилгээний төрөл устгагдлаа",
+      "serviceCreated": "Үйлчилгээ нэмэгдлээ",
+      "serviceUpdated": "Үйлчилгээ шинэчлэгдлээ",
+      "serviceDeleted": "Үйлчилгээ устгагдлаа",
+      "error": "Алдаа гарлаа"
+    }
+  },
+  "Currency": {
+    "title": "Валют, төлбөрийн хэрэгсэл",
+    "currencyTab": "Валют",
+    "paymentTab": "Төлбөрийн хэрэгсэл",
+    "addCurrency": "Валют нэмэх",
+    "currencyRegistration": "Валют бүртгэл",
+    "selectCurrency": "Валют",
+    "code": "Код",
+    "symbol": "Тэмдэглэгээ",
+    "exchangeRate": "Валютын ханш",
+    "buyRate": "Худалдаж авах",
+    "sellRate": "Зарах",
+    "save": "Хадгалах",
+    "table": {
+      "country": "Улс",
+      "currency": "Валют",
+      "code": "Код",
+      "symbol": "Тэмдэглэгээ",
+      "sell": "Зарах",
+      "buy": "Авах",
+      "date": "Он сар өдөр",
+      "lastUpdated": "Сүүлд засcан"
+    },
+    "history": {
+      "title": "Валютын ханшны түүх",
+      "noHistory": "Өмнөх түүх байхгүй",
+      "startDate": "Эхэлсэн огноо",
+      "endDate": "Дууссан огноо",
+      "admin": "Админ"
+    },
+    "paymentMethods": {
+      "title": "Төлбөрийн хэрэгсэл",
+      "description": "Та ашиглах төлбөрийн хэрэгслүүдээ сонгоно уу.",
+      "bankCards": "Банкны карт",
+      "digitalPayments": "Төлбөрийн шийдлүүд",
+      "international": "Олон улсын",
+      "other": "Бусад"
+    },
+    "messages": {
+      "currencyAdded": "Валют амжилттай нэмэгдлээ",
+      "currencyUpdated": "Валют шинэчлэгдлээ",
+      "fillAllFields": "Бүх талбарыг бөглөнө үү",
+      "error": "Алдаа гарлаа"
+    }
+  },
+  "UserSettings": {
+    "title": "Хэрэглэгчийн тохиргоо",
+    "addUser": "Нэмэх",
+    "addUserModal": "Системийн хэрэглэгч нэмэх",
+    "editUserModal": "Хэрэглэгч засах",
+    "filters": {
+      "all": "Бүгд",
+      "active": "Идэвхтэй",
+      "inactive": "Идэвхгүй"
+    },
+    "search": "Хайх",
+    "table": {
+      "number": "№",
+      "name": "Нэр",
+      "position": "Албан тушаал",
+      "email": "И-мэйл хаяг",
+      "phone": "Утасны дугаар",
+      "role": "Хэрэглэгчийн эрх",
+      "registeredDate": "Бүртгэсэн огноо",
+      "status": "Төлөв",
+      "actions": "Засах"
+    },
+    "form": {
+      "name": "Нэр",
+      "position": "Албан тушаал",
+      "email": "И-мэйл хаяг",
+      "phone": "Утасны дугаар",
+      "role": "Хэрэглэгчийн эрх",
+      "password": "Нууц үг үүсгэх",
+      "passwordConfirm": "Нууц үг давтах"
+    },
+    "passwordRequirements": {
+      "hasLetter": "Дор хаяж нэг үсэг орсон байх",
+      "hasNumber": "Дор хаяж нэг тоо орсон байх",
+      "hasMinLength": "6 болон түүнээс дээш тэмдэгттэй байх"
+    },
+    "messages": {
+      "userAdded": "Хэрэглэгч амжилттай нэмэгдлээ",
+      "userUpdated": "Хэрэглэгчийн мэдээлэл шинэчлэгдлээ",
+      "userDeleted": "Хэрэглэгч устгагдлаа",
+      "statusChanged": "Хэрэглэгчийн төлөв өөрчлөгдлөө",
+      "fillAllFields": "Бүх талбарыг бөглөнө үү",
+      "passwordRequired": "Нууц үг оруулна уу",
+      "passwordMismatch": "Нууц үг таарахгүй байна",
+      "passwordInvalid": "Нууц үг шаардлага хангахгүй байна",
+      "confirmDelete": "Энэ хэрэглэгчийг устгахдаа итгэлтэй байна у|?",
+      "noUsers": "Хэрэглэгч олдсонгүй",
+      "error": "Алдаа гарлаа"
+    },
+    "save": "Хадгалах"
   }
 }

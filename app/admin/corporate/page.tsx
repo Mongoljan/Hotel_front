@@ -214,19 +214,13 @@ export default function ContractOrganizationsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Гэрээт байгууллага</h1>
         </div>
-        <Button onClick={handleNewOrg}>
+        <Button onClick={handleNewOrg} className="bg-primary text-primary-foreground hover:bg-primary/90">
           <IconPlus className="mr-2 h-4 w-4" />
-          + Бүртгэх
+          Нэмэх
         </Button>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleNewOrg}>
-                <IconPlus className="mr-2 h-4 w-4" />
-                + Бүртгэх
-              </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingOrg ? 'Байгууллага засах' : 'Гэрээт байгууллага'}</DialogTitle>

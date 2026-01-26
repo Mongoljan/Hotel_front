@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { IconPlus } from '@tabler/icons-react';
 import RoomPriceList from './RoomPriceList';
 
 export default function RoomPriceManagement() {
@@ -21,8 +21,8 @@ export default function RoomPriceManagement() {
           </p>
         </div>
         <Button onClick={() => setOpenAddDialog(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
-          <Plus className="mr-2 h-4 w-4" />
-          Өрөөний үнэ нэмэх
+          <IconPlus className="mr-2 h-4 w-4" />
+          Нэмэх
         </Button>
       </div>
 

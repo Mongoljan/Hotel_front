@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Calendar, Percent, DollarSign } from 'lucide-react';
+import { IconPlus, IconPencil, IconTrash, IconCalendar, IconPercentage, IconCurrencyDollar } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 import { getClientBackendToken } from '@/utils/auth';
@@ -282,7 +282,7 @@ export default function PriceSettingsPage() {
           className="bg-primary text-primary-foreground hover:bg-primary/90"
           title={availableRoomOptions.length === 0 ? 'Бүх өрөөний үнийн тохиргоо хийгдсэн байна' : 'Үнийн тохиргоо нэмэх'}
         >
-          <Plus className="mr-2 h-4 w-4" />
+          <IconPlus className="mr-2 h-4 w-4" />
           Нэмэх
         </Button>
       </div>
@@ -309,7 +309,7 @@ export default function PriceSettingsPage() {
         <CardContent className="pt-6">
           {priceSettings.length === 0 ? (
             <div className="text-center py-8">
-              <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
+              <IconCurrencyDollar className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-2 text-sm font-semibold text-foreground">Тохиргоо байхгүй</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Эхний үнийн тохиргоог нэмэх товчийг дарж эхлүүлээрэй
@@ -338,7 +338,7 @@ export default function PriceSettingsPage() {
                               size="icon"
                               onClick={() => handleEdit(setting)}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <IconPencil className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -346,7 +346,7 @@ export default function PriceSettingsPage() {
                               onClick={() => handleDeleteClick(setting.id)}
                               className="text-destructive hover:text-destructive/90"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <IconTrash className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
@@ -368,16 +368,16 @@ export default function PriceSettingsPage() {
 
                         <div className="flex items-center gap-6 text-sm">
                           <div className="flex items-center gap-2 text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
+                            <IconCalendar className="h-4 w-4" />
                             <span>
                               {formatDate(setting.start_date)} - {formatDate(setting.end_date)}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
                             {setting.value_type === 'PERCENT' ? (
-                              <Percent className="h-4 w-4 text-primary" />
+                              <IconPercentage className="h-4 w-4 text-primary" />
                             ) : (
-                              <DollarSign className="h-4 w-4 text-primary" />
+                              <IconCurrencyDollar className="h-4 w-4 text-primary" />
                             )}
                             <span className={`font-semibold ${
                               setting.adjustment_type === 'ADD' ? 'text-green-600' : 'text-red-600'

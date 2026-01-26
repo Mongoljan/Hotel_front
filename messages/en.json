@@ -264,9 +264,8 @@
         "internalRules": "Internal Rules",
         "corporatePartners": "Corporate Partners",
         "additionalServices": "Additional Services",
-        "currency": "Currency",
-        "adminRights": "Admin Rights",
-        "faq": "FAQ"
+        "currencyPayment": "Currency & Payment Methods",
+        "userSettings": "User Settings"
       },
       "hotelManagement":"Hotel management",
       "rooms":"Rooms",
@@ -373,11 +372,8 @@
 
     "corporate": "Corporate",
     "additionalServices": "Additional Services",
-    "currency": "Currency",
-    "adminRights": "Admin Rights",
-    "workers": "Workers",
-    "permissions": "Permissions",
-    "faq": "FAQ",
+    "currencyPayment": "Currency & Payment Methods",
+    "userSettings": "User Settings",
     "sidebarMobileTitle": "Sidebar navigation",
     "waitingApproval": "Waiting for approval...",
     "waitingApprovalTooltip": "Menus will appear after receiving approval. Please wait for administrator approval.",
@@ -857,5 +853,140 @@
     "hotelIdMissing": "Hotel ID is missing",
     "failedToLoadHotelInfo": "Failed to load hotel information",
     "errorLoadingHotelInfo": "Error loading hotel information"
+  },
+  "AdditionalServices": {
+    "title": "Additional Services",
+    "addServiceType": "Add Service Type",
+    "addService": "Add",
+    "search": "Search",
+    "noServices": "No services found",
+    "addNewService": "Add new service",
+    "serviceTypeModal": {
+      "title": "Service Type",
+      "editTitle": "Edit Service Type",
+      "placeholder": "e.g., Cleaning, etc."
+    },
+    "serviceModal": {
+      "serviceName": "Service Name",
+      "serviceNamePlaceholder": "e.g., Breakfast",
+      "price": "Price (₮)",
+      "category": "Category",
+      "categoryPlaceholder": "Select",
+      "isCountable": "Is Countable",
+      "quantity": "Quantity",
+      "productCode": "Product Code"
+    },
+    "actions": {
+      "save": "Save",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "messages": {
+      "typeNameRequired": "Please enter service type name",
+      "serviceNameRequired": "Please enter service name",
+      "typeCreated": "Service type created",
+      "typeUpdated": "Service type updated",
+      "typeDeleted": "Service type deleted",
+      "serviceCreated": "Service created",
+      "serviceUpdated": "Service updated",
+      "serviceDeleted": "Service deleted",
+      "error": "An error occurred"
+    }
+  },
+  "Currency": {
+    "title": "Currency & Payment Methods",
+    "currencyTab": "Currency",
+    "paymentTab": "Payment Methods",
+    "addCurrency": "Add Currency",
+    "currencyRegistration": "Currency Registration",
+    "selectCurrency": "Currency",
+    "code": "Code",
+    "symbol": "Symbol",
+    "exchangeRate": "Exchange Rate",
+    "buyRate": "Buy Rate",
+    "sellRate": "Sell Rate",
+    "save": "Save",
+    "table": {
+      "country": "Country",
+      "currency": "Currency",
+      "code": "Code",
+      "symbol": "Symbol",
+      "sell": "Sell",
+      "buy": "Buy",
+      "date": "Date",
+      "lastUpdated": "Last Updated By"
+    },
+    "history": {
+      "title": "Currency Rate History",
+      "noHistory": "No history available",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "admin": "Admin"
+    },
+    "paymentMethods": {
+      "title": "Payment Methods",
+      "description": "Select the payment methods you want to use.",
+      "bankCards": "Bank Cards",
+      "digitalPayments": "Digital Payments",
+      "international": "International",
+      "other": "Other"
+    },
+    "messages": {
+      "currencyAdded": "Currency added successfully",
+      "currencyUpdated": "Currency updated successfully",
+      "fillAllFields": "Please fill all fields",
+      "error": "An error occurred"
+    }
+  },
+  "UserSettings": {
+    "title": "User Settings",
+    "addUser": "Add",
+    "addUserModal": "Add System User",
+    "editUserModal": "Edit User",
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "search": "Search",
+    "table": {
+      "number": "#",
+      "name": "Name",
+      "position": "Position",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "Role",
+      "registeredDate": "Registered Date",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "form": {
+      "name": "Name",
+      "position": "Position",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "User Role",
+      "password": "Create Password",
+      "passwordConfirm": "Confirm Password"
+    },
+    "passwordRequirements": {
+      "hasLetter": "At least one letter",
+      "hasNumber": "At least one number",
+      "hasMinLength": "At least 6 characters"
+    },
+    "messages": {
+      "userAdded": "User added successfully",
+      "userUpdated": "User updated successfully",
+      "userDeleted": "User deleted successfully",
+      "statusChanged": "User status changed",
+      "fillAllFields": "Please fill all fields",
+      "passwordRequired": "Password is required",
+      "passwordMismatch": "Passwords do not match",
+      "passwordInvalid": "Password does not meet requirements",
+      "confirmDelete": "Are you sure you want to delete this user?",
+      "noUsers": "No users found",
+      "error": "An error occurred"
+    },
+    "save": "Save"
   }
 }
