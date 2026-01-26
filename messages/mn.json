@@ -1037,7 +1037,7 @@
     },
     "save": "Хадгалах"
   },
-  "Bookings": {
+  "GuestRegistration": {
     "title": "Зочны бүртгэл",
     "search": "Хайх",
     "filters": {
@@ -1076,7 +1076,7 @@
       "noBookings": "Захиалга олдсонгүй"
     }
   },
-  "Reception": {
+  "RoomBlocks": {
     "title": "Өрөө блок",
     "addBlock": "Нэмэх",
     "addBlockModal": "Өрөө блок",

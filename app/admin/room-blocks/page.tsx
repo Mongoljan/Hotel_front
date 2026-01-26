@@ -125,7 +125,7 @@ const mockRoomBlocks: RoomBlock[] = [
 type TabType = 'all' | 'blocked' | 'available' | 'maintenance';
 
 export default function ReceptionPage() {
-  const t = useTranslations('Reception');
+  const t = useTranslations('RoomBlocks');
 
   // State
   const [activeTab, setActiveTab] = useState<TabType>('all');

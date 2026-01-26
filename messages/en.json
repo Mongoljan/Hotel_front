@@ -1033,7 +1033,7 @@
     },
     "save": "Save"
   },
-  "Bookings": {
+  "GuestRegistration": {
     "title": "Guest Registration",
     "search": "Search",
     "filters": {
@@ -1072,7 +1072,7 @@
       "noBookings": "No bookings found"
     }
   },
-  "Reception": {
+  "RoomBlocks": {
     "title": "Room Block",
     "addBlock": "Add",
     "addBlockModal": "Room Block",

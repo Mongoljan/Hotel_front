@@ -119,13 +119,13 @@ const statusColors = {
 type TabType = 'all' | 'confirmed' | 'pending' | 'cancelled' | 'checked-in' | 'checked-out';
 
 export default function BookingsPage() {
-  const t = useTranslations('Bookings');
+  const t = useTranslations('GuestRegistration');
 
   // State
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [hotelFilter, setHotelFilter] = useState('7');
-  const [roomTypeFilter, setRoomTypeFilter] = useState('');
+  const [roomTypeFilter, setRoomTypeFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('2025-04-10');
 
   // Filter bookings based on active tab and search
@@ -134,6 +134,12 @@ export default function BookingsPage() {
 
     if (activeTab !== 'all') {
       filtered = filtered.filter(booking => booking.status === activeTab);
+    }
+
+    if (roomTypeFilter && roomTypeFilter !== 'all') {
+      filtered = filtered.filter(booking =>
+        booking.roomType.toLowerCase().includes(roomTypeFilter.toLowerCase())
+      );
     }
 
     if (searchQuery) {
@@ -145,7 +151,7 @@ export default function BookingsPage() {
     }
 
     return filtered;
-  }, [activeTab, searchQuery]);
+  }, [activeTab, roomTypeFilter, searchQuery]);
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
@@ -198,7 +204,7 @@ export default function BookingsPage() {
                 <SelectValue placeholder={t('filters.roomType')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t('filters.allRoomTypes')}</SelectItem>
+                <SelectItem value="all">{t('filters.allRoomTypes')}</SelectItem>
                 <SelectItem value="standard">Standard Double</SelectItem>
                 <SelectItem value="deluxe">Deluxe Suite</SelectItem>
               </SelectContent>

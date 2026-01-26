@@ -758,7 +758,7 @@ export default function RoomModal({
       smoking_allowed: formData.smoking_allowed === "true",
       childQty: Number(formData.childQty),
       adultQty: Number(formData.adultQty),
-      RoomNo: roomNumbersArr,
+      room_number: roomNumbersArr,
     };
     
     // Only include images if NOT in addToGroupMode
@@ -817,7 +817,6 @@ export default function RoomModal({
 
   return (
     <div
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 z-50  bg-black/60 flex items-start md:items-center justify-center p-4"
