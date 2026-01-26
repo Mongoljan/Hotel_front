@@ -944,41 +944,40 @@
   },
   "Currency": {
     "title": "Валют, төлбөрийн хэрэгсэл",
-    "currencyTab": "Валют",
-    "paymentTab": "Төлбөрийн хэрэгсэл",
+    "currency": "Валют",
+    "paymentMethods": "Төлбөрийн хэрэгсэл",
+    "add": "Нэмэх",
     "addCurrency": "Валют нэмэх",
-    "currencyRegistration": "Валют бүртгэл",
-    "selectCurrency": "Валют",
-    "code": "Код",
-    "symbol": "Тэмдэглэгээ",
-    "exchangeRate": "Валютын ханш",
-    "buyRate": "Худалдаж авах",
-    "sellRate": "Зарах",
+    "currencyHistory": "Валютын ханшны түүх",
+    "exchangeRates": "Валютын ханш",
     "save": "Хадгалах",
+    "paymentMethodsDescription": "Та ашиглах төлбөрийн хэрэгслүүдээ сонгоно уу.",
+    "form": {
+      "currency": "Валют",
+      "select": "Сонгох",
+      "code": "Код",
+      "symbol": "Тэмдэглэгээ",
+      "buyRate": "Худалдаж авах",
+      "sellRate": "Зарах"
+    },
     "table": {
       "country": "Улс",
       "currency": "Валют",
       "code": "Код",
       "symbol": "Тэмдэглэгээ",
-      "sell": "Зарах",
-      "buy": "Авах",
-      "date": "Он сар өдөр",
-      "lastUpdated": "Сүүлд засcан"
-    },
-    "history": {
-      "title": "Валютын ханшны түүх",
-      "noHistory": "Өмнөх түүх байхгүй",
+      "sellRate": "Зарах",
+      "buyRate": "Авах",
+      "lastUpdated": "Сүүлд засcан",
+      "updatedBy": "Он сар өдөр",
       "startDate": "Эхэлсэн огноо",
       "endDate": "Дууссан огноо",
       "admin": "Админ"
     },
-    "paymentMethods": {
-      "title": "Төлбөрийн хэрэгсэл",
-      "description": "Та ашиглах төлбөрийн хэрэгслүүдээ сонгоно уу.",
-      "bankCards": "Банкны карт",
-      "digitalPayments": "Төлбөрийн шийдлүүд",
-      "international": "Олон улсын",
-      "other": "Бусад"
+    "paymentCategories": {
+      "bank": "Банкны карт:",
+      "digital": "Төлбөрийн шийдлүүд:",
+      "international": "Олон улсын:",
+      "other": "Бусад:"
     },
     "messages": {
       "currencyAdded": "Валют амжилттай нэмэгдлээ",

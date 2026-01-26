@@ -311,7 +311,7 @@ export default function CurrencyPage() {
                 )}
               >
                 <IconChevronRight className={cn('h-4 w-4 transition-transform', activeTab === 'currency' && 'rotate-90')} />
-                Валют
+                {t('currency')}
               </button>
               <button
                 onClick={() => setActiveTab('payment')}
@@ -323,7 +323,7 @@ export default function CurrencyPage() {
                 )}
               >
                 <IconChevronRight className={cn('h-4 w-4 transition-transform', activeTab === 'payment' && 'rotate-90')} />
-                Төлбөрийн хэрэгсэл
+                {t('paymentMethods')}
               </button>
             </nav>
           </CardContent>
@@ -336,13 +336,13 @@ export default function CurrencyPage() {
               <>
                 {/* Currency Tab Header */}
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold">Валют</h2>
+                  <h2 className="text-lg font-semibold">{t('currency')}</h2>
                   <Button
                     onClick={() => setIsAddCurrencyModalOpen(true)}
                     className="bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <IconPlus className="mr-2 h-4 w-4" />
-                    Нэмэх
+                    {t('add')}
                   </Button>
                 </div>
 
@@ -351,14 +351,14 @@ export default function CurrencyPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50 hover:bg-muted/50">
-                        <TableHead className="font-medium">Улс</TableHead>
-                        <TableHead className="font-medium">Валют</TableHead>
-                        <TableHead className="font-medium">Код</TableHead>
-                        <TableHead className="font-medium">Тэмдэглэгээ</TableHead>
-                        <TableHead className="font-medium">Зарах</TableHead>
-                        <TableHead className="font-medium">Авах</TableHead>
-                        <TableHead className="font-medium">Он сар өдөр</TableHead>
-                        <TableHead className="font-medium">Сүүлд засcан</TableHead>
+                        <TableHead className="font-medium">{t('table.country')}</TableHead>
+                        <TableHead className="font-medium">{t('table.currency')}</TableHead>
+                        <TableHead className="font-medium">{t('table.code')}</TableHead>
+                        <TableHead className="font-medium">{t('table.symbol')}</TableHead>
+                        <TableHead className="font-medium">{t('table.sellRate')}</TableHead>
+                        <TableHead className="font-medium">{t('table.buyRate')}</TableHead>
+                        <TableHead className="font-medium">{t('table.lastUpdated')}</TableHead>
+                        <TableHead className="font-medium">{t('table.updatedBy')}</TableHead>
                         <TableHead className="font-medium w-24"></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -403,16 +403,16 @@ export default function CurrencyPage() {
               <>
                 {/* Payment Methods Tab */}
                 <div className="mb-6">
-                  <h2 className="text-lg font-semibold mb-2">Төлбөрийн хэрэгсэл</h2>
+                  <h2 className="text-lg font-semibold mb-2">{t('paymentMethods')}</h2>
                   <p className="text-sm text-muted-foreground">
-                    Та ашиглах төлбөрийн хэрэгслүүдээ сонгоно уу.
+                    {t('paymentMethodsDescription')}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-4 gap-8">
                   {/* Bank Cards */}
                   <div>
-                    <h3 className="font-medium mb-4 text-sm">Банкны карт:</h3>
+                    <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.bank')}</h3>
                     <div className="space-y-3">
                       {groupedPaymentMethods.bank.map((pm) => (
                         <label key={pm.id} className="flex items-center gap-2 cursor-pointer">
@@ -428,7 +428,7 @@ export default function CurrencyPage() {
 
                   {/* Digital Payments */}
                   <div>
-                    <h3 className="font-medium mb-4 text-sm">Төлбөрийн шийдлүүд:</h3>
+                    <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.digital')}</h3>
                     <div className="space-y-3">
                       {groupedPaymentMethods.digital.map((pm) => (
                         <label key={pm.id} className="flex items-center gap-2 cursor-pointer">
@@ -444,7 +444,7 @@ export default function CurrencyPage() {
 
                   {/* International */}
                   <div>
-                    <h3 className="font-medium mb-4 text-sm">Олон улсын:</h3>
+                    <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.international')}</h3>
                     <div className="space-y-3">
                       {groupedPaymentMethods.international.map((pm) => (
                         <label key={pm.id} className="flex items-center gap-2 cursor-pointer">
@@ -460,7 +460,7 @@ export default function CurrencyPage() {
 
                   {/* Other */}
                   <div>
-                    <h3 className="font-medium mb-4 text-sm">Бусад:</h3>
+                    <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.other')}</h3>
                     <div className="space-y-3">
                       {groupedPaymentMethods.other.map((pm) => (
                         <label key={pm.id} className="flex items-center gap-2 cursor-pointer">
@@ -484,17 +484,17 @@ export default function CurrencyPage() {
       <Dialog open={isAddCurrencyModalOpen} onOpenChange={setIsAddCurrencyModalOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Валют бүртгэл</DialogTitle>
+            <DialogTitle>{t('addCurrency')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
             {/* Currency Selection Row */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Валют</Label>
+                <Label>{t('form.currency')}</Label>
                 <Select value={selectedCurrencyCode} onValueChange={setSelectedCurrencyCode}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Сонгох" />
+                    <SelectValue placeholder={t('form.select')} />
                   </SelectTrigger>
                   <SelectContent>
                     {availableCurrencies.map((currency) => (
@@ -506,7 +506,7 @@ export default function CurrencyPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Код</Label>
+                <Label>{t('form.code')}</Label>
                 <Input
                   value={selectedCurrencyDetails?.code || ''}
                   readOnly
@@ -514,7 +514,7 @@ export default function CurrencyPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Тэмдэглэгээ</Label>
+                <Label>{t('form.symbol')}</Label>
                 <Input
                   value={selectedCurrencyDetails?.symbol || ''}
                   readOnly
@@ -525,11 +525,11 @@ export default function CurrencyPage() {
 
             {/* Exchange Rates Section */}
             <div className="space-y-4">
-              <h3 className="font-medium border-b pb-2">Валютын ханш</h3>
+              <h3 className="font-medium border-b pb-2">{t('exchangeRates')}</h3>
 
               {/* Buy Rate */}
               <div className="space-y-2">
-                <Label>Худалдаж авах</Label>
+                <Label>{t('form.buyRate')}</Label>
                 <div className="flex items-center gap-4">
                   <div className="flex-1 flex items-center gap-2">
                     <Input
@@ -555,7 +555,7 @@ export default function CurrencyPage() {
 
               {/* Sell Rate */}
               <div className="space-y-2">
-                <Label>Зарах</Label>
+                <Label>{t('form.sellRate')}</Label>
                 <div className="flex items-center gap-4">
                   <div className="flex-1 flex items-center gap-2">
                     <Input
@@ -588,7 +588,7 @@ export default function CurrencyPage() {
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isSaving && <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Хадгалах
+              {t('save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -599,7 +599,7 @@ export default function CurrencyPage() {
         <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden">
           {/* Header */}
           <div className="bg-primary px-6 py-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-primary-foreground">Валютын ханшны түүх</h2>
+            <h2 className="text-lg font-semibold text-primary-foreground">{t('currencyHistory')}</h2>
             <button
               onClick={() => setIsHistoryModalOpen(false)}
               className="text-primary-foreground hover:bg-primary/80 rounded p-1 transition-colors"
@@ -623,11 +623,11 @@ export default function CurrencyPage() {
                     <TableHeader>
                       <TableRow className="bg-muted/50 hover:bg-muted/50">
                         <TableHead className="font-medium"></TableHead>
-                        <TableHead className="font-medium">Зарах</TableHead>
-                        <TableHead className="font-medium">Авах</TableHead>
-                        <TableHead className="font-medium">Эхэлсэн огноо</TableHead>
-                        <TableHead className="font-medium">Дууссан огноо</TableHead>
-                        <TableHead className="font-medium">Админ</TableHead>
+                        <TableHead className="font-medium">{t('table.sellRate')}</TableHead>
+                        <TableHead className="font-medium">{t('table.buyRate')}</TableHead>
+                        <TableHead className="font-medium">{t('table.startDate')}</TableHead>
+                        <TableHead className="font-medium">{t('table.endDate')}</TableHead>
+                        <TableHead className="font-medium">{t('table.admin')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

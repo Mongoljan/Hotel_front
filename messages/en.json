@@ -938,6 +938,50 @@
       "error": "An error occurred"
     }
   },
+  "Currency": {
+    "title": "Currency & Payment Methods",
+    "currency": "Currency",
+    "paymentMethods": "Payment Methods",
+    "add": "Add",
+    "addCurrency": "Add Currency",
+    "currencyHistory": "Currency Exchange History",
+    "exchangeRates": "Exchange Rates",
+    "save": "Save",
+    "paymentMethodsDescription": "Please select the payment methods you want to use.",
+    "form": {
+      "currency": "Currency",
+      "select": "Select",
+      "code": "Code",
+      "symbol": "Symbol",
+      "buyRate": "Buy Rate",
+      "sellRate": "Sell Rate"
+    },
+    "table": {
+      "country": "Country",
+      "currency": "Currency",
+      "code": "Code",
+      "symbol": "Symbol",
+      "sellRate": "Sell",
+      "buyRate": "Buy",
+      "lastUpdated": "Last Updated",
+      "updatedBy": "Date",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "admin": "Admin"
+    },
+    "paymentCategories": {
+      "bank": "Bank Cards:",
+      "digital": "Payment Solutions:",
+      "international": "International:",
+      "other": "Other:"
+    },
+    "messages": {
+      "currencyAdded": "Currency added successfully",
+      "currencyUpdated": "Currency updated",
+      "fillAllFields": "Please fill all fields",
+      "error": "An error occurred"
+    }
+  },
   "UserSettings": {
     "title": "User Settings",
     "addUser": "Add",

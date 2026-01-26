@@ -98,6 +98,8 @@ const userRoles = [
 ];
 
 export default function UsersPage() {
+  const t = useTranslations('UserSettings');
+  
   // State
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [searchQuery, setSearchQuery] = useState('');
@@ -287,13 +289,13 @@ export default function UsersPage() {
     <div className="flex flex-col gap-6 p-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Хэрэглэгчийн тохиргоо</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
         <Button
           onClick={() => openModal()}
           className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <IconPlus className="mr-2 h-4 w-4" />
-          Нэмэх
+          {t('addUser')}
         </Button>
       </div>
 
@@ -310,7 +312,7 @@ export default function UsersPage() {
                 : 'text-muted-foreground border-transparent hover:text-foreground'
             )}
           >
-            Бүгд
+            {t('filters.all')}
           </button>
           <button
             onClick={() => setFilterType('active')}
@@ -321,7 +323,7 @@ export default function UsersPage() {
                 : 'text-muted-foreground border-transparent hover:text-foreground'
             )}
           >
-            Идэвхтэй
+            {t('filters.active')}
           </button>
           <button
             onClick={() => setFilterType('inactive')}
@@ -332,14 +334,14 @@ export default function UsersPage() {
                 : 'text-muted-foreground border-transparent hover:text-foreground'
             )}
           >
-            Идэвхгүй
+            {t('filters.inactive')}
           </button>
         </div>
 
         {/* Search */}
         <div className="relative">
           <Input
-            placeholder="Хайх"
+            placeholder={t('search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-64 pr-10"
@@ -355,15 +357,15 @@ export default function UsersPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead className="font-medium w-12">№</TableHead>
-                  <TableHead className="font-medium">Нэр</TableHead>
-                  <TableHead className="font-medium">Албан тушаал</TableHead>
-                  <TableHead className="font-medium">И-мэйл хаяг</TableHead>
-                  <TableHead className="font-medium">Утасны дугаар</TableHead>
-                  <TableHead className="font-medium">Хэрэглэгчийн эрх</TableHead>
-                  <TableHead className="font-medium">Бүртгэсэн огноо</TableHead>
-                  <TableHead className="font-medium">Төлөв</TableHead>
-                  <TableHead className="font-medium w-24">Засах</TableHead>
+                  <TableHead className="font-medium w-12">{t('table.number')}</TableHead>
+                  <TableHead className="font-medium">{t('table.name')}</TableHead>
+                  <TableHead className="font-medium">{t('table.position')}</TableHead>
+                  <TableHead className="font-medium">{t('table.email')}</TableHead>
+                  <TableHead className="font-medium">{t('table.phone')}</TableHead>
+                  <TableHead className="font-medium">{t('table.role')}</TableHead>
+                  <TableHead className="font-medium">{t('table.registeredDate')}</TableHead>
+                  <TableHead className="font-medium">{t('table.status')}</TableHead>
+                  <TableHead className="font-medium w-24">{t('table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -408,7 +410,7 @@ export default function UsersPage() {
                 {filteredUsers.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                      Хэрэглэгч олдсонгүй
+                      {t('messages.noUsers')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -423,7 +425,7 @@ export default function UsersPage() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              {editingUser ? 'Хэрэглэгч засах' : 'Системийн хэрэглэгч нэмэх'}
+              {editingUser ? t('editUserModal') : t('addUserModal')}
             </DialogTitle>
           </DialogHeader>
 
@@ -432,14 +434,14 @@ export default function UsersPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Input
-                  placeholder="Нэр *"
+                  placeholder={`${t('form.name')} *`}
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Input
-                  placeholder="Албан тушаал *"
+                  placeholder={`${t('form.position')} *`}
                   value={formPosition}
                   onChange={(e) => setFormPosition(e.target.value)}
                 />
@@ -451,14 +453,14 @@ export default function UsersPage() {
               <div className="space-y-2">
                 <Input
                   type="email"
-                  placeholder="И-мэйл хаяг *"
+                  placeholder={`${t('form.email')} *`}
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Input
-                  placeholder="Утасны дугаар*"
+                  placeholder={`${t('form.phone')} *`}
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
                 />
@@ -470,7 +472,7 @@ export default function UsersPage() {
               <div className="space-y-2">
                 <Select value={formRole} onValueChange={setFormRole}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Хэрэглэгчийн эрх" />
+                    <SelectValue placeholder={t('form.role')} />
                   </SelectTrigger>
                   <SelectContent>
                     {userRoles.map((role) => (
@@ -491,7 +493,7 @@ export default function UsersPage() {
                   <div className="space-y-2">
                     <Input
                       type="password"
-                      placeholder="Нууц үг үүсгэх"
+                      placeholder={t('form.password')}
                       value={formPassword}
                       onChange={(e) => handlePasswordChange(e.target.value)}
                     />
@@ -499,7 +501,7 @@ export default function UsersPage() {
                   <div className="space-y-2">
                     <Input
                       type="password"
-                      placeholder="Нууц үг давтах"
+                      placeholder={t('form.passwordConfirm')}
                       value={formPasswordConfirm}
                       onChange={(e) => setFormPasswordConfirm(e.target.value)}
                     />
@@ -515,7 +517,7 @@ export default function UsersPage() {
                     )}>
                       {passwordValidation.hasLetter && <IconCheck className="h-3 w-3 text-white" />}
                     </div>
-                    <span className="text-muted-foreground">Дор хаяж нэг үсэг орсон байх</span>
+                    <span className="text-muted-foreground">{t('passwordRequirements.hasLetter')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className={cn(
@@ -524,7 +526,7 @@ export default function UsersPage() {
                     )}>
                       {passwordValidation.hasNumber && <IconCheck className="h-3 w-3 text-white" />}
                     </div>
-                    <span className="text-muted-foreground">Дор хаяж нэг тоо орсон байх</span>
+                    <span className="text-muted-foreground">{t('passwordRequirements.hasNumber')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className={cn(
@@ -533,7 +535,7 @@ export default function UsersPage() {
                     )}>
                       {passwordValidation.hasMinLength && <IconCheck className="h-3 w-3 text-white" />}
                     </div>
-                    <span className="text-muted-foreground">6 болон түүнээс дээш тэмдэгттэй байх</span>
+                    <span className="text-muted-foreground">{t('passwordRequirements.hasMinLength')}</span>
                   </div>
                 </div>
               </>
@@ -547,7 +549,7 @@ export default function UsersPage() {
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isSaving && <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Хадгалах
+              {t('save')}
             </Button>
           </DialogFooter>
         </DialogContent>
