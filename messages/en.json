@@ -1032,5 +1032,80 @@
       "error": "An error occurred"
     },
     "save": "Save"
+  },
+  "Bookings": {
+    "title": "Guest Registration",
+    "search": "Search",
+    "filters": {
+      "hotel": "Hotel",
+      "hotel7": "7 days view",
+      "roomType": "Room Type",
+      "allRoomTypes": "All Room Types"
+    },
+    "tabs": {
+      "all": "All Bookings",
+      "confirmed": "Confirmed", 
+      "pending": "Pending",
+      "cancelled": "Cancelled",
+      "checkedIn": "Checked In",
+      "checkedOut": "Checked Out"
+    },
+    "table": {
+      "bookingId": "Booking ID",
+      "guestName": "Guest Name",
+      "room": "Room",
+      "bookingDate": "Booking Date",
+      "checkInOut": "Check-in / Check-out",
+      "amount": "Total Amount",
+      "source": "Source",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "statuses": {
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "cancelled": "Cancelled", 
+      "checkedIn": "Checked In",
+      "checkedOut": "Checked Out"
+    },
+    "messages": {
+      "noBookings": "No bookings found"
+    }
+  },
+  "Reception": {
+    "title": "Room Block",
+    "addBlock": "Add",
+    "addBlockModal": "Room Block",
+    "search": "Search",
+    "save": "Save",
+    "tabs": {
+      "all": "All",
+      "blocked": "Blocked",
+      "maintenance": "Maintenance",
+      "available": "Available"
+    },
+    "table": {
+      "roomNumber": "Room Number",
+      "roomType": "Room Type", 
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "reason": "Reason",
+      "lastUpdate": "Last Update",
+      "updatedBy": "Updated By",
+      "actions": "Actions"
+    },
+    "form": {
+      "roomType": "Room Type",
+      "selectRoomType": "Select Room Type",
+      "roomNumber": "Room Number",
+      "selectRoom": "Select Room",
+      "startDate": "Start Date",
+      "endDate": "End Date", 
+      "reason": "Description",
+      "reasonPlaceholder": "Enter description"
+    },
+    "messages": {
+      "noBlocks": "No room blocks found"
+    }
   }
 }

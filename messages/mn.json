@@ -1031,10 +1031,85 @@
       "passwordRequired": "Нууц үг оруулна уу",
       "passwordMismatch": "Нууц үг таарахгүй байна",
       "passwordInvalid": "Нууц үг шаардлага хангахгүй байна",
-      "confirmDelete": "Энэ хэрэглэгчийг устгахдаа итгэлтэй байна у|?",
+      "confirmDelete": "Энэ хэрэглэгчийг устгахдаа итгэлтэй байна у?",
       "noUsers": "Хэрэглэгч олдсонгүй",
       "error": "Алдаа гарлаа"
     },
     "save": "Хадгалах"
+  },
+  "Bookings": {
+    "title": "Зочны бүртгэл",
+    "search": "Хайх",
+    "filters": {
+      "hotel": "Зочид буудал",
+      "hotel7": "7 хоногоор харах",
+      "roomType": "Өрөөний төрөл",
+      "allRoomTypes": "Бүгд"
+    },
+    "tabs": {
+      "all": "Бүх захиалга",
+      "confirmed": "Баталгаажсан",
+      "pending": "Хүлээгдэж байгаа",
+      "cancelled": "Цуцлагдсан",
+      "checkedIn": "Зочин ирсэн",
+      "checkedOut": "Зочин ирсэн"
+    },
+    "table": {
+      "bookingId": "Захиалгын №",
+      "guestName": "Зочны нэр",
+      "room": "Өрөө",
+      "bookingDate": "Захиалгын огноо",
+      "checkInOut": "Check-in / Check-out",
+      "amount": "Нийт төлбөр",
+      "source": "Захиалгын сувраг",
+      "status": "Захиалгын төлөв",
+      "actions": "Үйлдэл"
+    },
+    "statuses": {
+      "confirmed": "Захиалга баталгаажсан",
+      "pending": "Хүлээлдэж буй",
+      "cancelled": "Цуцлагдсан",
+      "checkedIn": "Зочин ирсэн",
+      "checkedOut": "Check-out"
+    },
+    "messages": {
+      "noBookings": "Захиалга олдсонгүй"
+    }
+  },
+  "Reception": {
+    "title": "Өрөө блок",
+    "addBlock": "Нэмэх",
+    "addBlockModal": "Өрөө блок",
+    "search": "Хайх",
+    "save": "Хадгалах",
+    "tabs": {
+      "all": "Бүгд",
+      "blocked": "Идэвхтэй дуусган",
+      "maintenance": "Хүлээгдэж байгаа",
+      "available": "Бүгд"
+    },
+    "table": {
+      "roomNumber": "Өрөөний №",
+      "roomType": "Өрөөний төрөл",
+      "startDate": "Эхлэх огноо",
+      "endDate": "Дуусах огноо",
+      "reason": "Тэмдэглэл",
+      "lastUpdate": "Үүсгэсэн огноо",
+      "updatedBy": "Хариуцах хүн",
+      "actions": "Үйлдэл"
+    },
+    "form": {
+      "roomType": "Өрөөний төрөл",
+      "selectRoomType": "Сонгох",
+      "roomNumber": "Өрөөний №",
+      "selectRoom": "Сонгох",
+      "startDate": "Эхлэх огноо",
+      "endDate": "Дуусах огноо",
+      "reason": "Тэмдэглэл",
+      "reasonPlaceholder": "Тэмдэглэл бичих"
+    },
+    "messages": {
+      "noBlocks": "Өрөө блок олдсонгүй"
+    }
   }
 }
