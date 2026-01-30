@@ -9,11 +9,28 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn'
  */
 export async function GET(request: NextRequest) {
   try {
-    const payload = await getAuthToken();
-
-    if (!payload || !payload.backendToken) {
+    let payload;
+    try {
+      payload = await getAuthToken();
+    } catch (authError) {
+      console.error('GET /api/services: Error getting auth token:', authError);
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { error: 'Authentication error', details: authError instanceof Error ? authError.message : 'Unknown auth error' },
+        { status: 401 }
+      );
+    }
+
+    if (!payload) {
+      return NextResponse.json(
+        { error: 'Authentication required - no token' },
+        { status: 401 }
+      );
+    }
+
+    if (!payload.backendToken) {
+      console.error('GET /api/services: No backendToken in payload');
+      return NextResponse.json(
+        { error: 'Authentication required - no backend token' },
         { status: 401 }
       );
     }
@@ -32,8 +49,15 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Backend error:', errorText);
-      throw new Error(`Backend returned ${response.status}`);
+      console.error('Backend error for services:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText.substring(0, 500)
+      });
+      return NextResponse.json(
+        { error: `Backend returned ${response.status}: ${response.statusText}` },
+        { status: response.status }
+      );
     }
 
     const data = await response.json();

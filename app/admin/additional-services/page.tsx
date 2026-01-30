@@ -109,11 +109,22 @@ export default function AdditionalServicesPage() {
       if (!typesRes.ok) {
         const errorData = await typesRes.json().catch(() => ({}));
         console.error('Service types error:', typesRes.status, errorData);
+        // If 401, show auth error, otherwise show generic error
+        if (typesRes.status === 401) {
+          toast.error('Дахин нэвтэрнэ үү');
+        } else {
+          toast.error(`Үйлчилгээний төрөл татахад алдаа: ${errorData.error || typesRes.status}`);
+        }
         throw new Error(errorData.error || 'Failed to fetch service types');
       }
       if (!servicesRes.ok) {
         const errorData = await servicesRes.json().catch(() => ({}));
         console.error('Services error:', servicesRes.status, errorData);
+        if (servicesRes.status === 401) {
+          toast.error('Дахин нэвтэрнэ үү');
+        } else {
+          toast.error(`Үйлчилгээ татахад алдаа: ${errorData.error || servicesRes.status}`);
+        }
         throw new Error(errorData.error || 'Failed to fetch services');
       }
 

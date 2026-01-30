@@ -48,6 +48,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         isApproved={user?.hotelApproved || false}
         userApproved={user?.approved || false}
         hotelRegistrationCompleted={hotelRegistrationCompleted}
+        userType={user?.user_type || 0}
       />
       <main className="flex-1 flex flex-col w-full">
         <BreadcrumbHeader />

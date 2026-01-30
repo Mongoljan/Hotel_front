@@ -13,6 +13,7 @@ import { NavMain } from '@/components/nav-main';
 import { OrgSwitcher } from '@/components/org-switcher';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { navItems } from '@/constants/data';
+import { USER_TYPES } from '@/lib/userTypes';
 import { useTranslations } from 'next-intl';
 import { AlertCircle } from 'lucide-react';
 import {
@@ -26,6 +27,7 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   isApproved: boolean;
   userApproved: boolean;
   hotelRegistrationCompleted: boolean;
+  userType: number;
 }
 
 function SidebarStatusMessage({ isApproved, userApproved, hotelRegistrationCompleted }: { isApproved: boolean; userApproved: boolean; hotelRegistrationCompleted: boolean }) {
@@ -82,17 +84,14 @@ function SidebarStatusMessage({ isApproved, userApproved, hotelRegistrationCompl
   );
 }
 
-export function AppSidebar({ isApproved, userApproved, hotelRegistrationCompleted, ...props }: AppSidebarProps) {
+export function AppSidebar({ isApproved, userApproved, hotelRegistrationCompleted, userType, ...props }: AppSidebarProps) {
   const tNav = useTranslations('Navigation');
   const mobileSidebarTitle = tNav('sidebarMobileTitle');
 
-  // Filter navigation items based on approval status and hotel registration completion
+  // Filter navigation items based on approval status, hotel registration completion, and user role
   const filteredNavItems = React.useMemo(() => {
-
-    if (isApproved && userApproved && hotelRegistrationCompleted) {
-      return navItems;
-    } else {
-      // Only show hotel information until 6-step registration is completed
+    // If not approved or registration not completed, show only hotel info
+    if (!isApproved || !userApproved || !hotelRegistrationCompleted) {
       return [
         {
           title: 'Тохиргоо',
@@ -111,7 +110,28 @@ export function AppSidebar({ isApproved, userApproved, hotelRegistrationComplete
         },
       ];
     }
-  }, [isApproved, userApproved, hotelRegistrationCompleted]);
+
+    // Reception (4): Cannot see Settings submenu at all
+    if (userType === USER_TYPES.RECEPTION) {
+      return navItems.filter(item => item.i18nKey !== 'settings');
+    }
+
+    // Manager (3): Same as Owner but cannot see Users menu item
+    if (userType === USER_TYPES.MANAGER) {
+      return navItems.map(item => {
+        if (item.i18nKey === 'settings' && item.items) {
+          return {
+            ...item,
+            items: item.items.filter(subItem => subItem.url !== '/admin/users'),
+          };
+        }
+        return item;
+      });
+    }
+
+    // Owner (2) and others: Full access
+    return navItems;
+  }, [isApproved, userApproved, hotelRegistrationCompleted, userType]);
 
   return (
     <Sidebar collapsible="icon" mobileTitle={mobileSidebarTitle} {...props}>

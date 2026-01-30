@@ -38,9 +38,34 @@ export function middleware(req: NextRequest) {
 
   // ===== ADMIN ROUTES =====
   // Role-based route protection
+  
+  // Only Owner (2) can access /admin/users (user management)
+  if (pathname.startsWith('/admin/users') && isValidToken) {
+    if (userType !== 2) {
+      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+    }
+  }
+
   // Only Owner (2) can create employees in the admin panel
   if (pathname.startsWith('/admin/employees') && isValidToken) {
     if (userType !== 2) {
+      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+    }
+  }
+
+  // Reception (4) cannot access settings pages
+  if (userType === 4 && isValidToken) {
+    const settingsPages = [
+      '/admin/hotel',
+      '/admin/room',
+      '/admin/internal-rules',
+      '/admin/corporate',
+      '/admin/additional-services',
+      '/admin/currency',
+      '/admin/users',
+    ];
+    
+    if (settingsPages.some(page => pathname.startsWith(page))) {
       return NextResponse.redirect(new URL('/admin/dashboard', req.url))
     }
   }

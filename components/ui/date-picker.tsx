@@ -21,6 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+// Detect Safari browser
+const isSafari = typeof window !== 'undefined' && 
+  /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+
 interface DatePickerProps {
   date?: Date
   onSelect?: (date: Date | undefined) => void
@@ -83,9 +87,10 @@ export function DatePicker({
   const formatters = locale === 'mn' ? formattersMn : formattersEn
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           disabled={disabled}
           className={cn(
@@ -98,7 +103,7 @@ export function DatePicker({
           {date ? format(date, displayFormat) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0" align="start" sideOffset={4} style={{ zIndex: 9999 }}>
         <div className="p-3 space-y-2 border-b">
           <div className="flex gap-2">
             <Select
@@ -108,7 +113,7 @@ export function DatePicker({
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
+              <SelectContent className="max-h-[300px]" position="popper">
                 {years.map((year) => (
                   <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                 ))}
@@ -121,7 +126,7 @@ export function DatePicker({
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 {months.map((month, index) => (
                   <SelectItem key={index} value={index.toString()}>{month}</SelectItem>
                 ))}
@@ -142,7 +147,6 @@ export function DatePicker({
             setSelectedMonth(date.getMonth())
           }}
           formatters={formatters}
-          initialFocus
         />
       </PopoverContent>
     </Popover>
@@ -202,9 +206,10 @@ export function DatePickerWithValue({
   const formatters = locale === 'mn' ? formattersMn : formattersEn
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           disabled={disabled}
           className={cn(
@@ -217,7 +222,7 @@ export function DatePickerWithValue({
           {dateValue ? format(dateValue, displayFormat) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0" align="start" sideOffset={4} style={{ zIndex: 9999 }}>
         <div className="p-3 space-y-2 border-b">
           <div className="flex gap-2">
             <Select
@@ -227,7 +232,7 @@ export function DatePickerWithValue({
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
+              <SelectContent className="max-h-[300px]" position="popper">
                 {years.map((year) => (
                   <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                 ))}
@@ -240,7 +245,7 @@ export function DatePickerWithValue({
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 {months.map((month, index) => (
                   <SelectItem key={index} value={index.toString()}>{month}</SelectItem>
                 ))}
@@ -265,7 +270,6 @@ export function DatePickerWithValue({
             setSelectedMonth(date.getMonth())
           }}
           formatters={formatters}
-          initialFocus
         />
       </PopoverContent>
     </Popover>
