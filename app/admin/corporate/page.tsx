@@ -87,6 +87,16 @@ interface PartnerOrganization {
   created_at?: string;
 }
 
+// Helper function to get display label for org_type
+const getOrgTypeLabel = (orgType: string): string => {
+  const labels: Record<string, string> = {
+    company: 'Гэрээт',
+    partner: 'Харилцагч',
+    hotel: 'Зочид буудал',
+  };
+  return labels[orgType] || orgType;
+};
+
 export default function ContractOrganizationsPage() {
   const [organizations, setOrganizations] = useState<PartnerOrganization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -322,7 +332,7 @@ export default function ContractOrganizationsPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto" preventOutsideClose hideCloseButton>
               <DialogHeader>
                 <DialogTitle>{editingOrg ? 'Байгууллага засах' : 'Гэрээт байгууллага'}</DialogTitle>
                 <DialogDescription>
@@ -371,9 +381,9 @@ export default function ContractOrganizationsPage() {
                             <SelectValue placeholder="Төрөл сонгох" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Гэрээт">Гэрээт</SelectItem>
-                            <SelectItem value="Харилцагч">Харилцагч</SelectItem>
-                            <SelectItem value="Зочид буудал">Зочид буудал</SelectItem>
+                            <SelectItem value="company">Гэрээт</SelectItem>
+                            <SelectItem value="partner">Харилцагч</SelectItem>
+                            <SelectItem value="hotel">Зочид буудал</SelectItem>
                           </SelectContent>
                         </Select>
                         {form.formState.errors.organization_type && (
@@ -681,7 +691,7 @@ export default function ContractOrganizationsPage() {
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>{org.name}</TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="outline">{org.org_type}</Badge>
+                        <Badge variant="outline">{getOrgTypeLabel(org.org_type)}</Badge>
                       </TableCell>
                       <TableCell className="text-center">{org.register_no}</TableCell>
                       <TableCell className="text-center">{org.discount_percent}%</TableCell>
@@ -723,7 +733,7 @@ export default function ContractOrganizationsPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px]" preventOutsideClose hideCloseButton>
           <DialogHeader>
             <DialogTitle>Байгууллага устгах</DialogTitle>
             <DialogDescription>

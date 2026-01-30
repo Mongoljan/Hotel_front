@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,9 +50,31 @@ export function EditLocationDialog({
   onSave,
   isSaving,
 }: EditLocationDialogProps) {
+  // Track draft state separately
+  const [draftLocation, setDraftLocation] = useState<EditLocationData>(editLocation);
+  const lastSavedRef = useRef<EditLocationData>(editLocation);
+
+  // Sync draft with original values when they change from parent (after save)
+  useEffect(() => {
+    const hasChanged = 
+      editLocation.province_city !== lastSavedRef.current.province_city ||
+      editLocation.soum !== lastSavedRef.current.soum ||
+      editLocation.total_floor_number !== lastSavedRef.current.total_floor_number;
+    
+    if (hasChanged) {
+      setDraftLocation(editLocation);
+      lastSavedRef.current = editLocation;
+    }
+  }, [editLocation]);
+
+  // Sync draft to parent when changed
+  useEffect(() => {
+    onEditLocationChange(draftLocation);
+  }, [draftLocation, onEditLocationChange]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" preventOutsideClose hideCloseButton>
         <DialogHeader>
           <DialogTitle>Байршил засах</DialogTitle>
           <DialogDescription>
@@ -62,9 +85,9 @@ export function EditLocationDialog({
           <div className="space-y-2">
             <Label htmlFor="province">Хот/Аймаг</Label>
             <Select
-              value={editLocation.province_city}
+              value={draftLocation.province_city}
               onValueChange={(value) => {
-                onEditLocationChange({ ...editLocation, province_city: value, soum: '' });
+                setDraftLocation({ ...draftLocation, province_city: value, soum: '' });
                 onProvinceChange(value);
               }}
             >
@@ -83,9 +106,9 @@ export function EditLocationDialog({
           <div className="space-y-2">
             <Label htmlFor="soum">Дүүрэг/Сум</Label>
             <Select
-              value={editLocation.soum}
-              onValueChange={(value) => onEditLocationChange({ ...editLocation, soum: value })}
-              disabled={!editLocation.province_city || filteredSoums.length === 0}
+              value={draftLocation.soum}
+              onValueChange={(value) => setDraftLocation({ ...draftLocation, soum: value })}
+              disabled={!draftLocation.province_city || filteredSoums.length === 0}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Дүүрэг/Сум сонгох" />
@@ -104,8 +127,8 @@ export function EditLocationDialog({
             <Input
               id="floors"
               type="number"
-              value={editLocation.total_floor_number}
-              onChange={(e) => onEditLocationChange({ ...editLocation, total_floor_number: e.target.value })}
+              value={draftLocation.total_floor_number}
+              onChange={(e) => setDraftLocation({ ...draftLocation, total_floor_number: e.target.value })}
               placeholder="10"
             />
           </div>

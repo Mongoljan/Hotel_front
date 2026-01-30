@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,9 +30,26 @@ export function EditMapDialog({
   onSave,
   isSaving,
 }: EditMapDialogProps) {
+  // Track draft state separately
+  const [draftGoogleMap, setDraftGoogleMap] = useState(googleMap);
+  const lastSavedRef = useRef(googleMap);
+
+  // Sync draft with original value when it changes from parent (after save)
+  useEffect(() => {
+    if (googleMap !== lastSavedRef.current) {
+      setDraftGoogleMap(googleMap);
+      lastSavedRef.current = googleMap;
+    }
+  }, [googleMap]);
+
+  // Sync draft to parent when changed
+  useEffect(() => {
+    onGoogleMapChange(draftGoogleMap);
+  }, [draftGoogleMap, onGoogleMapChange]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" preventOutsideClose hideCloseButton>
         <DialogHeader>
           <DialogTitle>Google Map засах</DialogTitle>
           <DialogDescription>
@@ -44,18 +62,18 @@ export function EditMapDialog({
             <Input
               id="googleMap"
               type="url"
-              value={googleMap}
-              onChange={(e) => onGoogleMapChange(e.target.value)}
+              value={draftGoogleMap}
+              onChange={(e) => setDraftGoogleMap(e.target.value)}
               placeholder="https://www.google.com/maps/embed?pb=..."
             />
             <p className="text-xs text-muted-foreground">
               Google Maps дээр Share → Embed a map → Copy HTML код дотрх src холбоосыг хуулна уу
             </p>
           </div>
-          {googleMap && (
+          {draftGoogleMap && (
             <div className="aspect-video rounded-md overflow-hidden border">
               <iframe
-                src={googleMap}
+                src={draftGoogleMap}
                 className="w-full h-full"
                 allowFullScreen
                 loading="lazy"

@@ -494,7 +494,7 @@ export default function UsersPage() {
 
       {/* Add/Edit User Modal */}
       <Dialog open={isAddUserModalOpen} onOpenChange={setIsAddUserModalOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px]" preventOutsideClose hideCloseButton>
           <DialogHeader>
             <DialogTitle>
               {editingUser ? t('editUserModal') : t('addUserModal')}
@@ -629,7 +629,7 @@ export default function UsersPage() {
 
       {/* Delete Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[400px]" preventOutsideClose hideCloseButton>
           <DialogHeader>
             <DialogTitle>Хэрэглэгч устгах</DialogTitle>
           </DialogHeader>

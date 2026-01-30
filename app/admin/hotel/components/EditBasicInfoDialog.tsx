@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,6 +42,22 @@ interface EditBasicInfoDialogProps {
   isSaving: boolean;
 }
 
+// Helper to compare basic info objects
+const basicInfoEqual = (a: EditBasicInfoData, b: EditBasicInfoData): boolean => {
+  return (
+    a.property_name_mn === b.property_name_mn &&
+    a.property_name_en === b.property_name_en &&
+    a.start_date === b.start_date &&
+    a.star_rating === b.star_rating &&
+    a.part_of_group === b.part_of_group &&
+    a.group_name === b.group_name &&
+    a.total_hotel_rooms === b.total_hotel_rooms &&
+    a.available_rooms === b.available_rooms &&
+    a.sales_room_limitation === b.sales_room_limitation &&
+    JSON.stringify(a.languages) === JSON.stringify(b.languages)
+  );
+};
+
 export function EditBasicInfoDialog({
   open,
   onOpenChange,
@@ -51,35 +67,51 @@ export function EditBasicInfoDialog({
   onSave,
   isSaving,
 }: EditBasicInfoDialogProps) {
+  // Track draft state separately
+  const [draftBasicInfo, setDraftBasicInfo] = useState<EditBasicInfoData>(editBasicInfo);
+  const lastSavedRef = useRef<EditBasicInfoData>(editBasicInfo);
+
+  // Sync draft with original values when they change from parent (after save)
+  useEffect(() => {
+    if (!basicInfoEqual(editBasicInfo, lastSavedRef.current)) {
+      setDraftBasicInfo(editBasicInfo);
+      lastSavedRef.current = editBasicInfo;
+    }
+  }, [editBasicInfo]);
+
+  // Sync draft to parent when changed
+  useEffect(() => {
+    onEditBasicInfoChange(draftBasicInfo);
+  }, [draftBasicInfo, onEditBasicInfoChange]);
   // Real-time validation errors
   const validationErrors = useMemo(() => {
     const errors: Record<string, string> = {};
     
     // Validate property name (Mongolian)
-    if (editBasicInfo.property_name_mn && !/^[А-Яа-яӨөҮүЁё0-9\s.,'-]+$/.test(editBasicInfo.property_name_mn)) {
+    if (draftBasicInfo.property_name_mn && !/^[А-Яа-яӨөҮүЁё0-9\s.,'-]+$/.test(draftBasicInfo.property_name_mn)) {
       errors.property_name_mn = 'Зөвхөн кирилл үсэг ашиглана уу';
     }
     
     // Validate property name (English)
-    if (editBasicInfo.property_name_en && !/^[A-Za-z0-9\s.,'-]+$/.test(editBasicInfo.property_name_en)) {
+    if (draftBasicInfo.property_name_en && !/^[A-Za-z0-9\s.,'-]+$/.test(draftBasicInfo.property_name_en)) {
       errors.property_name_en = 'Зөвхөн латин үсэг ашиглана уу';
     }
     
     // Validate star rating
-    const rating = parseInt(editBasicInfo.star_rating);
-    if (editBasicInfo.star_rating && (isNaN(rating) || rating < 1 || rating > 5)) {
+    const rating = parseInt(draftBasicInfo.star_rating);
+    if (draftBasicInfo.star_rating && (isNaN(rating) || rating < 1 || rating > 5)) {
       errors.star_rating = 'Зэрэглэл 1-5 хооронд байх ёстой';
     }
     
     // Validate total rooms
-    const totalRooms = parseInt(editBasicInfo.total_hotel_rooms);
-    if (editBasicInfo.total_hotel_rooms && (isNaN(totalRooms) || totalRooms < 1)) {
+    const totalRooms = parseInt(draftBasicInfo.total_hotel_rooms);
+    if (draftBasicInfo.total_hotel_rooms && (isNaN(totalRooms) || totalRooms < 1)) {
       errors.total_hotel_rooms = 'Нийт өрөөний тоо хамгийн багадаа 1 байх ёстой';
     }
     
     // Validate available rooms
-    const availableRooms = parseInt(editBasicInfo.available_rooms);
-    if (editBasicInfo.available_rooms && (isNaN(availableRooms) || availableRooms < 1)) {
+    const availableRooms = parseInt(draftBasicInfo.available_rooms);
+    if (draftBasicInfo.available_rooms && (isNaN(availableRooms) || availableRooms < 1)) {
       errors.available_rooms = 'Боломжит өрөөний тоог оруулна уу';
     }
     
@@ -89,16 +121,16 @@ export function EditBasicInfoDialog({
     }
     
     // Validate group name when part_of_group is true
-    if (editBasicInfo.part_of_group && (!editBasicInfo.group_name || editBasicInfo.group_name.trim() === '')) {
+    if (draftBasicInfo.part_of_group && (!draftBasicInfo.group_name || draftBasicInfo.group_name.trim() === '')) {
       errors.group_name = 'Бүлгийн нэрийг заавал оруулна уу';
     }
     
     return errors;
-  }, [editBasicInfo]);
+  }, [draftBasicInfo]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" preventOutsideClose hideCloseButton>
         <DialogHeader>
           <DialogTitle>Үндсэн мэдээлэл засах</DialogTitle>
           <DialogDescription>
@@ -111,8 +143,8 @@ export function EditBasicInfoDialog({
               <Label htmlFor="nameMn">Буудлын нэр (монголоор)</Label>
               <Input
                 id="nameMn"
-                value={editBasicInfo.property_name_mn}
-                onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, property_name_mn: e.target.value })}
+                value={draftBasicInfo.property_name_mn}
+                onChange={(e) => setDraftBasicInfo({ ...draftBasicInfo, property_name_mn: e.target.value })}
                 placeholder="Буудлын нэрийг оруулах"
                 className={validationErrors.property_name_mn ? 'border-destructive' : ''}
               />
@@ -124,8 +156,8 @@ export function EditBasicInfoDialog({
               <Label htmlFor="nameEn">Буудлын нэр (англиар)</Label>
               <Input
                 id="nameEn"
-                value={editBasicInfo.property_name_en}
-                onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, property_name_en: e.target.value })}
+                value={draftBasicInfo.property_name_en}
+                onChange={(e) => setDraftBasicInfo({ ...draftBasicInfo, property_name_en: e.target.value })}
                 placeholder="Enter hotel name"
                 className={validationErrors.property_name_en ? 'border-destructive' : ''}
               />
@@ -138,8 +170,8 @@ export function EditBasicInfoDialog({
             <div className="space-y-2">
               <Label htmlFor="startDate">Үйл ажиллагаа эхэлсэн огноо</Label>
               <DatePickerWithValue
-                value={editBasicInfo.start_date}
-                onChange={(value) => onEditBasicInfoChange({ ...editBasicInfo, start_date: value })}
+                value={draftBasicInfo.start_date}
+                onChange={(value) => setDraftBasicInfo({ ...draftBasicInfo, start_date: value })}
                 placeholder="Огноо сонгох"
               />
             </div>
@@ -150,8 +182,8 @@ export function EditBasicInfoDialog({
                 type="number"
                 min="1"
                 max="5"
-                value={editBasicInfo.star_rating}
-                onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, star_rating: e.target.value })}
+                value={draftBasicInfo.star_rating}
+                onChange={(e) => setDraftBasicInfo({ ...draftBasicInfo, star_rating: e.target.value })}
                 placeholder="5"
                 className={validationErrors.star_rating ? 'border-destructive' : ''}
               />
@@ -165,9 +197,9 @@ export function EditBasicInfoDialog({
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => onEditBasicInfoChange({ ...editBasicInfo, part_of_group: true })}
+                onClick={() => setDraftBasicInfo({ ...draftBasicInfo, part_of_group: true })}
                 className={`px-8 py-2 rounded-md text-sm font-medium transition-all border ${
-                  editBasicInfo.part_of_group === true
+                  draftBasicInfo.part_of_group === true
                     ? 'border-primary bg-primary text-primary-foreground shadow-sm'
                     : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
                 }`}
@@ -176,9 +208,9 @@ export function EditBasicInfoDialog({
               </button>
               <button
                 type="button"
-                onClick={() => onEditBasicInfoChange({ ...editBasicInfo, part_of_group: false, group_name: '' })}
+                onClick={() => setDraftBasicInfo({ ...draftBasicInfo, part_of_group: false, group_name: '' })}
                 className={`px-8 py-2 rounded-md text-sm font-medium transition-all border ${
-                  editBasicInfo.part_of_group === false
+                  draftBasicInfo.part_of_group === false
                     ? 'border-primary bg-primary text-primary-foreground shadow-sm'
                     : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
                 }`}
@@ -186,13 +218,13 @@ export function EditBasicInfoDialog({
                 Үгүй
               </button>
             </div>
-            {editBasicInfo.part_of_group && (
+            {draftBasicInfo.part_of_group && (
               <div className="space-y-2 mt-3">
                 <Label htmlFor="groupName">Сүлжээ буудлын нэр</Label>
                 <Input
                   id="groupName"
-                  value={editBasicInfo.group_name}
-                  onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, group_name: e.target.value })}
+                  value={draftBasicInfo.group_name}
+                  onChange={(e) => setDraftBasicInfo({ ...draftBasicInfo, group_name: e.target.value })}
                   placeholder="Сүлжээ буудлын нэр оруулах"
                   className={validationErrors.group_name ? 'border-destructive' : ''}
                 />
@@ -208,8 +240,8 @@ export function EditBasicInfoDialog({
               <Input
                 id="totalRooms"
                 type="number"
-                value={editBasicInfo.total_hotel_rooms}
-                onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, total_hotel_rooms: e.target.value })}
+                value={draftBasicInfo.total_hotel_rooms}
+                onChange={(e) => setDraftBasicInfo({ ...draftBasicInfo, total_hotel_rooms: e.target.value })}
                 placeholder="200"
                 className={validationErrors.total_hotel_rooms ? 'border-destructive' : ''}
               />
@@ -222,8 +254,8 @@ export function EditBasicInfoDialog({
               <Input
                 id="availableRooms"
                 type="number"
-                value={editBasicInfo.available_rooms}
-                onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, available_rooms: e.target.value })}
+                value={draftBasicInfo.available_rooms}
+                onChange={(e) => setDraftBasicInfo({ ...draftBasicInfo, available_rooms: e.target.value })}
                 placeholder="50"
                 className={validationErrors.available_rooms ? 'border-destructive' : ''}
               />
@@ -240,12 +272,12 @@ export function EditBasicInfoDialog({
                   <input
                     type="checkbox"
                     id={`lang-${lang.id}`}
-                    checked={editBasicInfo.languages.includes(lang.id)}
+                    checked={draftBasicInfo.languages.includes(lang.id)}
                     onChange={(e) => {
                       if (e.target.checked) {
-                        onEditBasicInfoChange({ ...editBasicInfo, languages: [...editBasicInfo.languages, lang.id] });
+                        setDraftBasicInfo({ ...draftBasicInfo, languages: [...draftBasicInfo.languages, lang.id] });
                       } else {
-                        onEditBasicInfoChange({ ...editBasicInfo, languages: editBasicInfo.languages.filter(id => id !== lang.id) });
+                        setDraftBasicInfo({ ...draftBasicInfo, languages: draftBasicInfo.languages.filter(id => id !== lang.id) });
                       }
                     }}
                     className="h-4 w-4"

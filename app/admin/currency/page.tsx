@@ -676,7 +676,7 @@ export default function CurrencyPage() {
 
       {/* Add Currency Modal */}
       <Dialog open={isAddCurrencyModalOpen} onOpenChange={setIsAddCurrencyModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" preventOutsideClose hideCloseButton>
           <DialogHeader>
             <DialogTitle>{t('addCurrency')}</DialogTitle>
           </DialogHeader>
@@ -801,7 +801,7 @@ export default function CurrencyPage() {
 
       {/* History Modal */}
       <Dialog open={isHistoryModalOpen} onOpenChange={setIsHistoryModalOpen}>
-        <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden" preventOutsideClose hideCloseButton>
           <VisuallyHidden.Root>
             <DialogHeader>
               <DialogTitle>{t('currencyHistory')}</DialogTitle>
@@ -858,7 +858,7 @@ export default function CurrencyPage() {
 
       {/* Edit Currency Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" preventOutsideClose hideCloseButton>
           <DialogHeader>
             <DialogTitle>Валютын ханш засах</DialogTitle>
             <DialogDescription>
@@ -943,7 +943,7 @@ export default function CurrencyPage() {
 
       {/* Delete Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px]" preventOutsideClose hideCloseButton>
           <DialogHeader>
             <DialogTitle>{t('messages.deleteTitle') || 'Валют устгах'}</DialogTitle>
             <DialogDescription>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,9 +35,35 @@ export function EditAboutVideoDialog({
   onSave,
   isSaving,
 }: EditAboutVideoDialogProps) {
+  // Track if user has made changes since last save
+  const [draftAbout, setDraftAbout] = useState(about);
+  const [draftYoutubeUrl, setDraftYoutubeUrl] = useState(youtubeUrl);
+  const lastSavedRef = useRef({ about, youtubeUrl });
+
+  // Sync draft with original values when they change from parent (after save)
+  useEffect(() => {
+    if (about !== lastSavedRef.current.about) {
+      setDraftAbout(about);
+      lastSavedRef.current.about = about;
+    }
+    if (youtubeUrl !== lastSavedRef.current.youtubeUrl) {
+      setDraftYoutubeUrl(youtubeUrl);
+      lastSavedRef.current.youtubeUrl = youtubeUrl;
+    }
+  }, [about, youtubeUrl]);
+
+  // Sync draft to parent when changed
+  useEffect(() => {
+    onAboutChange(draftAbout);
+  }, [draftAbout, onAboutChange]);
+
+  useEffect(() => {
+    onYoutubeUrlChange(draftYoutubeUrl);
+  }, [draftYoutubeUrl, onYoutubeUrlChange]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl" preventOutsideClose hideCloseButton>
         <DialogHeader>
           <DialogTitle>Бидний тухай болон Видео засах</DialogTitle>
           <DialogDescription>
@@ -48,8 +75,8 @@ export function EditAboutVideoDialog({
             <Label htmlFor="about">Бидний тухай</Label>
             <Textarea
               id="about"
-              value={about}
-              onChange={(e) => onAboutChange(e.target.value)}
+              value={draftAbout}
+              onChange={(e) => setDraftAbout(e.target.value)}
               placeholder="Буудлын дэлгэрэнгүй мэдээллийг оруулна уу"
               className="min-h-[150px]"
             />
@@ -59,8 +86,8 @@ export function EditAboutVideoDialog({
             <Input
               id="youtube"
               type="url"
-              value={youtubeUrl}
-              onChange={(e) => onYoutubeUrlChange(e.target.value)}
+              value={draftYoutubeUrl}
+              onChange={(e) => setDraftYoutubeUrl(e.target.value)}
               placeholder="YouTube холбоос оруулах"
             />
             <p className="text-xs text-muted-foreground">

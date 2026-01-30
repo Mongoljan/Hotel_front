@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -28,6 +28,20 @@ export default function ServicesTab({ facilityIds, hotelId, propertyDetailId, on
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedFacilityIds, setSelectedFacilityIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Track last saved state to preserve draft between opens
+  const lastSavedRef = useRef<number[]>(facilityIds);
+  const [draftFacilityIds, setDraftFacilityIds] = useState<number[]>(facilityIds);
+
+  // Sync draft with saved values when facilityIds change (after save)
+  useEffect(() => {
+    const currentSaved = JSON.stringify(facilityIds.sort());
+    const lastSaved = JSON.stringify(lastSavedRef.current.sort());
+    if (currentSaved !== lastSaved) {
+      setDraftFacilityIds([...facilityIds]);
+      lastSavedRef.current = [...facilityIds];
+    }
+  }, [facilityIds]);
 
   useEffect(() => {
     const loadFacilities = async () => {
@@ -55,9 +69,16 @@ export default function ServicesTab({ facilityIds, hotelId, propertyDetailId, on
   }, [facilityIds]);
 
   const handleEdit = () => {
-    setSelectedFacilityIds([...facilityIds]);
+    setSelectedFacilityIds([...draftFacilityIds]);
     setIsEditDialogOpen(true);
   };
+
+  // Sync draft when dialog changes are made
+  useEffect(() => {
+    if (isEditDialogOpen) {
+      setDraftFacilityIds([...selectedFacilityIds]);
+    }
+  }, [selectedFacilityIds, isEditDialogOpen]);
 
   const handleSave = async () => {
     if (!propertyDetailId) {
@@ -129,7 +150,7 @@ export default function ServicesTab({ facilityIds, hotelId, propertyDetailId, on
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" preventOutsideClose hideCloseButton>
             <DialogHeader>
               <DialogTitle>Ерөнхий үйлчилгээ засах</DialogTitle>
               <DialogDescription>
@@ -212,7 +233,7 @@ export default function ServicesTab({ facilityIds, hotelId, propertyDetailId, on
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" preventOutsideClose hideCloseButton>
           <DialogHeader>
             <DialogTitle>Ерөнхий үйлчилгээ засах</DialogTitle>
             <DialogDescription>

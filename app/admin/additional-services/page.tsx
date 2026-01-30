@@ -559,7 +559,7 @@ export default function AdditionalServicesPage() {
 
       {/* Service Type Modal */}
       <Dialog open={isTypeModalOpen} onOpenChange={setIsTypeModalOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[400px]" preventOutsideClose hideCloseButton>
           <DialogHeader>
             <DialogTitle>
               {editingType ? t('serviceTypeModal.editTitle') : t('serviceTypeModal.title')}
@@ -576,6 +576,13 @@ export default function AdditionalServicesPage() {
 
           <DialogFooter>
             <Button
+              variant="outline"
+              onClick={() => setIsTypeModalOpen(false)}
+              disabled={isSaving}
+            >
+              {t('actions.cancel')}
+            </Button>
+            <Button
               onClick={handleSaveType}
               disabled={isSaving || !typeName.trim()}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
@@ -589,7 +596,7 @@ export default function AdditionalServicesPage() {
 
       {/* Service Modal */}
       <Dialog open={isServiceModalOpen} onOpenChange={setIsServiceModalOpen}>
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-[450px]" preventOutsideClose hideCloseButton>
           <DialogHeader>
             <DialogTitle>
               {editingService ? `${selectedTypeName} ${t('actions.edit').toLowerCase()}` : selectedTypeName}
@@ -686,6 +693,13 @@ export default function AdditionalServicesPage() {
           </div>
 
           <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsServiceModalOpen(false)}
+              disabled={isSaving}
+            >
+              {t('actions.cancel')}
+            </Button>
             <Button
               onClick={handleSaveService}
               disabled={isSaving || !serviceName.trim()}
