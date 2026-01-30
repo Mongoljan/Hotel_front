@@ -90,7 +90,14 @@ export function AppSidebar({ isApproved, userApproved, hotelRegistrationComplete
 
   // Filter navigation items based on approval status, hotel registration completion, and user role
   const filteredNavItems = React.useMemo(() => {
-    // If not approved or registration not completed, show only hotel info
+    // Reception (4) and Manager (3) who are NOT approved: show no navigation (they see StaffWaitingView)
+    const isStaffUser = userType === USER_TYPES.RECEPTION || userType === USER_TYPES.MANAGER;
+    if (isStaffUser && (!isApproved || !userApproved)) {
+      // Staff users waiting for approval - no menu needed, they see StaffWaitingView
+      return [];
+    }
+
+    // Owner who is not approved or registration not completed: show only hotel info
     if (!isApproved || !userApproved || !hotelRegistrationCompleted) {
       return [
         {

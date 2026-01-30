@@ -4,6 +4,8 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { z } from 'zod';
+import { schemaServiceType, schemaService } from '@/app/schema';
 import { 
   IconPlus, 
   IconSearch, 
@@ -188,8 +190,10 @@ export default function AdditionalServicesPage() {
   };
 
   const handleSaveType = async () => {
-    if (!typeName.trim()) {
-      toast.error(t('messages.typeNameRequired'));
+    // Validate with Zod
+    const validationResult = schemaServiceType.safeParse({ name: typeName });
+    if (!validationResult.success) {
+      toast.error(validationResult.error.errors[0].message);
       return;
     }
 
@@ -293,8 +297,18 @@ export default function AdditionalServicesPage() {
   };
 
   const handleSaveService = async () => {
-    if (!serviceName.trim()) {
-      toast.error(t('messages.serviceNameRequired'));
+    // Validate with Zod
+    const validationResult = schemaService.safeParse({
+      name: serviceName,
+      price: servicePrice,
+      service_type: serviceCategoryId,
+      category: serviceCategory || undefined,
+      is_countable: serviceIsCountable,
+      barcode: serviceBarcode || undefined,
+    });
+
+    if (!validationResult.success) {
+      toast.error(validationResult.error.errors[0].message);
       return;
     }
 

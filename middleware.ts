@@ -17,6 +17,14 @@ export function middleware(req: NextRequest) {
     isValidToken = !!payload
   }
 
+  // Allow access to no-access page without redirect loops
+  if (pathname === '/admin/no-access') {
+    if (!isValidToken) {
+      return NextResponse.redirect(new URL('/auth/login', req.url))
+    }
+    return NextResponse.next()
+  }
+
   // ===== SUPERADMIN ROUTES =====
   // Protect /superadmin/*: only SuperAdmin (user_type=1) can access
   if (pathname.startsWith('/superadmin')) {
@@ -37,24 +45,17 @@ export function middleware(req: NextRequest) {
   }
 
   // ===== ADMIN ROUTES =====
-  // Role-based route protection
+  // Role-based route protection (only if user IS approved - otherwise they need to go through approval flow)
   
   // Only Owner (2) can access /admin/users (user management)
-  if (pathname.startsWith('/admin/users') && isValidToken) {
+  if (pathname.startsWith('/admin/users') && isValidToken && userApproved && hotelApproved) {
     if (userType !== 2) {
-      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+      return NextResponse.redirect(new URL('/admin/no-access', req.url))
     }
   }
 
-  // Only Owner (2) can create employees in the admin panel
-  if (pathname.startsWith('/admin/employees') && isValidToken) {
-    if (userType !== 2) {
-      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
-    }
-  }
-
-  // Reception (4) cannot access settings pages
-  if (userType === 4 && isValidToken) {
+  // Reception (4) cannot access settings pages (only if approved)
+  if (userType === 4 && isValidToken && userApproved && hotelApproved) {
     const settingsPages = [
       '/admin/hotel',
       '/admin/room',
@@ -66,7 +67,7 @@ export function middleware(req: NextRequest) {
     ];
     
     if (settingsPages.some(page => pathname.startsWith(page))) {
-      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+      return NextResponse.redirect(new URL('/admin/no-access', req.url))
     }
   }
 
@@ -75,6 +76,12 @@ export function middleware(req: NextRequest) {
     if (userType === 1) {
       return NextResponse.redirect(new URL('/superadmin/dashboard', req.url))
     }
+    // If approved, go to dashboard
+    if (userApproved && hotelApproved) {
+      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+    }
+    // Staff users (Reception/Manager) who are not approved go to hotel page to see waiting status
+    // Owner who is not approved also goes to hotel page for registration flow
     return NextResponse.redirect(new URL('/admin/hotel', req.url))
   }
 
@@ -88,7 +95,8 @@ export function middleware(req: NextRequest) {
     if (userApproved && hotelApproved) {
       return NextResponse.redirect(new URL('/admin/dashboard', req.url))
     }
-    // Otherwise go to hotel page (registration/approval process)
+    // Staff users waiting for approval go to hotel page to see their status
+    // Owner goes to hotel page for registration/approval process
     return NextResponse.redirect(new URL('/admin/hotel', req.url))
   }
 
@@ -99,6 +107,8 @@ export function middleware(req: NextRequest) {
 
   // 4. If logged in but EITHER user or hotel isn't approved → lock to /admin/hotel
   // (Skip this check for SuperAdmin - they should already be redirected above)
+  // But for staff users who ARE approved, don't redirect them to /admin/hotel
+  const isStaffUser = userType === 3 || userType === 4
   if (
     pathname.startsWith('/admin') &&
     isValidToken &&

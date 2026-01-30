@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { USER_TYPES, USER_TYPE_NAMES, UserTypeValue } from '@/lib/userTypes';
 import { toast } from "sonner";
+import { z } from 'zod';
+import { schemaEmployee, schemaEmployeeEdit } from '@/app/schema';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -160,6 +162,18 @@ export default function WorkersPage() {
     setError('');
 
     try {
+      // Validate with Zod
+      const schema = isEditMode ? schemaEmployeeEdit : schemaEmployee;
+      const validationResult = schema.safeParse(formData);
+      
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        setError(firstError.message);
+        toast.error(firstError.message);
+        setIsSaving(false);
+        return;
+      }
+
       const url = '/api/employees';
       const method = isEditMode ? 'PUT' : 'POST';
       const body = isEditMode 

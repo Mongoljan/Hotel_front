@@ -49,7 +49,8 @@ export default function LoginForm() {
     } else {
       toast.success(tMsg('login_success'));
       setTimeout(() => {
-        router.push('/admin/hotel');
+        // Redirect to root and let middleware decide destination based on user type and approval status
+        router.push('/');
       }, 1000);
     }
   };

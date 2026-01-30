@@ -697,3 +697,131 @@ export const schemaContractOrganization = z.object({
   notes: z.string().optional(),
 });
 
+// Service Type Schema
+export const schemaServiceType = z.object({
+  name: z.string()
+    .min(1, { message: "Үйлчилгээний төрлийн нэрийг оруулна уу" })
+    .max(100, { message: "Нэр 100 тэмдэгтээс хэтрэхгүй байх ёстой" }),
+});
+
+// Service Schema
+export const schemaService = z.object({
+  name: z.string()
+    .min(1, { message: "Үйлчилгээний нэрийг оруулна уу" })
+    .max(100, { message: "Нэр 100 тэмдэгтээс хэтрэхгүй байх ёстой" }),
+  price: z.string()
+    .min(1, { message: "Үнийг оруулна уу" })
+    .regex(/^\d+(\.\d{1,2})?$/, { message: "Үнэ зөвхөн тоо байх ёстой" })
+    .refine((val) => parseFloat(val) >= 0, { message: "Үнэ сөрөг байж болохгүй" }),
+  service_type: z.string().min(1, { message: "Үйлчилгээний төрлийг сонгоно уу" }),
+  category: z.string().optional(),
+  is_countable: z.boolean().default(false),
+  barcode: z.string().optional(),
+});
+
+// Employee/Worker Schema
+export const schemaEmployee = z.object({
+  name: z.string()
+    .min(2, { message: "Нэр хамгийн багадаа 2 тэмдэгт байх ёстой" })
+    .max(100, { message: "Нэр 100 тэмдэгтээс хэтрэхгүй байх ёстой" }),
+  position: z.string()
+    .min(1, { message: "Албан тушаалыг оруулна уу" })
+    .max(100, { message: "Албан тушаал 100 тэмдэгтээс хэтрэхгүй байх ёстой" }),
+  email: z.string()
+    .min(1, { message: "И-мэйл хаягийг оруулна уу" })
+    .email({ message: "И-мэйл хаяг буруу байна" }),
+  contact_number: z.string()
+    .min(8, { message: "Утасны дугаар хамгийн багадаа 8 оронтой байх ёстой" })
+    .max(15, { message: "Утасны дугаар 15 оронтоос хэтрэхгүй байх ёстой" })
+    .regex(/^[0-9+\-\s]+$/, { message: "Утасны дугаар зөвхөн тоо агуулах ёстой" }),
+  password: z.string()
+    .min(6, { message: "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой" })
+    .regex(/[a-zA-Z]/, { message: "Нууц үг үсэг агуулсан байх ёстой" })
+    .regex(/[0-9]/, { message: "Нууц үг тоо агуулсан байх ёстой" }),
+  user_type: z.number()
+    .min(2, { message: "Хэрэглэгчийн төрлийг сонгоно уу" })
+    .max(5, { message: "Буруу хэрэглэгчийн төрөл" }),
+});
+
+// Employee Edit Schema (password optional)
+export const schemaEmployeeEdit = z.object({
+  name: z.string()
+    .min(2, { message: "Нэр хамгийн багадаа 2 тэмдэгт байх ёстой" })
+    .max(100, { message: "Нэр 100 тэмдэгтээс хэтрэхгүй байх ёстой" }),
+  position: z.string()
+    .min(1, { message: "Албан тушаалыг оруулна уу" })
+    .max(100, { message: "Албан тушаал 100 тэмдэгтээс хэтрэхгүй байх ёстой" }),
+  email: z.string()
+    .min(1, { message: "И-мэйл хаягийг оруулна уу" })
+    .email({ message: "И-мэйл хаяг буруу байна" }),
+  contact_number: z.string()
+    .min(8, { message: "Утасны дугаар хамгийн багадаа 8 оронтой байх ёстой" })
+    .max(15, { message: "Утасны дугаар 15 оронтоос хэтрэхгүй байх ёстой" })
+    .regex(/^[0-9+\-\s]+$/, { message: "Утасны дугаар зөвхөн тоо агуулах ёстой" }),
+  password: z.string()
+    .regex(/[a-zA-Z]/, { message: "Нууц үг үсэг агуулсан байх ёстой" })
+    .regex(/[0-9]/, { message: "Нууц үг тоо агуулсан байх ёстой" })
+    .min(6, { message: "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой" })
+    .optional()
+    .or(z.literal('')),
+  user_type: z.number()
+    .min(2, { message: "Хэрэглэгчийн төрлийг сонгоно уу" })
+    .max(5, { message: "Буруу хэрэглэгчийн төрөл" }),
+});
+
+// Currency Rate Schema
+export const schemaCurrencyRate = z.object({
+  currency: z.string().min(1, { message: "Валют сонгоно уу" }),
+  buy_rate: z.string()
+    .min(1, { message: "Авах ханшийг оруулна уу" })
+    .regex(/^\d+(\.\d{1,2})?$/, { message: "Ханш зөвхөн тоо байх ёстой" })
+    .refine((val) => parseFloat(val) > 0, { message: "Ханш 0-ээс их байх ёстой" }),
+  sell_rate: z.string()
+    .min(1, { message: "Зарах ханшийг оруулна уу" })
+    .regex(/^\d+(\.\d{1,2})?$/, { message: "Ханш зөвхөн тоо байх ёстой" })
+    .refine((val) => parseFloat(val) > 0, { message: "Ханш 0-ээс их байх ёстой" }),
+});
+
+// Room Block Schema
+export const schemaRoomBlock = z.object({
+  room_type: z.string().min(1, { message: "Өрөөний төрлийг сонгоно уу" }),
+  room: z.string().min(1, { message: "Өрөө сонгоно уу" }),
+  start_date: z.string().min(1, { message: "Эхлэх огноо оруулна уу" }),
+  end_date: z.string().min(1, { message: "Дуусах огноо оруулна уу" }),
+  reason: z.string()
+    .min(1, { message: "Шалтгаан оруулна уу" })
+    .max(500, { message: "Шалтгаан 500 тэмдэгтээс хэтрэхгүй байх ёстой" }),
+}).refine((data) => {
+  if (data.start_date && data.end_date) {
+    return new Date(data.start_date) <= new Date(data.end_date);
+  }
+  return true;
+}, { message: "Эхлэх огноо дуусах огноонооос өмнө байх ёстой", path: ["end_date"] });
+
+// Price Setting Schema
+export const schemaPriceSetting = z.object({
+  name: z.string()
+    .min(1, { message: "Нэрийг оруулна уу" })
+    .max(100, { message: "Нэр 100 тэмдэгтээс хэтрэхгүй байх ёстой" }),
+  room_combination: z.string().min(1, { message: "Өрөөний төрлийг сонгоно уу" }),
+  start_date: z.string().min(1, { message: "Эхлэх огноо оруулна уу" }),
+  end_date: z.string().min(1, { message: "Дуусах огноо оруулна уу" }),
+  adjustment_type: z.enum(['ADD', 'SUB'], { message: "Үнийн өөрчлөлтийн төрлийг сонгоно уу" }),
+  value_type: z.enum(['PERCENT', 'AMOUNT'], { message: "Утгын төрлийг сонгоно уу" }),
+  value: z.string()
+    .min(1, { message: "Утга оруулна уу" })
+    .regex(/^\d+(\.\d{1,2})?$/, { message: "Утга зөвхөн тоо байх ёстой" }),
+  is_active: z.boolean().default(true),
+}).refine((data) => {
+  if (data.start_date && data.end_date) {
+    return new Date(data.start_date) <= new Date(data.end_date);
+  }
+  return true;
+}, { message: "Эхлэх огноо дуусах огноонооос өмнө байх ёстой", path: ["end_date"] })
+.refine((data) => {
+  if (data.value_type === 'PERCENT') {
+    const val = parseFloat(data.value);
+    return val >= 0 && val <= 100;
+  }
+  return true;
+}, { message: "Хувь 0-100 хооронд байх ёстой", path: ["value"] });

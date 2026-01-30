@@ -75,9 +75,24 @@ export function BreadcrumbHeader() {
   const { user, sessionTimeRemaining, refreshSession, isRefreshing } = useAuth();
   const tNav = useTranslations('Navigation');
   
+  // Check if user is staff (Manager=3 or Reception=4) and not approved
+  const isStaffUser = user?.user_type === 3 || user?.user_type === 4;
+  const isApproved = user?.approved;
+  const hideSettingsBreadcrumb = isStaffUser && !isApproved;
+  
   // Build smart breadcrumbs based on menu hierarchy
   const buildBreadcrumbs = () => {
     const result: { name: string; path: string; isLast: boolean }[] = [];
+    
+    // For unapproved staff on /admin/hotel, don't show settings breadcrumb
+    if (hideSettingsBreadcrumb && pathname === '/admin/hotel') {
+      result.push({
+        name: tNav('waitingApproval') || 'Зөвшөөрөл хүлээгдэж байна',
+        path: pathname,
+        isLast: true
+      });
+      return result;
+    }
     
     // Check if this route has a parent menu
     const parentKey = routeParentKeys[pathname];

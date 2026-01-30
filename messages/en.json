@@ -8,6 +8,19 @@
     "noHotelInfo": "No hotel info available",
     "hotelDataNotFound": "Hotel data not found"
   },
+  "StaffWaiting": {
+    "pendingTitle": "Awaiting Approval",
+    "approvedTitle": "Registration Approved",
+    "role": "Your role",
+    "manager": "Manager",
+    "reception": "Reception",
+    "pending": "Pending",
+    "approved": "Approved",
+    "phone": "Phone",
+    "email": "Email",
+    "pendingMessage": "Your account is pending approval from the hotel owner. Once approved, you will have full access to the system.",
+    "approvedMessage": "Your registration has been approved. You can now access the dashboard and start working."
+  },
 
   "Proceed":{
     "title":"Proceed registeration",
@@ -17,6 +30,7 @@
     "4":"Approved",
     "5":"Proceed",
     "tooltip_wait_approval": "Please wait for approval of your registered hotel.",
+    "staffWaitApproval": "Your account is pending approval. The hotel owner needs to approve your registration.",
     "pendingApproval": "Pending Approval"
   },
 
@@ -457,6 +471,11 @@
     "description": "You do not have permission to access this page.",
     "goback": "Go Back",
     "gotohome": "Go to Home"
+  },
+  "noAccess": {
+    "title": "Access Restricted",
+    "description": "You do not have permission to access this page. This page is not available for your role.",
+    "backToDashboard": "Back to Dashboard"
   },
   "Status": {
     "unauthorized": {

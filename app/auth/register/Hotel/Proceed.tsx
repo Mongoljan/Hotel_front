@@ -67,6 +67,9 @@ const Proceed: React.FC<ProceedProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Check if user is staff (Manager=3 or Reception=4) - they can only view, not edit
+  const isStaffUser = user?.user_type === 3 || user?.user_type === 4;
+
   useEffect(() => {
     const fetchData = async () => {
       const currentHotelId = hotelId || user?.hotel;
@@ -240,7 +243,7 @@ const Proceed: React.FC<ProceedProps> = ({
               <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
                 <Clock className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-amber-800">
-                  {t('tooltip_wait_approval')}
+                  {isStaffUser ? t('staffWaitApproval') : t('tooltip_wait_approval')}
                 </p>
               </div>
             </div>
@@ -248,8 +251,8 @@ const Proceed: React.FC<ProceedProps> = ({
         </CardContent>
       </Card>
 
-      {/* Continue Button */}
-      {isApproved && (
+      {/* Continue Button - only show for Owner, not staff */}
+      {isApproved && !isStaffUser && (
         <div className="flex justify-center">
           <Button onClick={handleContinue} className="px-8">
             {t('5')}

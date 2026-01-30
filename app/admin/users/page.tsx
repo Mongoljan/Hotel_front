@@ -3,6 +3,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { z } from 'zod';
+import { schemaEmployee, schemaEmployeeEdit } from '@/app/schema';
 import {
   IconPlus,
   IconEdit,
@@ -227,9 +229,22 @@ export default function UsersPage() {
 
   // Handle save user
   const handleSaveUser = async () => {
-    // Validation
-    if (!formName || !formPosition || !formEmail || !formPhone || !formRole) {
-      toast.error('Бүх талбарыг бөглөнө үү');
+    // Build form data for validation
+    const formData = {
+      name: formName,
+      position: formPosition,
+      email: formEmail,
+      contact_number: formPhone,
+      user_type: formRole ? parseInt(formRole) : 0,
+      ...(editingUser ? {} : { password: formPassword }),
+    };
+
+    // Zod validation
+    const schema = editingUser ? schemaEmployeeEdit : schemaEmployee;
+    const validateResult = schema.safeParse(formData);
+    if (!validateResult.success) {
+      const firstError = validateResult.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 

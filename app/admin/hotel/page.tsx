@@ -6,6 +6,7 @@ import Proceed from '@/app/auth/register/Hotel/Proceed';
 import RegisterPage from '@/app/auth/register/Hotel/Hotel';
 import StepIndicator from './StepIndicator';
 import SixStepInfo from './SixStepInfo';
+import StaffWaitingView from './StaffWaitingView';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
@@ -71,6 +72,9 @@ export default function RegisterHotel() {
   const [hotelApproved, setHotelApproved] = useState(false);
   const [stepStatus, setStepStatus] = useState(2);
   const [view, setView] = useState<'proceed' | 'register'>('proceed');
+  
+  // Check if user is staff (Manager=3 or Reception=4)
+  const isStaffUser = user?.user_type === 3 || user?.user_type === 4;
   
   // Hotel data state
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
@@ -296,6 +300,11 @@ export default function RegisterHotel() {
   }), [basicInfo, propertyBaseInfo, propertyPolicy, user?.hotel, getPropertyTypeName, formatDate, t]);
 
   if (isLoading || proceed === null) return <div>Loading authentication and page data…</div>;
+
+  // Staff users (Manager/Reception) see simplified view
+  if (isStaffUser) {
+    return <StaffWaitingView />;
+  }
 
   // Debug info
  

@@ -3,6 +3,8 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { z } from 'zod';
+import { schemaCurrencyRate } from '@/app/schema';
 import {
   IconPlus,
   IconEdit,
@@ -370,8 +372,22 @@ export default function CurrencyPage() {
 
   // Save edited currency rate
   const handleSaveEdit = async () => {
-    if (!editingCurrency || !editBuyRate || !editSellRate) {
+    if (!editingCurrency) {
       toast.error(t('messages.fillAllFields'));
+      return;
+    }
+
+    // Zod validation
+    const formData = {
+      currency: editingCurrency.currencyId,
+      buy_rate: editBuyRate ? parseFloat(editBuyRate) : 0,
+      sell_rate: editSellRate ? parseFloat(editSellRate) : 0,
+    };
+    
+    const validateResult = schemaCurrencyRate.safeParse(formData);
+    if (!validateResult.success) {
+      const firstError = validateResult.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 

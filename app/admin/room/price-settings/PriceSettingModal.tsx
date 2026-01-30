@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePickerWithValue } from '@/components/ui/date-picker';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
+import { schemaPriceSetting } from '@/app/schema';
 
 // Formatted Number Input Component for prices
 interface FormattedNumberInputProps {
@@ -186,18 +188,31 @@ export default function PriceSettingModal({
       return;
     }
 
-    if (!formData.name || !formData.room_combination || 
-        !formData.start_date || !formData.end_date || !formData.value) {
-      toast.error('Бүх шаардлагатай талбаруудыг бөглөнө үү');
+    // Parse room_type and room_category from room_combination
+    const [room_type, room_category] = formData.room_combination 
+      ? formData.room_combination.split('-').map(Number)
+      : [0, 0];
+
+    // Zod validation
+    const validationData = {
+      name: formData.name,
+      room_type: room_type || 0,
+      room_category: room_category || 0,
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+      value: formData.value ? parseFloat(formData.value) : 0,
+    };
+
+    const validateResult = schemaPriceSetting.safeParse(validationData);
+    if (!validateResult.success) {
+      const firstError = validateResult.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Parse room_type and room_category from room_combination
-      const [room_type, room_category] = formData.room_combination.split('-').map(Number);
-      
       const body = {
         name: formData.name,
         hotel: hotelId,

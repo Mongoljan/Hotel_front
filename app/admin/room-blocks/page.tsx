@@ -2,6 +2,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
+import { z } from 'zod';
+import { schemaRoomBlock } from '@/app/schema';
+import { toast } from 'sonner';
 import {
   IconPlus,
   IconSearch,
@@ -183,7 +186,19 @@ export default function ReceptionPage() {
   ];
 
   const handleSaveRoomBlock = async () => {
-    if (!formRoomType || !formRoomNumber || !formStartDate || !formEndDate || !formReason) {
+    // Zod validation
+    const formData = {
+      room_type: formRoomType,
+      room_number: formRoomNumber,
+      start_date: formStartDate,
+      end_date: formEndDate,
+      reason: formReason,
+    };
+    
+    const validateResult = schemaRoomBlock.safeParse(formData);
+    if (!validateResult.success) {
+      const firstError = validateResult.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 
