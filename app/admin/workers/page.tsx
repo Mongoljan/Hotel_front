@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { USER_TYPES, USER_TYPE_NAMES } from '@/lib/userTypes';
+import { USER_TYPES, USER_TYPE_NAMES, UserTypeValue } from '@/lib/userTypes';
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -71,7 +71,14 @@ export default function WorkersPage() {
   
   // Form state
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    position: string;
+    contact_number: string;
+    email: string;
+    password: string;
+    user_type: UserTypeValue;
+  }>({
     name: '',
     position: '',
     contact_number: '',
@@ -135,7 +142,7 @@ export default function WorkersPage() {
       contact_number: employee.contact_number,
       email: employee.email,
       password: '',
-      user_type: employee.user_type,
+      user_type: employee.user_type as UserTypeValue,
     });
     setIsModalOpen(true);
   };
@@ -406,7 +413,7 @@ export default function WorkersPage() {
               <Label htmlFor="user_type">{t('userType')} <span className="text-destructive">*</span></Label>
               <Select
                 value={formData.user_type.toString()}
-                onValueChange={(value) => setFormData({ ...formData, user_type: parseInt(value) })}
+                onValueChange={(value) => setFormData({ ...formData, user_type: parseInt(value) as UserTypeValue })}
               >
                 <SelectTrigger>
                   <SelectValue />
