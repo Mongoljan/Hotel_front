@@ -922,6 +922,8 @@
       "category": "Ангилал",
       "categoryPlaceholder": "Сонгох",
       "isCountable": "Тоолох боломжтой эсэх",
+      "yes": "Тийм",
+      "no": "Үгүй",
       "quantity": "Тоо ширхэг",
       "productCode": "Бараанын код"
     },
@@ -939,7 +941,8 @@
       "serviceCreated": "Үйлчилгээ нэмэгдлээ",
       "serviceUpdated": "Үйлчилгээ шинэчлэгдлээ",
       "serviceDeleted": "Үйлчилгээ устгагдлаа",
-      "error": "Алдаа гарлаа"
+      "error": "Алдаа гарлаа",
+      "createTypeFirst": "Эхлээд үйлчилгээний төрөл үүсгэнэ үү"
     }
   },
   "Currency": {
@@ -981,9 +984,18 @@
     },
     "messages": {
       "currencyAdded": "Валют амжилттай нэмэгдлээ",
-      "currencyUpdated": "Валют шинэчлэгдлээ",
+      "currencyUpdated": "Валютын ханш амжилттай шинэчлэгдлээ",
+      "currencyDeleted": "Валют амжилттай устгагдлаа",
       "fillAllFields": "Бүх талбарыг бөглөнө үү",
-      "error": "Алдаа гарлаа"
+      "error": "Алдаа гарлаа",
+      "deleteError": "Устгахад алдаа гарлаа",
+      "cancel": "Болих",
+      "delete": "Устгах",
+      "deleting": "Устгаж байна...",
+      "deleteTitle": "Валют устгах",
+      "deleteConfirm": "Энэ валютыг устгахдаа итгэлтэй байна уу?",
+      "paymentEnabled": "Төлбөрийн хэрэгсэл идэвхжүүлсэн",
+      "paymentDisabled": "Төлбөрийн хэрэгсэл идэвхгүй болгосон"
     }
   },
   "UserSettings": {

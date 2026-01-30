@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
@@ -10,11 +10,12 @@ import {
   IconX,
   IconChevronRight,
   IconLoader2,
+  IconRefresh,
+  IconTrash,
 } from '@tabler/icons-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -22,7 +23,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
   Select,
   SelectContent,
@@ -40,11 +43,43 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
-// Types
+// Types for API data
+interface CurrencyRate {
+  id: number;
+  created_by_name: string;
+  buy_rate: string;
+  sell_rate: string;
+  created_at: string;
+  currency: number;
+}
+
+interface PaymentMethod {
+  id: number;
+  name: string;
+  method_type: string;
+  logo: string | null;
+}
+
+interface PropertyPaymentMethod {
+  id?: number;
+  payment_method: number;
+  is_enabled: boolean;
+}
+
+// Currency from /api/currencies
 interface Currency {
   id: number;
+  name: string;
+  code: string;
+  symbol: string;
+  flagUrl: string;
+  flagUrlSvg: string;
+}
+
+// Display type for UI
+interface CurrencyDisplay {
+  id: number;
   country: string;
-  countryCode: string;
   currencyName: string;
   currencyCode: string;
   symbol: string;
@@ -52,136 +87,55 @@ interface Currency {
   buyRate: number;
   lastUpdated: string;
   updatedBy: string;
-  flagEmoji: string;
+  flagUrl: string;
+  currencyId: number;
 }
 
-interface CurrencyHistory {
+interface PaymentMethodDisplay {
   id: number;
-  currencyCode: string;
-  sellRate: number;
-  buyRate: number;
-  startDate: string;
-  endDate: string;
-  admin: string;
-  flagEmoji: string;
-}
-
-interface PaymentMethod {
-  id: string;
   name: string;
   category: 'bank' | 'digital' | 'international' | 'other';
   enabled: boolean;
 }
 
-// Mock data
-const mockCurrencies: Currency[] = [
-  {
-    id: 1,
-    country: 'Mongolia',
-    countryCode: 'MN',
-    currencyName: 'Tugrik',
-    currencyCode: 'MNT',
-    symbol: '₮',
-    sellRate: 1.0,
-    buyRate: 1.0,
-    lastUpdated: '2024-10-20 16:25:45',
-    updatedBy: 'Zol',
-    flagEmoji: '🇲🇳',
-  },
-  {
-    id: 2,
-    country: 'China',
-    countryCode: 'CN',
-    currencyName: 'Yuan',
-    currencyCode: 'CNY',
-    symbol: '¥',
-    sellRate: 474.0,
-    buyRate: 474.0,
-    lastUpdated: '2024-10-20 16:25:45',
-    updatedBy: 'Batjargal',
-    flagEmoji: '🇨🇳',
-  },
-  {
-    id: 3,
-    country: 'Japan',
-    countryCode: 'JP',
-    currencyName: 'Yen',
-    currencyCode: 'JPY',
-    symbol: '¥',
-    sellRate: 20.0,
-    buyRate: 20.0,
-    lastUpdated: '2024-10-20 16:25:45',
-    updatedBy: 'Batjargal',
-    flagEmoji: '🇯🇵',
-  },
-  {
-    id: 4,
-    country: 'United States',
-    countryCode: 'US',
-    currencyName: 'US dollar',
-    currencyCode: 'USD',
-    symbol: '$',
-    sellRate: 4350.0,
-    buyRate: 4350.0,
-    lastUpdated: '2024-10-20 16:25:45',
-    updatedBy: 'Mo',
-    flagEmoji: '🇺🇸',
-  },
-];
+// Payment method category mapping
+const getPaymentCategory = (methodType: string): 'bank' | 'digital' | 'international' | 'other' => {
+  switch (methodType) {
+    case 'bank': return 'bank';
+    case 'digital': return 'digital';
+    case 'international': return 'international';
+    default: return 'other';
+  }
+};
 
-const mockCurrencyHistory: CurrencyHistory[] = [
-  { id: 1, currencyCode: 'USD', sellRate: 1.0, buyRate: 1.0, startDate: '2024-10-20 16:25:45', endDate: '2024-10-20 16:25:45', admin: 'Zol', flagEmoji: '🇺🇸' },
-  { id: 2, currencyCode: 'USD', sellRate: 474.0, buyRate: 474.0, startDate: '2024-10-20 16:25:45', endDate: '2024-10-20 16:25:45', admin: 'Batjargal', flagEmoji: '🇺🇸' },
-  { id: 3, currencyCode: 'USD', sellRate: 20.0, buyRate: 20.0, startDate: '2024-10-20 16:25:45', endDate: '2024-10-20 16:25:45', admin: 'Batjargal', flagEmoji: '🇺🇸' },
-  { id: 4, currencyCode: 'USD', sellRate: 4350.0, buyRate: 4350.0, startDate: '2024-10-20 16:25:45', endDate: '2024-10-20 16:25:45', admin: 'Mo', flagEmoji: '🇺🇸' },
-];
-
-const mockPaymentMethods: PaymentMethod[] = [
-  // Bank Cards
-  { id: 'golomt', name: 'Голомт банк', category: 'bank', enabled: false },
-  { id: 'khan', name: 'Хаан банк', category: 'bank', enabled: false },
-  { id: 'xac', name: 'ХАС банк', category: 'bank', enabled: false },
-  { id: 'tdb', name: 'Худалдаа хөгжлийн банк', category: 'bank', enabled: false },
-  { id: 'state', name: 'Төрийн банк', category: 'bank', enabled: false },
-  { id: 'arig', name: 'Ариг банк', category: 'bank', enabled: false },
-  { id: 'bogd', name: 'Богд банк', category: 'bank', enabled: false },
-  { id: 'capitron', name: 'Капитрон банк', category: 'bank', enabled: false },
-  { id: 'mobile_bank', name: 'Mobile-аар', category: 'bank', enabled: false },
-  // Digital Payments
-  { id: 'monpay', name: 'MonPay', category: 'digital', enabled: false },
-  { id: 'pass', name: 'PASS', category: 'digital', enabled: false },
-  { id: 'qpay', name: 'QPAY', category: 'digital', enabled: false },
-  { id: 'socialpay', name: 'SocialPay', category: 'digital', enabled: false },
-  { id: 'ardapp', name: 'ArdApp', category: 'digital', enabled: false },
-  { id: 'hipay', name: 'Hi-Pay', category: 'digital', enabled: false },
-  { id: 'lendmn', name: 'Lendmn', category: 'digital', enabled: false },
-  { id: 'mostmoney', name: 'MostMoney', category: 'digital', enabled: false },
-  { id: 'omniway', name: 'Omniway', category: 'digital', enabled: false },
-  { id: 'pocket', name: 'Pocket', category: 'digital', enabled: false },
-  // International
-  { id: 'visa', name: 'VISA', category: 'international', enabled: false },
-  { id: 'amex', name: 'American Express', category: 'international', enabled: false },
-  { id: 'mastercard', name: 'MasterCard', category: 'international', enabled: false },
-  { id: 'jcb', name: 'JCB', category: 'international', enabled: false },
-  { id: 'unionpay', name: 'UnionPay', category: 'international', enabled: false },
-  { id: 'paypal', name: 'PayPal', category: 'international', enabled: false },
-  // Other
-  { id: 'cash', name: 'Бэлэн мөнгө', category: 'other', enabled: false },
-  { id: 'credit', name: 'Кредитээр', category: 'other', enabled: false },
-  { id: 'bonus', name: 'Бонус', category: 'other', enabled: false },
-  { id: 'giftcard', name: 'Бэлгийн карт', category: 'other', enabled: false },
-  { id: 'mobile_other', name: 'Mobile-аар', category: 'other', enabled: false },
-];
-
-const availableCurrencies = [
-  { code: 'USD', name: 'US dollar', symbol: '$', country: 'United States', flagEmoji: '🇺🇸' },
-  { code: 'EUR', name: 'Euro', symbol: '€', country: 'European Union', flagEmoji: '🇪🇺' },
-  { code: 'CNY', name: 'Yuan', symbol: '¥', country: 'China', flagEmoji: '🇨🇳' },
-  { code: 'JPY', name: 'Yen', symbol: '¥', country: 'Japan', flagEmoji: '🇯🇵' },
-  { code: 'KRW', name: 'Won', symbol: '₩', country: 'South Korea', flagEmoji: '🇰🇷' },
-  { code: 'RUB', name: 'Ruble', symbol: '₽', country: 'Russia', flagEmoji: '🇷🇺' },
-  { code: 'GBP', name: 'Pound', symbol: '£', country: 'United Kingdom', flagEmoji: '🇬🇧' },
-];
+// Memoized payment method item to prevent unnecessary re-renders
+const PaymentMethodItem = memo(function PaymentMethodItem({ 
+  pm, 
+  onToggle 
+}: { 
+  pm: PaymentMethodDisplay; 
+  onToggle: (id: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-sm">{pm.name}</span>
+      <Button
+        type="button"
+        size="sm"
+        variant={pm.enabled ? 'default' : 'outline'}
+        className={cn(
+          'h-7 px-3 text-xs',
+          pm.enabled
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground'
+        )}
+        onClick={() => onToggle(pm.id)}
+      >
+        {pm.enabled ? 'Идэвхтэй' : 'Идэвхгүй'}
+      </Button>
+    </div>
+  );
+});
 
 type TabType = 'currency' | 'payment';
 
@@ -191,91 +145,295 @@ export default function CurrencyPage() {
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('currency');
 
+  // Loading states
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
   // Currency state
-  const [currencies, setCurrencies] = useState<Currency[]>(mockCurrencies);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(mockPaymentMethods);
+  const [currencyRates, setCurrencyRates] = useState<CurrencyRate[]>([]);
+  const [currencies, setCurrencies] = useState<CurrencyDisplay[]>([]);
+  const [availableCurrencies, setAvailableCurrencies] = useState<Currency[]>([]);
+  
+  // Payment methods state
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodDisplay[]>([]);
+  const [allPaymentMethods, setAllPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [propertyPaymentMethods, setPropertyPaymentMethods] = useState<PropertyPaymentMethod[]>([]);
 
   // Modal states
   const [isAddCurrencyModalOpen, setIsAddCurrencyModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
-  const [selectedCurrencyForHistory, setSelectedCurrencyForHistory] = useState<Currency | null>(null);
-  const [historyData, setHistoryData] = useState<CurrencyHistory[]>([]);
+  const [selectedCurrencyForHistory, setSelectedCurrencyForHistory] = useState<CurrencyDisplay | null>(null);
+  const [historyData, setHistoryData] = useState<CurrencyRate[]>([]);
+  
+  // Edit modal states
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingCurrency, setEditingCurrency] = useState<CurrencyDisplay | null>(null);
+  const [editBuyRate, setEditBuyRate] = useState('');
+  const [editSellRate, setEditSellRate] = useState('');
+  
+  // Delete modal states
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [currencyToDelete, setCurrencyToDelete] = useState<CurrencyDisplay | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form states for add currency
-  const [selectedCurrencyCode, setSelectedCurrencyCode] = useState('');
-  const [buyRate, setBuyRate] = useState('1.00');
-  const [sellRate, setSellRate] = useState('1.00');
+  const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>('');
+  const [buyRate, setBuyRate] = useState('');
+  const [sellRate, setSellRate] = useState('');
 
-  // Loading states
-  const [isSaving, setIsSaving] = useState(false);
+  // Fetch data on mount
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [currencyRes, currenciesRes, paymentMethodsRes, propertyPaymentRes] = await Promise.all([
+        fetch('/api/currency-rates', { credentials: 'include' }),
+        fetch('/api/currencies', { credentials: 'include' }),
+        fetch('/api/payment-methods', { credentials: 'include' }),
+        fetch('/api/property-payment-methods', { credentials: 'include' }),
+      ]);
+
+      // Process available currencies (for dropdown)
+      let currencyLookup: Record<number, Currency> = {};
+      if (currenciesRes.ok) {
+        const currenciesData: Currency[] = await currenciesRes.json();
+        setAvailableCurrencies(Array.isArray(currenciesData) ? currenciesData : []);
+        // Create lookup map
+        currencyLookup = (Array.isArray(currenciesData) ? currenciesData : []).reduce((acc, curr) => {
+          acc[curr.id] = curr;
+          return acc;
+        }, {} as Record<number, Currency>);
+      }
+
+      // Process currency rates
+      if (currencyRes.ok) {
+        const currencyData: CurrencyRate[] = await currencyRes.json();
+        setCurrencyRates(Array.isArray(currencyData) ? currencyData : []);
+        
+        // Convert to display format using fetched currencies
+        const displayCurrencies: CurrencyDisplay[] = (Array.isArray(currencyData) ? currencyData : []).map(rate => {
+          const currencyInfo = currencyLookup[rate.currency];
+          return {
+            id: rate.id,
+            country: currencyInfo?.name || 'Unknown',
+            currencyName: currencyInfo?.name || 'Unknown',
+            currencyCode: currencyInfo?.code || 'UNK',
+            symbol: currencyInfo?.symbol || '?',
+            sellRate: parseFloat(rate.sell_rate),
+            buyRate: parseFloat(rate.buy_rate),
+            lastUpdated: new Date(rate.created_at).toLocaleString('mn-MN'),
+            updatedBy: rate.created_by_name,
+            flagUrl: currencyInfo?.flagUrl || '',
+            currencyId: rate.currency,
+          };
+        });
+        setCurrencies(displayCurrencies);
+      }
+
+      // Process payment methods
+      if (paymentMethodsRes.ok) {
+        const paymentData: PaymentMethod[] = await paymentMethodsRes.json();
+        setAllPaymentMethods(Array.isArray(paymentData) ? paymentData : []);
+      }
+
+      // Process property payment methods
+      if (propertyPaymentRes.ok) {
+        const propPaymentData: PropertyPaymentMethod[] = await propertyPaymentRes.json();
+        setPropertyPaymentMethods(Array.isArray(propPaymentData) ? propPaymentData : []);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // Using hardcoded text since fetchData is called before t is available
+      toast.error('Алдаа гарлаа');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Combine payment methods with enabled status
+  useEffect(() => {
+    const combined: PaymentMethodDisplay[] = allPaymentMethods.map(pm => ({
+      id: pm.id,
+      name: pm.name,
+      category: getPaymentCategory(pm.method_type),
+      enabled: propertyPaymentMethods.some(ppm => ppm.payment_method === pm.id && ppm.is_enabled),
+    }));
+    setPaymentMethods(combined);
+  }, [allPaymentMethods, propertyPaymentMethods]);
 
   // Get selected currency details
   const selectedCurrencyDetails = useMemo(() => {
-    return availableCurrencies.find(c => c.code === selectedCurrencyCode);
-  }, [selectedCurrencyCode]);
+    return availableCurrencies.find(c => c.id.toString() === selectedCurrencyId);
+  }, [selectedCurrencyId]);
 
-  // Handle payment method toggle
-  const togglePaymentMethod = (id: string) => {
+  // Handle payment method toggle - memoized to prevent re-renders
+  const togglePaymentMethod = useCallback(async (id: number) => {
+    const currentMethod = paymentMethods.find(pm => pm.id === id);
+    if (!currentMethod) return;
+
+    const newEnabled = !currentMethod.enabled;
+    
+    // Optimistic update
     setPaymentMethods(prev =>
       prev.map(pm =>
-        pm.id === id ? { ...pm, enabled: !pm.enabled } : pm
+        pm.id === id ? { ...pm, enabled: newEnabled } : pm
       )
     );
-  };
+
+    try {
+      const res = await fetch('/api/property-payment-methods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          payment_method: id,
+          is_enabled: newEnabled,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update payment method');
+      }
+      
+      toast.success(newEnabled ? t('messages.paymentEnabled') : t('messages.paymentDisabled'));
+    } catch (error) {
+      // Revert on error
+      setPaymentMethods(prev =>
+        prev.map(pm =>
+          pm.id === id ? { ...pm, enabled: !newEnabled } : pm
+        )
+      );
+      toast.error(t('messages.error'));
+    }
+  }, [paymentMethods, t]);
 
   // Open history modal
-  const openHistoryModal = (currency: Currency) => {
+  const openHistoryModal = (currency: CurrencyDisplay) => {
     setSelectedCurrencyForHistory(currency);
     // Filter history for this currency
-    const filtered = mockCurrencyHistory.filter(h => h.currencyCode === currency.currencyCode);
+    const filtered = currencyRates.filter(r => r.currency === currency.currencyId);
     setHistoryData(filtered);
     setIsHistoryModalOpen(true);
   };
 
   // Handle add currency
   const handleAddCurrency = async () => {
-    if (!selectedCurrencyCode || !buyRate || !sellRate) {
+    if (!selectedCurrencyId || !buyRate || !sellRate) {
       toast.error('Бүх талбарыг бөглөнө үү');
       return;
     }
 
     setIsSaving(true);
     try {
-      // API call would go here
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const res = await fetch('/api/currency-rates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          currency: parseInt(selectedCurrencyId),
+          buy_rate: parseFloat(buyRate),
+          sell_rate: parseFloat(sellRate),
+        }),
+      });
 
-      const currencyDetails = availableCurrencies.find(c => c.code === selectedCurrencyCode);
-      if (currencyDetails) {
-        const newCurrency: Currency = {
-          id: currencies.length + 1,
-          country: currencyDetails.country,
-          countryCode: selectedCurrencyCode.substring(0, 2),
-          currencyName: currencyDetails.name,
-          currencyCode: selectedCurrencyCode,
-          symbol: currencyDetails.symbol,
-          sellRate: parseFloat(sellRate),
-          buyRate: parseFloat(buyRate),
-          lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19),
-          updatedBy: 'Admin',
-          flagEmoji: currencyDetails.flagEmoji,
-        };
-        setCurrencies(prev => [...prev, newCurrency]);
+      if (!res.ok) {
+        throw new Error('Failed to add currency rate');
       }
 
-      toast.success('Валют амжилттай нэмэгдлээ');
+      toast.success(t('messages.currencyAdded'));
       setIsAddCurrencyModalOpen(false);
       resetForm();
+      fetchData(); // Refresh data
     } catch (error) {
-      toast.error('Алдаа гарлаа');
+      toast.error(t('messages.error'));
     } finally {
       setIsSaving(false);
     }
   };
 
   const resetForm = () => {
-    setSelectedCurrencyCode('');
-    setBuyRate('1.00');
-    setSellRate('1.00');
+    setSelectedCurrencyId('');
+    setBuyRate('');
+    setSellRate('');
+  };
+
+  // Handle edit currency - open modal with current values
+  const handleEditCurrency = (currency: CurrencyDisplay) => {
+    setEditingCurrency(currency);
+    setEditBuyRate(currency.buyRate.toString());
+    setEditSellRate(currency.sellRate.toString());
+    setIsEditModalOpen(true);
+  };
+
+  // Save edited currency rate
+  const handleSaveEdit = async () => {
+    if (!editingCurrency || !editBuyRate || !editSellRate) {
+      toast.error(t('messages.fillAllFields'));
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/currency-rates', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          id: editingCurrency.id,
+          currency: editingCurrency.currencyId,
+          buy_rate: parseFloat(editBuyRate),
+          sell_rate: parseFloat(editSellRate),
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update currency rate');
+      }
+
+      toast.success(t('messages.currencyUpdated'));
+      setIsEditModalOpen(false);
+      setEditingCurrency(null);
+      fetchData();
+    } catch (error) {
+      toast.error(t('messages.error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle delete currency - open confirmation modal
+  const handleDeleteCurrency = (currency: CurrencyDisplay) => {
+    setCurrencyToDelete(currency);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Confirm delete currency
+  const confirmDeleteCurrency = async () => {
+    if (!currencyToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/currency-rates?id=${currencyToDelete.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete currency rate');
+      }
+
+      toast.success(t('messages.currencyDeleted'));
+      setIsDeleteModalOpen(false);
+      setCurrencyToDelete(null);
+      fetchData();
+    } catch (error) {
+      toast.error(t('messages.deleteError'));
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Payment methods grouped by category
@@ -287,6 +445,16 @@ export default function CurrencyPage() {
       other: paymentMethods.filter(pm => pm.category === 'other'),
     };
   }, [paymentMethods]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <IconLoader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Уншиж байна...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -337,13 +505,23 @@ export default function CurrencyPage() {
                 {/* Currency Tab Header */}
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold">{t('currency')}</h2>
-                  <Button
-                    onClick={() => setIsAddCurrencyModalOpen(true)}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
-                    <IconPlus className="mr-2 h-4 w-4" />
-                    {t('add')}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={fetchData}
+                      title="Шинэчлэх"
+                    >
+                      <IconRefresh className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={() => setIsAddCurrencyModalOpen(true)}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <IconPlus className="mr-2 h-4 w-4" />
+                      {t('add')}
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Currency Table */}
@@ -367,7 +545,15 @@ export default function CurrencyPage() {
                         <TableRow key={currency.id} className="hover:bg-muted/50">
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <span className="text-lg">{currency.flagEmoji}</span>
+                              {currency.flagUrl ? (
+                                <img 
+                                  src={currency.flagUrl} 
+                                  alt={currency.currencyCode} 
+                                  className="w-6 h-4 object-cover rounded-sm"
+                                />
+                              ) : (
+                                <span className="w-6 h-4 bg-muted rounded-sm" />
+                              )}
                               <span>{currency.country}</span>
                             </div>
                           </TableCell>
@@ -380,7 +566,13 @@ export default function CurrencyPage() {
                           <TableCell>{currency.updatedBy}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={() => handleEditCurrency(currency)}
+                                title="Засах"
+                              >
                                 <IconEdit className="h-4 w-4" />
                               </Button>
                               <Button
@@ -388,8 +580,18 @@ export default function CurrencyPage() {
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => openHistoryModal(currency)}
+                                title="Түүх харах"
                               >
                                 <IconHistory className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteCurrency(currency)}
+                                title="Устгах"
+                              >
+                                <IconTrash className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -413,15 +615,9 @@ export default function CurrencyPage() {
                   {/* Bank Cards */}
                   <div>
                     <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.bank')}</h3>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {groupedPaymentMethods.bank.map((pm) => (
-                        <label key={pm.id} className="flex items-center gap-2 cursor-pointer">
-                          <Checkbox
-                            checked={pm.enabled}
-                            onCheckedChange={() => togglePaymentMethod(pm.id)}
-                          />
-                          <span className="text-sm">{pm.name}</span>
-                        </label>
+                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} />
                       ))}
                     </div>
                   </div>
@@ -429,15 +625,9 @@ export default function CurrencyPage() {
                   {/* Digital Payments */}
                   <div>
                     <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.digital')}</h3>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {groupedPaymentMethods.digital.map((pm) => (
-                        <label key={pm.id} className="flex items-center gap-2 cursor-pointer">
-                          <Checkbox
-                            checked={pm.enabled}
-                            onCheckedChange={() => togglePaymentMethod(pm.id)}
-                          />
-                          <span className="text-sm">{pm.name}</span>
-                        </label>
+                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} />
                       ))}
                     </div>
                   </div>
@@ -445,15 +635,9 @@ export default function CurrencyPage() {
                   {/* International */}
                   <div>
                     <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.international')}</h3>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {groupedPaymentMethods.international.map((pm) => (
-                        <label key={pm.id} className="flex items-center gap-2 cursor-pointer">
-                          <Checkbox
-                            checked={pm.enabled}
-                            onCheckedChange={() => togglePaymentMethod(pm.id)}
-                          />
-                          <span className="text-sm">{pm.name}</span>
-                        </label>
+                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} />
                       ))}
                     </div>
                   </div>
@@ -461,15 +645,9 @@ export default function CurrencyPage() {
                   {/* Other */}
                   <div>
                     <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.other')}</h3>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {groupedPaymentMethods.other.map((pm) => (
-                        <label key={pm.id} className="flex items-center gap-2 cursor-pointer">
-                          <Checkbox
-                            checked={pm.enabled}
-                            onCheckedChange={() => togglePaymentMethod(pm.id)}
-                          />
-                          <span className="text-sm">{pm.name}</span>
-                        </label>
+                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} />
                       ))}
                     </div>
                   </div>
@@ -492,14 +670,23 @@ export default function CurrencyPage() {
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>{t('form.currency')}</Label>
-                <Select value={selectedCurrencyCode} onValueChange={setSelectedCurrencyCode}>
+                <Select value={selectedCurrencyId} onValueChange={setSelectedCurrencyId}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('form.select')} />
                   </SelectTrigger>
                   <SelectContent>
                     {availableCurrencies.map((currency) => (
-                      <SelectItem key={currency.code} value={currency.code}>
-                        {currency.name}
+                      <SelectItem key={currency.id} value={currency.id.toString()}>
+                        <div className="flex items-center gap-2">
+                          {currency.flagUrl && (
+                            <img 
+                              src={currency.flagUrl} 
+                              alt={currency.code} 
+                              className="w-5 h-3 object-cover rounded-sm"
+                            />
+                          )}
+                          <span>{currency.name}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -527,20 +714,10 @@ export default function CurrencyPage() {
             <div className="space-y-4">
               <h3 className="font-medium border-b pb-2">{t('exchangeRates')}</h3>
 
-              {/* Buy Rate */}
+              {/* Buy Rate - 1 Foreign Currency = X MNT */}
               <div className="space-y-2">
                 <Label>{t('form.buyRate')}</Label>
                 <div className="flex items-center gap-4">
-                  <div className="flex-1 flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={buyRate}
-                      onChange={(e) => setBuyRate(e.target.value)}
-                      step="0.01"
-                    />
-                    <span className="text-lg font-medium w-8">{selectedCurrencyDetails?.symbol || '$'}</span>
-                  </div>
-                  <span className="text-xl">=</span>
                   <div className="flex-1 flex items-center gap-2">
                     <Input
                       type="number"
@@ -548,12 +725,23 @@ export default function CurrencyPage() {
                       readOnly
                       className="bg-muted"
                     />
-                    <span className="text-lg font-medium w-8">₮</span>
+                    <span className="text-lg font-medium w-8">{selectedCurrencyDetails?.symbol || '$'}</span>
+                  </div>
+                  <span className="text-xl">=</span>
+                  <div className="flex-1 flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={buyRate}
+                      onChange={(e) => setBuyRate(e.target.value)}
+                      step="0.01"
+                      placeholder="3500.00"
+                    />
+                    <span className="text-sm font-medium">төгрөг</span>
                   </div>
                 </div>
               </div>
 
-              {/* Sell Rate */}
+              {/* Sell Rate - 1 Foreign Currency = X MNT */}
               <div className="space-y-2">
                 <Label>{t('form.sellRate')}</Label>
                 <div className="flex items-center gap-4">
@@ -564,7 +752,7 @@ export default function CurrencyPage() {
                       readOnly
                       className="bg-muted"
                     />
-                    <span className="text-lg font-medium w-8">₮</span>
+                    <span className="text-lg font-medium w-8">{selectedCurrencyDetails?.symbol || '$'}</span>
                   </div>
                   <span className="text-xl">=</span>
                   <div className="flex-1 flex items-center gap-2">
@@ -573,8 +761,9 @@ export default function CurrencyPage() {
                       value={sellRate}
                       onChange={(e) => setSellRate(e.target.value)}
                       step="0.01"
+                      placeholder="3450.00"
                     />
-                    <span className="text-lg font-medium w-8">{selectedCurrencyDetails?.symbol || '$'}</span>
+                    <span className="text-sm font-medium">төгрөг</span>
                   </div>
                 </div>
               </div>
@@ -597,6 +786,11 @@ export default function CurrencyPage() {
       {/* History Modal */}
       <Dialog open={isHistoryModalOpen} onOpenChange={setIsHistoryModalOpen}>
         <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden">
+          <VisuallyHidden.Root>
+            <DialogHeader>
+              <DialogTitle>{t('currencyHistory')}</DialogTitle>
+            </DialogHeader>
+          </VisuallyHidden.Root>
           {/* Header */}
           <div className="bg-primary px-6 py-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-primary-foreground">{t('currencyHistory')}</h2>
@@ -622,25 +816,19 @@ export default function CurrencyPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50 hover:bg-muted/50">
-                        <TableHead className="font-medium"></TableHead>
                         <TableHead className="font-medium">{t('table.sellRate')}</TableHead>
                         <TableHead className="font-medium">{t('table.buyRate')}</TableHead>
-                        <TableHead className="font-medium">{t('table.startDate')}</TableHead>
-                        <TableHead className="font-medium">{t('table.endDate')}</TableHead>
-                        <TableHead className="font-medium">{t('table.admin')}</TableHead>
+                        <TableHead className="font-medium">{t('table.lastUpdated')}</TableHead>
+                        <TableHead className="font-medium">{t('table.updatedBy')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {historyData.map((history) => (
                         <TableRow key={history.id}>
-                          <TableCell>
-                            <span className="text-lg">{history.flagEmoji}</span>
-                          </TableCell>
-                          <TableCell>{history.currencyCode} {history.sellRate.toFixed(2)}</TableCell>
-                          <TableCell>{history.buyRate.toFixed(2)}</TableCell>
-                          <TableCell>{history.startDate}</TableCell>
-                          <TableCell>{history.endDate}</TableCell>
-                          <TableCell>{history.admin}</TableCell>
+                          <TableCell>{parseFloat(history.sell_rate).toFixed(2)}</TableCell>
+                          <TableCell>{parseFloat(history.buy_rate).toFixed(2)}</TableCell>
+                          <TableCell>{new Date(history.created_at).toLocaleString('mn-MN')}</TableCell>
+                          <TableCell>{history.created_by_name}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -649,6 +837,124 @@ export default function CurrencyPage() {
               </>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Currency Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Валютын ханш засах</DialogTitle>
+            <DialogDescription>
+              {editingCurrency?.currencyName} ({editingCurrency?.currencyCode}) валютын ханшийг шинэчлэх
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Buy Rate */}
+            <div className="space-y-2">
+              <Label>{t('form.buyRate')}</Label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value="1.00"
+                    readOnly
+                    className="bg-muted"
+                  />
+                  <span className="text-lg font-medium w-8">{editingCurrency?.symbol || '$'}</span>
+                </div>
+                <span className="text-xl">=</span>
+                <div className="flex-1 flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={editBuyRate}
+                    onChange={(e) => setEditBuyRate(e.target.value)}
+                    step="0.01"
+                    placeholder="3500.00"
+                  />
+                  <span className="text-sm font-medium">төгрөг</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Sell Rate */}
+            <div className="space-y-2">
+              <Label>{t('form.sellRate')}</Label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value="1.00"
+                    readOnly
+                    className="bg-muted"
+                  />
+                  <span className="text-lg font-medium w-8">{editingCurrency?.symbol || '$'}</span>
+                </div>
+                <span className="text-xl">=</span>
+                <div className="flex-1 flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={editSellRate}
+                    onChange={(e) => setEditSellRate(e.target.value)}
+                    step="0.01"
+                    placeholder="3450.00"
+                  />
+                  <span className="text-sm font-medium">төгрөг</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditModalOpen(false)}
+              disabled={isSaving}
+            >
+              {t('messages.cancel') || 'Болих'}
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={isSaving}
+            >
+              {isSaving && <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{t('messages.deleteTitle') || 'Валют устгах'}</DialogTitle>
+            <DialogDescription>
+              {t('messages.deleteConfirm', { name: `${currencyToDelete?.currencyName} (${currencyToDelete?.currencyCode})` }) || `"${currencyToDelete?.currencyName} (${currencyToDelete?.currencyCode})" валютыг устгахдаа итгэлтэй байна уу?`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isDeleting}
+            >
+              {t('messages.cancel') || 'Болих'}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteCurrency}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('messages.deleting') || 'Устгаж байна...'}
+                </>
+              ) : t('messages.delete') || 'Устгах'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

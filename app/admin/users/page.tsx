@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
@@ -10,12 +10,11 @@ import {
   IconSearch,
   IconLoader2,
   IconCheck,
-  IconX,
+  IconRefresh,
 } from '@tabler/icons-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
@@ -40,74 +39,45 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { USER_TYPES, USER_TYPE_NAMES } from '@/lib/userTypes';
 
-// Types
-interface User {
+// Types from API
+interface Employee {
   id: number;
+  hotel: number;
   name: string;
   position: string;
+  contact_number: string;
   email: string;
-  phone: string;
-  role: string;
-  registeredDate: string;
-  isActive: boolean;
+  user_type: number;
+  approved: boolean;
+  created_at: string;
 }
 
 type FilterType = 'all' | 'active' | 'inactive';
 
-// Mock data
-const mockUsers: User[] = [
-  {
-    id: 1,
-    name: 'Золзаяа',
-    position: 'менежер',
-    email: 'Szzoe1105@gmail.com',
-    phone: '99972626',
-    role: 'Manager',
-    registeredDate: '2024-04-01',
-    isActive: true,
-  },
-  {
-    id: 2,
-    name: 'Батжаргал',
-    position: 'Захирал',
-    email: 'jagaa@myhotels.mn',
-    phone: '99992626',
-    role: 'Owner',
-    registeredDate: '2024-04-01',
-    isActive: true,
-  },
-  {
-    id: 3,
-    name: 'Дорж',
-    position: 'Ресепшн',
-    email: 'dorj@myhotels.mn',
-    phone: '99992626',
-    role: 'Reception',
-    registeredDate: '2024-04-01',
-    isActive: false,
-  },
-];
-
+// Only Manager and Reception roles available - Owner is unique per property
 const userRoles = [
-  { value: 'owner', label: 'Owner' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'reception', label: 'Reception' },
-  { value: 'housekeeping', label: 'Housekeeping' },
-  { value: 'accountant', label: 'Accountant' },
+  { value: USER_TYPES.MANAGER.toString(), label: 'Manager' },
+  { value: USER_TYPES.RECEPTION.toString(), label: 'Reception' },
 ];
 
 export default function UsersPage() {
   const t = useTranslations('UserSettings');
   
+  // Loading state
+  const [isLoading, setIsLoading] = useState(true);
+  
   // State
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<Employee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
 
   // Modal states
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<Employee | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<Employee | null>(null);
 
   // Form states
   const [formName, setFormName] = useState('');
@@ -128,12 +98,35 @@ export default function UsersPage() {
   // Loading states
   const [isSaving, setIsSaving] = useState(false);
 
+  // Fetch employees from API
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/employees', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(Array.isArray(data) ? data : []);
+      } else {
+        toast.error('Хэрэглэгчдийг татахад алдаа гарлаа');
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Хэрэглэгчдийг татахад алдаа гарлаа');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
   // Filter users
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
-      // Filter by status
-      if (filterType === 'active' && !user.isActive) return false;
-      if (filterType === 'inactive' && user.isActive) return false;
+      // Filter by status (approved = active)
+      if (filterType === 'active' && !user.approved) return false;
+      if (filterType === 'inactive' && user.approved) return false;
 
       // Filter by search
       if (searchQuery) {
@@ -141,7 +134,7 @@ export default function UsersPage() {
         return (
           user.name.toLowerCase().includes(query) ||
           user.email.toLowerCase().includes(query) ||
-          user.phone.includes(query) ||
+          user.contact_number.includes(query) ||
           user.position.toLowerCase().includes(query)
         );
       }
@@ -165,25 +158,50 @@ export default function UsersPage() {
     validatePassword(value);
   };
 
-  // Toggle user status
-  const toggleUserStatus = (userId: number) => {
+  // Toggle user status (approved)
+  const toggleUserStatus = async (user: Employee) => {
+    // Optimistic update
     setUsers(prev =>
-      prev.map(user =>
-        user.id === userId ? { ...user, isActive: !user.isActive } : user
+      prev.map(u =>
+        u.id === user.id ? { ...u, approved: !u.approved } : u
       )
     );
-    toast.success('Хэрэглэгчийн төлөв өөрчлөгдлөө');
+
+    try {
+      const res = await fetch('/api/employees', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          id: user.id,
+          approved: !user.approved,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update status');
+      }
+      toast.success('Хэрэглэгчийн төлөв өөрчлөгдлөө');
+    } catch (error) {
+      // Revert on error
+      setUsers(prev =>
+        prev.map(u =>
+          u.id === user.id ? { ...u, approved: user.approved } : u
+        )
+      );
+      toast.error('Алдаа гарлаа');
+    }
   };
 
   // Open add/edit modal
-  const openModal = (user?: User) => {
+  const openModal = (user?: Employee) => {
     if (user) {
       setEditingUser(user);
       setFormName(user.name);
       setFormPosition(user.position);
       setFormEmail(user.email);
-      setFormPhone(user.phone);
-      setFormRole(user.role.toLowerCase());
+      setFormPhone(user.contact_number);
+      setFormRole(user.user_type.toString());
     } else {
       setEditingUser(null);
       resetForm();
@@ -232,71 +250,110 @@ export default function UsersPage() {
 
     setIsSaving(true);
     try {
-      // API call would go here
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const url = '/api/employees';
+      const method = editingUser ? 'PUT' : 'POST';
+      
+      const body: Record<string, unknown> = {
+        name: formName,
+        position: formPosition,
+        email: formEmail,
+        contact_number: formPhone,
+        user_type: parseInt(formRole),
+      };
 
       if (editingUser) {
-        // Update existing user
-        setUsers(prev =>
-          prev.map(user =>
-            user.id === editingUser.id
-              ? {
-                  ...user,
-                  name: formName,
-                  position: formPosition,
-                  email: formEmail,
-                  phone: formPhone,
-                  role: formRole.charAt(0).toUpperCase() + formRole.slice(1),
-                }
-              : user
-          )
-        );
-        toast.success('Хэрэглэгчийн мэдээлэл шинэчлэгдлээ');
+        body.id = editingUser.id;
       } else {
-        // Add new user
-        const newUser: User = {
-          id: users.length + 1,
-          name: formName,
-          position: formPosition,
-          email: formEmail,
-          phone: formPhone,
-          role: formRole.charAt(0).toUpperCase() + formRole.slice(1),
-          registeredDate: new Date().toISOString().split('T')[0],
-          isActive: true,
-        };
-        setUsers(prev => [...prev, newUser]);
-        toast.success('Хэрэглэгч амжилттай нэмэгдлээ');
+        body.password = formPassword;
       }
 
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save');
+      }
+
+      toast.success(editingUser ? 'Хэрэглэгчийн мэдээлэл шинэчлэгдлээ' : 'Хэрэглэгч амжилттай нэмэгдлээ');
       setIsAddUserModalOpen(false);
       resetForm();
+      fetchUsers(); // Refresh data
     } catch (error) {
-      toast.error('Алдаа гарлаа');
+      toast.error(error instanceof Error ? error.message : 'Алдаа гарлаа');
     } finally {
       setIsSaving(false);
     }
   };
 
+  // Open delete confirmation
+  const openDeleteModal = (user: Employee) => {
+    setUserToDelete(user);
+    setIsDeleteModalOpen(true);
+  };
+
   // Handle delete user
-  const handleDeleteUser = (userId: number) => {
-    if (confirm('Энэ хэрэглэгчийг устгахдаа итгэлтэй байна уу?')) {
-      setUsers(prev => prev.filter(user => user.id !== userId));
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/employees?id=${userToDelete.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete');
+      }
+
       toast.success('Хэрэглэгч устгагдлаа');
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+      fetchUsers(); // Refresh data
+    } catch (error) {
+      toast.error('Устгахад алдаа гарлаа');
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <IconLoader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Уншиж байна...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
-        <Button
-          onClick={() => openModal()}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          <IconPlus className="mr-2 h-4 w-4" />
-          {t('addUser')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={fetchUsers}
+            title="Шинэчлэх"
+          >
+            <IconRefresh className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={() => openModal()}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <IconPlus className="mr-2 h-4 w-4" />
+            {t('addUser')}
+          </Button>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -375,13 +432,13 @@ export default function UsersPage() {
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.position}</TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.phone}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>{user.registeredDate}</TableCell>
+                    <TableCell>{user.contact_number}</TableCell>
+                    <TableCell>{USER_TYPE_NAMES[user.user_type] || 'Unknown'}</TableCell>
+                    <TableCell>{new Date(user.created_at).toLocaleDateString('mn-MN')}</TableCell>
                     <TableCell>
                       <Switch
-                        checked={user.isActive}
-                        onCheckedChange={() => toggleUserStatus(user.id)}
+                        checked={user.approved}
+                        onCheckedChange={() => toggleUserStatus(user)}
                         className="data-[state=checked]:bg-green-500"
                       />
                     </TableCell>
@@ -399,7 +456,7 @@ export default function UsersPage() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteUser(user.id)}
+                          onClick={() => openDeleteModal(user)}
                         >
                           <IconTrash className="h-4 w-4" />
                         </Button>
@@ -550,6 +607,28 @@ export default function UsersPage() {
             >
               {isSaving && <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Хэрэглэгч устгах</DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground">
+            &quot;{userToDelete?.name}&quot; хэрэглэгчийг устгахдаа итгэлтэй байна уу?
+            Энэ үйлдлийг буцаах боломжгүй.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+              Цуцлах
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser} disabled={isSaving}>
+              {isSaving && <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Устгах
             </Button>
           </DialogFooter>
         </DialogContent>

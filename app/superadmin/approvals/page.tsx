@@ -178,9 +178,9 @@ export default function ApprovalsPage() {
       }
 
       const results = await Promise.all(promises);
-      const allSuccessful = results.every((r) => r.ok);
+      const failedResponses = results.filter((r) => !r.ok);
 
-      if (allSuccessful) {
+      if (failedResponses.length === 0) {
         toast.success(
           action
             ? type === 'both'
@@ -192,11 +192,15 @@ export default function ApprovalsPage() {
         );
         fetchData();
       } else {
-        throw new Error('Some approvals failed');
+        // Extract error message from failed response
+        const errorData = await failedResponses[0].json().catch(() => null);
+        const errorMessage = errorData?.error || errorData?.message || errorData?.detail || 'Зөвшөөрөл амжилтгүй боллоо';
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error approving:', error);
-      toast.error('Алдаа гарлаа');
+      const errorMessage = error instanceof Error ? error.message : 'Алдаа гарлаа';
+      toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
       setConfirmDialog({ isOpen: false, type: 'both', approval: null, action: true });

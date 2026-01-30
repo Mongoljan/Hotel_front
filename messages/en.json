@@ -873,6 +873,8 @@
       "category": "Category",
       "categoryPlaceholder": "Select",
       "isCountable": "Is Countable",
+      "yes": "Yes",
+      "no": "No",
       "quantity": "Quantity",
       "productCode": "Product Code"
     },
@@ -890,7 +892,8 @@
       "serviceCreated": "Service created",
       "serviceUpdated": "Service updated",
       "serviceDeleted": "Service deleted",
-      "error": "An error occurred"
+      "error": "An error occurred",
+      "createTypeFirst": "Please create a service type first"
     }
   },
   "Currency": {
@@ -977,9 +980,18 @@
     },
     "messages": {
       "currencyAdded": "Currency added successfully",
-      "currencyUpdated": "Currency updated",
+      "currencyUpdated": "Currency rate updated successfully",
+      "currencyDeleted": "Currency deleted successfully",
       "fillAllFields": "Please fill all fields",
-      "error": "An error occurred"
+      "error": "An error occurred",
+      "deleteError": "Error deleting currency",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "deleteTitle": "Delete Currency",
+      "deleteConfirm": "Are you sure you want to delete this currency?",
+      "paymentEnabled": "Payment method enabled",
+      "paymentDisabled": "Payment method disabled"
     }
   },
   "UserSettings": {

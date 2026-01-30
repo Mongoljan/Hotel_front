@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -11,12 +11,12 @@ import {
   IconEdit, 
   IconTrash,
   IconDotsVertical,
-  IconLoader2
+  IconLoader2,
+  IconRefresh
 } from '@tabler/icons-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -38,56 +38,46 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 // Types for the API data structure
 interface ServiceType {
   id: number;
   name: string;
-  property?: number;
+  created_at?: string;
 }
 
 interface Service {
   id: number;
   name: string;
-  price: number;
-  category_id: number;
-  category_name?: string;
+  price: number | string;
+  service_type: number;
+  category?: string;
   is_countable: boolean;
-  quantity?: number;
-  product_code?: string;
+  barcode?: string;
+  created_at?: string;
 }
-
-// Mock data for development - will be replaced by API
-const mockServiceTypes: ServiceType[] = [
-  { id: 1, name: 'Ресторан' },
-  { id: 2, name: 'Цэвэрлэгээ' },
-  { id: 3, name: 'Бусад' },
-];
-
-const mockServices: Service[] = [
-  { id: 1, name: 'Өглөөний цай', price: 15000, category_id: 1, is_countable: false },
-  { id: 2, name: 'Өглөөний цай', price: 15000, category_id: 1, is_countable: false },
-  { id: 3, name: 'Өглөөний цай', price: 15000, category_id: 1, is_countable: true, quantity: 5 },
-  { id: 4, name: 'Өглөөний цай', price: 15000, category_id: 1, is_countable: false },
-  { id: 5, name: 'Өглөөний цай', price: 15000, category_id: 1, is_countable: false },
-  { id: 6, name: 'Өглөөний цай', price: 15000, category_id: 1, is_countable: false },
-];
 
 export default function AdditionalServicesPage() {
   const { user } = useAuth();
   const t = useTranslations('AdditionalServices');
   
   // State for service types
-  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>(mockServiceTypes);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
   
   // State for services
-  const [services, setServices] = useState<Service[]>(mockServices);
+  const [services, setServices] = useState<Service[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Loading states
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
   // Modal states
@@ -104,10 +94,48 @@ export default function AdditionalServicesPage() {
   const [servicePrice, setServicePrice] = useState('');
   const [serviceCategoryId, setServiceCategoryId] = useState<string>('');
   const [serviceIsCountable, setServiceIsCountable] = useState(false);
-  const [serviceQuantity, setServiceQuantity] = useState('');
-  const [serviceProductCode, setServiceProductCode] = useState('');
+  const [serviceBarcode, setServiceBarcode] = useState('');
+  const [serviceCategory, setServiceCategory] = useState('');
 
-  // Set initial selected type
+  // Fetch service types and services from API
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [typesRes, servicesRes] = await Promise.all([
+        fetch('/api/service-types', { credentials: 'include' }),
+        fetch('/api/services', { credentials: 'include' }),
+      ]);
+
+      if (!typesRes.ok) {
+        const errorData = await typesRes.json().catch(() => ({}));
+        console.error('Service types error:', typesRes.status, errorData);
+        throw new Error(errorData.error || 'Failed to fetch service types');
+      }
+      if (!servicesRes.ok) {
+        const errorData = await servicesRes.json().catch(() => ({}));
+        console.error('Services error:', servicesRes.status, errorData);
+        throw new Error(errorData.error || 'Failed to fetch services');
+      }
+
+      const typesData = await typesRes.json();
+      const servicesData = await servicesRes.json();
+
+      setServiceTypes(Array.isArray(typesData) ? typesData : []);
+      setServices(Array.isArray(servicesData) ? servicesData : []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error(t('messages.error'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [t]);
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Set initial selected type when types are loaded
   useEffect(() => {
     if (serviceTypes.length > 0 && selectedTypeId === null) {
       setSelectedTypeId(serviceTypes[0].id);
@@ -117,7 +145,7 @@ export default function AdditionalServicesPage() {
   // Filter services by selected type and search query
   const filteredServices = useMemo(() => {
     return services.filter((service) => {
-      const matchesType = selectedTypeId === null || service.category_id === selectedTypeId;
+      const matchesType = selectedTypeId === null || service.service_type === selectedTypeId;
       const matchesSearch = searchQuery === '' || 
         service.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesType && matchesSearch;
@@ -157,26 +185,33 @@ export default function AdditionalServicesPage() {
     setIsSaving(true);
     
     try {
-      // TODO: Replace with actual API call
-      // const res = await fetch('/api/service-types', {
-      //   method: editingType ? 'PUT' : 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ id: editingType?.id, name: typeName, property: user?.hotel })
-      // });
-
       if (editingType) {
         // Update existing type
+        const res = await fetch('/api/service-types', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ id: editingType.id, name: typeName })
+        });
+
+        if (!res.ok) throw new Error('Failed to update service type');
+
         setServiceTypes(prev => prev.map(t => 
           t.id === editingType.id ? { ...t, name: typeName } : t
         ));
         toast.success(t('messages.typeUpdated'));
       } else {
         // Create new type
-        const newType: ServiceType = {
-          id: Date.now(), // Temporary ID for mock
-          name: typeName,
-          property: user?.hotel ? parseInt(user.hotel) : undefined,
-        };
+        const res = await fetch('/api/service-types', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ name: typeName })
+        });
+
+        if (!res.ok) throw new Error('Failed to create service type');
+
+        const newType = await res.json();
         setServiceTypes(prev => [...prev, newType]);
         toast.success(t('messages.typeCreated'));
       }
@@ -191,15 +226,26 @@ export default function AdditionalServicesPage() {
   };
 
   const handleDeleteType = async (typeId: number) => {
-    // TODO: Replace with actual API call
-    setServiceTypes(prev => prev.filter(t => t.id !== typeId));
-    // Also remove services under this type
-    setServices(prev => prev.filter(s => s.category_id !== typeId));
-    
-    if (selectedTypeId === typeId) {
-      setSelectedTypeId(serviceTypes[0]?.id || null);
+    try {
+      const res = await fetch(`/api/service-types?id=${typeId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!res.ok) throw new Error('Failed to delete service type');
+
+      setServiceTypes(prev => prev.filter(t => t.id !== typeId));
+      // Also remove services under this type from local state
+      setServices(prev => prev.filter(s => s.service_type !== typeId));
+      
+      if (selectedTypeId === typeId) {
+        setSelectedTypeId(serviceTypes[0]?.id || null);
+      }
+      toast.success(t('messages.typeDeleted'));
+    } catch (error) {
+      console.error('Error deleting service type:', error);
+      toast.error(t('messages.error'));
     }
-    toast.success(t('messages.typeDeleted'));
   };
 
   // Service Modal handlers
@@ -207,19 +253,19 @@ export default function AdditionalServicesPage() {
     if (service) {
       setEditingService(service);
       setServiceName(service.name);
-      setServicePrice(service.price.toString());
-      setServiceCategoryId(service.category_id.toString());
+      setServicePrice(typeof service.price === 'string' ? service.price : service.price.toString());
+      setServiceCategoryId(service.service_type.toString());
       setServiceIsCountable(service.is_countable);
-      setServiceQuantity(service.quantity?.toString() || '');
-      setServiceProductCode(service.product_code || '');
+      setServiceBarcode(service.barcode || '');
+      setServiceCategory(service.category || '');
     } else {
       setEditingService(null);
       setServiceName('');
       setServicePrice('');
       setServiceCategoryId(selectedTypeId?.toString() || '');
       setServiceIsCountable(false);
-      setServiceQuantity('');
-      setServiceProductCode('');
+      setServiceBarcode('');
+      setServiceCategory('');
     }
     setIsServiceModalOpen(true);
   };
@@ -231,8 +277,8 @@ export default function AdditionalServicesPage() {
     setServicePrice('');
     setServiceCategoryId('');
     setServiceIsCountable(false);
-    setServiceQuantity('');
-    setServiceProductCode('');
+    setServiceBarcode('');
+    setServiceCategory('');
   };
 
   const handleSaveService = async () => {
@@ -244,28 +290,43 @@ export default function AdditionalServicesPage() {
     setIsSaving(true);
     
     try {
-      // TODO: Replace with actual API call
       const serviceData = {
+        service_type: parseInt(serviceCategoryId),
         name: serviceName,
         price: parseFloat(servicePrice) || 0,
-        category_id: parseInt(serviceCategoryId),
+        category: serviceCategory || undefined,
         is_countable: serviceIsCountable,
-        quantity: serviceIsCountable ? parseInt(serviceQuantity) || undefined : undefined,
-        product_code: serviceProductCode || undefined,
+        barcode: serviceBarcode || undefined,
       };
 
       if (editingService) {
         // Update existing service
+        const res = await fetch('/api/services', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ id: editingService.id, ...serviceData })
+        });
+
+        if (!res.ok) throw new Error('Failed to update service');
+
+        const updatedService = await res.json();
         setServices(prev => prev.map(s => 
-          s.id === editingService.id ? { ...s, ...serviceData } : s
+          s.id === editingService.id ? { ...s, ...updatedService } : s
         ));
         toast.success(t('messages.serviceUpdated'));
       } else {
         // Create new service
-        const newService: Service = {
-          id: Date.now(), // Temporary ID for mock
-          ...serviceData,
-        };
+        const res = await fetch('/api/services', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(serviceData)
+        });
+
+        if (!res.ok) throw new Error('Failed to create service');
+
+        const newService = await res.json();
         setServices(prev => [...prev, newService]);
         toast.success(t('messages.serviceCreated'));
       }
@@ -280,21 +341,52 @@ export default function AdditionalServicesPage() {
   };
 
   const handleDeleteService = async (serviceId: number) => {
-    // TODO: Replace with actual API call
-    setServices(prev => prev.filter(s => s.id !== serviceId));
-    toast.success(t('messages.serviceDeleted'));
+    try {
+      const res = await fetch(`/api/services?id=${serviceId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!res.ok) throw new Error('Failed to delete service');
+
+      setServices(prev => prev.filter(s => s.id !== serviceId));
+      toast.success(t('messages.serviceDeleted'));
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      toast.error(t('messages.error'));
+    }
   };
 
   // Format price with currency
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('mn-MN').format(price) + '₮';
+  const formatPrice = (price: number | string) => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    return new Intl.NumberFormat('mn-MN').format(numPrice) + '₮';
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <IconLoader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">{t('title')}...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchData}
+          disabled={isLoading}
+        >
+          <IconRefresh className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+          Refresh
+        </Button>
       </div>
 
       {/* Main Content */}
@@ -362,15 +454,29 @@ export default function AdditionalServicesPage() {
           <CardContent className="p-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-foreground">{selectedTypeName}</h2>
+              <h2 className="text-lg font-semibold text-foreground">{selectedTypeName || t('title')}</h2>
               <div className="flex items-center gap-3">
-                <Button
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={() => openServiceModal()}
-                >
-                  <IconPlus className="mr-2 h-4 w-4" />
-                  {t('addService')}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() => openServiceModal()}
+                          disabled={serviceTypes.length === 0}
+                        >
+                          <IconPlus className="mr-2 h-4 w-4" />
+                          {t('addService')}
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {serviceTypes.length === 0 && (
+                      <TooltipContent>
+                        <p>{t('messages.createTypeFirst')}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
                 {/* Search */}
                 <div className="relative">
                   <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -399,14 +505,27 @@ export default function AdditionalServicesPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <p className="text-sm">{t('noServices')}</p>
-                <Button
-                  variant="link"
-                  className="mt-2"
-                  onClick={() => openServiceModal()}
-                >
-                  {t('addNewService')}
-                </Button>
+                <p className="text-sm">
+                  {serviceTypes.length === 0 ? t('messages.createTypeFirst') : t('noServices')}
+                </p>
+                {serviceTypes.length > 0 && (
+                  <Button
+                    variant="link"
+                    className="mt-2"
+                    onClick={() => openServiceModal()}
+                  >
+                    {t('addNewService')}
+                  </Button>
+                )}
+                {serviceTypes.length === 0 && (
+                  <Button
+                    variant="link"
+                    className="mt-2"
+                    onClick={() => openTypeModal()}
+                  >
+                    {t('addServiceType')}
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
@@ -469,14 +588,17 @@ export default function AdditionalServicesPage() {
             <div className="space-y-2">
               <Label>{t('serviceModal.price')}</Label>
               <Input
-                type="number"
-                placeholder=""
-                value={servicePrice}
-                onChange={(e) => setServicePrice(e.target.value)}
+                type="text"
+                placeholder="0"
+                value={servicePrice ? Number(servicePrice.replace(/,/g, '')).toLocaleString('en-US') : ''}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/,/g, '').replace(/[^0-9]/g, '');
+                  setServicePrice(value);
+                }}
               />
             </div>
 
-            {/* Category */}
+            {/* Service Type (Category) */}
             <div className="space-y-2">
               <Label>{t('serviceModal.category')}</Label>
               <Select
@@ -496,38 +618,44 @@ export default function AdditionalServicesPage() {
               </Select>
             </div>
 
-            {/* Countable Checkbox */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  id="countable"
-                  checked={serviceIsCountable}
-                  onCheckedChange={(checked) => setServiceIsCountable(checked === true)}
-                  className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-                />
-                <Label htmlFor="countable" className="cursor-pointer">
-                  {t('serviceModal.isCountable')}
-                </Label>
+            {/* Countable - Yes/No Buttons */}
+            <div className="space-y-2">
+              <Label>{t('serviceModal.isCountable')}</Label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setServiceIsCountable(true)}
+                  className={cn(
+                    "px-6 py-2 rounded-md text-sm font-medium transition-all border",
+                    serviceIsCountable
+                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  {t('serviceModal.yes')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setServiceIsCountable(false)}
+                  className={cn(
+                    "px-6 py-2 rounded-md text-sm font-medium transition-all border",
+                    !serviceIsCountable
+                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  {t('serviceModal.no')}
+                </button>
               </div>
-              
-              {/* Quantity Field - shown when countable is checked */}
-              {serviceIsCountable && (
-                <Input
-                  type="number"
-                  placeholder={t('serviceModal.quantity')}
-                  value={serviceQuantity}
-                  onChange={(e) => setServiceQuantity(e.target.value)}
-                />
-              )}
             </div>
 
-            {/* Product Code */}
+            {/* Barcode / Product Code */}
             <div className="space-y-2">
               <Label>{t('serviceModal.productCode')}</Label>
               <Input
                 placeholder=""
-                value={serviceProductCode}
-                onChange={(e) => setServiceProductCode(e.target.value)}
+                value={serviceBarcode}
+                onChange={(e) => setServiceBarcode(e.target.value)}
               />
             </div>
           </div>
@@ -553,7 +681,7 @@ interface ServiceCardProps {
   service: Service;
   onEdit: () => void;
   onDelete: () => void;
-  formatPrice: (price: number) => string;
+  formatPrice: (price: number | string) => string;
 }
 
 function ServiceCard({ service, onEdit, onDelete, formatPrice }: ServiceCardProps) {
@@ -562,6 +690,9 @@ function ServiceCard({ service, onEdit, onDelete, formatPrice }: ServiceCardProp
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-medium text-foreground truncate">{service.name}</h3>
         <p className="text-sm text-muted-foreground mt-0.5">{formatPrice(service.price)}</p>
+        {service.barcode && (
+          <p className="text-xs text-muted-foreground mt-1">Code: {service.barcode}</p>
+        )}
       </div>
       
       <div className="flex items-center gap-1 ml-2">

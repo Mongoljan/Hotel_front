@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DatePickerWithValue } from '@/components/ui/date-picker';
 import {
   Table,
   TableBody,
@@ -56,67 +57,70 @@ import {
   IconMapPin,
   IconEdit,
   IconEye,
+  IconTrash,
 } from '@tabler/icons-react';
 
 type FormFields = z.infer<typeof schemaContractOrganization>;
 
-interface ContractOrganization extends FormFields {
+// API response structure
+interface PartnerOrganization {
   id: number;
-  created_at: string;
-  status: 'active' | 'inactive' | 'expired';
+  name: string;
+  register_no: string;
+  org_type: string;
+  discount_percent: number;
+  promo: string;
+  contact_name: string;
+  contact_phone: string;
+  contact_email: string;
+  finance1_name: string;
+  finance1_phone: string;
+  finance1_email: string;
+  finance2_name: string;
+  finance2_phone: string;
+  finance2_email: string;
+  address: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  created_at?: string;
 }
 
-// Mock data - будут заменены на API
-const mockOrganizations: ContractOrganization[] = [
-  {
-    id: 1,
-    organization_name: 'Маа Хотелс XXX',
-    registration_number: '1234567',
-    organization_type: 'Гэрээт',
-    discount_percent: '20',
-    promo_code: 'HOTEL20',
-    validity_start: '2025-07-15',
-    validity_end: '2025-12-31',
-    contact_person_name: 'Батжаргал',
-    contact_person_email: 'jagaa@myhotels.mn',
-    contact_person_phone: '99992626',
-    financial_person_name: '',
-    financial_person_email: '',
-    financial_person_phone: '',
-    address: '',
-    notes: '',
-    created_at: '2025-07-15T10:00:00Z',
-    status: 'active',
-  },
-  {
-    id: 2,
-    organization_name: 'Эм-Си-Эс XXX',
-    registration_number: '1234567',
-    organization_type: 'Харилцагч',
-    discount_percent: '30',
-    promo_code: '',
-    validity_start: '2025-07-15',
-    validity_end: '2025-12-31',
-    contact_person_name: 'Зол',
-    contact_person_email: 'szzoe1105@gmail.com',
-    contact_person_phone: '99972626',
-    financial_person_name: '',
-    financial_person_email: '',
-    financial_person_phone: '',
-    address: '',
-    notes: '',
-    created_at: '2025-07-15T10:00:00Z',
-    status: 'active',
-  },
-];
-
 export default function ContractOrganizationsPage() {
-  const [organizations, setOrganizations] = useState<ContractOrganization[]>(mockOrganizations);
-  const [isLoading, setIsLoading] = useState(false);
+  const [organizations, setOrganizations] = useState<PartnerOrganization[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingOrg, setEditingOrg] = useState<ContractOrganization | null>(null);
+  const [editingOrg, setEditingOrg] = useState<PartnerOrganization | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive'>('all');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [orgToDelete, setOrgToDelete] = useState<PartnerOrganization | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Fetch organizations from API
+  const fetchOrganizations = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/partner-organizations', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setOrganizations(Array.isArray(data) ? data : []);
+      } else {
+        toast.error('Байгууллагуудыг татахад алдаа гарлаа');
+      }
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
+      toast.error('Байгууллагуудыг татахад алдаа гарлаа');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, [fetchOrganizations]);
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaContractOrganization),
@@ -143,27 +147,83 @@ export default function ContractOrganizationsPage() {
   });
 
   const onSubmit = async (data: FormFields) => {
+    setIsSaving(true);
     try {
-      // TODO: API integration here
-      console.log('Form data:', data);
-      
-      if (editingOrg) {
-        toast.success('Байгууллага амжилттай шинэчлэгдлээ');
+      // Transform form data to API structure
+      const apiData = {
+        name: data.organization_name,
+        register_no: data.registration_number,
+        org_type: data.organization_type,
+        discount_percent: parseFloat(data.discount_percent) || 0,
+        promo: data.promo_code || '',
+        contact_name: data.contact_person_name,
+        contact_phone: data.contact_person_phone,
+        contact_email: data.contact_person_email,
+        finance1_name: data.financial_person_name || '',
+        finance1_phone: data.financial_person_phone || '',
+        finance1_email: data.financial_person_email || '',
+        finance2_name: data.accountant_person_name || '',
+        finance2_phone: data.accountant_person_phone || '',
+        finance2_email: data.accountant_person_email || '',
+        address: data.address || '',
+        description: data.notes || '',
+        start_date: data.validity_start,
+        end_date: data.validity_end,
+        is_active: true,
+      };
+
+      const url = '/api/partner-organizations';
+      const method = editingOrg ? 'PUT' : 'POST';
+      const body = editingOrg ? { id: editingOrg.id, ...apiData } : apiData;
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        toast.success(editingOrg ? 'Байгууллага амжилттай шинэчлэгдлээ' : 'Байгууллага амжилттай бүртгэгдлээ');
+        setIsDialogOpen(false);
+        form.reset();
+        setEditingOrg(null);
+        fetchOrganizations();
       } else {
-        toast.success('Байгууллага амжилттай бүртгэгдлээ');
+        const errorData = await res.json();
+        toast.error(errorData.error || 'Алдаа гарлаа');
       }
-      
-      setIsDialogOpen(false);
-      form.reset();
-      setEditingOrg(null);
     } catch (error) {
+      console.error('Error saving organization:', error);
       toast.error('Алдаа гарлаа');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleEdit = (org: ContractOrganization) => {
+  const handleEdit = (org: PartnerOrganization) => {
     setEditingOrg(org);
-    form.reset(org);
+    // Map API fields to form fields
+    form.reset({
+      organization_name: org.name,
+      registration_number: org.register_no,
+      organization_type: org.org_type,
+      discount_percent: org.discount_percent?.toString() || '',
+      promo_code: org.promo || '',
+      validity_start: org.start_date || '',
+      validity_end: org.end_date || '',
+      contact_person_name: org.contact_name || '',
+      contact_person_email: org.contact_email || '',
+      contact_person_phone: org.contact_phone || '',
+      financial_person_name: org.finance1_name || '',
+      financial_person_email: org.finance1_email || '',
+      financial_person_phone: org.finance1_phone || '',
+      accountant_person_name: org.finance2_name || '',
+      accountant_person_email: org.finance2_email || '',
+      accountant_person_phone: org.finance2_phone || '',
+      address: org.address || '',
+      notes: org.description || '',
+    });
     setIsDialogOpen(true);
   };
 
@@ -173,17 +233,57 @@ export default function ContractOrganizationsPage() {
     setIsDialogOpen(true);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-green-500">Идэвхтэй</Badge>;
-      case 'inactive':
-        return <Badge variant="secondary">Идэвхгүй</Badge>;
-      case 'expired':
-        return <Badge variant="destructive">Дууссан</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  const handleDelete = (org: PartnerOrganization) => {
+    setOrgToDelete(org);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!orgToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/partner-organizations?id=${orgToDelete.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        toast.success('Байгууллага амжилттай устгагдлаа');
+        fetchOrganizations();
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.error || 'Устгахад алдаа гарлаа');
+      }
+    } catch (error) {
+      console.error('Error deleting organization:', error);
+      toast.error('Устгахад алдаа гарлаа');
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setOrgToDelete(null);
     }
+  };
+
+  const getStatusBadge = (org: PartnerOrganization) => {
+    const now = new Date();
+    const endDate = org.end_date ? new Date(org.end_date) : null;
+    const isExpired = endDate && endDate < now;
+
+    if (isExpired) {
+      return <Badge variant="destructive">Дууссан</Badge>;
+    }
+    if (org.is_active) {
+      return <Badge className="bg-green-500">Идэвхтэй</Badge>;
+    }
+    return <Badge variant="secondary">Идэвхгүй</Badge>;
+  };
+
+  const getOrgStatus = (org: PartnerOrganization): 'active' | 'inactive' | 'expired' => {
+    const now = new Date();
+    const endDate = org.end_date ? new Date(org.end_date) : null;
+    if (endDate && endDate < now) return 'expired';
+    return org.is_active ? 'active' : 'inactive';
   };
 
   const formatDate = (dateString: string) => {
@@ -196,14 +296,15 @@ export default function ContractOrganizationsPage() {
 
   const filteredOrganizations = organizations.filter((org) => {
     const matchesSearch =
-      org.organization_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      org.registration_number.includes(searchQuery) ||
-      org.contact_person_email.toLowerCase().includes(searchQuery.toLowerCase());
+      org.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      org.register_no?.includes(searchQuery) ||
+      org.contact_email?.toLowerCase().includes(searchQuery.toLowerCase());
 
+    const status = getOrgStatus(org);
     const matchesTab =
       activeTab === 'all' ||
-      (activeTab === 'active' && org.status === 'active') ||
-      (activeTab === 'inactive' && org.status !== 'active');
+      (activeTab === 'active' && status === 'active') ||
+      (activeTab === 'inactive' && status !== 'active');
 
     return matchesSearch && matchesTab;
   });
@@ -290,10 +391,10 @@ export default function ContractOrganizationsPage() {
                     <div className="grid grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="validity_start">Эхлэх огноо *</Label>
-                        <Input
-                          id="validity_start"
-                          type="date"
-                          {...form.register('validity_start')}
+                        <DatePickerWithValue
+                          value={form.watch('validity_start')}
+                          onChange={(value) => form.setValue('validity_start', value)}
+                          placeholder="Эхлэх огноо сонгох"
                         />
                         {form.formState.errors.validity_start && (
                           <p className="text-sm text-red-500 mt-1">
@@ -303,10 +404,10 @@ export default function ContractOrganizationsPage() {
                       </div>
                       <div>
                         <Label htmlFor="validity_end">Дуусах огноо *</Label>
-                        <Input
-                          id="validity_end"
-                          type="date"
-                          {...form.register('validity_end')}
+                        <DatePickerWithValue
+                          value={form.watch('validity_end')}
+                          onChange={(value) => form.setValue('validity_end', value)}
+                          placeholder="Дуусах огноо сонгох"
                         />
                         {form.formState.errors.validity_end && (
                           <p className="text-sm text-red-500 mt-1">
@@ -494,11 +595,17 @@ export default function ContractOrganizationsPage() {
                       form.reset();
                       setEditingOrg(null);
                     }}
+                    disabled={isSaving}
                   >
                     Болих
                   </Button>
-                  <Button type="submit">
-                    {editingOrg ? 'Шинэчлэх' : 'Хадгалах'}
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Хадгалж байна...
+                      </>
+                    ) : editingOrg ? 'Шинэчлэх' : 'Хадгалах'}
                   </Button>
                 </DialogFooter>
               </form>
@@ -565,23 +672,45 @@ export default function ContractOrganizationsPage() {
                     <TableHead className="text-center">Утасны дугаар</TableHead>
                     <TableHead className="text-center">И-мэйл хаяг</TableHead>
                     <TableHead className="text-center">Хүчинтэй хугацаа</TableHead>
+                    <TableHead className="text-center">Үйлдэл</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredOrganizations.map((org, index) => (
-                    <TableRow key={org.id}>
+                    <TableRow key={org.id} className="hover:bg-muted/50">
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell>{org.organization_name}</TableCell>
+                      <TableCell>{org.name}</TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="outline">{org.organization_type}</Badge>
+                        <Badge variant="outline">{org.org_type}</Badge>
                       </TableCell>
-                      <TableCell className="text-center">{org.registration_number}</TableCell>
+                      <TableCell className="text-center">{org.register_no}</TableCell>
                       <TableCell className="text-center">{org.discount_percent}%</TableCell>
-                      <TableCell className="text-center">{org.contact_person_name}</TableCell>
-                      <TableCell className="text-center">{org.contact_person_phone}</TableCell>
-                      <TableCell className="text-center">{org.contact_person_email}</TableCell>
+                      <TableCell className="text-center">{org.contact_name}</TableCell>
+                      <TableCell className="text-center">{org.contact_phone}</TableCell>
+                      <TableCell className="text-center">{org.contact_email}</TableCell>
                       <TableCell className="text-center">
-                        {formatDate(org.validity_start)} - {formatDate(org.validity_end)}
+                        {org.start_date && org.end_date ? `${formatDate(org.start_date)} - ${formatDate(org.end_date)}` : '-'}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(org)}
+                            title="Засах"
+                          >
+                            <IconEdit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(org)}
+                            title="Устгах"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <IconTrash className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -591,6 +720,39 @@ export default function ContractOrganizationsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Байгууллага устгах</DialogTitle>
+            <DialogDescription>
+              "{orgToDelete?.name}" байгууллагыг устгахдаа итгэлтэй байна уу? Энэ үйлдлийг буцаах боломжгүй.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Болих
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Устгаж байна...
+                </>
+              ) : 'Устгах'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
