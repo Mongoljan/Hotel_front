@@ -353,7 +353,7 @@ export default function ContractOrganizationsPage() {
                         <Input
                           id="registration_number"
                           {...form.register('registration_number')}
-                          placeholder="1234567"
+                          placeholder="Регистрийн дугаар оруулах"
                         />
                         {form.formState.errors.registration_number && (
                           <p className="text-sm text-red-500 mt-1">
@@ -421,7 +421,7 @@ export default function ContractOrganizationsPage() {
                           id="discount_percent"
                           type="number"
                           step="0.01"
-                          placeholder="20.00"
+                          placeholder="0.00"
                           {...form.register('discount_percent')}
                         />
                         {form.formState.errors.discount_percent && (
@@ -435,7 +435,7 @@ export default function ContractOrganizationsPage() {
                         <Input
                           id="promo_code"
                           {...form.register('promo_code')}
-                          placeholder="SUMMER2026"
+                          placeholder="Промо код оруулах"
                         />
                       </div>
                     </div>
@@ -450,7 +450,7 @@ export default function ContractOrganizationsPage() {
                         <Input
                           id="contact_person_name"
                           {...form.register('contact_person_name')}
-                          placeholder="Батжаргал - Менежер"
+                          placeholder="Нэр, албан тушаал оруулах"
                         />
                         {form.formState.errors.contact_person_name && (
                           <p className="text-sm text-red-500 mt-1">
@@ -464,7 +464,7 @@ export default function ContractOrganizationsPage() {
                           id="contact_person_email"
                           type="email"
                           {...form.register('contact_person_email')}
-                          placeholder="contact@company.mn"
+                          placeholder="И-мэйл хаяг оруулах"
                         />
                         {form.formState.errors.contact_person_email && (
                           <p className="text-sm text-red-500 mt-1">
@@ -477,7 +477,7 @@ export default function ContractOrganizationsPage() {
                         <Input
                           id="contact_person_phone"
                           {...form.register('contact_person_phone')}
-                          placeholder="99001234"
+                          placeholder="Утасны дугаар оруулах"
                         />
                         {form.formState.errors.contact_person_phone && (
                           <p className="text-sm text-red-500 mt-1">
@@ -506,7 +506,7 @@ export default function ContractOrganizationsPage() {
                           id="financial_person_email"
                           type="email"
                           {...form.register('financial_person_email')}
-                          placeholder="finance@company.mn"
+                          placeholder="И-мэйл хаяг оруулах"
                         />
                         {form.formState.errors.financial_person_email && (
                           <p className="text-sm text-red-500 mt-1">
@@ -519,7 +519,7 @@ export default function ContractOrganizationsPage() {
                         <Input
                           id="financial_person_phone"
                           {...form.register('financial_person_phone')}
-                          placeholder="99001234"
+                          placeholder="Утасны дугаар оруулах"
                         />
                       </div>
                     </div>
@@ -543,7 +543,7 @@ export default function ContractOrganizationsPage() {
                           id="accountant_person_email"
                           type="email"
                           {...form.register('accountant_person_email')}
-                          placeholder="accountant@company.mn"
+                          placeholder="И-мэйл хаяг оруулах"
                         />
                         {form.formState.errors.accountant_person_email && (
                           <p className="text-sm text-red-500 mt-1">
@@ -556,7 +556,7 @@ export default function ContractOrganizationsPage() {
                         <Input
                           id="accountant_person_phone"
                           {...form.register('accountant_person_phone')}
-                          placeholder="99001234"
+                          placeholder="Утасны дугаар оруулах"
                         />
                       </div>
                     </div>

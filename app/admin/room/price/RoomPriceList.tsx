@@ -541,7 +541,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                   id="base-price"
                   value={form.base_price}
                   onChange={(value) => setForm(f => ({ ...f, base_price: value }))}
-                  placeholder="Үндсэн үнэ оруулах (жишээ нь: 200'000)"
+                  placeholder="Үндсэн үнэ оруулах"
                 />
               </div>
 
@@ -551,7 +551,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                   id="single-price"
                   value={form.single_person_price}
                   onChange={(value) => setForm(f => ({ ...f, single_person_price: value }))}
-                  placeholder="Ганц хүний үнэ оруулах (жишээ нь: 120'000)"
+                  placeholder="Ганц хүний үнэ оруулах"
                 />
               </div>
 
@@ -561,7 +561,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                   id="half-day-price"
                   value={form.half_day_price}
                   onChange={(value) => setForm(f => ({ ...f, half_day_price: value }))}
-                  placeholder="Хагас өдрийн үнэ оруулах (жишээ нь: 150'000)"
+                  placeholder="Хагас өдрийн үнэ оруулах"
                 />
               </div>
 
@@ -572,7 +572,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                     id="breakfast-price"
                     value={form.breakfast_include_price}
                     onChange={(value) => setForm(f => ({ ...f, breakfast_include_price: value }))}
-                    placeholder="Өглөөний цай багтсан үнэ (жишээ нь: 180'000)"
+                    placeholder="Өглөөний цай багтсан үнэ оруулах"
                   />
                 </div>
               )}
@@ -615,7 +615,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                 id="edit-base-price"
                 value={form.base_price}
                 onChange={(value) => setForm(f => ({ ...f, base_price: value }))}
-                placeholder="Үндсэн үнэ оруулах (жишээ нь: 200'000)"
+                placeholder="Үндсэн үнэ оруулах"
               />
             </div>
 
@@ -625,7 +625,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                 id="edit-single-price"
                 value={form.single_person_price}
                 onChange={(value) => setForm(f => ({ ...f, single_person_price: value }))}
-                placeholder="Ганц хүний үнэ оруулах (жишээ нь: 120'000)"
+                placeholder="Ганц хүний үнэ оруулах"
               />
             </div>
 
@@ -635,7 +635,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                 id="edit-half-day-price"
                 value={form.half_day_price}
                 onChange={(value) => setForm(f => ({ ...f, half_day_price: value }))}
-                placeholder="Хагас өдрийн үнэ оруулах (жишээ нь: 150'000)"
+                placeholder="Хагас өдрийн үнэ оруулах"
               />
             </div>
 
@@ -646,7 +646,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
                   id="edit-breakfast-price"
                   value={form.breakfast_include_price}
                   onChange={(value) => setForm(f => ({ ...f, breakfast_include_price: value }))}
-                  placeholder="Өглөөний цай багтсан үнэ (жишээ нь: 180'000)"
+                  placeholder="Өглөөний цай багтсан үнэ оруулах"
                 />
               </div>
             )}

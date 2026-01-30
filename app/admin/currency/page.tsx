@@ -734,7 +734,7 @@ export default function CurrencyPage() {
                       value={buyRate}
                       onChange={(e) => setBuyRate(e.target.value)}
                       step="0.01"
-                      placeholder="3500.00"
+                      placeholder="0.00"
                     />
                     <span className="text-sm font-medium">төгрөг</span>
                   </div>
@@ -761,7 +761,7 @@ export default function CurrencyPage() {
                       value={sellRate}
                       onChange={(e) => setSellRate(e.target.value)}
                       step="0.01"
-                      placeholder="3450.00"
+                      placeholder="0.00"
                     />
                     <span className="text-sm font-medium">төгрөг</span>
                   </div>
@@ -871,7 +871,7 @@ export default function CurrencyPage() {
                     value={editBuyRate}
                     onChange={(e) => setEditBuyRate(e.target.value)}
                     step="0.01"
-                    placeholder="3500.00"
+                    placeholder="0.00"
                   />
                   <span className="text-sm font-medium">төгрөг</span>
                 </div>
@@ -898,7 +898,7 @@ export default function CurrencyPage() {
                     value={editSellRate}
                     onChange={(e) => setEditSellRate(e.target.value)}
                     step="0.01"
-                    placeholder="3450.00"
+                    placeholder="0.00"
                   />
                   <span className="text-sm font-medium">төгрөг</span>
                 </div>

@@ -113,7 +113,7 @@ export function EditBasicInfoDialog({
                 id="nameMn"
                 value={editBasicInfo.property_name_mn}
                 onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, property_name_mn: e.target.value })}
-                placeholder="Шангри-Ла Улаанбаатар Зочид Буудал"
+                placeholder="Буудлын нэрийг оруулах"
                 className={validationErrors.property_name_mn ? 'border-destructive' : ''}
               />
               {validationErrors.property_name_mn && (
@@ -126,7 +126,7 @@ export function EditBasicInfoDialog({
                 id="nameEn"
                 value={editBasicInfo.property_name_en}
                 onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, property_name_en: e.target.value })}
-                placeholder="Shangri-La Ulaanbaatar Hotel"
+                placeholder="Enter hotel name"
                 className={validationErrors.property_name_en ? 'border-destructive' : ''}
               />
               {validationErrors.property_name_en && (
@@ -193,7 +193,7 @@ export function EditBasicInfoDialog({
                   id="groupName"
                   value={editBasicInfo.group_name}
                   onChange={(e) => onEditBasicInfoChange({ ...editBasicInfo, group_name: e.target.value })}
-                  placeholder="Marriott, Hilton гэх мэт"
+                  placeholder="Сүлжээ буудлын нэр оруулах"
                   className={validationErrors.group_name ? 'border-destructive' : ''}
                 />
                 {validationErrors.group_name && (

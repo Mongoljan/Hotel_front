@@ -61,7 +61,7 @@ export function EditAboutVideoDialog({
               type="url"
               value={youtubeUrl}
               onChange={(e) => onYoutubeUrlChange(e.target.value)}
-              placeholder="https://youtube.com/watch?v=..."
+              placeholder="YouTube холбоос оруулах"
             />
             <p className="text-xs text-muted-foreground">
               Youtube бичлэгийн Share-ээс холбоосыг хуулна уу

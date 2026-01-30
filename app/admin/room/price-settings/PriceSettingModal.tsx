@@ -272,7 +272,7 @@ export default function PriceSettingModal({
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Жишээ нь: Өвлийн улирлын нэмэгдэл"
+              placeholder="Үнийн тохиргооны нэр оруулах"
               className="border-input"
             />
           </div>
@@ -424,7 +424,7 @@ export default function PriceSettingModal({
                 id="value"
                 value={formData.value}
                 onChange={(value) => setFormData({ ...formData, value })}
-                placeholder="50'000"
+                placeholder="Дүн оруулах"
                 className="border-input"
               />
             ) : (
@@ -464,7 +464,7 @@ export default function PriceSettingModal({
                   // Allow partial input like "10." for decimals
                   setFormData({ ...formData, value: val });
                 }}
-                placeholder="10"
+                placeholder="0"
                 className="border-input"
               />
             )}

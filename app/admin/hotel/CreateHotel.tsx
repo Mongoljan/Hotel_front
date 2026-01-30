@@ -133,13 +133,13 @@ export default function CreateHotel() {
 
 <input
           type="double"
-          placeholder="food_gst_percentage:"
+          placeholder="Хоолны GST хувь"
           {...register('food_gst_percentage')}
           className="border p-2 w-full mb-4 h-14 rounded-md"
         />
         <input
           type="double"
-          placeholder="room_gst_percentage:"
+          placeholder="Өрөөний GST хувь"
           {...register('room_gst_percentage')}
           className="border p-2 w-full mb-4 h-14 rounded-md"
         />
