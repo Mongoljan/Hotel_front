@@ -305,8 +305,23 @@
   "savePassword": "Forgot Password?",
   "remember": "Remember Me",
   "wait": "Please wait...",
-  "subtitle": "Access your hotel admin dashboard"
+  "subtitle": "Access your hotel admin dashboard",
+  "superadminLogin": "Super Admin Login"
 },
+  "SuperAdminLogin": {
+    "title": "Super Admin",
+    "subtitle": "System Management",
+    "signIn": "Sign In",
+    "description": "Sign in with super admin privileges",
+    "username": "Username",
+    "usernamePlaceholder": "Enter your username",
+    "password": "Password",
+    "wait": "Please wait...",
+    "loginSuccess": "Login successful!",
+    "loginFailed": "Login failed",
+    "networkError": "Network error occurred",
+    "backToHotelLogin": "Back to hotel login"
+  },
   "AuthMessages": {
     "login_success": "Login successful!",
     "company_found": "Reg no: {regno} company found!",

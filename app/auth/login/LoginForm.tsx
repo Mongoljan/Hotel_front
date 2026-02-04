@@ -161,6 +161,15 @@ export default function LoginForm() {
           {t('signUp')}
         </Link>
       </Button>
+
+      <div className="text-center pt-4 border-t">
+        <Link 
+          href="/auth/superadmin-login" 
+          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+        >
+          {t('superadminLogin')}
+        </Link>
+      </div>
     </form>
   );
 }

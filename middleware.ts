@@ -17,6 +17,16 @@ export function middleware(req: NextRequest) {
     isValidToken = !!payload
   }
 
+  // Allow access to superadmin login page without redirect
+  if (pathname === '/auth/superadmin-login') {
+    // If already logged in as superadmin, redirect to dashboard
+    if (isValidToken && userType === 1) {
+      return NextResponse.redirect(new URL('/superadmin/dashboard', req.url))
+    }
+    // Otherwise allow access to login page
+    return NextResponse.next()
+  }
+
   // Allow access to no-access page without redirect loops
   if (pathname === '/admin/no-access') {
     if (!isValidToken) {
@@ -29,7 +39,7 @@ export function middleware(req: NextRequest) {
   // Protect /superadmin/*: only SuperAdmin (user_type=1) can access
   if (pathname.startsWith('/superadmin')) {
     if (!isValidToken) {
-      return NextResponse.redirect(new URL('/auth/login', req.url))
+      return NextResponse.redirect(new URL('/auth/superadmin-login', req.url))
     }
     if (userType !== 1) {
       return NextResponse.redirect(new URL('/unauthorized', req.url))

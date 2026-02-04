@@ -320,7 +320,22 @@
     "savePassword":"Нууц үг мартсан?",
     "remember":"Намайг сана",
     "wait":"Түр хүлээнэ үү...",
-    "subtitle":"Буудлын админ самбарт нэвтрэх"
+    "subtitle":"Буудлын админ самбарт нэвтрэх",
+    "superadminLogin":"Супер админ нэвтрэх"
+  },
+  "SuperAdminLogin": {
+    "title": "Супер Админ",
+    "subtitle": "Системийн удирдлага",
+    "signIn": "Нэвтрэх",
+    "description": "Супер админ эрхээр нэвтрэх",
+    "username": "Хэрэглэгчийн нэр",
+    "usernamePlaceholder": "Хэрэглэгчийн нэрээ оруулна уу",
+    "password": "Нууц үг",
+    "wait": "Түр хүлээнэ үү...",
+    "loginSuccess": "Амжилттай нэвтэрлээ!",
+    "loginFailed": "Нэвтрэх амжилтгүй боллоо",
+    "networkError": "Сүлжээний алдаа гарлаа",
+    "backToHotelLogin": "Буудлын нэвтрэх хуудас руу буцах"
   },
   "AuthMessages": {
     "login_success": "Амжилттай нэвтэрлээ!",
