@@ -196,16 +196,23 @@ export default function PriceSettingModal({
     // Zod validation
     const validationData = {
       name: formData.name,
+      room_combination: formData.room_combination,
       room_type: room_type || 0,
       room_category: room_category || 0,
       start_date: formData.start_date,
       end_date: formData.end_date,
-      value: formData.value ? parseFloat(formData.value) : 0,
+      adjustment_type: formData.adjustment_type,
+      value_type: formData.value_type,
+      value: formData.value || '',
+      is_active: formData.is_active,
     };
 
+    console.log('Validation data:', validationData);
     const validateResult = schemaPriceSetting.safeParse(validationData);
+    console.log('Validation result:', validateResult);
     if (!validateResult.success) {
       const firstError = validateResult.error.errors[0];
+      console.log('All errors:', validateResult.error.errors);
       toast.error(firstError.message);
       return;
     }

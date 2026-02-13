@@ -2,110 +2,81 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  IconUsers,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   IconBuilding,
-  IconUserCheck,
-  IconUserX,
   IconLoader2,
-  IconArrowRight,
+  IconSearch,
+  IconMail,
+  IconPhone,
+  IconCalendar,
   IconRefresh,
+  IconMapPin,
   IconCheck,
   IconX,
-  IconClipboardCheck,
+  IconUser,
+  IconBriefcase,
 } from '@tabler/icons-react';
-
-interface DashboardStats {
-  totalOwners: number;
-  pendingOwners: number;
-  approvedOwners: number;
-  totalProperties: number;
-  pendingProperties: number;
-  approvedProperties: number;
-}
+import { toast } from 'sonner';
 
 interface Owner {
-  owner_pk: number;
-  user_name: string;
-  hotel_name: string;
-  user_mail: string;
+  id: number;
+  name: string;
+  position: string;
+  contact_number: string;
+  email: string;
   approved: boolean;
-  created_at: string;
 }
 
 interface Property {
   pk: number;
-  PropertyName: string;
+  register: string;
   CompanyName: string;
+  PropertyName: string;
   location: string;
+  property_type: number;
+  phone: string;
+  mail: string;
   is_approved: boolean;
   created_at: string;
+  owner: Owner | null;
 }
 
 export default function SuperAdminDashboardPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalOwners: 0,
-    pendingOwners: 0,
-    approvedOwners: 0,
-    totalProperties: 0,
-    pendingProperties: 0,
-    approvedProperties: 0,
-  });
-  const [recentPendingOwners, setRecentPendingOwners] = useState<Owner[]>([]);
-  const [recentPendingProperties, setRecentPendingProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'approved' | 'pending'>('all');
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Fetch owners
-      const ownersResponse = await fetch('/api/superadmin/owners', {
+      const response = await fetch('https://dev.kacc.mn/api/properties/', {
         credentials: 'include',
       });
 
-      // Fetch properties
-      const propertiesResponse = await fetch('/api/superadmin/properties', {
-        credentials: 'include',
-      });
-
-      if (ownersResponse.ok && propertiesResponse.ok) {
-        const owners: Owner[] = await ownersResponse.json();
-        const properties: Property[] = await propertiesResponse.json();
-        
-        const pendingOwners = owners.filter((o) => !o.approved);
-        const approvedOwners = owners.filter((o) => o.approved);
-
-        const pendingProperties = properties.filter((p) => !p.is_approved);
-        const approvedProperties = properties.filter((p) => p.is_approved);
-
-        setStats({
-          totalOwners: owners.length,
-          pendingOwners: pendingOwners.length,
-          approvedOwners: approvedOwners.length,
-          totalProperties: properties.length,
-          pendingProperties: pendingProperties.length,
-          approvedProperties: approvedProperties.length,
-        });
-
-        // Get 5 most recent pending owners
-        const sortedPendingOwners = pendingOwners
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 5);
-        setRecentPendingOwners(sortedPendingOwners);
-
-        // Get 5 most recent pending properties
-        const sortedPendingProperties = pendingProperties
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 5);
-        setRecentPendingProperties(sortedPendingProperties);
+      if (response.ok) {
+        const data: Property[] = await response.json();
+        setProperties(data);
+      } else {
+        toast.error('Мэдээлэл ачаалахад алдаа гарлаа');
       }
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error fetching data:', error);
+      toast.error('Сервертэй холбогдоход алдаа гарлаа');
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +87,45 @@ export default function SuperAdminDashboardPage() {
       fetchData();
     }
   }, [authLoading, fetchData]);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('mn-MN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const getPropertyTypeName = (type: number) => {
+    const types: Record<number, string> = {
+      1: 'Зочид буудал',
+      2: 'Амралтын газар',
+      3: 'Зуслангийн газар',
+    };
+    return types[type] || 'Тодорхойгүй';
+  };
+
+  // Filter properties based on search and tab
+  const filteredProperties = properties.filter((property) => {
+    const matchesSearch =
+      property.PropertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      property.CompanyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      property.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      property.mail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      property.register.includes(searchQuery) ||
+      (property.owner?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+
+    if (activeTab === 'all') return matchesSearch;
+    if (activeTab === 'approved') return matchesSearch && property.is_approved;
+    if (activeTab === 'pending') return matchesSearch && !property.is_approved;
+    return matchesSearch;
+  });
+
+  // Stats
+  const totalProperties = properties.length;
+  const approvedProperties = properties.filter((p) => p.is_approved).length;
+  const pendingProperties = properties.filter((p) => !p.is_approved).length;
+  const propertiesWithOwner = properties.filter((p) => p.owner !== null).length;
 
   if (authLoading || isLoading) {
     return (
@@ -134,7 +144,7 @@ export default function SuperAdminDashboardPage() {
             Сайн байна уу, {user?.name || 'SuperAdmin'}!
           </h1>
           <p className="text-muted-foreground">
-            SuperAdmin хяналтын самбар - Системийн ерөнхий мэдээлэл
+            SuperAdmin хяналтын самбар - Зочид буудлуудын мэдээлэл
           </p>
         </div>
         <Button onClick={fetchData} variant="outline" disabled={isLoading}>
@@ -144,287 +154,195 @@ export default function SuperAdminDashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="space-y-4">
-        {/* Owner Stats */}
-        <div>
-          <h2 className="text-lg font-semibold mb-3">Эзэдийн статистик</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Нийт эзэд</CardTitle>
-                <IconUsers className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalOwners}</div>
-                <p className="text-xs text-muted-foreground">
-                  Бүртгэгдсэн зочид буудлын эзэд
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-orange-200 bg-orange-50/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Хүлээгдэж буй</CardTitle>
-                <IconUserX className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{stats.pendingOwners}</div>
-                <p className="text-xs text-muted-foreground">
-                  Зөвшөөрөл хүлээж буй эзэд
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-green-200 bg-green-50/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Зөвшөөрөгдсөн</CardTitle>
-                <IconUserCheck className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.approvedOwners}</div>
-                <p className="text-xs text-muted-foreground">
-                  Идэвхтэй зочид буудлын эзэд
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Property Stats */}
-        <div>
-          <h2 className="text-lg font-semibold mb-3">Зочид буудлын статистик</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Нийт буудал</CardTitle>
-                <IconBuilding className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalProperties}</div>
-                <p className="text-xs text-muted-foreground">
-                  Бүртгэгдсэн зочид буудлууд
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-orange-200 bg-orange-50/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Хүлээгдэж буй</CardTitle>
-                <IconX className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{stats.pendingProperties}</div>
-                <p className="text-xs text-muted-foreground">
-                  Зөвшөөрөл хүлээж буй буудлууд
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-green-200 bg-green-50/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Зөвшөөрөгдсөн</CardTitle>
-                <IconCheck className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.approvedProperties}</div>
-                <p className="text-xs text-muted-foreground">
-                  Идэвхтэй зочид буудлууд
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Pending Requests */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Pending Owners */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Эзэдийн хүсэлтүүд</CardTitle>
-                <CardDescription>
-                  Зөвшөөрөл хүлээж буй сүүлийн эзэд
-                </CardDescription>
-              </div>
-              <Link href="/superadmin/approvals">
-                <Button variant="outline" size="sm">
-                  Бүгдийг харах
-                  <IconArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Нийт буудал</CardTitle>
+            <IconBuilding className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {recentPendingOwners.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <IconUserCheck className="h-12 w-12 text-green-500/50" />
-                <p className="mt-4 text-lg font-medium">Бүх хүсэлт шийдэгдсэн!</p>
-                <p className="text-sm text-muted-foreground">
-                  Одоогоор хүлээгдэж буй эзэд байхгүй
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {recentPendingOwners.map((owner) => (
-                  <div
-                    key={owner.owner_pk}
-                    className="flex items-center justify-between rounded-lg border p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100">
-                        <IconUsers className="h-4 w-4 text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{owner.user_name}</p>
-                        <p className="text-xs text-muted-foreground">{owner.hotel_name}</p>
-                      </div>
-                    </div>
-                    <Link href="/superadmin/approvals">
-                      <Button size="sm" variant="outline">Шалгах</Button>
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="text-2xl font-bold">{totalProperties}</div>
+            <p className="text-xs text-muted-foreground">Бүртгэгдсэн зочид буудлууд</p>
           </CardContent>
         </Card>
 
-        {/* Recent Pending Properties */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Буудлын хүсэлтүүд</CardTitle>
-                <CardDescription>
-                  Зөвшөөрөл хүлээж буй сүүлийн буудлууд
-                </CardDescription>
-              </div>
-              <Link href="/superadmin/approvals">
-                <Button variant="outline" size="sm">
-                  Бүгдийг харах
-                  <IconArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
+        <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Зөвшөөрөгдсөн</CardTitle>
+            <IconCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            {recentPendingProperties.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <IconCheck className="h-12 w-12 text-green-500/50" />
-                <p className="mt-4 text-lg font-medium">Бүх хүсэлт шийдэгдсэн!</p>
-                <p className="text-sm text-muted-foreground">
-                  Одоогоор хүлээгдэж буй буудал байхгүй
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {recentPendingProperties.map((property) => (
-                  <div
-                    key={property.pk}
-                    className="flex items-center justify-between rounded-lg border p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100">
-                        <IconBuilding className="h-4 w-4 text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{property.PropertyName}</p>
-                        <p className="text-xs text-muted-foreground">{property.location}</p>
-                      </div>
-                    </div>
-                    <Link href="/superadmin/approvals">
-                      <Button size="sm" variant="outline">Шалгах</Button>
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="text-2xl font-bold text-green-600">{approvedProperties}</div>
+            <p className="text-xs text-muted-foreground">Идэвхтэй зочид буудлууд</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-orange-200 bg-orange-50/50 dark:bg-orange-950/20 dark:border-orange-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Хүлээгдэж буй</CardTitle>
+            <IconX className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{pendingProperties}</div>
+            <p className="text-xs text-muted-foreground">Зөвшөөрөл хүлээж буй</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Эзэнтэй</CardTitle>
+            <IconUser className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{propertiesWithOwner}</div>
+            <p className="text-xs text-muted-foreground">Эзэн холбогдсон буудлууд</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Link href="/superadmin/approvals" className="block">
-          <Card className="transition-all hover:shadow-md hover:border-primary/50 cursor-pointer border-orange-200 bg-orange-50/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <IconClipboardCheck className="h-5 w-5 text-orange-600" />
-                Зөвшөөрлийн удирдлага
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Эзэд болон буудлын зөвшөөрөл
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+      {/* Properties Table */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <CardTitle>Зочид буудлуудын жагсаалт</CardTitle>
+            <div className="relative w-full md:w-80">
+              <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Хайх..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="all">
+                Бүгд ({totalProperties})
+              </TabsTrigger>
+              <TabsTrigger value="approved">
+                Зөвшөөрөгдсөн ({approvedProperties})
+              </TabsTrigger>
+              <TabsTrigger value="pending">
+                Хүлээгдэж буй ({pendingProperties})
+              </TabsTrigger>
+            </TabsList>
 
-        <Link href="/superadmin/owners" className="block">
-          <Card className="transition-all hover:shadow-md hover:border-primary/50 cursor-pointer">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <IconUserCheck className="h-5 w-5 text-primary" />
-                Эзэдийн удирдлага
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Эзэдийн бүртгэл, зөвшөөрөл удирдах
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/superadmin/hotels" className="block">
-          <Card className="transition-all hover:shadow-md hover:border-primary/50 cursor-pointer">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <IconBuilding className="h-5 w-5 text-primary" />
-                Зочид буудлууд
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Бүх зочид буудлын мэдээлэл
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Card className="opacity-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <IconUsers className="h-5 w-5" />
-              Хэрэглэгчид
-              <Badge variant="outline" className="ml-auto">Тун удахгүй</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Бүх хэрэглэгчдийн жагсаалт
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="opacity-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <IconBuilding className="h-5 w-5" />
-              Тохиргоо
-              <Badge variant="outline" className="ml-auto">Тун удахгүй</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Системийн тохиргоо
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+            <TabsContent value={activeTab} className="mt-0">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Буудлын нэр</TableHead>
+                      <TableHead>Компанийн нэр</TableHead>
+                      <TableHead>Эзэн</TableHead>
+                      <TableHead>Байршил</TableHead>
+                      <TableHead>Холбоо барих</TableHead>
+                      <TableHead>Төрөл</TableHead>
+                      <TableHead>Статус</TableHead>
+                      <TableHead>Огноо</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProperties.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="h-24 text-center">
+                          <div className="flex flex-col items-center justify-center text-muted-foreground">
+                            <IconBuilding className="h-8 w-8 mb-2" />
+                            <p>Мэдээлэл олдсонгүй</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredProperties.map((property) => (
+                        <TableRow key={property.pk}>
+                          <TableCell>
+                            <div className="font-medium">{property.PropertyName}</div>
+                            <div className="text-xs text-muted-foreground">
+                              РД: {property.register}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-[150px] truncate" title={property.CompanyName}>
+                              {property.CompanyName}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {property.owner ? (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1">
+                                  <IconUser className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-sm font-medium">{property.owner.name}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <IconBriefcase className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">{property.owner.position}</span>
+                                </div>
+                                <Badge variant={property.owner.approved ? 'default' : 'secondary'} className="text-xs">
+                                  {property.owner.approved ? 'Зөвшөөрөгдсөн' : 'Хүлээгдэж буй'}
+                                </Badge>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-start gap-1 max-w-[200px]">
+                              <IconMapPin className="h-3 w-3 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                              <span className="text-sm truncate" title={property.location}>
+                                {property.location}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1">
+                                <IconMail className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-xs">{property.mail}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <IconPhone className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-xs">{property.phone}</span>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{getPropertyTypeName(property.property_type)}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {property.is_approved ? (
+                              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                <IconCheck className="h-3 w-3 mr-1" />
+                                Зөвшөөрөгдсөн
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                <IconX className="h-3 w-3 mr-1" />
+                                Хүлээгдэж буй
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <IconCalendar className="h-3 w-3" />
+                              {formatDate(property.created_at)}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="mt-4 text-sm text-muted-foreground">
+                Нийт {filteredProperties.length} бүртгэл харуулж байна
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }

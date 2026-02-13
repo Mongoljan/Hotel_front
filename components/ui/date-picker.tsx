@@ -113,7 +113,7 @@ export function DatePicker({
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px]" position="popper">
+              <SelectContent className="max-h-[300px]" position="popper" style={{ zIndex: 10001 }}>
                 {years.map((year) => (
                   <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                 ))}
@@ -126,7 +126,7 @@ export function DatePicker({
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
               </SelectTrigger>
-              <SelectContent position="popper">
+              <SelectContent position="popper" style={{ zIndex: 10001 }}>
                 {months.map((month, index) => (
                   <SelectItem key={index} value={index.toString()}>{month}</SelectItem>
                 ))}
@@ -232,7 +232,7 @@ export function DatePickerWithValue({
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px]" position="popper">
+              <SelectContent className="max-h-[300px]" position="popper" style={{ zIndex: 10001 }}>
                 {years.map((year) => (
                   <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                 ))}
@@ -245,7 +245,7 @@ export function DatePickerWithValue({
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
               </SelectTrigger>
-              <SelectContent position="popper">
+              <SelectContent position="popper" style={{ zIndex: 10001 }}>
                 {months.map((month, index) => (
                   <SelectItem key={index} value={index.toString()}>{month}</SelectItem>
                 ))}

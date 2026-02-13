@@ -806,8 +806,12 @@ export const schemaPriceSetting = z.object({
   room_combination: z.string().min(1, { message: "Өрөөний төрлийг сонгоно уу" }),
   start_date: z.string().min(1, { message: "Эхлэх огноо оруулна уу" }),
   end_date: z.string().min(1, { message: "Дуусах огноо оруулна уу" }),
-  adjustment_type: z.enum(['ADD', 'SUB'], { message: "Үнийн өөрчлөлтийн төрлийг сонгоно уу" }),
-  value_type: z.enum(['PERCENT', 'AMOUNT'], { message: "Утгын төрлийг сонгоно уу" }),
+  adjustment_type: z.enum(['ADD', 'SUB'], { 
+    errorMap: () => ({ message: "Үнийн өөрчлөлтийн төрлийг сонгоно уу" })
+  }),
+  value_type: z.enum(['PERCENT', 'AMOUNT'], { 
+    errorMap: () => ({ message: "Утгын төрлийг сонгоно уу" })
+  }),
   value: z.string()
     .min(1, { message: "Утга оруулна уу" })
     .regex(/^\d+(\.\d{1,2})?$/, { message: "Утга зөвхөн тоо байх ёстой" }),
