@@ -83,7 +83,7 @@ interface PropertyCommission {
   bank_account_name: string;
   billing_day: number | null;
   contract_file: string | null;
-  status: 'active' | 'draft' | 'expired' | 'pending';
+  status: 'active' | 'suspended' | 'expired' | 'inactive' | 'cancelled' | 'pending';
   note: string;
   created_at: string;
   property_obj: number;
@@ -150,7 +150,7 @@ export default function PropertyCommissionsPage() {
     bank_account_name: '',
     billing_day: '',
     note: '',
-    status: 'draft' as 'active' | 'draft',
+    status: 'pending' as 'active' | 'suspended' | 'expired' | 'inactive' | 'cancelled' | 'pending',
     is_active: false,
   });
   const [contractFile, setContractFile] = useState<File | null>(null);
@@ -210,28 +210,51 @@ export default function PropertyCommissionsPage() {
     return property ? `${property.pk} - ${property.PropertyName}` : `Property #${propertyId}`;
   };
 
-  const getStatusBadge = (status: string, isActive: boolean) => {
-    if (status === 'active' && isActive) {
-      return (
-        <Badge className="bg-green-500 hover:bg-green-600">
-          <IconCheck className="mr-1 h-3 w-3" />
-          Идэвхтэй
-        </Badge>
-      );
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return (
+          <Badge className="bg-green-500 hover:bg-green-600 text-white">
+            Хүчинтэй
+          </Badge>
+        );
+      case 'suspended':
+        return (
+          <Badge variant="secondary" className="bg-gray-200 text-gray-700">
+            Түр зогсоосон
+          </Badge>
+        );
+      case 'expired':
+        return (
+          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">
+            Хугацаа дууссан
+          </Badge>
+        );
+      case 'inactive':
+        return (
+          <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+            Идэвхгүй
+          </Badge>
+        );
+      case 'cancelled':
+        return (
+          <Badge variant="outline" className="border-red-500 text-red-500">
+            Цуцалсан
+          </Badge>
+        );
+      case 'pending':
+        return (
+          <Badge variant="outline" className="border-orange-500 text-orange-500">
+            Хүлээгдэж байгаа
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline">
+            {status}
+          </Badge>
+        );
     }
-    if (status === 'expired') {
-      return (
-        <Badge variant="destructive">
-          Дууссан
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="outline">
-        <IconX className="mr-1 h-3 w-3" />
-        Идэвхгүй
-      </Badge>
-    );
   };
 
   const formatDate = (dateString: string) => {
@@ -382,7 +405,7 @@ export default function PropertyCommissionsPage() {
       bank_account_name: '',
       billing_day: '',
       note: '',
-      status: 'draft',
+      status: 'pending',
       is_active: false,
     });
     setContractFile(null);
@@ -419,7 +442,7 @@ export default function PropertyCommissionsPage() {
       bank_account_name: commission.bank_account_name || '',
       billing_day: commission.billing_day ? String(commission.billing_day) : '',
       note: commission.note || '',
-      status: commission.status as 'active' | 'draft',
+      status: commission.status as 'active' | 'suspended' | 'expired' | 'inactive' | 'cancelled' | 'pending',
       is_active: commission.is_active,
     });
     setContractFile(null);
@@ -444,9 +467,12 @@ export default function PropertyCommissionsPage() {
 
   const stats = {
     total: commissions.length,
-    active: commissions.filter((c) => c.status === 'active' && c.is_active).length,
-    draft: commissions.filter((c) => c.status === 'draft' || !c.is_active).length,
-    inactive: commissions.filter((c) => !c.is_active).length,
+    active: commissions.filter((c) => c.status === 'active').length,
+    pending: commissions.filter((c) => c.status === 'pending').length,
+    suspended: commissions.filter((c) => c.status === 'suspended').length,
+    expired: commissions.filter((c) => c.status === 'expired').length,
+    inactive: commissions.filter((c) => c.status === 'inactive').length,
+    cancelled: commissions.filter((c) => c.status === 'cancelled').length,
   };
 
   return (
@@ -707,7 +733,7 @@ export default function PropertyCommissionsPage() {
                         <Label htmlFor="status">Төлөв</Label>
                         <Select
                           value={formData.status}
-                          onValueChange={(value: 'active' | 'draft') =>
+                          onValueChange={(value: 'active' | 'suspended' | 'expired' | 'inactive' | 'cancelled' | 'pending') =>
                             setFormData({ ...formData, status: value, is_active: value === 'active' })
                           }
                         >
@@ -715,8 +741,12 @@ export default function PropertyCommissionsPage() {
                             <SelectValue placeholder="Төлөв сонгох" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="draft">Ноорог</SelectItem>
-                            <SelectItem value="active">Идэвхтэй</SelectItem>
+                            <SelectItem value="pending">Хүлээгдэж байгаа</SelectItem>
+                            <SelectItem value="active">Хүчинтэй</SelectItem>
+                            <SelectItem value="suspended">Түр зогсоосон</SelectItem>
+                            <SelectItem value="expired">Хугацаа дууссан</SelectItem>
+                            <SelectItem value="inactive">Идэвхгүй</SelectItem>
+                            <SelectItem value="cancelled">Цуцалсан</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -942,10 +972,10 @@ export default function PropertyCommissionsPage() {
         </Card>
         <Card className="border-yellow-200 bg-yellow-50/50 dark:border-yellow-800 dark:bg-yellow-950/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Ноорог</CardTitle>
+            <CardTitle className="text-sm font-medium">Хүлээгдэж байгаа</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.draft}</div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
           </CardContent>
         </Card>
         <Card className="border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-950/20">
@@ -1046,7 +1076,7 @@ export default function PropertyCommissionsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        {getStatusBadge(commission.status, commission.is_active)}
+                        {getStatusBadge(commission.status)}
                       </TableCell>
                       <TableCell className="text-center">
                         {commission.contract_file_url ? (

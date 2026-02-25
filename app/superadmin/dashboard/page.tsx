@@ -64,7 +64,7 @@ export default function SuperAdminDashboardPage() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://dev.kacc.mn/api/properties/', {
+      const response = await fetch('/api/superadmin/properties', {
         credentials: 'include',
       });
 
