@@ -149,7 +149,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     if (!user?.id || !user?.hotel) {
-      toast.error('User information missing');
+      toast.error(t('user_info_missing'));
       return;
     }
 
@@ -173,7 +173,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
     const propertyId = stored.propertyId || user.hotel;
 
     if (!propertyId) {
-      toast.error('Үл хөдлөх хөрөнгийн ID олдсонгүй. Эхлээд 1-р алхмыг дуусгана уу.');
+      toast.error(t('property_id_not_found'));
       return;
     }
 
@@ -209,11 +209,11 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       stored.step2 = result;
       UserStorage.setItem('propertyData', JSON.stringify(stored), user.id);
 
-      toast.success(t('address_saved') || 'Хаягийн мэдээлэл хадгалагдлаа!');
+      toast.success(t('address_saved'));
       onNext();
     } catch (err) {
       console.error(err);
-      toast.error(t('error') || 'Алдаа гарлаа. Дахин оролдоно уу.');
+      toast.error(t('error'));
     }
   };
 
@@ -233,11 +233,11 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                 name="province_city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Хот/Аймаг</FormLabel>
+                    <FormLabel>{t('province_label')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="-- Хот Аймаг сонгох --" />
+                          <SelectValue placeholder={t('province_placeholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -258,7 +258,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                 name="soum"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Сум/Дүүрэг</FormLabel>
+                    <FormLabel>{t('soum_label')}</FormLabel>
                     <Select
                       key={`soum-${selectedProvinceId}-${field.value}`}
                       onValueChange={field.onChange}
@@ -267,7 +267,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="-- Сум/Дүүрэг сонгох --" />
+                          <SelectValue placeholder={t('soum_placeholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -288,7 +288,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                 name="district"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Баг/Хороо</FormLabel>
+                    <FormLabel>{t('district_label')}</FormLabel>
                     <FormControl>
                       <Input 
                         type="number"
@@ -332,7 +332,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                 name="total_floor_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Барилгын давхрын тоо</FormLabel>
+                    <FormLabel>{t('floor_label')}</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 

@@ -79,7 +79,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     try {
       if (!user?.id || !user?.hotel) {
-        toast.error(t('user_info_missing') || 'User information is missing');
+        toast.error(t('user_info_missing'));
         return;
       }
 

@@ -116,7 +116,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       // Check file type
       const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
       if (!validTypes.includes(file.type)) {
-        toast.error('Зөвхөн PNG, JPG, JPEG, WebP форматтай зураг оруулна уу.');
+        toast.error(t('image_format_error'));
         event.target.value = '';
         return;
       }
@@ -124,7 +124,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       // Check file size (minimum 100KB)
       const fileSizeKB = file.size / 1024;
       if (fileSizeKB < 100) {
-        toast.error('Зургийн хэмжээ хамгийн багадаа 100KB байх ёстой. Илүү чанартай зураг оруулна уу.');
+        toast.error(t('image_size_error'));
         event.target.value = '';
         return;
       }
@@ -140,7 +140,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     if (!user?.id || !user?.hotel) {
-      toast.error('User information missing');
+      toast.error(t('user_info_missing'));
       return;
     }
 
@@ -163,58 +163,89 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       const result: any[] = [];
       const allImageIds: number[] = [];
 
+      // Separate new uploads from existing images
+      const newEntries: { index: number; entry: typeof data.entries[0] }[] = [];
+      const patchTasks: { index: number; entry: typeof data.entries[0]; existingImage: any }[] = [];
+      const keepTasks: { index: number; existingImage: any }[] = [];
+
       for (let i = 0; i < data.entries.length; i++) {
         const entry = data.entries[i];
         const existingImage = existingImages[i];
-
-        // Check if this is a new image (base64) or existing image (URL)
         const isNewImage = entry.images.startsWith('data:');
 
         if (isNewImage) {
-          // Upload new image
-          const formData = new FormData();
-          formData.append('property', propertyId.toString());
-          formData.append('description', entry.descriptions);
+          newEntries.push({ index: i, entry });
+        } else if (existingImage) {
+          if (existingImage.description !== entry.descriptions) {
+            patchTasks.push({ index: i, entry, existingImage });
+          } else {
+            keepTasks.push({ index: i, existingImage });
+          }
+        }
+      }
 
-          const base64 = entry.images;
-          const blob = await (await fetch(base64)).blob();
-          formData.append('image', blob, `image_${Date.now()}_${i}.jpeg`);
+      // Batch upload all new images in a single POST request
+      let uploadedImages: any[] = [];
+      if (newEntries.length > 0) {
+        const payload = newEntries.map(({ entry }) => ({
+          property: propertyId,
+          image: entry.images,
+          description: entry.descriptions,
+        }));
 
-          const res = await fetch(API_URL, {
-            method: 'POST',
-            body: formData,
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) throw new Error('Image upload failed.');
+        const json = await res.json();
+        uploadedImages = Array.isArray(json) ? json : [json];
+      }
+
+      // Update descriptions in parallel
+      const patchResults = await Promise.all(
+        patchTasks.map(async ({ index, entry, existingImage }) => {
+          const updateRes = await fetch(`${API_URL}${existingImage.id}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description: entry.descriptions }),
           });
 
-          if (!res.ok) throw new Error('One of the image uploads failed.');
-          const json = await res.json();
-
-          if (Array.isArray(json)) {
-            result.push(...json);
-            allImageIds.push(...json.map((img: any) => img.id));
-          } else {
-            result.push(json);
-            allImageIds.push(json.id);
+          if (updateRes.ok) {
+            return { index, json: await updateRes.json() };
           }
-        } else if (existingImage) {
-          // Keep existing image, update description if changed
-          if (existingImage.description !== entry.descriptions) {
-            // Update description
-            const updateRes = await fetch(`${API_URL}${existingImage.id}/`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ description: entry.descriptions }),
-            });
+          return { index, json: existingImage };
+        })
+      );
 
-            if (updateRes.ok) {
-              const updatedImage = await updateRes.json();
-              result.push(updatedImage);
-            } else {
-              result.push(existingImage);
-            }
-          } else {
-            result.push(existingImage);
-          }
-          allImageIds.push(existingImage.id);
+      // Combine all results in original order
+      const resultMap = new Map<number, any>();
+
+      // Map uploaded images back to their original indices
+      for (let i = 0; i < newEntries.length; i++) {
+        const img = uploadedImages[i];
+        if (img) {
+          resultMap.set(newEntries[i].index, img);
+          allImageIds.push(img.id);
+        }
+      }
+
+      for (const { index, json } of patchResults) {
+        resultMap.set(index, json);
+        allImageIds.push(json.id);
+      }
+
+      for (const { index, existingImage } of keepTasks) {
+        resultMap.set(index, existingImage);
+        allImageIds.push(existingImage.id);
+      }
+
+      // Build result array in original order
+      for (let i = 0; i < data.entries.length; i++) {
+        if (resultMap.has(i)) {
+          result.push(resultMap.get(i));
         }
       }
 
@@ -259,12 +290,12 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           <Alert className="mb-6">
             <AlertDescription>
               <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>Хамгийн багадаа <strong>5 зураг</strong> оруулна уу</li>
-                <li>Зураг бүр хамгийн багадаа <strong>100KB</strong> хэмжээтэй байх ёстой</li>
-                <li>Зөвхөн <strong>PNG, JPG, JPEG, WebP</strong> форматтай зураг оруулна уу</li>
+                <li>{t('alert_min_images')}</li>
+                <li>{t('alert_min_size')}</li>
+                <li>{t('alert_formats')}</li>
               </ul>
               <div className="mt-3 text-sm font-medium">
-                Оруулсан зургийн тоо: <span className={`${watchedEntries.filter(e => e.images).length >= 5 ? 'text-green-600' : 'text-orange-600'}`}>{watchedEntries.filter(e => e.images).length}</span> / 5 (хамгийн бага)
+                {t('images_count_label')}: <span className={`${watchedEntries.filter(e => e.images).length >= 5 ? 'text-green-600' : 'text-orange-600'}`}>{watchedEntries.filter(e => e.images).length}</span> / 5 {t('min_label')}
               </div>
             </AlertDescription>
           </Alert>
@@ -317,7 +348,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                               <FormLabel>{t('2')}</FormLabel>
                               <FormControl>
                                 <Textarea 
-                                  placeholder="Enter image description..."
+                                  placeholder={t('description_placeholder')}
                                   {...field} 
                                 />
                               </FormControl>

@@ -4,20 +4,22 @@ import React, { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Clock, Coffee, Car, Baby } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { schemaHotelSteps3 } from '../../../schema';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslations } from 'next-intl';
-import { cn } from "@/lib/utils";
-import { NumericFormat } from 'react-number-format';
+
+import CheckInOutSection from './sections/CheckInOutSection';
+import CancellationPolicySection from './sections/CancellationPolicySection';
+import BreakfastPolicySection from './sections/BreakfastPolicySection';
+import ParkingPolicySection from './sections/ParkingPolicySection';
+import ChildPolicySection from './sections/ChildPolicySection';
 
 const API_URL = 'https://dev.kacc.mn/api/property-policies/';
 
@@ -37,14 +39,14 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
     resolver: zodResolver(schemaHotelSteps3),
     mode: 'onChange',
     defaultValues: {
-      // Check-in/Check-out times
-      check_in_from: '',
-      check_in_until: '',
-      check_out_from: '',
-      check_out_until: '',
+      // Check-in/Check-out times (default to 12:00)
+      check_in_from: '12:00',
+      check_in_until: '12:00',
+      check_out_from: '12:00',
+      check_out_until: '12:00',
       
       // Cancellation fee
-      cancel_time: '',
+      cancel_time: '12:00',
       single_before_time_percentage: '',
       single_after_time_percentage: '',
       multi_5days_before_percentage: '',
@@ -76,16 +78,6 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
     },
   });
 
-  const cancelTime = form.watch('cancel_time');
-  const displayCancelTime = cancelTime ? cancelTime.slice(0, 5) : '';
-  
-  // Watch values for conditional rendering
-  const breakfastStatus = form.watch('breakfast_status');
-  const outdoorParking = form.watch('outdoor_parking');
-  const indoorParking = form.watch('indoor_parking');
-  const allowChildren = form.watch('allow_children');
-  const allowExtraBed = form.watch('allow_extra_bed');
-
   // Fetch and populate data when component mounts
   useEffect(() => {
     const fetchPolicyData = async () => {
@@ -111,7 +103,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
             check_out_until: initialData.check_out_until || '',
             
             // Cancellation fee
-            cancel_time: initialData.cancellation_fee?.cancel_time || '',
+            cancel_time: initialData.cancellation_fee?.cancel_time || '12:00',
             single_before_time_percentage: initialData.cancellation_fee?.single_before_time_percentage || '',
             single_after_time_percentage: initialData.cancellation_fee?.single_after_time_percentage || '',
             multi_5days_before_percentage: initialData.cancellation_fee?.multi_5days_before_percentage || '',
@@ -158,7 +150,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     if (!user?.id || !user?.hotel) {
-      toast.error('User information missing');
+      toast.error(t('user_info_missing'));
       return;
     }
 
@@ -177,7 +169,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
     const propertyId = stored.propertyId || user.hotel;
 
     if (!propertyId) {
-      toast.error(t('property_id_not_found') || 'Үл хөдлөх хөрөнгийн ID олдсонгүй. 1-р алхмыг дуусгана уу.');
+      toast.error(t('property_id_not_found'));
       return;
     }
 
@@ -254,7 +246,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       onNext();
     } catch (error) {
       console.error(error);
-      toast.error(t('error_try_again') || 'Алдаа гарлаа. Дахин оролдоно уу.');
+      toast.error(t('error_try_again'));
     }
   };
 
@@ -270,692 +262,23 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               
-              {/* Check-in/Check-out Times */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  <h3 className="text-lg font-semibold">Цаг тохируулах</h3>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Та өөрийн буудлын дотоод журмын дагуу өрөөнд орох болон гарах цагийг тохируулна уу.
-                </p>
-
-                <div className="space-y-4 p-4 border border-dashed rounded-lg">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <h4 className="font-medium md:mr-10">{t('6')}</h4>
-                      <FormField
-                        control={form.control}
-                        name="check_in_from"
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input type="time" {...field} className="w-32" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <span className="text-sm text-muted-foreground"> - </span>
-                      <FormField
-                        control={form.control}
-                        name="check_in_until"
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input type="time" {...field} className="w-32" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <h4 className="font-medium md:mr-10">{t('8')}</h4>
-                      <FormField
-                        control={form.control}
-                        name="check_out_from"
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input type="time" {...field} className="w-32" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <span className="text-sm text-muted-foreground"> - </span>
-                      <FormField
-                        control={form.control}
-                        name="check_out_until"
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input type="time" {...field} className="w-32" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <CheckInOutSection form={form} t={t} />
 
               <Separator />
 
-              {/* Cancellation Policy */}
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold">Цуцлалтын бодлого</h3>
-
-                <FormField
-                  control={form.control}
-                  name="cancel_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center gap-4">
-                        <FormLabel className="min-w-[200px]">Цуцлах боломжтой цаг</FormLabel>
-                        <FormControl>
-                          <Input type="time" {...field} className="w-40" />
-                        </FormControl>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Separator className="my-4" />
-
-                {/* Single Room Section */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-base">1 өрөөний захиалгад нийт төлбөрөөс суутгах хураамжийн хувь:</h4>
-
-                  <FormField
-                    control={form.control}
-                    name="single_before_time_percentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-4">
-                          <FormLabel className="min-w-[200px]">
-                            Өмнөх өдрийн <span className="text-blue-500 mr-1">{displayCancelTime || '...'}</span> цагаас өмнө цуцалвал
-                          </FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="single_after_time_percentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-4">
-                          <FormLabel className="min-w-[200px]">
-                            Өмнөх өдрийн <span className="text-blue-500 mr-1">{displayCancelTime || '...'}</span> цагаас хойш цуцалвал
-                          </FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <Separator className="my-4" />
-
-                {/* Multi Room Section */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-base">2 болон түүнээс дээш өрөөнд нийт төлбөрөөс суутгах хураамжийн хувь:</h4>
-
-                  <FormField
-                    control={form.control}
-                    name="multi_5days_before_percentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-4">
-                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 5 хоногийн өмнөх хувь</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="multi_3days_before_percentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-4">
-                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 3 хоногийн өмнөх хувь</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="multi_2days_before_percentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-4">
-                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 2 хоногийн өмнөх хувь</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="multi_1day_before_percentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-4">
-                          <FormLabel className="min-w-[200px]">Ирэх өдрөөсөө 1 хоногийн өмнөх хувь</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="0" min="0" max="100" step="1" {...field} className="w-32" />
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
+              <CancellationPolicySection form={form} t={t} />
 
               <Separator />
 
-              {/* Breakfast Policy */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <Coffee className="h-5 w-5" />
-                  <h3 className="text-lg font-semibold">Өглөөний цай</h3>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="breakfast_status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('10')}</FormLabel>
-                      <FormControl>
-                        <div className="flex gap-3">
-                          {(['no', 'free', 'paid'] as const).map((value) => (
-                            <button
-                              key={value}
-                              type="button"
-                              onClick={() => field.onChange(value)}
-                              className={cn(
-                                "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                                field.value === value
-                                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                  : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                              )}
-                            >
-                              {value === 'no' ? t('17') : value === 'free' ? t('18') : t('19')}
-                            </button>
-                          ))}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {breakfastStatus !== 'no' && (
-                  <div className="space-y-4 p-4 border border-dashed rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <FormLabel className="min-w-[150px]">Өглөөний цайны цаг</FormLabel>
-                      <FormField
-                        control={form.control}
-                        name="breakfast_start_time"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input type="time" {...field} className="w-32" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <span>-</span>
-                      <FormField
-                        control={form.control}
-                        name="breakfast_end_time"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input type="time" {...field} className="w-32" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="breakfast_type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Өглөөний цайны төрөл</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="Сонгоно уу" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="buffet">Buffet</SelectItem>
-                              <SelectItem value="room">Өрөөнд</SelectItem>
-                              <SelectItem value="plate">Тавгаар</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {breakfastStatus === 'paid' && (
-                      <FormField
-                        control={form.control}
-                        name="breakfast_price"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center gap-4">
-                              <FormLabel className="min-w-[150px]">Үнэ (₮)</FormLabel>
-                              <FormControl>
-                                <NumericFormat
-                                  thousandSeparator=","
-                                  placeholder="0"
-                                  value={field.value || ''}
-                                  onValueChange={(values) => field.onChange(values.value || null)}
-                                  customInput={Input}
-                                  className="w-40"
-                                />
-                              </FormControl>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
+              <BreakfastPolicySection form={form} t={t} />
 
               <Separator />
 
-              {/* Parking Policy */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <Car className="h-5 w-5" />
-                  <h3 className="text-lg font-semibold">Зогсоолын мэдээлэл</h3>
-                </div>
-
-                {/* Outdoor Parking */}
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="outdoor_parking"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Гадна зогсоол</FormLabel>
-                        <FormControl>
-                          <div className="flex gap-3">
-                            {(['no', 'free', 'paid'] as const).map((value) => (
-                              <button
-                                key={value}
-                                type="button"
-                                onClick={() => field.onChange(value)}
-                                className={cn(
-                                  "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                                  field.value === value
-                                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                                )}
-                              >
-                                {value === 'no' ? t('17') : value === 'free' ? t('18') : t('19')}
-                              </button>
-                            ))}
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {outdoorParking === 'paid' && (
-                    <div className="flex gap-4 p-4 border border-dashed rounded-lg">
-                      <FormField
-                        control={form.control}
-                        name="outdoor_fee_type"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Төлбөрийн нэгж</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || undefined}>
-                              <FormControl>
-                                <SelectTrigger className="w-[150px]">
-                                  <SelectValue placeholder="Сонгоно уу" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="hour">Цагаар</SelectItem>
-                                <SelectItem value="day">Хоногоор</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="outdoor_price"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Үнэ (₮)</FormLabel>
-                            <FormControl>
-                              <NumericFormat
-                                thousandSeparator=","
-                                placeholder="0"
-                                value={field.value || ''}
-                                onValueChange={(values) => field.onChange(values.value || null)}
-                                customInput={Input}
-                                className="w-32"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Indoor Parking */}
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="indoor_parking"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Дотор зогсоол</FormLabel>
-                        <FormControl>
-                          <div className="flex gap-3">
-                            {(['no', 'free', 'paid'] as const).map((value) => (
-                              <button
-                                key={value}
-                                type="button"
-                                onClick={() => field.onChange(value)}
-                                className={cn(
-                                  "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                                  field.value === value
-                                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                                )}
-                              >
-                                {value === 'no' ? t('17') : value === 'free' ? t('18') : t('19')}
-                              </button>
-                            ))}
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {indoorParking === 'paid' && (
-                    <div className="flex gap-4 p-4 border border-dashed rounded-lg">
-                      <FormField
-                        control={form.control}
-                        name="indoor_fee_type"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Төлбөрийн нэгж</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || undefined}>
-                              <FormControl>
-                                <SelectTrigger className="w-[150px]">
-                                  <SelectValue placeholder="Сонгоно уу" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="hour">Цагаар</SelectItem>
-                                <SelectItem value="day">Хоногоор</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="indoor_price"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Үнэ (₮)</FormLabel>
-                            <FormControl>
-                              <NumericFormat
-                                thousandSeparator=","
-                                placeholder="0"
-                                value={field.value || ''}
-                                onValueChange={(values) => field.onChange(values.value || null)}
-                                customInput={Input}
-                                className="w-32"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ParkingPolicySection form={form} t={t} />
 
               <Separator />
 
-              {/* Child Policy */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <Baby className="h-5 w-5" />
-                  <h3 className="text-lg font-semibold">Хүүхэд болон нэмэлт ор</h3>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="allow_children"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('11')}</FormLabel>
-                      <FormControl>
-                        <div className="flex gap-3">
-                          <button
-                            type="button"
-                            onClick={() => field.onChange(true)}
-                            className={cn(
-                              "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                              field.value === true
-                                ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                            )}
-                          >
-                            Тийм
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => field.onChange(false)}
-                            className={cn(
-                              "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                              field.value === false
-                                ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                            )}
-                          >
-                            Үгүй
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {allowChildren && (
-                  <div className="space-y-4 p-4 border border-dashed rounded-lg">
-                    <FormField
-                      control={form.control}
-                      name="max_child_age"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center gap-4">
-                            <FormLabel className="min-w-[200px]">Хүүхдийн дээд нас</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="17"
-                                min="0"
-                                max="18"
-                                step="1"
-                                {...field}
-                                value={field.value || ''}
-                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                                className="w-32"
-                              />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="child_bed_available"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Хүүхдийн ор байгаа эсэх</FormLabel>
-                          <FormControl>
-                            <div className="flex gap-3">
-                              <button
-                                type="button"
-                                onClick={() => field.onChange('yes')}
-                                className={cn(
-                                  "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                                  field.value === 'yes'
-                                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                                )}
-                              >
-                                Тийм
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => field.onChange('no')}
-                                className={cn(
-                                  "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                                  field.value === 'no'
-                                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                                )}
-                              >
-                                Үгүй
-                              </button>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-
-                <FormField
-                  control={form.control}
-                  name="allow_extra_bed"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Нэмэлт ор тавих боломжтой эсэх</FormLabel>
-                      <FormControl>
-                        <div className="flex gap-3">
-                          <button
-                            type="button"
-                            onClick={() => field.onChange(true)}
-                            className={cn(
-                              "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                              field.value === true
-                                ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                            )}
-                          >
-                            Тийм
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => field.onChange(false)}
-                            className={cn(
-                              "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                              field.value === false
-                                ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                            )}
-                          >
-                            Үгүй
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {allowExtraBed && (
-                  <div className="p-4 border border-dashed rounded-lg">
-                    <FormField
-                      control={form.control}
-                      name="extra_bed_price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center gap-4">
-                            <FormLabel className="min-w-[200px]">Нэмэлт орны үнэ (₮)</FormLabel>
-                            <FormControl>
-                              <NumericFormat
-                                thousandSeparator=","
-                                placeholder="0"
-                                value={field.value || ''}
-                                onValueChange={(values) => field.onChange(values.value || null)}
-                                customInput={Input}
-                                className="w-40"
-                              />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-              </div>
+              <ChildPolicySection form={form} t={t} />
 
               <div className="flex gap-4 pt-6">
                 <Button

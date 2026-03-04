@@ -44,7 +44,10 @@
     "longitude": "Longitude",
     "view_on_google_maps": "View on Google Maps",
     "1": "Back",
-    "2": "Next"
+    "2": "Next",
+    "user_info_missing": "User information missing",
+    "loading_map": "Loading Google Maps...",
+    "error_loading_map": "Error loading Google Maps"
   },
 
   "4PropertyPolicies":{
@@ -65,7 +68,6 @@
     "14": "Next",
     "16":"Select",
     "17":"None",
-    
     "18":"Included in price",
     "19":"Separately priced",
     "20":"Proceed",
@@ -82,7 +84,41 @@
     "special_condition_percentage": "day before percentage (%)",
     "property_id_not_found": "Property ID not found. Please complete step 1.",
     "policy_saved": "Policy saved successfully",
-    "error_try_again": "Error occurred. Please try again."
+    "error_try_again": "Error occurred. Please try again.",
+    "set_time_title": "Set Time",
+    "set_time_description": "Please set the check-in and check-out times according to your hotel's internal rules.",
+    "cancellation_policy": "Cancellation Policy",
+    "cancellable_time": "Cancellable time",
+    "single_room_fee_label": "Deduction percentage from total payment for 1 room booking:",
+    "before_cancel_label": "If cancelled before {time} the day before",
+    "after_cancel_label": "If cancelled after {time} the day before",
+    "multi_room_fee_label": "Deduction percentage from total payment for 2 or more rooms:",
+    "five_days_before": "5 days before arrival (%)",
+    "three_days_before": "3 days before arrival (%)",
+    "two_days_before": "2 days before arrival (%)",
+    "one_day_before": "1 day before arrival (%)",
+    "breakfast": "Breakfast",
+    "breakfast_time": "Breakfast time",
+    "breakfast_type_label": "Breakfast type",
+    "select_placeholder": "Select",
+    "buffet": "Buffet",
+    "in_room": "In Room",
+    "plate": "Plate service",
+    "price_label": "Price (₮)",
+    "parking_info": "Parking Information",
+    "outdoor_parking_label": "Outdoor Parking",
+    "indoor_parking_label": "Indoor Parking",
+    "payment_unit": "Payment unit",
+    "hourly": "Hourly",
+    "daily": "Daily",
+    "children_extra_bed": "Children and Extra Bed",
+    "yes": "Yes",
+    "no_label": "No",
+    "max_child_age": "Maximum child age",
+    "child_bed_available": "Child bed available",
+    "extra_bed_available": "Extra bed available",
+    "extra_bed_price": "Extra bed price (₮)",
+    "user_info_missing": "User information missing"
   },
 
   "5PropertyImages":{
@@ -93,8 +129,19 @@
     "3":"Remove",
     "4":"Add more",
     "5": "Back",
-    "6": "Next"
-
+    "6": "Next",
+    "property_id_not_found": "Property ID not found. Please complete step 1.",
+    "images_saved_success": "Images saved successfully!",
+    "error_try_again": "An error occurred. Please try again.",
+    "user_info_missing": "User information missing",
+    "image_format_error": "Only PNG, JPG, JPEG, WebP format images are accepted.",
+    "image_size_error": "Image size must be at least 100KB. Please upload a higher quality image.",
+    "alert_min_images": "Upload at least 5 images",
+    "alert_min_size": "Each image must be at least 100KB",
+    "alert_formats": "Only PNG, JPG, JPEG, WebP formats accepted",
+    "images_count_label": "Images uploaded",
+    "min_label": "(minimum)",
+    "description_placeholder": "Enter image description..."
   },
   "6FinalPropertyDetails":{
     "title":"Final Property Details",
@@ -102,7 +149,13 @@
     "2":"Parking Situation",
     "3":"General Facilities",
     "5": "Back",
-    "6": "Next"
+    "6": "Next",
+    "general_facilities_title": "General Facilities",
+    "facilities_instruction": "Select all the facilities and services available at your property",
+    "property_id_not_found": "Property ID not found. Please complete step 1.",
+    "details_saved_success": "Property details saved successfully!",
+    "error_try_again": "An error occurred. Please try again.",
+    "user_info_missing": "User information missing"
   },
   "HotelPage": {
     "loading": "Loading...",
@@ -213,8 +266,20 @@
     "5":"Zip Code",
     "6":"Total Floor Number",
     "10": "Back",
-    "11": "Next"
-
+    "11": "Next",
+    "province_label": "Province/City",
+    "province_placeholder": "-- Select Province/City --",
+    "soum_label": "Soum/District",
+    "soum_placeholder": "-- Select Soum/District --",
+    "district_label": "Sub-district/Khoroo",
+    "floor_label": "Number of Building Floors",
+    "district_placeholder": "Enter district number",
+    "zipcode_placeholder": "Enter zip code",
+    "floors_placeholder": "Enter number of floors",
+    "address_saved": "Address information saved!",
+    "user_info_missing": "User information missing",
+    "property_id_not_found": "Property ID not found. Please complete step 1.",
+    "error": "An error occurred. Please try again."
   },
 
   "1BasicInfo": {
@@ -237,7 +302,15 @@
   "selectLanguagesHint": "Select one or more languages",
   "yes": "Yes",
   "no": "No",
-  "selectOption": "Select"
+  "selectOption": "Select",
+  "loading_ratings": "Loading...",
+  "no_rating": "None",
+  "languages_selected": "{count} language(s) selected",
+  "select_date": "Select date",
+  "year": "Year",
+  "month": "Month",
+  "user_info_missing": "User information missing",
+  "error": "An error occurred. Please try again."
 },
 
 

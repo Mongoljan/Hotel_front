@@ -137,7 +137,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     if (!user?.id || !user?.hotel) {
-      toast.error('User information missing');
+      toast.error(t('user_info_missing'));
       return;
     }
 
@@ -183,11 +183,11 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         propertyId: user.hotel,
       }), user.id);
 
-      toast.success(t('saveSuccess') || 'Мэдээлэл хадгалагдлаа!');
+      toast.success(t('saveSuccess'));
       onNext();
     } catch (error) {
       console.error(error);
-      toast.error(t('error') || 'Алдаа гарлаа. Та дахин оролдоно уу.');
+      toast.error(t('error'));
     }
   };
 
@@ -307,7 +307,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                               )}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value ? format(new Date(field.value), "yyyy-MM-dd") : <span>{locale === 'mn' ? 'Огноо сонгох' : 'Select date'}</span>}
+                              {field.value ? format(new Date(field.value), "yyyy-MM-dd") : <span>{t('select_date')}</span>}
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
@@ -322,7 +322,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                                 }}
                               >
                                 <SelectTrigger className="w-[120px]">
-                                  <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
+                                  <SelectValue placeholder={t('year')} />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-[300px]">
                                   {years.map((year) => (
@@ -339,7 +339,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                                 }}
                               >
                                 <SelectTrigger className="w-[130px]">
-                                  <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
+                                  <SelectValue placeholder={t('month')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {months.map((month, index) => (
@@ -386,7 +386,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                     <FormControl>
                       <div className="flex gap-2 flex-wrap">
                         {ratings.length === 0 ? (
-                          <div className="text-sm text-muted-foreground">Ачааллаж байна...</div>
+                          <div className="text-sm text-muted-foreground">{t('loading_ratings')}</div>
                         ) : (
                           ratings.map(r => {
                             const isSelected = field.value === r.id.toString();
@@ -406,7 +406,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                                 )}
                               >
                                 {isNA ? (
-                                  <span className="text-sm">Байхгүй</span>
+                                  <span className="text-sm">{t('no_rating')}</span>
                                 ) : (
                                   <>
                                     <Star
@@ -526,7 +526,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
                         {field.value && field.value.length > 0 && (
                           <p className="text-xs text-muted-foreground">
-                            {field.value.length} хэл сонгогдсон
+                            {t('languages_selected', { count: String(field.value.length) })}
                           </p>
                         )}
                       </div>

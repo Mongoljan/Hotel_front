@@ -67,13 +67,13 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         lng: e.latLng.lng(),
       };
       setLocation(newLocation);
-      toast.success(t('location_updated') || 'Байршил сонгогдлоо');
+      toast.success(t('location_updated'));
     }
   }, [t]);
 
   const handleNext = () => {
     if (!user?.id) {
-      toast.error('User information missing');
+      toast.error(t('user_info_missing') || 'User information missing');
       return;
     }
 
@@ -96,7 +96,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
     
     UserStorage.setItem('propertyData', JSON.stringify(stored), user.id);
     
-    toast.success(t('location_saved') || 'Байршил хадгалагдлаа');
+    toast.success(t('location_saved'));
     onNext();
   };
 
@@ -106,7 +106,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
         <Card className="w-full max-w-[440px] md:max-w-[600px]">
           <CardContent className="pt-6">
             <div className="text-center text-red-500">
-              <p>Error loading Google Maps</p>
+              <p>{t('error_loading_map')}</p>
               <p className="text-sm mt-2">{loadError.message}</p>
             </div>
           </CardContent>
@@ -124,7 +124,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             {t("title")}
           </CardTitle>
           <CardDescription className="text-center">
-            {t("description") || "Газрын зураг дээр дарж буудлын байршлыг сонгоно уу"}
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -158,7 +158,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
               <div className="w-full h-[400px] bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
                 <div className="text-center text-gray-500">
                   <MapPin className="h-8 w-8 mx-auto mb-2 animate-pulse" />
-                  <p className="text-sm">Loading Google Maps...</p>
+                  <p className="text-sm">{t('loading_map')}</p>
                 </div>
               </div>
             )}
@@ -167,13 +167,13 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
               <h4 className="font-medium mb-2 flex items-center gap-2 text-gray-900">
                 <MapPin className="h-4 w-4 text-blue-600" />
-                {t("selected_location") || "Сонгосон байршил:"}
+                {t("selected_location")}
               </h4>
               <p className="text-sm text-gray-700">
-                <strong>{t("latitude") || "Өргөрөг"}:</strong> {location.lat.toFixed(6)}
+                <strong>{t("latitude")}:</strong> {location.lat.toFixed(6)}
               </p>
               <p className="text-sm text-gray-700">
-                <strong>{t("longitude") || "Уртраг"}:</strong> {location.lng.toFixed(6)}
+                <strong>{t("longitude")}:</strong> {location.lng.toFixed(6)}
               </p>
               <p className="text-sm text-gray-700 mt-2">
                 <strong>Google Maps URL:</strong>{' '}

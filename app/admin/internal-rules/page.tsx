@@ -238,6 +238,7 @@ export default function InternalRulesPage() {
       
       console.log('Form Data to Reset:', formData);
       form.reset(formData);
+      form.clearErrors(); // Clear any validation errors from previous state
     }
     setEditSection(section);
     setIsEditDialogOpen(true);

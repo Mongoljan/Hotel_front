@@ -455,6 +455,10 @@ export const schemaHotelSteps3 = z.object({
 }).refine((data) => {
   // Validate breakfast times when breakfast is not 'no'
   if (data.breakfast_status !== 'no') {
+    // Only validate if user has started filling breakfast fields or both are empty (allow empty initially)
+    if (data.breakfast_start_time === '' && data.breakfast_end_time === '') {
+      return true; // Allow empty initially - will be caught on final submit if still empty
+    }
     if (!data.breakfast_start_time || !data.breakfast_end_time) {
       return false;
     }
@@ -512,7 +516,8 @@ export const schemaHotelSteps3 = z.object({
 }).refine((data) => {
   // Validate child age when children are allowed
   if (data.allow_children) {
-    if (!data.max_child_age) return false;
+    // Use explicit undefined/null check instead of falsy check (0 is a valid age)
+    if (data.max_child_age === undefined || data.max_child_age === null) return false;
     if (!data.child_bed_available) return false;
   }
   return true;
@@ -539,8 +544,11 @@ export const schemaHotelSteps5 = z.object({
     z.object({
       images: z
         .string()
-        .url({ message: 'Image must be a valid URL.' })
-        .min(1, { message: 'Image URL is required.' }),
+        .min(1, { message: 'Image is required.' })
+        .refine(
+          (val) => val.startsWith('data:') || val.startsWith('http://') || val.startsWith('https://'),
+          { message: 'Image must be a valid URL or uploaded file.' }
+        ),
       descriptions: z
         .string()
         .min(1, { message: 'Description must not be empty.' }),
