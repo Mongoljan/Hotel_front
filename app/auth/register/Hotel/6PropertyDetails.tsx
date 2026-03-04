@@ -18,7 +18,7 @@ import UserStorage from '@/utils/storage';
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const API_PROPERTY_DETAILS = 'https://dev.kacc.mn/api/property-details/';
 
-type FormFields = z.infer<typeof schemaHotelSteps6>;
+type FormFields = z.infer<ReturnType<typeof schemaHotelSteps6>>;
 
 type Props = {
   onNext: () => void;
@@ -35,7 +35,7 @@ export default function RegisterHotel6({ onNext, onBack, proceed, setProceed }: 
   const [initialValues, setInitialValues] = useState<FormFields | null>(null);
 
   const form = useForm<FormFields>({
-    resolver: zodResolver(schemaHotelSteps6),
+    resolver: zodResolver(schemaHotelSteps6(t('select_facility_error'))),
     mode: 'onChange',
     defaultValues: {
       general_facilities: [],

@@ -557,10 +557,10 @@ export const schemaHotelSteps5 = z.object({
 });
 
 
-export const schemaHotelSteps6 = z.object({
+export const schemaHotelSteps6 = (msg?: string) => z.object({
   general_facilities: z
     .array(z.string())
-    .min(1, { message: 'Select at least one general facility' }),
+    .min(1, { message: msg || 'Select at least one general facility' }),
 });
 
 export const schemaRegistrationEmployee2 =z.object({
