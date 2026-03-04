@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslations } from 'next-intl';
 import { schemaContractOrganization } from '@/app/schema';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,7 +61,7 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 
-type FormFields = z.infer<typeof schemaContractOrganization>;
+type FormFields = z.infer<ReturnType<typeof schemaContractOrganization>>;
 
 // API response structure
 interface PartnerOrganization {
@@ -87,17 +88,18 @@ interface PartnerOrganization {
   created_at?: string;
 }
 
-// Helper function to get display label for org_type
-const getOrgTypeLabel = (orgType: string): string => {
-  const labels: Record<string, string> = {
-    company: 'Гэрээт',
-    partner: 'Харилцагч',
-    hotel: 'Зочид буудал',
-  };
-  return labels[orgType] || orgType;
-};
-
 export default function ContractOrganizationsPage() {
+  const t = useTranslations('Corporate');
+  const tv = useTranslations('Corporate.validation');
+
+  const getOrgTypeLabel = (orgType: string): string => {
+    const labels: Record<string, string> = {
+      company: t('type_contract'),
+      partner: t('type_partner'),
+      hotel: t('type_hotel'),
+    };
+    return labels[orgType] || orgType;
+  };
   const [organizations, setOrganizations] = useState<PartnerOrganization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,11 +120,11 @@ export default function ContractOrganizationsPage() {
         const data = await res.json();
         setOrganizations(Array.isArray(data) ? data : []);
       } else {
-        toast.error('Байгууллагуудыг татахад алдаа гарлаа');
+        toast.error(t('toast_fetch_error'));
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);
-      toast.error('Байгууллагуудыг татахад алдаа гарлаа');
+      toast.error(t('toast_fetch_error'));
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +135,7 @@ export default function ContractOrganizationsPage() {
   }, [fetchOrganizations]);
 
   const form = useForm<FormFields>({
-    resolver: zodResolver(schemaContractOrganization),
+    resolver: zodResolver(schemaContractOrganization(tv)),
     defaultValues: {
       organization_name: '',
       registration_number: '',
@@ -194,18 +196,18 @@ export default function ContractOrganizationsPage() {
       });
 
       if (res.ok) {
-        toast.success(editingOrg ? 'Байгууллага амжилттай шинэчлэгдлээ' : 'Байгууллага амжилттай бүртгэгдлээ');
+        toast.success(editingOrg ? t('toast_updated') : t('toast_created'));
         setIsDialogOpen(false);
         form.reset();
         setEditingOrg(null);
         fetchOrganizations();
       } else {
         const errorData = await res.json();
-        toast.error(errorData.error || 'Алдаа гарлаа');
+        toast.error(errorData.error || t('toast_save_error'));
       }
     } catch (error) {
       console.error('Error saving organization:', error);
-      toast.error('Алдаа гарлаа');
+      toast.error(t('toast_save_error'));
     } finally {
       setIsSaving(false);
     }
@@ -259,15 +261,15 @@ export default function ContractOrganizationsPage() {
       });
 
       if (res.ok) {
-        toast.success('Байгууллага амжилттай устгагдлаа');
+        toast.success(t('toast_deleted'));
         fetchOrganizations();
       } else {
         const errorData = await res.json();
-        toast.error(errorData.error || 'Устгахад алдаа гарлаа');
+        toast.error(errorData.error || t('toast_delete_error'));
       }
     } catch (error) {
       console.error('Error deleting organization:', error);
-      toast.error('Устгахад алдаа гарлаа');
+      toast.error(t('toast_delete_error'));
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -323,34 +325,34 @@ export default function ContractOrganizationsPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Гэрээт байгууллага</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
         </div>
         <Button onClick={handleNewOrg} className="bg-primary text-primary-foreground hover:bg-primary/90">
           <IconPlus className="mr-2 h-4 w-4" />
-          Нэмэх
+          {t('add_button')}
         </Button>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto" preventOutsideClose hideCloseButton>
               <DialogHeader>
-                <DialogTitle>{editingOrg ? 'Байгууллага засах' : 'Гэрээт байгууллага'}</DialogTitle>
+                <DialogTitle>{editingOrg ? t('dialog_title_edit') : t('dialog_title_new')}</DialogTitle>
                 <DialogDescription>
-                  {editingOrg ? 'Байгууллагын мэдээллийг шинэчилнэ үү' : 'Шинэ гэрээт байгууллага бүртгэх'}
+                  {editingOrg ? t('dialog_desc_edit') : t('dialog_desc_new')}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="grid gap-6 py-4">
                   {/* Гэрээт байгууллагын мэдээлэл */}
                   <div className="space-y-4">
-                    <h3 className="font-medium">Байгууллагын мэдээлэл</h3>
+                    <h3 className="font-medium">{t('org_info_section')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
-                        <Label htmlFor="organization_name">Байгууллагын нэр *</Label>
+                        <Label htmlFor="organization_name">{t('org_name_label')}</Label>
                         <Input
                           id="organization_name"
                           {...form.register('organization_name')}
-                          placeholder="Байгууллагын нэр"
+                          placeholder={t('org_name_placeholder')}
                         />
                         {form.formState.errors.organization_name && (
                           <p className="text-sm text-red-500 mt-1">
@@ -359,11 +361,11 @@ export default function ContractOrganizationsPage() {
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="registration_number">ААН-ийн регистрийн № *</Label>
+                        <Label htmlFor="registration_number">{t('reg_no_label')}</Label>
                         <Input
                           id="registration_number"
                           {...form.register('registration_number')}
-                          placeholder="Регистрийн дугаар оруулах"
+                          placeholder={t('reg_no_placeholder')}
                         />
                         {form.formState.errors.registration_number && (
                           <p className="text-sm text-red-500 mt-1">
@@ -372,18 +374,18 @@ export default function ContractOrganizationsPage() {
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="organization_type">Төрөл *</Label>
+                        <Label htmlFor="organization_type">{t('type_label')}</Label>
                         <Select
                           value={form.watch('organization_type')}
                           onValueChange={(value) => form.setValue('organization_type', value)}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Төрөл сонгох" />
+                            <SelectValue placeholder={t('type_placeholder')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="company">Гэрээт</SelectItem>
-                            <SelectItem value="partner">Харилцагч</SelectItem>
-                            <SelectItem value="hotel">Зочид буудал</SelectItem>
+                            <SelectItem value="company">{t('type_contract')}</SelectItem>
+                            <SelectItem value="partner">{t('type_partner')}</SelectItem>
+                            <SelectItem value="hotel">{t('type_hotel')}</SelectItem>
                           </SelectContent>
                         </Select>
                         {form.formState.errors.organization_type && (
@@ -397,14 +399,14 @@ export default function ContractOrganizationsPage() {
 
                   {/* Хүчинтэй хугацаа */}
                   <div className="space-y-4">
-                    <h3 className="font-medium">Хүчинтэй хугацаа</h3>
+                    <h3 className="font-medium">{t('validity_section')}</h3>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="validity_start">Эхлэх огноо *</Label>
+                        <Label htmlFor="validity_start">{t('start_date_label')}</Label>
                         <DatePickerWithValue
                           value={form.watch('validity_start')}
                           onChange={(value) => form.setValue('validity_start', value)}
-                          placeholder="Эхлэх огноо сонгох"
+                          placeholder={t('start_date_placeholder')}
                         />
                         {form.formState.errors.validity_start && (
                           <p className="text-sm text-red-500 mt-1">
@@ -413,11 +415,11 @@ export default function ContractOrganizationsPage() {
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="validity_end">Дуусах огноо *</Label>
+                        <Label htmlFor="validity_end">{t('end_date_label')}</Label>
                         <DatePickerWithValue
                           value={form.watch('validity_end')}
                           onChange={(value) => form.setValue('validity_end', value)}
-                          placeholder="Дуусах огноо сонгох"
+                          placeholder={t('end_date_placeholder')}
                         />
                         {form.formState.errors.validity_end && (
                           <p className="text-sm text-red-500 mt-1">
@@ -426,7 +428,7 @@ export default function ContractOrganizationsPage() {
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="discount_percent">Хөнгөлөлт (%) *</Label>
+                        <Label htmlFor="discount_percent">{t('discount_label')}</Label>
                         <Input
                           id="discount_percent"
                           type="number"
@@ -441,11 +443,11 @@ export default function ContractOrganizationsPage() {
                         )}
                       </div>
                       <div className="col-span-3">
-                        <Label htmlFor="promo_code">Промо дугаар</Label>
+                        <Label htmlFor="promo_code">{t('promo_label')}</Label>
                         <Input
                           id="promo_code"
                           {...form.register('promo_code')}
-                          placeholder="Промо код оруулах"
+                          placeholder={t('promo_placeholder')}
                         />
                       </div>
                     </div>
@@ -453,14 +455,14 @@ export default function ContractOrganizationsPage() {
 
                   {/* Холбогдох хүний мэдээлэл */}
                   <div className="space-y-4">
-                    <h3 className="font-medium">Холбогдох хүний мэдээлэл</h3>
+                    <h3 className="font-medium">{t('contact_section')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
-                        <Label htmlFor="contact_person_name">Нэр, албан тушаал *</Label>
+                        <Label htmlFor="contact_person_name">{t('contact_name_label')}</Label>
                         <Input
                           id="contact_person_name"
                           {...form.register('contact_person_name')}
-                          placeholder="Нэр, албан тушаал оруулах"
+                          placeholder={t('contact_name_placeholder')}
                         />
                         {form.formState.errors.contact_person_name && (
                           <p className="text-sm text-red-500 mt-1">
@@ -469,12 +471,12 @@ export default function ContractOrganizationsPage() {
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="contact_person_email">И-мэйл хаяг *</Label>
+                        <Label htmlFor="contact_person_email">{t('email_label')}</Label>
                         <Input
                           id="contact_person_email"
                           type="email"
                           {...form.register('contact_person_email')}
-                          placeholder="И-мэйл хаяг оруулах"
+                          placeholder={t('email_placeholder')}
                         />
                         {form.formState.errors.contact_person_email && (
                           <p className="text-sm text-red-500 mt-1">
@@ -483,11 +485,11 @@ export default function ContractOrganizationsPage() {
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="contact_person_phone">Утасны дугаар *</Label>
+                        <Label htmlFor="contact_person_phone">{t('phone_label')}</Label>
                         <Input
                           id="contact_person_phone"
                           {...form.register('contact_person_phone')}
-                          placeholder="Утасны дугаар оруулах"
+                          placeholder={t('phone_placeholder')}
                         />
                         {form.formState.errors.contact_person_phone && (
                           <p className="text-sm text-red-500 mt-1">
@@ -500,23 +502,23 @@ export default function ContractOrganizationsPage() {
 
                   {/* Санхүүгийн албаны */}
                   <div className="space-y-4">
-                    <h3 className="font-medium">Ерөнхий Нягтлан Бодогч</h3>
+                    <h3 className="font-medium">{t('finance_section')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
-                        <Label htmlFor="financial_person_name">Нэр, албан тушаал</Label>
+                        <Label htmlFor="financial_person_name">{t('finance_name_label')}</Label>
                         <Input
                           id="financial_person_name"
                           {...form.register('financial_person_name')}
-                          placeholder="Нэр"
+                          placeholder={t('finance_name_placeholder')}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="financial_person_email">И-мэйл хаяг</Label>
+                        <Label htmlFor="financial_person_email">{t('email_label')}</Label>
                         <Input
                           id="financial_person_email"
                           type="email"
                           {...form.register('financial_person_email')}
-                          placeholder="И-мэйл хаяг оруулах"
+                          placeholder={t('email_placeholder')}
                         />
                         {form.formState.errors.financial_person_email && (
                           <p className="text-sm text-red-500 mt-1">
@@ -525,11 +527,11 @@ export default function ContractOrganizationsPage() {
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="financial_person_phone">Утасны дугаар</Label>
+                        <Label htmlFor="financial_person_phone">{t('phone_label')}</Label>
                         <Input
                           id="financial_person_phone"
                           {...form.register('financial_person_phone')}
-                          placeholder="Утасны дугаар оруулах"
+                          placeholder={t('phone_placeholder')}
                         />
                       </div>
                     </div>
@@ -537,23 +539,23 @@ export default function ContractOrganizationsPage() {
 
                   {/* Тооцооны Нягтлан Бодогч */}
                   <div className="space-y-4">
-                    <h3 className="font-medium">Тооцооны Нягтлан Бодогч</h3>
+                    <h3 className="font-medium">{t('accountant_section')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
-                        <Label htmlFor="accountant_person_name">Нэр, албан тушаал</Label>
+                        <Label htmlFor="accountant_person_name">{t('accountant_name_label')}</Label>
                         <Input
                           id="accountant_person_name"
                           {...form.register('accountant_person_name')}
-                          placeholder="Нэр"
+                          placeholder={t('accountant_name_placeholder')}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="accountant_person_email">И-мэйл хаяг</Label>
+                        <Label htmlFor="accountant_person_email">{t('email_label')}</Label>
                         <Input
                           id="accountant_person_email"
                           type="email"
                           {...form.register('accountant_person_email')}
-                          placeholder="И-мэйл хаяг оруулах"
+                          placeholder={t('email_placeholder')}
                         />
                         {form.formState.errors.accountant_person_email && (
                           <p className="text-sm text-red-500 mt-1">
@@ -562,11 +564,11 @@ export default function ContractOrganizationsPage() {
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="accountant_person_phone">Утасны дугаар</Label>
+                        <Label htmlFor="accountant_person_phone">{t('phone_label')}</Label>
                         <Input
                           id="accountant_person_phone"
                           {...form.register('accountant_person_phone')}
-                          placeholder="Утасны дугаар оруулах"
+                          placeholder={t('phone_placeholder')}
                         />
                       </div>
                     </div>
@@ -576,20 +578,20 @@ export default function ContractOrganizationsPage() {
                   <div className="space-y-4">
                     <div className="grid gap-4">
                       <div>
-                        <Label htmlFor="address">Хаяг</Label>
+                        <Label htmlFor="address">{t('address_label')}</Label>
                         <Textarea
                           id="address"
                           {...form.register('address')}
-                          placeholder="Байгууллагын хаяг"
+                          placeholder={t('address_placeholder')}
                           rows={2}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="notes">Тайлбар</Label>
+                        <Label htmlFor="notes">{t('notes_label')}</Label>
                         <Textarea
                           id="notes"
                           {...form.register('notes')}
-                          placeholder="Нэмэлт тайлбар"
+                          placeholder={t('notes_placeholder')}
                           rows={3}
                         />
                       </div>
@@ -607,15 +609,15 @@ export default function ContractOrganizationsPage() {
                     }}
                     disabled={isSaving}
                   >
-                    Болих
+                    {t('cancel_button')}
                   </Button>
                   <Button type="submit" disabled={isSaving}>
                     {isSaving ? (
                       <>
                         <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Хадгалж байна...
+                        {t('saving_button')}
                       </>
-                    ) : editingOrg ? 'Шинэчлэх' : 'Хадгалах'}
+                    ) : t('save_button')}
                   </Button>
                 </DialogFooter>
               </form>
@@ -628,9 +630,9 @@ export default function ContractOrganizationsPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
               <TabsList>
-                <TabsTrigger value="all">Бүгд</TabsTrigger>
-                <TabsTrigger value="active">Хүчинтэй</TabsTrigger>
-                <TabsTrigger value="inactive">Хүчингүй дууссан</TabsTrigger>
+                <TabsTrigger value="all">{t('tab_all')}</TabsTrigger>
+                <TabsTrigger value="active">{t('tab_active')}</TabsTrigger>
+                <TabsTrigger value="inactive">{t('tab_inactive')}</TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="flex items-center gap-4">
@@ -647,7 +649,7 @@ export default function ContractOrganizationsPage() {
               <div className="relative w-full md:w-72">
                 <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Хайх..."
+                  placeholder={t('search_placeholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -665,7 +667,7 @@ export default function ContractOrganizationsPage() {
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <IconBuilding className="h-12 w-12 text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">
-                {searchQuery ? 'Хайлтад тохирох байгууллага олдсонгүй' : 'Байгууллага бүртгэгдээгүй байна'}
+                {t('no_results')}
               </p>
             </div>
           ) : (
@@ -674,15 +676,15 @@ export default function ContractOrganizationsPage() {
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead>№</TableHead>
-                    <TableHead>Байгууллагын нэр</TableHead>
-                    <TableHead className="text-center">Төрөл</TableHead>
-                    <TableHead className="text-center">ААН-ын регистрийн №</TableHead>
-                    <TableHead className="text-center">Хөнгөлөлт (%)</TableHead>
-                    <TableHead className="text-center">Харилцах хүн</TableHead>
-                    <TableHead className="text-center">Утасны дугаар</TableHead>
-                    <TableHead className="text-center">И-мэйл хаяг</TableHead>
-                    <TableHead className="text-center">Хүчинтэй хугацаа</TableHead>
-                    <TableHead className="text-center">Үйлдэл</TableHead>
+                    <TableHead>{t('table_name')}</TableHead>
+                    <TableHead className="text-center">{t('table_type')}</TableHead>
+                    <TableHead className="text-center">{t('reg_no_label')}</TableHead>
+                    <TableHead className="text-center">{t('table_discount')}</TableHead>
+                    <TableHead className="text-center">{t('table_contact')}</TableHead>
+                    <TableHead className="text-center">{t('phone_label')}</TableHead>
+                    <TableHead className="text-center">{t('email_label')}</TableHead>
+                    <TableHead className="text-center">{t('table_date')}</TableHead>
+                    <TableHead className="text-center">{t('table_actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -735,9 +737,9 @@ export default function ContractOrganizationsPage() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[425px]" preventOutsideClose hideCloseButton>
           <DialogHeader>
-            <DialogTitle>Байгууллага устгах</DialogTitle>
+            <DialogTitle>{t('delete_title')}</DialogTitle>
             <DialogDescription>
-              "{orgToDelete?.name}" байгууллагыг устгахдаа итгэлтэй байна уу? Энэ үйлдлийг буцаах боломжгүй.
+              {t('delete_confirm')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -746,7 +748,7 @@ export default function ContractOrganizationsPage() {
               onClick={() => setIsDeleteDialogOpen(false)}
               disabled={isDeleting}
             >
-              Болих
+              {t('cancel_button')}
             </Button>
             <Button
               variant="destructive"
@@ -756,9 +758,9 @@ export default function ContractOrganizationsPage() {
               {isDeleting ? (
                 <>
                   <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Устгаж байна...
+                  {t('deleting_button')}
                 </>
-              ) : 'Устгах'}
+              ) : t('delete_button')}
             </Button>
           </DialogFooter>
         </DialogContent>

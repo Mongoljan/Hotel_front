@@ -6,6 +6,7 @@ import {
   IconBuilding,
   IconChevronDown,
   IconChevronRight,
+  IconDashboard,
   IconFileText,
 } from "@tabler/icons-react";
 
@@ -17,6 +18,11 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  {
+    label: "Хянах самбар",
+    href: "/superadmin/dashboard",
+    icon: <IconDashboard className="h-5 w-5" />,
+  },
   {
     label: "Гэрээний үнэ",
     href: "/superadmin/commissions",

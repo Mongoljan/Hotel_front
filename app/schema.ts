@@ -678,32 +678,35 @@ description: z.string().nonempty("Description cannot be empty"),
 });
 
 // Contract Organization Schema
-export const schemaContractOrganization = z.object({
-  organization_name: z.string().min(1, { message: "Байгууллагын нэрийг оруулна уу" }),
-  registration_number: z.string().min(1, { message: "ААН-ийн регистрийн дугаарыг оруулна уу" }),
-  organization_type: z.string().min(1, { message: "Төрөл сонгоно уу" }),
-  discount_percent: z.string()
-    .min(1, { message: "Хөнгөлөлтийн хувийг оруулна уу" })
-    .regex(/^\d+(\.\d{1,2})?$/, { message: "Буруу формат" })
-    .refine((val) => {
-      const num = parseFloat(val);
-      return num >= 0 && num <= 100;
-    }, { message: "Хөнгөлөлт 0-100 хувийн хооронд байх ёстой" }),
-  promo_code: z.string().optional(),
-  validity_start: z.string().min(1, { message: "Эхлэх огноо оруулна уу" }),
-  validity_end: z.string().min(1, { message: "Дуусах огноо оруулна уу" }),
-  contact_person_name: z.string().min(1, { message: "Нэр оруулна уу" }),
-  contact_person_email: z.string().email({ message: "И-мэйл хаяг буруу байна" }),
-  contact_person_phone: z.string().min(8, { message: "Утасны дугаар оруулна уу" }),
-  financial_person_name: z.string().optional(),
-  financial_person_email: z.string().email({ message: "И-мэйл хаяг буруу байна" }).optional().or(z.literal('')),
-  financial_person_phone: z.string().optional(),
-  accountant_person_name: z.string().optional(),
-  accountant_person_email: z.string().email({ message: "И-мэйл хаяг буруу байна" }).optional().or(z.literal('')),
-  accountant_person_phone: z.string().optional(),
-  address: z.string().optional(),
-  notes: z.string().optional(),
-});
+export const schemaContractOrganization = (t?: (key: string) => string) => {
+  const msg = (key: string, fallback: string) => t ? t(key) : fallback;
+  return z.object({
+    organization_name: z.string().min(1, { message: msg('org_name_required', 'Байгууллагын нэрийг оруулна уу') }),
+    registration_number: z.string().min(1, { message: msg('reg_no_required', 'ААН-ийн регистрийн дугаарыг оруулна уу') }),
+    organization_type: z.string().min(1, { message: msg('type_required', 'Төрөл сонгоно уу') }),
+    discount_percent: z.string()
+      .min(1, { message: msg('discount_required', 'Хөнгөлөлтийн хувийг оруулна уу') })
+      .regex(/^\d+(\.\d{1,2})?$/, { message: msg('discount_format', 'Буруу формат') })
+      .refine((val) => {
+        const num = parseFloat(val);
+        return num >= 0 && num <= 100;
+      }, { message: msg('discount_range', 'Хөнгөлөлт 0-100 хувийн хооронд байх ёстой') }),
+    promo_code: z.string().optional(),
+    validity_start: z.string().min(1, { message: msg('start_date_required', 'Эхлэх огноо оруулна уу') }),
+    validity_end: z.string().min(1, { message: msg('end_date_required', 'Дуусах огноо оруулна уу') }),
+    contact_person_name: z.string().min(1, { message: msg('contact_name_required', 'Нэр оруулна уу') }),
+    contact_person_email: z.string().email({ message: msg('email_invalid', 'И-мэйл хаяг буруу байна') }),
+    contact_person_phone: z.string().min(8, { message: msg('phone_required', 'Утасны дугаар оруулна уу') }),
+    financial_person_name: z.string().optional(),
+    financial_person_email: z.string().email({ message: msg('email_invalid', 'И-мэйл хаяг буруу байна') }).optional().or(z.literal('')),
+    financial_person_phone: z.string().optional(),
+    accountant_person_name: z.string().optional(),
+    accountant_person_email: z.string().email({ message: msg('email_invalid', 'И-мэйл хаяг буруу байна') }).optional().or(z.literal('')),
+    accountant_person_phone: z.string().optional(),
+    address: z.string().optional(),
+    notes: z.string().optional(),
+  });
+};
 
 // Service Type Schema
 export const schemaServiceType = z.object({

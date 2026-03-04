@@ -66,9 +66,10 @@ export function DatePicker({
     date ? date.getMonth() : new Date().getMonth()
   )
 
-  // Generate year options
+  // Generate year options (1950 to 10 years in the future)
   const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: currentYear - 1949 }, (_, i) => currentYear - i)
+  const maxYear = currentYear + 10
+  const years = Array.from({ length: maxYear - 1949 }, (_, i) => maxYear - i)
   
   // Localized month names
   const monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -185,9 +186,10 @@ export function DatePickerWithValue({
     dateValue ? dateValue.getMonth() : new Date().getMonth()
   )
 
-  // Generate year options
+  // Generate year options (1950 to 10 years in the future)
   const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: currentYear - 1949 }, (_, i) => currentYear - i)
+  const maxYear = currentYear + 10
+  const years = Array.from({ length: maxYear - 1949 }, (_, i) => maxYear - i)
   
   // Localized month names
   const monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
