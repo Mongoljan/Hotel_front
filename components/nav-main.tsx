@@ -17,11 +17,17 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface NavMainProps {
   items?: NavItem[];
@@ -33,6 +39,23 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
   const Icon = item.icon;
   const isActive = pathname === item.url;
   const hasSubItems = item.items && item.items.length > 0;
+  const isImplemented = item.implemented !== false; // undefined or true = implemented
+
+  // "Coming Soon" indicator component
+  const ComingSoonIndicator = () => (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex items-center ml-auto group-data-[collapsible=icon]:hidden">
+            <Clock className="h-3.5 w-3.5 text-orange-500" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="text-xs">
+          {tNav('comingSoon') || 'Удахгүй нэмэгдэнэ'}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 
   if (hasSubItems) {
     return (
@@ -50,12 +73,27 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
               {item.items!.map((subItem) => {
                 const SubIcon = subItem.icon;
                 const isSubActive = pathname === subItem.url;
+                const isSubImplemented = subItem.implemented !== false;
                 return (
                   <SidebarMenuSubItem key={subItem.url}>
                     <SidebarMenuSubButton asChild isActive={isSubActive}>
-                      <Link href={subItem.url}>
+                      <Link href={subItem.url} className="flex items-center">
                         <SubIcon size={14} />
                         <span className="text-cyrillic truncate">{subItem.i18nKey ? tNav(subItem.i18nKey) : subItem.title}</span>
+                        {!isSubImplemented && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex items-center ml-auto">
+                                  <Clock className="h-3 w-3 text-orange-500" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="right" className="text-xs">
+                                {tNav('comingSoon') || 'Удахгүй нэмэгдэнэ'}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
@@ -71,9 +109,10 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
   return (
     <SidebarMenuItem>
       <SidebarMenuButton tooltip={item.i18nKey ? tNav(item.i18nKey) : item.title} isActive={isActive} asChild>
-        <Link href={item.url}>
+        <Link href={item.url} className="flex items-center">
           <Icon size={16} />
           <span className="text-cyrillic truncate flex-1 group-data-[collapsible=icon]:hidden">{item.i18nKey ? tNav(item.i18nKey) : item.title}</span>
+          {!isImplemented && <ComingSoonIndicator />}
           {item.badge && item.badge > 0 && (
             <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-primary text-primary-foreground group-data-[collapsible=icon]:hidden">
               {item.badge}

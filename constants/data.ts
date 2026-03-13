@@ -30,6 +30,7 @@ export type NavItem = {
   items?: NavItem[];
   i18nKey?: string;
   badge?: number;
+  implemented?: boolean; // false = shows "Coming Soon" indicator
 };
 
 export type NavSection = {
@@ -59,6 +60,7 @@ export const navSections: NavSection[] = [
         url: '/admin/reception',
         icon: IconUsers,
         shortcut: ['f', 'f'],
+        implemented: false,
       },
       {
         title: 'Захиалгууд',
@@ -66,6 +68,7 @@ export const navSections: NavSection[] = [
         url: '/admin/bookings',
         icon: IconClipboardList,
         shortcut: ['b', 'b'],
+        implemented: true,
       },
       {
         title: 'Зочид',
@@ -73,6 +76,7 @@ export const navSections: NavSection[] = [
         url: '/admin/guest-registration',
         icon: IconUserPlus,
         shortcut: ['g', 'g'],
+        implemented: true,
       },
       {
         title: 'Өрөө цэвэрлэгээ',
@@ -80,6 +84,7 @@ export const navSections: NavSection[] = [
         url: '/admin/housekeeping',
         icon: IconSparkles,
         shortcut: ['h', 'h'],
+        implemented: true,
       },
       {
         title: 'Ажлын жагсаалт',
@@ -87,6 +92,7 @@ export const navSections: NavSection[] = [
         url: '/admin/tasks',
         icon: IconChecklist,
         shortcut: ['t', 't'],
+        implemented: false,
       },
     ],
   },
@@ -100,6 +106,7 @@ export const navSections: NavSection[] = [
         url: '/admin/online-bookings',
         icon: IconWorld,
         shortcut: ['o', 'o'],
+        implemented: false,
       },
       {
         title: 'Төлбөр тооцоо',
@@ -107,6 +114,7 @@ export const navSections: NavSection[] = [
         url: '/admin/billing',
         icon: IconReceipt,
         shortcut: ['p', 'p'],
+        implemented: false,
       },
       {
         title: 'Шууд захиалга',
@@ -114,6 +122,7 @@ export const navSections: NavSection[] = [
         url: '/admin/direct-booking',
         icon: IconCalendar,
         shortcut: ['r', 'r'],
+        implemented: false,
       },
       {
         title: 'Тайлан',
@@ -121,6 +130,7 @@ export const navSections: NavSection[] = [
         url: '/admin/reports',
         icon: IconFileText,
         shortcut: ['l', 'l'],
+        implemented: false,
       },
     ],
   },
@@ -203,6 +213,7 @@ export const navSections: NavSection[] = [
         url: '/admin/support',
         icon: IconHeadset,
         shortcut: ['s', 's'],
+        implemented: false,
       },
     ],
   },

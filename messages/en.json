@@ -488,7 +488,8 @@
     "taskList": "Task List",
     "onlineBookings": "Online Bookings",
     "directBooking": "Direct Booking",
-    "reports": "Reports"
+    "reports": "Reports",
+    "comingSoon": "Coming Soon"
   },
   "Language": {
     "switch": "Switch language"
