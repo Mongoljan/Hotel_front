@@ -15,6 +15,24 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
         outline: "text-foreground",
+        // Semantic status variants
+        success:
+          "border-transparent bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))] shadow hover:bg-[hsl(var(--success))]/80",
+        successMuted:
+          "border-[hsl(var(--success))]/30 bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]",
+        warning:
+          "border-transparent bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] shadow hover:bg-[hsl(var(--warning))]/80",
+        warningMuted:
+          "border-[hsl(var(--warning))]/30 bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]",
+        info:
+          "border-transparent bg-[hsl(var(--info))] text-[hsl(var(--info-foreground))] shadow hover:bg-[hsl(var(--info))]/80",
+        infoMuted:
+          "border-[hsl(var(--info))]/30 bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]",
+        destructiveMuted:
+          "border-[hsl(var(--destructive))]/30 bg-[hsl(var(--destructive-muted))] text-[hsl(var(--destructive))]",
+        // Neutral muted variant
+        muted:
+          "border-transparent bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {

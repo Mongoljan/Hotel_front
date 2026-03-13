@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { LoadingPage } from "@/components/ui/loading";
 import { SidebarLayout } from "@/components/sidebar-provider";
 import { useTranslations } from 'next-intl';
+import { ThemeProvider } from "@/context/ThemeContext";
 
 
 export default function Layout({
@@ -26,8 +27,10 @@ export default function Layout({
   }
 
   return (
-    <SidebarLayout>
-      {children}
-    </SidebarLayout>
+    <ThemeProvider>
+      <SidebarLayout>
+        {children}
+      </SidebarLayout>
+    </ThemeProvider>
   );
 }

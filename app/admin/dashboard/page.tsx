@@ -1,371 +1,555 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { 
-  IconCurrencyDollar, 
-  IconClipboardList, 
-  IconBed, 
-  IconClock, 
+  IconCloud,
+  IconLogin,
+  IconLogout,
+  IconCash,
   IconTrendingUp, 
   IconTrendingDown,
-  IconUsers,
-  IconCalendar,
-  IconPlus,
-  IconActivity
+  IconPrinter,
+  IconEye,
+  IconCircleCheck,
 } from "@tabler/icons-react";
 import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
   ResponsiveContainer,
   XAxis,
   YAxis,
   Tooltip,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  BarChart,
+  Bar,
 } from 'recharts';
 
-const data = [
-  {
-    name: "Jan",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Feb",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Mar",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Apr",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "May",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jun",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
+// Mock data for guest count bar chart
+const guestCountData = [
+  { day: '15', count: 280 },
+  { day: '16', count: 350 },
+  { day: '17', count: 790 },
+  { day: '18', count: 450 },
+  { day: '19', count: 220 },
+  { day: '20', count: 180 },
+  { day: '21', count: 320 },
 ];
 
-const pieData = [
-  { name: 'Дотоод', value: 65, color: 'hsl(var(--chart-1))' },
-  { name: 'Гадаад', value: 35, color: 'hsl(var(--chart-2))' },
+// Mock data for booking status donut
+const bookingStatusData = [
+  { name: 'Booked', value: 3420, percentage: 60, color: '#22c55e' },
+  { name: 'Canceled', value: 1140, percentage: 20, color: '#f59e0b' },
+  { name: 'Pending Confirmation', value: 1140, percentage: 20, color: '#9ca3af' },
+  { name: 'No-Show', value: 570, percentage: 10, color: '#6366f1' },
 ];
+
+// Mock data for booking channels
+const bookingChannelsData = [
+  { name: 'Booking.com', value: 44, color: '#003580' },
+  { name: 'Agoda', value: 23, color: '#5542F6' },
+  { name: 'Traveloka', value: 24, color: '#00AA13' },
+  { name: 'Direct', value: 218, color: '#f97316' },
+  { name: 'AirBNB', value: 109, color: '#FF5A5F' },
+];
+
+// Mock recent bookings data
+const recentBookings = [
+  { id: 1, guestName: 'Zolzaya Zorig', roomNo: '305', guestCount: 3, checkIn: '2026/01/05', checkOut: '2026/03/01', status: 'confirmed' },
+  { id: 2, guestName: 'Zolzaya Zorig', roomNo: '305', guestCount: 3, checkIn: '2026/01/05', checkOut: '2026/03/01', status: 'cancelled' },
+  { id: 3, guestName: 'Zolzaya Zorig', roomNo: '305', guestCount: 3, checkIn: '2026/01/05', checkOut: '2026/03/01', status: 'checked_in' },
+  { id: 4, guestName: 'Zolzaya Zorig', roomNo: '305', guestCount: 3, checkIn: '2026/01/05', checkOut: '2026/03/01', status: 'confirmed' },
+  { id: 5, guestName: 'Zolzaya Zorig', roomNo: '305', guestCount: 3, checkIn: '2026/01/05', checkOut: '2026/03/01', status: 'checked_in' },
+  { id: 6, guestName: 'Zolzaya Zorig', roomNo: '305', guestCount: 3, checkIn: '2026/01/05', checkOut: '2026/03/01', status: 'cancelled' },
+  { id: 7, guestName: 'Zolzaya Zorig', roomNo: '305', guestCount: 3, checkIn: '2026/01/05', checkOut: '2026/03/01', status: 'confirmed' },
+  { id: 8, guestName: 'Zolzaya Zorig', roomNo: '305', guestCount: 3, checkIn: '2026/01/05', checkOut: '2026/03/01', status: 'confirmed' },
+];
+
+// Mock daily tasks
+const dailyTasks = [
+  { id: 1, date: '2026 /01/23', room: 'Өрөө 305: Deep Clean Carpet', guest: 'Zoe Zorig', org: 'Зочин-байгууллага', completed: false },
+  { id: 2, date: '2026 /01/23', room: 'Өрөө 305: Deep Clean Carpet', guest: 'Zoe Zorig', org: 'Зочин-байгууллага', completed: false },
+  { id: 3, date: '2026 /01/23', room: 'Өрөө 305: Deep Clean Carpet', guest: 'Zoe Zorig', org: 'Зочин-байгууллага', completed: true },
+  { id: 4, date: '2026 /01/23', room: 'Өрөө 305: Deep Clean Carpet', guest: 'Zoe Zorig', org: 'Зочин-байгууллага', completed: true },
+];
+
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case 'confirmed':
+      return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Баталгаажсан</Badge>;
+    case 'cancelled':
+      return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">Хүлээгдэж буй</Badge>;
+    case 'checked_in':
+      return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Зочинирсэн</Badge>;
+    default:
+      return <Badge variant="secondary">{status}</Badge>;
+  }
+};
 
 export default function DashboardPage() {
-  const t = useTranslations();
-  
+  const t = useTranslations('dashboard');
+  const [dateFilter, setDateFilter] = useState('today');
+  const [guestFilter, setGuestFilter] = useState('all');
+
+  const totalBookings = bookingStatusData.reduce((sum, item) => sum + item.value, 0);
+
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">{t('dashboard.title')}</h2>
-        <div className="flex items-center space-x-2">
-          <Button>
-            <IconPlus className="mr-2 h-4 w-4" />
-            {t('dashboard.newBooking')}
-          </Button>
-        </div>
+    <div className="flex-1 space-y-6 p-4 md:p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Хянах самбар</h1>
+        <Button variant="outline" size="sm">
+          <IconPrinter className="mr-2 h-4 w-4" />
+          Татах
+        </Button>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">{t('dashboard.tabs.overview')}</TabsTrigger>
-          <TabsTrigger value="analytics" disabled>
-            {t('dashboard.tabs.analytics')}
-          </TabsTrigger>
-          <TabsTrigger value="reports" disabled>
-            {t('dashboard.tabs.reports')}
-          </TabsTrigger>
-          <TabsTrigger value="notifications" disabled>
-            {t('dashboard.tabs.notifications')}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-cyrillic">
-                  Нийт орлого
-                </CardTitle>
-                <IconCurrencyDollar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">₮45,231,890</div>
-                <p className="text-xs text-muted-foreground">
-                  {t('dashboard.stats.revenueChange')}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-cyrillic">
-                  Захиалгууд
-                </CardTitle>
-                <IconUsers className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">+2,350</div>
-                <p className="text-xs text-muted-foreground">
-                  {t('dashboard.stats.bookingsChange')}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-cyrillic">
-                  Өрөөний тоо
-                </CardTitle>
-                <IconClipboardList className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">+12,234</div>
-                <p className="text-xs text-muted-foreground">
-                  {t('dashboard.stats.roomsChange')}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-cyrillic">
-                  Идэвхтэй
-                </CardTitle>
-                <IconActivity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">+573</div>
-                <p className="text-xs text-muted-foreground">
-                  {t('dashboard.stats.activeChange')}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Charts */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4">
-              <CardHeader>
-                <CardTitle className="text-cyrillic">{t('dashboard.chart.title')}</CardTitle>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart data={data}>
-                    <XAxis
-                      dataKey="name"
-                      stroke="#888888"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="#888888"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value) => `₮${value}`}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="total"
-                      strokeWidth={2}
-                      activeDot={{
-                        r: 6,
-                        style: { fill: "hsl(var(--primary))", opacity: 0.25 },
-                      }}
-                      style={{
-                        fill: "hsl(var(--primary))",
-                        fillOpacity: 0.2,
-                        stroke: "hsl(var(--primary))",
-                      }}
-                    />
-                    <Tooltip 
-                      formatter={(value) => [`₮${value}`, t('dashboard.chart.revenue')]}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card className="col-span-3">
-              <CardHeader>
-                <CardTitle className="text-cyrillic">{t('dashboard.recentBookings.title')}</CardTitle>
-                <CardDescription className="text-cyrillic">
-                  {t('dashboard.recentBookings.subtitle')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-8">
-                  {[
-                    {
-                      name: "Оливия Мартин",
-                      email: "olivia.martin@email.com", 
-                      amount: "₮1,999,000",
-                      avatar: "OM"
-                    },
-                    {
-                      name: "Жексон Ли",
-                      email: "jackson.lee@email.com",
-                      amount: "₮399,000",
-                      avatar: "JL"
-                    },
-                    {
-                      name: "Изабелла Нгуен",
-                      email: "isabella.nguyen@email.com",
-                      amount: "₮299,000",
-                      avatar: "IN"
-                    },
-                    {
-                      name: "Уильям Ким",
-                      email: "will@email.com",
-                      amount: "₮99,000",
-                      avatar: "WK"
-                    },
-                    {
-                      name: "София Дэвис",
-                      email: "sofia.davis@email.com",
-                      amount: "₮39,000",
-                      avatar: "SD"
-                    },
-                  ].map((customer, index) => (
-                    <div key={index} className="flex items-center">
-                      <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
-                        {customer.avatar}
-                      </div>
-                      <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {customer.name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {customer.email}
-                        </p>
-                      </div>
-                      <div className="ml-auto font-medium">
-                        {customer.amount}
-                      </div>
-                    </div>
-                  ))}
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Room Occupancy */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Өрөө дүүргэлтийн хувь (56 / 90)</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">87%</span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <div className="flex items-center gap-1 text-xs">
+                  <span className="text-muted-foreground">Өнгөрсөн</span>
+                  <Badge className="bg-green-100 text-green-700 text-xs px-1.5 py-0 hover:bg-green-100">
+                    <IconTrendingUp className="h-3 w-3 mr-0.5" />
+                    +5%
+                  </Badge>
+                </div>
+              </div>
+              <div className="rounded-full bg-blue-100 p-3">
+                <IconCloud className="h-5 w-5 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Additional Stats */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-cyrillic">{t('dashboard.guestDistribution.title')}</CardTitle>
-                <CardDescription className="text-cyrillic">
-                  {t('dashboard.guestDistribution.subtitle')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
+        {/* Today's Check-in */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Өнөөдрийн Check-in</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">24</span>
+                </div>
+                <p className="text-xs text-muted-foreground">12 ирсэн • 12 хүлээгдэж байгаа</p>
+              </div>
+              <div className="rounded-full bg-green-100 p-3">
+                <IconLogin className="h-5 w-5 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Today's Check-out */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Өнөөдрийн Check-out</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">7</span>
+                </div>
+                <p className="text-xs text-muted-foreground">3 үлдсэн • 4 гарсан</p>
+              </div>
+              <div className="rounded-full bg-orange-100 p-3">
+                <IconLogout className="h-5 w-5 text-orange-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Today's Revenue */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Өнөөдрийн орлого</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">5,000,000 ₮</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs">
+                  <span className="text-muted-foreground">Өнгөрсөн</span>
+                  <Badge className="bg-red-100 text-red-700 text-xs px-1.5 py-0 hover:bg-red-100">
+                    <IconTrendingDown className="h-3 w-3 mr-0.5" />
+                    -12%
+                  </Badge>
+                </div>
+              </div>
+              <div className="rounded-full bg-emerald-100 p-3">
+                <IconCash className="h-5 w-5 text-emerald-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Row - 3 columns */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Booking Status Donut */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-medium">Захиалгын төлөөр</CardTitle>
+              <Select defaultValue="week">
+                <SelectTrigger className="h-8 w-[130px] text-xs">
+                  <SelectValue placeholder="Сүүлийн 7 хоног" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Сүүлийн 7 хоног</SelectItem>
+                  <SelectItem value="month">Энэ сар</SelectItem>
+                  <SelectItem value="year">Энэ жил</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center">
+              <div className="relative">
+                <ResponsiveContainer width={180} height={180}>
                   <PieChart>
                     <Pie
-                      data={pieData}
+                      data={bookingStatusData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
+                      innerRadius={55}
                       outerRadius={80}
                       paddingAngle={2}
                       dataKey="value"
                     >
-                      {pieData.map((entry, index) => (
+                      {bookingStatusData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => `${value}%`} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="flex justify-center space-x-4 mt-4">
-                  {pieData.map((entry, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
-                        style={{ backgroundColor: entry.color }}
-                      />
-                      <span className="text-sm text-cyrillic">{entry.name}: {entry.value}%</span>
-                    </div>
-                  ))}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold">{totalBookings.toLocaleString()}</span>
+                  <span className="text-xs text-muted-foreground">Total Bookings</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              {bookingStatusData.map((item, index) => (
+                <div key={index} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-xs">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{item.value.toLocaleString()}</span>
+                    <span className="text-xs" style={{ color: item.color }}>{item.percentage}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-cyrillic">{t('dashboard.roomTypes.title')}</CardTitle>
-                <CardDescription className="text-cyrillic">
-                  {t('dashboard.roomTypes.subtitle')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={[
-                    { name: 'Стандарт', value: 60 },
-                    { name: 'Делюкс', value: 90 },
-                    { name: 'Сьют', value: 45 },
-                    { name: 'Пентхаус', value: 12 },
-                  ]}>
-                    <XAxis dataKey="name" fontSize={12} />
-                    <YAxis fontSize={12} />
-                    <Bar 
-                      dataKey="value" 
-                      fill="hsl(var(--primary))" 
-                      radius={[4, 4, 0, 0]}
+        {/* Guest Count Bar Chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-medium">Зочдын тоон үзүүлэлт</CardTitle>
+              <Select defaultValue="week">
+                <SelectTrigger className="h-8 w-[130px] text-xs">
+                  <SelectValue placeholder="Сүүлийн 7 хоног" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Сүүлийн 7 хоног</SelectItem>
+                  <SelectItem value="month">Энэ сар</SelectItem>
+                  <SelectItem value="year">Энэ жил</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={guestCountData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <XAxis
+                  dataKey="day"
+                  stroke="#888888"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#888888"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `${value}`}
+                  domain={[0, 1000]}
+                  ticks={[0, 200, 400, 600, 800, 1000]}
+                />
+                <Tooltip 
+                  formatter={(value: number) => [value, 'Зочид']}
+                  labelFormatter={(label) => `Өдөр: ${label}`}
+                />
+                <Bar
+                  dataKey="count"
+                  fill="#22c55e"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Booking Channels Pie Chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-medium">Захиалгын сувгаар</CardTitle>
+              <Select defaultValue="week">
+                <SelectTrigger className="h-8 w-[130px] text-xs">
+                  <SelectValue placeholder="Сүүлийн 7 хоног" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Сүүлийн 7 хоног</SelectItem>
+                  <SelectItem value="month">Энэ сар</SelectItem>
+                  <SelectItem value="year">Энэ жил</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center">
+              <ResponsiveContainer width={180} height={180}>
+                <PieChart>
+                  <Pie
+                    data={bookingChannelsData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {bookingChannelsData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center hidden">
+              <span className="text-sm font-medium">43.8%</span>
+              <span className="text-xs text-muted-foreground block">Most guests booked via Direct</span>
+            </div>
+            <div className="mt-4 space-y-1.5">
+              {bookingChannelsData.map((item, index) => (
+                <div key={index} className="flex items-center gap-2 text-xs">
+                  <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span>{item.name} ({item.value})</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bookings Table and Tasks */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Recent Bookings Table */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle className="text-base font-medium">Сүүлийн захиалгууд</CardTitle>
+              <div className="flex gap-1 rounded-lg bg-muted p-1">
+                <Button
+                  variant={dateFilter === 'today' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-7 px-3 text-xs"
+                  onClick={() => setDateFilter('today')}
+                >
+                  Өнөөдөр
+                </Button>
+                <Button
+                  variant={dateFilter === 'week' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-7 px-3 text-xs"
+                  onClick={() => setDateFilter('week')}
+                >
+                  Энэ 7 хоног
+                </Button>
+                <Button
+                  variant={dateFilter === 'month' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-7 px-3 text-xs"
+                  onClick={() => setDateFilter('month')}
+                >
+                  Энэ сар
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {/* Guest Filter Tabs */}
+            <div className="mb-4 flex flex-wrap gap-2">
+              {[
+                { value: 'all', label: 'Бүгд', count: 55 },
+                { value: 'arriving', label: 'Ирэх зочин', count: 10 },
+                { value: 'departing', label: 'Гарах зочин', count: 12 },
+                { value: 'staying', label: 'Байрлах байгаа зочин', count: 18 },
+                { value: 'extended', label: 'Хугацаа сунгасан зочин', count: 15 },
+              ].map((filter) => (
+                <Button
+                  key={filter.value}
+                  variant={guestFilter === filter.value ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setGuestFilter(filter.value)}
+                >
+                  {filter.label}
+                  <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-xs">
+                    {filter.count}
+                  </Badge>
+                </Button>
+              ))}
+            </div>
+
+            {/* Table */}
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-10">
+                      <Checkbox />
+                    </TableHead>
+                    <TableHead>Зочин нэр</TableHead>
+                    <TableHead className="text-center">Өрөөний №</TableHead>
+                    <TableHead className="text-center">Зочны тоо</TableHead>
+                    <TableHead className="text-center">Ирэх өдөр</TableHead>
+                    <TableHead className="text-center">Гарах өдөр</TableHead>
+                    <TableHead className="text-center">Төлөв</TableHead>
+                    <TableHead className="w-10"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentBookings.map((booking) => (
+                    <TableRow key={booking.id}>
+                      <TableCell>
+                        <Checkbox />
+                      </TableCell>
+                      <TableCell className="font-medium">{booking.guestName}</TableCell>
+                      <TableCell className="text-center">{booking.roomNo}</TableCell>
+                      <TableCell className="text-center">{booking.guestCount}</TableCell>
+                      <TableCell className="text-center">{booking.checkIn}</TableCell>
+                      <TableCell className="text-center">{booking.checkOut}</TableCell>
+                      <TableCell className="text-center">{getStatusBadge(booking.status)}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <IconEye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Daily Tasks */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-medium">Өнөөдрийн гүйцэтгэх ажил</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="relative h-10 w-10">
+                  <svg className="h-10 w-10 -rotate-90">
+                    <circle
+                      cx="20"
+                      cy="20"
+                      r="16"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                      className="text-muted"
                     />
-                    <Tooltip />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-cyrillic">{t('dashboard.recentActivity.title')}</CardTitle>
-                <CardDescription className="text-cyrillic">
-                  {t('dashboard.recentActivity.subtitle')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {[
-                  { time: '2 minutes ago', action: 'Шинэ захиалга' },
-                  { time: '1 hour ago', action: 'Төлбөр хийгдсэн' },
-                  { time: '3 hours ago', action: 'Зочин бүртгэгдсэн' },
-                  { time: '1 day ago', action: 'Өрөө нэмэгдсэн' },
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-center space-x-4">
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none text-cyrillic">
-                        {activity.action}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.time}
-                      </p>
+                    <circle
+                      cx="20"
+                      cy="20"
+                      r="16"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeDasharray={`${40 * 2 * Math.PI / 100 * 101} ${101}`}
+                      className="text-primary"
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-xs font-medium">40%</span>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-4">
+              {dailyTasks.map((task) => (
+                <div key={task.id} className="flex gap-3">
+                  <div className="mt-0.5">
+                    {task.completed ? (
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <IconCircleCheck className="h-4 w-4" />
+                      </div>
+                    ) : (
+                      <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
+                    )}
+                  </div>
+                  <div className={`flex-1 space-y-1 ${task.completed ? 'opacity-60' : ''}`}>
+                    <p className="text-xs text-muted-foreground">{task.date}</p>
+                    <p className={`text-sm font-medium ${task.completed ? 'line-through' : ''}`}>
+                      {task.room}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <div className="h-7 w-7 rounded-full bg-green-100 ring-2 ring-green-500 flex items-center justify-center text-xs font-medium text-green-700">
+                          {task.guest[0]}
+                        </div>
+                        <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium">{task.guest}</p>
+                        <p className="text-xs text-muted-foreground">{task.org}</p>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+                </div>
+              ))}
+            </div>
+            <Button variant="link" className="mt-4 h-auto p-0 text-sm text-primary">
+              Бүгдийг харах →
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

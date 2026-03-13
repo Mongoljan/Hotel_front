@@ -38,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import {
   Tabs,
   TabsContent,
@@ -139,7 +140,7 @@ export default function ContractOrganizationsPage() {
     defaultValues: {
       organization_name: '',
       registration_number: '',
-      organization_type: '',
+      organization_type: 'company',
       discount_percent: '',
       promo_code: '',
       validity_start: '',
@@ -155,6 +156,7 @@ export default function ContractOrganizationsPage() {
       accountant_person_phone: '',
       address: '',
       notes: '',
+      is_active: true,
     },
   });
 
@@ -181,7 +183,7 @@ export default function ContractOrganizationsPage() {
         description: data.notes || '',
         start_date: data.validity_start,
         end_date: data.validity_end,
-        is_active: true,
+        is_active: data.is_active ?? true,
       };
 
       const url = '/api/partner-organizations';
@@ -235,6 +237,7 @@ export default function ContractOrganizationsPage() {
       accountant_person_phone: org.finance2_phone || '',
       address: org.address || '',
       notes: org.description || '',
+      is_active: org.is_active ?? true,
     });
     setIsDialogOpen(true);
   };
@@ -384,8 +387,6 @@ export default function ContractOrganizationsPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="company">{t('type_contract')}</SelectItem>
-                            <SelectItem value="partner">{t('type_partner')}</SelectItem>
-                            <SelectItem value="hotel">{t('type_hotel')}</SelectItem>
                           </SelectContent>
                         </Select>
                         {form.formState.errors.organization_type && (
@@ -597,6 +598,18 @@ export default function ContractOrganizationsPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Идэвхтэй эсэх */}
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <Label>{t('is_active_label')}</Label>
+                      <p className="text-sm text-muted-foreground">{t('is_active_description')}</p>
+                    </div>
+                    <Switch
+                      checked={form.watch('is_active')}
+                      onCheckedChange={(checked) => form.setValue('is_active', checked)}
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button
@@ -684,6 +697,7 @@ export default function ContractOrganizationsPage() {
                     <TableHead className="text-center">{t('phone_label')}</TableHead>
                     <TableHead className="text-center">{t('email_label')}</TableHead>
                     <TableHead className="text-center">{t('table_date')}</TableHead>
+                    <TableHead className="text-center">{t('table_status')}</TableHead>
                     <TableHead className="text-center">{t('table_actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -702,6 +716,11 @@ export default function ContractOrganizationsPage() {
                       <TableCell className="text-center">{org.contact_email}</TableCell>
                       <TableCell className="text-center">
                         {org.start_date && org.end_date ? `${formatDate(org.start_date)} - ${formatDate(org.end_date)}` : '-'}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={org.is_active ? 'default' : 'secondary'}>
+                          {org.is_active ? t('status_active') : t('status_inactive')}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">

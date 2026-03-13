@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import UserProfileToggle from '@/components/UserProfileToggle';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslations } from 'next-intl';
 import { Clock, RefreshCw } from 'lucide-react';
@@ -226,6 +227,7 @@ export function BreadcrumbHeader() {
             </TooltipProvider>
           )}
           
+          <ThemeSwitcher />
           <LanguageSwitcher />
           <Separator orientation="vertical" className="hidden h-5 md:block" />
           <UserProfileToggle 

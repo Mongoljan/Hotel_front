@@ -104,15 +104,35 @@ const config: Config = {
   				DEFAULT: 'hsl(var(--secondary))',
   				foreground: 'hsl(var(--secondary-foreground))'
   			},
-			  muted: '#707680',
+			  muted: {
+					DEFAULT: 'hsl(var(--muted))',
+					foreground: 'hsl(var(--muted-foreground))'
+				},
 				accent: {
 					DEFAULT: 'hsl(var(--accent))',
 					foreground: 'hsl(var(--accent-foreground))'
 				},
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
+  				foreground: 'hsl(var(--destructive-foreground))',
+					muted: 'hsl(var(--destructive-muted))'
   			},
+				// Semantic status colors from CSS variables
+				'status-success': {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))',
+					muted: 'hsl(var(--success-muted))'
+				},
+				'status-warning': {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))',
+					muted: 'hsl(var(--warning-muted))'
+				},
+				'status-info': {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))',
+					muted: 'hsl(var(--info-muted))'
+				},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
@@ -152,13 +172,16 @@ const config: Config = {
 			'colored': '0 8px 35px -10px rgba(79, 70, 229, 0.25)',
 		},
   		borderRadius: {
+			'none': '0',
 			'xs': '0.125rem',
-			sd: '0.625rem',
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)',
-			'2xl': '1rem',
+			'sm': 'var(--radius-sm)',
+  			'md': 'var(--radius-md)',
+  			'DEFAULT': 'var(--radius)',
+  			'lg': 'var(--radius-lg)',
+			'xl': 'var(--radius-xl)',
+			'2xl': 'var(--radius-2xl)',
 			'3xl': '1.5rem',
+			'full': 'var(--radius-full)',
   		},
 		fontSize: {
 			'2xs': ['0.625rem', { lineHeight: '0.75rem' }],

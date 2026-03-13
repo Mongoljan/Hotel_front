@@ -705,6 +705,7 @@ export const schemaContractOrganization = (t?: (key: string) => string) => {
     accountant_person_phone: z.string().optional(),
     address: z.string().optional(),
     notes: z.string().optional(),
+    is_active: z.boolean().optional(),
   });
 };
 

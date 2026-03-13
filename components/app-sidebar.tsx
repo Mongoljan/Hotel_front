@@ -12,10 +12,11 @@ import {
 import { NavMain } from '@/components/nav-main';
 import { OrgSwitcher } from '@/components/org-switcher';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
-import { navItems } from '@/constants/data';
+import { navSections, dashboardItem, NavSection, NavItem } from '@/constants/data';
 import { USER_TYPES } from '@/lib/userTypes';
 import { useTranslations } from 'next-intl';
 import { AlertCircle } from 'lucide-react';
+import { IconSettings, IconBuilding } from '@tabler/icons-react';
 import {
   Tooltip,
   TooltipContent,
@@ -88,8 +89,8 @@ export function AppSidebar({ isApproved, userApproved, hotelRegistrationComplete
   const tNav = useTranslations('Navigation');
   const mobileSidebarTitle = tNav('sidebarMobileTitle');
 
-  // Filter navigation items based on approval status, hotel registration completion, and user role
-  const filteredNavItems = React.useMemo(() => {
+  // Filter navigation sections based on approval status, hotel registration completion, and user role
+  const filteredSections = React.useMemo((): NavSection[] => {
     // Reception (4) and Manager (3) who are NOT approved: show no navigation (they see StaffWaitingView)
     const isStaffUser = userType === USER_TYPES.RECEPTION || userType === USER_TYPES.MANAGER;
     if (isStaffUser && (!isApproved || !userApproved)) {
@@ -97,21 +98,27 @@ export function AppSidebar({ isApproved, userApproved, hotelRegistrationComplete
       return [];
     }
 
-    // Owner who is not approved or registration not completed: show only hotel info
+    // Owner who is not approved or registration not completed: show only hotel info in settings
     if (!isApproved || !userApproved || !hotelRegistrationCompleted) {
       return [
         {
-          title: 'Тохиргоо',
-          i18nKey: 'settings',
-          url: '#',
-          icon: navItems.find(item => item.i18nKey === 'settings')?.icon,
-          isActive: false,
+          title: 'Бусад',
+          i18nKey: 'others',
           items: [
             {
-              title: 'Буудлын мэдээлэл',
-              i18nKey: 'hotelInfo',
-              url: '/admin/hotel',
-              icon: navItems.find(item => item.items?.some(subItem => subItem.url === '/admin/hotel'))?.items?.find(subItem => subItem.url === '/admin/hotel')?.icon,
+              title: 'Тохиргоо',
+              i18nKey: 'settings',
+              url: '#',
+              icon: IconSettings,
+              isActive: false,
+              items: [
+                {
+                  title: 'Буудлын мэдээлэл',
+                  i18nKey: 'hotelInfo',
+                  url: '/admin/hotel',
+                  icon: IconBuilding,
+                },
+              ],
             },
           ],
         },
@@ -120,25 +127,34 @@ export function AppSidebar({ isApproved, userApproved, hotelRegistrationComplete
 
     // Reception (4): Cannot see Settings submenu at all
     if (userType === USER_TYPES.RECEPTION) {
-      return navItems.filter(item => item.i18nKey !== 'settings');
+      return navSections.map(section => ({
+        ...section,
+        items: section.items.filter(item => item.i18nKey !== 'settings'),
+      })).filter(section => section.items.length > 0);
     }
 
-    // Manager (3): Same as Owner but cannot see Users menu item
+    // Manager (3): Same as Owner but cannot see Users menu item in Settings
     if (userType === USER_TYPES.MANAGER) {
-      return navItems.map(item => {
-        if (item.i18nKey === 'settings' && item.items) {
-          return {
-            ...item,
-            items: item.items.filter(subItem => subItem.url !== '/admin/users'),
-          };
-        }
-        return item;
-      });
+      return navSections.map(section => ({
+        ...section,
+        items: section.items.map(item => {
+          if (item.i18nKey === 'settings' && item.items) {
+            return {
+              ...item,
+              items: item.items.filter(subItem => subItem.url !== '/admin/users'),
+            };
+          }
+          return item;
+        }),
+      }));
     }
 
     // Owner (2) and others: Full access
-    return navItems;
+    return navSections;
   }, [isApproved, userApproved, hotelRegistrationCompleted, userType]);
+
+  // Show dashboard only when approved
+  const showDashboard = isApproved && userApproved && hotelRegistrationCompleted;
 
   return (
     <Sidebar collapsible="icon" mobileTitle={mobileSidebarTitle} {...props}>
@@ -147,7 +163,10 @@ export function AppSidebar({ isApproved, userApproved, hotelRegistrationComplete
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain items={filteredNavItems} />
+        <NavMain 
+          sections={filteredSections} 
+          dashboardNav={showDashboard ? dashboardItem : undefined}
+        />
         <SidebarStatusMessage
           isApproved={isApproved}
           userApproved={userApproved}
