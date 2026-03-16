@@ -227,6 +227,12 @@ export default function UsersPage() {
     });
   };
 
+  const closeAddEditModal = () => {
+    setIsAddUserModalOpen(false);
+    setEditingUser(null);
+    resetForm();
+  };
+
   // Handle save user
   const handleSaveUser = async () => {
     // Build form data for validation
@@ -295,8 +301,7 @@ export default function UsersPage() {
       }
 
       toast.success(editingUser ? 'Хэрэглэгчийн мэдээлэл шинэчлэгдлээ' : 'Хэрэглэгч амжилттай нэмэгдлээ');
-      setIsAddUserModalOpen(false);
-      resetForm();
+      closeAddEditModal();
       fetchUsers(); // Refresh data
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Алдаа гарлаа');
@@ -494,7 +499,7 @@ export default function UsersPage() {
 
       {/* Add/Edit User Modal */}
       <Dialog open={isAddUserModalOpen} onOpenChange={setIsAddUserModalOpen}>
-        <DialogContent className="sm:max-w-[600px]" preventOutsideClose hideCloseButton>
+        <DialogContent className="sm:max-w-[600px]" preventOutsideClose>
           <DialogHeader>
             <DialogTitle>
               {editingUser ? t('editUserModal') : t('addUserModal')}
@@ -615,6 +620,14 @@ export default function UsersPage() {
           </div>
 
           <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeAddEditModal}
+              disabled={isSaving}
+            >
+              Цуцлах
+            </Button>
             <Button
               onClick={handleSaveUser}
               disabled={isSaving}
