@@ -276,7 +276,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   return (
     <div className="flex justify-center items-center">
 
-      <Card className="w-full max-w-[600px] md:min-w-[440px]">
+      <Card className="w-full max-w-[620px] md:min-w-[440px]">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center flex items-center justify-center gap-2">
             <ImageIcon className="h-6 w-6" />
@@ -287,28 +287,28 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert className="mb-6">
+          <Alert className="mb-4 py-3">
             <AlertDescription>
-              <ul className="list-disc list-inside space-y-1 text-sm">
+              <ul className="list-disc list-inside space-y-0.5 text-xs text-muted-foreground">
                 <li>{t('alert_min_images')}</li>
                 <li>{t('alert_min_size')}</li>
                 <li>{t('alert_formats')}</li>
               </ul>
-              <div className="mt-3 text-sm font-medium">
+              <div className="mt-2 text-sm font-medium">
                 {t('images_count_label')}: <span className={`${watchedEntries.filter(e => e.images).length >= 5 ? 'text-green-600' : 'text-orange-600'}`}>{watchedEntries.filter(e => e.images).length}</span> / 5 {t('min_label')}
               </div>
             </AlertDescription>
           </Alert>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
               {fields.map((field, index) => {
                 const previewSrc = watchedEntries?.[index]?.images;
                 return (
                   <Card key={field.id} className="border-dashed">
-                    <CardContent className="pt-6">
-                      <div className="space-y-4">
+                    <CardContent className="pt-4">
+                      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] md:items-start">
                         <FormField
                           control={form.control}
                           name={`entries.${index}.images`}
@@ -328,11 +328,11 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                               </FormControl>
                               <FormMessage />
                               {previewSrc && (
-                                <div className="mt-4">
+                                <div className="mt-2">
                                   <img
                                     src={previewSrc}
                                     alt={`Preview ${index + 1}`}
-                                    className="max-h-40 w-auto rounded-md border object-cover"
+                                    className="max-h-28 w-auto rounded-md border object-cover"
                                   />
                                 </div>
                               )}
@@ -349,6 +349,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                               <FormControl>
                                 <Textarea 
                                   placeholder={t('description_placeholder')}
+                                  rows={3}
                                   {...field} 
                                 />
                               </FormControl>
@@ -363,7 +364,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                             variant="destructive"
                             size="sm"
                             onClick={() => remove(index)}
-                            className="w-full"
+                            className="w-full md:w-auto md:justify-self-end"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             {t('3')}

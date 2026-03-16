@@ -21,6 +21,14 @@ type Props = {
 export default function BreakfastPolicySection({ form, t }: Props) {
   const breakfastStatus = form.watch('breakfast_status');
 
+  // Safari may render a locale placeholder-like value for empty native time inputs.
+  // Keep breakfast time fields as explicit HH:MM text to ensure consistent UI in all browsers.
+  const formatTimeInput = (raw: string): string => {
+    const digits = raw.replace(/\D/g, '').slice(0, 4);
+    if (digits.length <= 2) return digits;
+    return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  };
+
   // Clear validation errors and set default times when status changes to free/paid
   React.useEffect(() => {
     if (breakfastStatus !== 'no') {
@@ -88,7 +96,19 @@ export default function BreakfastPolicySection({ form, t }: Props) {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input type="time" {...field} className="w-32" />
+                    <Input
+                      type="text"
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(formatTimeInput(e.target.value || ''))}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder="HH:MM"
+                      maxLength={5}
+                      className="w-32"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -101,7 +121,19 @@ export default function BreakfastPolicySection({ form, t }: Props) {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input type="time" {...field} className="w-32" />
+                    <Input
+                      type="text"
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(formatTimeInput(e.target.value || ''))}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder="HH:MM"
+                      maxLength={5}
+                      className="w-32"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

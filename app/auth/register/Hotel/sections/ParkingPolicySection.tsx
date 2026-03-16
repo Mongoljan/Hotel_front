@@ -34,14 +34,26 @@ function ParkingSubSection({
   priceFieldName: 'outdoor_price' | 'indoor_price';
 }) {
   const parkingValue = form.watch(parkingFieldName);
+  const feeTypeValue = form.watch(feeTypeFieldName);
+  const priceValue = form.watch(priceFieldName);
 
-  // Clear validation errors when parking status changes
+  // Keep parking paid validation state in sync with non-native controls.
   React.useEffect(() => {
     if (parkingValue === 'paid') {
-      // Clear stale errors when switching to paid
       form.clearErrors([priceFieldName, feeTypeFieldName]);
+      const rawPrice = (priceValue || '').toString().replace(/,/g, '');
+      const parsedPrice = parseFloat(rawPrice);
+      if (feeTypeValue && rawPrice && !Number.isNaN(parsedPrice) && parsedPrice > 0) {
+        form.clearErrors([priceFieldName, feeTypeFieldName]);
+      }
+      return;
     }
-  }, [parkingValue, form, priceFieldName, feeTypeFieldName]);
+
+    // For "no" and "free", paid-only fields should not keep old errors/values.
+    form.setValue(feeTypeFieldName, null as any, { shouldValidate: true });
+    form.setValue(priceFieldName, null as any, { shouldValidate: true });
+    form.clearErrors([priceFieldName, feeTypeFieldName]);
+  }, [parkingValue, feeTypeValue, priceValue, form, priceFieldName, feeTypeFieldName]);
 
   return (
     <div className="space-y-4">
@@ -83,7 +95,16 @@ function ParkingSubSection({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('payment_unit')}</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || undefined}>
+                <Select
+                  onValueChange={(value) => {
+                    form.setValue(feeTypeFieldName, value as any, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    });
+                  }}
+                  value={field.value || undefined}
+                >
                   <FormControl>
                     <SelectTrigger className="w-[150px]">
                       <SelectValue placeholder={t('select_placeholder')} />
@@ -109,7 +130,13 @@ function ParkingSubSection({
                     thousandSeparator=","
                     placeholder="0"
                     value={field.value || ''}
-                    onValueChange={(values) => field.onChange(values.value || null)}
+                    onValueChange={(values) => {
+                      form.setValue(priceFieldName, values.value || null, {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      });
+                    }}
                     customInput={Input}
                     className="w-32"
                   />

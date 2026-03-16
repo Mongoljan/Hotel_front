@@ -27,6 +27,7 @@ type Props = {
 
 export default function RegisterHotel3({ onNext, onBack }: Props) {
   const [location, setLocation] = useState(DefaultLocation);
+  const [mapCenter, setMapCenter] = useState(DefaultLocation);
   const [zoom, setZoom] = useState(DefaultZoom);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const t = useTranslations("3GoogleMap");
@@ -46,6 +47,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
     
     if (stored.step3?.location) {
       setLocation(stored.step3.location);
+      setMapCenter(stored.step3.location);
       if (stored.step3.zoom) {
         setZoom(stored.step3.zoom);
       }
@@ -133,7 +135,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             {isLoaded ? (
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
-                center={location}
+                center={mapCenter}
                 zoom={zoom}
                 onLoad={onLoad}
                 onUnmount={onUnmount}

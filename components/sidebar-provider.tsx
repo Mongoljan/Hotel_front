@@ -52,7 +52,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       />
       <main className="flex-1 flex flex-col w-full">
         <BreadcrumbHeader />
-        <div className="flex-1 px-4 py-4 md:px-5 md:py-5 lg:px-6 lg:py-6 xl:px-8 xl:py-6 2xl:px-10 2xl:py-8 max-w-screen-2xl mx-auto w-full">
+        <div className="flex-1 px-3 py-3 md:px-4 md:py-4 lg:px-4 lg:py-4 xl:px-5 xl:py-5 2xl:px-6 2xl:py-6 w-full">
           {children}
         </div>
       </main>
