@@ -549,6 +549,12 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     );
   }
 
+  const rightGalleryImages = propertyImages.slice(1, 7);
+  const rightGallerySlots = rightGalleryImages.length > 4 ? 6 : 4;
+  const showGalleryMoreCount = propertyImages.length > 7;
+  const galleryExtraCount = propertyImages.length - 7;
+  const galleryHeightClass = rightGallerySlots === 6 ? 'h-[520px]' : 'h-[400px]';
+
   return (
     <div className="w-full max-w-full space-y-4">
       {/* Hotel Name Header */}
@@ -572,62 +578,76 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                 <IconPencil className="h-4 w-4" />
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-3 p-3 h-[400px]">
-          {/* Left: Large Image */}
-          <div
-            className="relative rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-            onClick={() => {
-              if (propertyImages[0]) {
-                setLightboxImage(propertyImages[0].image);
-                setLightboxOpen(true);
-              }
-            }}
-          >
-            {propertyImages[0] ? (
-              <Image
-                src={propertyImages[0].image}
-                alt={propertyImages[0].description || 'Hotel image'}
-                fill
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <IconPhoto className="h-16 w-16 text-gray-400" />
-              </div>
-            )}
-          </div>
-
-          {/* Right: 4 smaller images in 2x2 grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((index) => (
+            <div className={`grid grid-cols-2 gap-3 p-3 ${galleryHeightClass}`}>
+              {/* Left: Hero image */}
               <div
-                key={index}
                 className="relative rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => {
-                  if (propertyImages[index]) {
-                    setLightboxImage(propertyImages[index].image);
+                  if (propertyImages[0]) {
+                    setLightboxImage(propertyImages[0].image);
                     setLightboxOpen(true);
                   }
                 }}
               >
-                {propertyImages[index] ? (
+                {propertyImages[0] ? (
                   <Image
-                    src={propertyImages[index].image}
-                    alt={propertyImages[index].description || `Hotel image ${index + 1}`}
+                    src={propertyImages[0].image}
+                    alt={propertyImages[0].description || 'Hotel image'}
                     fill
                     className="object-cover"
+                    priority
                   />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <IconPhoto className="h-8 w-8 text-gray-400" />
+                    <IconPhoto className="h-16 w-16 text-gray-400" />
                   </div>
                 )}
               </div>
-            ))}
-          </div>
+
+              {/* Right: adaptive thumbnail grid (4 or 6 slots) */}
+              <div className={`grid grid-cols-2 gap-3 ${rightGallerySlots === 6 ? 'grid-rows-3' : 'grid-rows-2'}`}>
+                {Array.from({ length: rightGallerySlots }).map((_, slotIndex) => {
+                  const imageIndex = slotIndex + 1;
+                  const image = propertyImages[imageIndex];
+                  const isLastVisibleSlot = slotIndex === rightGallerySlots - 1;
+                  const shouldShowMoreOverlay = Boolean(image) && isLastVisibleSlot && showGalleryMoreCount;
+
+                  return (
+                    <div
+                      key={imageIndex}
+                      className="relative rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => {
+                        if (image) {
+                          setLightboxImage(image.image);
+                          setLightboxOpen(true);
+                        }
+                      }}
+                    >
+                      {image ? (
+                        <>
+                          <Image
+                            src={image.image}
+                            alt={image.description || `Hotel image ${imageIndex + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                          {shouldShowMoreOverlay && (
+                            <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                              <span className="text-white text-xl font-semibold">+{galleryExtraCount}</span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <IconPhoto className="h-8 w-8 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
         </div>
-      </div>
 
           {/* Tabbed Information - inside left column */}
           <div className="border rounded-lg p-4 mt-4">

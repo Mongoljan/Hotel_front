@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";  // Import from next/navigation
 import Cookies from "js-cookie";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { useTranslations } from "next-intl";
 import { HiArrowRightOnRectangle } from "react-icons/hi2";  // Import js-cookie
 // import LanguageToggle from "../components/languageToggle";
@@ -66,6 +67,7 @@ export default function Topbar() {
                  {t("register")}
           </Link>
         </div>
+        <ThemeSwitcher />
         <LanguageSwitcher/>
        
       </div>

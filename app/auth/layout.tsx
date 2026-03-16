@@ -2,6 +2,7 @@ import { WavyBackground } from "../../components/ui/wavy-background";
 import "../globals.css";
 import Topbar from "./TopbarAuth";
 import { Inter, PT_Sans } from "next/font/google";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -24,11 +25,13 @@ export default function AuthLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className={`${inter.variable} ${ptSans.variable} antialiased font-sans min-h-screen`}>
-      <Topbar/>
-      <div className="flex-1">
-        {children}
+    <ThemeProvider>
+      <div className={`${inter.variable} ${ptSans.variable} antialiased font-sans min-h-screen`}>
+        <Topbar/>
+        <div className="flex-1">
+          {children}
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 }
