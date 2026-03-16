@@ -1182,6 +1182,14 @@
       "international": "International:",
       "other": "Other:"
     },
+    "paymentMethodsHint": "Use the toggle switch to enable or disable each payment method.",
+    "paymentMethodsCount": "Active: {active}/{total}",
+    "paymentStatus": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "clickToEnable": "Turn on the switch to enable",
+      "clickToDisable": "Turn off the switch to disable"
+    },
     "messages": {
       "currencyAdded": "Currency added successfully",
       "currencyUpdated": "Currency rate updated successfully",

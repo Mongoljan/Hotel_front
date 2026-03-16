@@ -817,7 +817,6 @@ export default function RoomModal({
 
   return (
     <div
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 z-50  bg-black/60 flex items-start md:items-center justify-center p-4"
@@ -837,7 +836,7 @@ export default function RoomModal({
               ? "Бүлэгт өрөө нэмэх" 
               : (roomToEdit ? t('title_edit') : t('title_add'))}
           </h2>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="close">
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="close">
             <X className="h-5 w-5 text-slate-700" />
           </Button>
         </div>

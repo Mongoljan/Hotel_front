@@ -35,6 +35,14 @@ function ParkingSubSection({
 }) {
   const parkingValue = form.watch(parkingFieldName);
 
+  // Clear validation errors when parking status changes
+  React.useEffect(() => {
+    if (parkingValue === 'paid') {
+      // Clear stale errors when switching to paid
+      form.clearErrors([priceFieldName, feeTypeFieldName]);
+    }
+  }, [parkingValue, form, priceFieldName, feeTypeFieldName]);
+
   return (
     <div className="space-y-4">
       <FormField

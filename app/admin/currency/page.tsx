@@ -19,6 +19,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -113,28 +114,44 @@ const getPaymentCategory = (methodType: string): 'bank' | 'digital' | 'internati
 // Memoized payment method item to prevent unnecessary re-renders
 const PaymentMethodItem = memo(function PaymentMethodItem({ 
   pm, 
-  onToggle 
+  onToggle,
+  labels,
 }: { 
   pm: PaymentMethodDisplay; 
   onToggle: (id: number) => void;
+  labels: {
+    active: string;
+    inactive: string;
+    clickToEnable: string;
+    clickToDisable: string;
+  };
 }) {
+  const isEnabled = pm.enabled;
+
   return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-sm">{pm.name}</span>
-      <Button
-        type="button"
-        size="sm"
-        variant={pm.enabled ? 'default' : 'outline'}
-        className={cn(
-          'h-7 px-3 text-xs',
-          pm.enabled
-            ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground'
-        )}
-        onClick={() => onToggle(pm.id)}
-      >
-        {pm.enabled ? 'Идэвхтэй' : 'Идэвхгүй'}
-      </Button>
+    <div className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+      <div className="min-w-0">
+        <p className="text-sm font-medium truncate">{pm.name}</p>
+        <p className="text-xs text-muted-foreground">
+          {isEnabled ? labels.clickToDisable : labels.clickToEnable}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+        <span
+          className={cn(
+            'text-xs font-medium',
+            isEnabled ? 'text-primary' : 'text-muted-foreground'
+          )}
+        >
+          {isEnabled ? labels.active : labels.inactive}
+        </span>
+        <Switch
+          checked={isEnabled}
+          onCheckedChange={() => onToggle(pm.id)}
+          aria-label={`${pm.name} ${isEnabled ? labels.active : labels.inactive}`}
+        />
+      </div>
     </div>
   );
 });
@@ -462,6 +479,16 @@ export default function CurrencyPage() {
     };
   }, [paymentMethods]);
 
+  const paymentMethodLabels = useMemo(
+    () => ({
+      active: t('paymentStatus.active'),
+      inactive: t('paymentStatus.inactive'),
+      clickToEnable: t('paymentStatus.clickToEnable'),
+      clickToDisable: t('paymentStatus.clickToDisable'),
+    }),
+    [t]
+  );
+
   // Show loading state
   if (isLoading) {
     return (
@@ -625,6 +652,15 @@ export default function CurrencyPage() {
                   <p className="text-sm text-muted-foreground">
                     {t('paymentMethodsDescription')}
                   </p>
+                  <div className="mt-3 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">{t('paymentMethodsHint')}</span>
+                    <span className="ml-2">
+                      {t('paymentMethodsCount', {
+                        active: paymentMethods.filter((pm) => pm.enabled).length,
+                        total: paymentMethods.length,
+                      })}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-4 gap-8">
@@ -633,7 +669,7 @@ export default function CurrencyPage() {
                     <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.bank')}</h3>
                     <div className="space-y-2">
                       {groupedPaymentMethods.bank.map((pm) => (
-                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} />
+                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} labels={paymentMethodLabels} />
                       ))}
                     </div>
                   </div>
@@ -643,7 +679,7 @@ export default function CurrencyPage() {
                     <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.digital')}</h3>
                     <div className="space-y-2">
                       {groupedPaymentMethods.digital.map((pm) => (
-                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} />
+                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} labels={paymentMethodLabels} />
                       ))}
                     </div>
                   </div>
@@ -653,7 +689,7 @@ export default function CurrencyPage() {
                     <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.international')}</h3>
                     <div className="space-y-2">
                       {groupedPaymentMethods.international.map((pm) => (
-                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} />
+                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} labels={paymentMethodLabels} />
                       ))}
                     </div>
                   </div>
@@ -663,7 +699,7 @@ export default function CurrencyPage() {
                     <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.other')}</h3>
                     <div className="space-y-2">
                       {groupedPaymentMethods.other.map((pm) => (
-                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} />
+                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} labels={paymentMethodLabels} />
                       ))}
                     </div>
                   </div>

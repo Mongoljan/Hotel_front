@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   IconPhoto,
@@ -80,16 +81,31 @@ const mapContainerStyle = {
 // Helper function to extract coordinates from Google Maps URL
 const extractCoordinates = (url: string | null | undefined): { lat: number; lng: number } | null => {
   if (!url) return null;
-  const match = url.match(/q=([-\d.]+),([-\d.]+)/);
-  if (match) {
-    const [, lat, lng] = match;
-    return { lat: parseFloat(lat), lng: parseFloat(lng) };
+
+  // Format: ...?q=47.918873,106.917017
+  const qMatch = url.match(/[?&]q=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (qMatch?.[1] && qMatch?.[2]) {
+    return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
   }
+
+  // Format: .../@47.918873,106.917017,15z
+  const atMatch = url.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (atMatch?.[1] && atMatch?.[2]) {
+    return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
+  }
+
+  // Embed format contains !3d{lat}!4d{lng}
+  const embedMatch = url.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if (embedMatch?.[1] && embedMatch?.[2]) {
+    return { lat: parseFloat(embedMatch[1]), lng: parseFloat(embedMatch[2]) };
+  }
+
   return null;
 };
 
 export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const t = useTranslations('SixStepInfo');
+  const router = useRouter();
   const { user } = useAuth();
 
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
@@ -641,6 +657,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       <EditMapDialog
         open={isMapDialogOpen}
         onOpenChange={setIsMapDialogOpen}
+        isMapLoaded={isMapLoaded}
         googleMap={editGoogleMap}
         onGoogleMapChange={setEditGoogleMap}
         onSave={handleSaveGoogleMap}
@@ -795,7 +812,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="absolute top-3 right-3 h-8 w-8"
+                    className="absolute top-3 right-3 h-8 w-8 z-20"
                     onClick={handleEditGoogleMap}
                   >
                     <IconPencil className="h-4 w-4" />
@@ -846,7 +863,15 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
               {/* Дотоод журам Tab */}
               <TabsContent value="policy" className="mt-4">
-                <div className="border rounded-lg p-4 space-y-6">
+                <div className="relative border rounded-lg p-4 space-y-6">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute top-3 right-3 h-8 w-8"
+                    onClick={() => router.push('/admin/internal-rules')}
+                  >
+                    <IconPencil className="h-4 w-4" />
+                  </Button>
                   {propertyPolicy ? (
                     <>
                       {/* Check-in / Check-out Times */}

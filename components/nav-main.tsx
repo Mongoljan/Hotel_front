@@ -2,6 +2,7 @@
 
 import { type LucideIcon } from 'lucide-react';
 import { NavItem, NavSection, dashboardItem, navSections } from '@/constants/data';
+import { toast } from 'sonner';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -40,6 +41,7 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
   const isActive = pathname === item.url;
   const hasSubItems = item.items && item.items.length > 0;
   const isImplemented = item.implemented !== false; // undefined or true = implemented
+  const notImplementedMessage = 'Энэ цэс одоогоор хэрэгжээгүй байна.';
 
   // "Coming Soon" indicator component
   const ComingSoonIndicator = () => (
@@ -77,7 +79,17 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
                 return (
                   <SidebarMenuSubItem key={subItem.url}>
                     <SidebarMenuSubButton asChild isActive={isSubActive}>
-                      <Link href={subItem.url} className="flex items-center">
+                      <Link
+                        href={subItem.url}
+                        className="flex items-center"
+                        onClick={(e) => {
+                          if (!isSubImplemented) {
+                            e.preventDefault();
+                            toast.info(notImplementedMessage);
+                          }
+                        }}
+                        aria-disabled={!isSubImplemented}
+                      >
                         <SubIcon size={14} />
                         <span className="text-cyrillic truncate">{subItem.i18nKey ? tNav(subItem.i18nKey) : subItem.title}</span>
                         {!isSubImplemented && (
@@ -109,7 +121,17 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
   return (
     <SidebarMenuItem>
       <SidebarMenuButton tooltip={item.i18nKey ? tNav(item.i18nKey) : item.title} isActive={isActive} asChild>
-        <Link href={item.url} className="flex items-center">
+        <Link
+          href={item.url}
+          className="flex items-center"
+          onClick={(e) => {
+            if (!isImplemented) {
+              e.preventDefault();
+              toast.info(notImplementedMessage);
+            }
+          }}
+          aria-disabled={!isImplemented}
+        >
           <Icon size={16} />
           <span className="text-cyrillic truncate flex-1 group-data-[collapsible=icon]:hidden">{item.i18nKey ? tNav(item.i18nKey) : item.title}</span>
           {!isImplemented && <ComingSoonIndicator />}

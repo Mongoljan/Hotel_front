@@ -21,6 +21,26 @@ type Props = {
 export default function BreakfastPolicySection({ form, t }: Props) {
   const breakfastStatus = form.watch('breakfast_status');
 
+  // Clear validation errors and set default times when status changes to free/paid
+  React.useEffect(() => {
+    if (breakfastStatus !== 'no') {
+      // Get current values
+      const startTime = form.getValues('breakfast_start_time');
+      const endTime = form.getValues('breakfast_end_time');
+      
+      // If times are empty, set default values to avoid validation issues
+      if (!startTime) {
+        form.setValue('breakfast_start_time', '', { shouldValidate: false });
+      }
+      if (!endTime) {
+        form.setValue('breakfast_end_time', '', { shouldValidate: false });
+      }
+      
+      // Clear any stale errors on the time fields
+      form.clearErrors(['breakfast_start_time', 'breakfast_end_time']);
+    }
+  }, [breakfastStatus, form]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">

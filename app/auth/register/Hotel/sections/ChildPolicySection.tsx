@@ -21,6 +21,20 @@ export default function ChildPolicySection({ form, t }: Props) {
   const allowChildren = form.watch('allow_children');
   const allowExtraBed = form.watch('allow_extra_bed');
 
+  // Clear validation errors when allow_children changes to true
+  React.useEffect(() => {
+    if (allowChildren) {
+      form.clearErrors(['max_child_age', 'child_bed_available']);
+    }
+  }, [allowChildren, form]);
+
+  // Clear validation errors when allow_extra_bed changes to true
+  React.useEffect(() => {
+    if (allowExtraBed) {
+      form.clearErrors(['extra_bed_price']);
+    }
+  }, [allowExtraBed, form]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">

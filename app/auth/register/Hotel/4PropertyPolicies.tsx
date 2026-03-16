@@ -25,6 +25,22 @@ const API_URL = 'https://dev.kacc.mn/api/property-policies/';
 
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
+// Helper to normalize time format (strip seconds if present: "08:30:00" → "08:30")
+const normalizeTime = (time: string | null | undefined): string => {
+  if (!time) return '';
+  // Match HH:MM or HH:MM:SS and return only HH:MM
+  const match = time.match(/^(\d{1,2}:\d{2})/);
+  return match ? match[1] : time;
+};
+
+// Helper to normalize price (strip commas and ensure it's a clean number string)
+const normalizePrice = (price: string | number | null | undefined): string | null => {
+  if (price === null || price === undefined || price === '') return null;
+  // Convert to string and strip commas
+  const priceStr = String(price).replace(/,/g, '');
+  return priceStr;
+};
+
 type Props = {
   onNext: () => void;
   onBack: () => void;
@@ -37,7 +53,8 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps3),
-    mode: 'onChange',
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       // Check-in/Check-out times (default to 12:00)
       check_in_from: '12:00',
@@ -96,14 +113,14 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
         if (initialData) {
           // Normalize values from API response
           const normalizedValues: FormFields = {
-            // Check-in/Check-out times
-            check_in_from: initialData.check_in_from || '',
-            check_in_until: initialData.check_in_until || '',
-            check_out_from: initialData.check_out_from || '',
-            check_out_until: initialData.check_out_until || '',
+            // Check-in/Check-out times (normalize to HH:MM format)
+            check_in_from: normalizeTime(initialData.check_in_from) || '',
+            check_in_until: normalizeTime(initialData.check_in_until) || '',
+            check_out_from: normalizeTime(initialData.check_out_from) || '',
+            check_out_until: normalizeTime(initialData.check_out_until) || '',
             
             // Cancellation fee
-            cancel_time: initialData.cancellation_fee?.cancel_time || '12:00',
+            cancel_time: normalizeTime(initialData.cancellation_fee?.cancel_time) || '12:00',
             single_before_time_percentage: initialData.cancellation_fee?.single_before_time_percentage || '',
             single_after_time_percentage: initialData.cancellation_fee?.single_after_time_percentage || '',
             multi_5days_before_percentage: initialData.cancellation_fee?.multi_5days_before_percentage || '',
@@ -111,27 +128,27 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
             multi_2days_before_percentage: initialData.cancellation_fee?.multi_2days_before_percentage || '',
             multi_1day_before_percentage: initialData.cancellation_fee?.multi_1day_before_percentage || '',
             
-            // Breakfast policy
+            // Breakfast policy (normalize times)
             breakfast_status: initialData.breakfast_policy?.status || 'no',
-            breakfast_start_time: initialData.breakfast_policy?.start_time || '',
-            breakfast_end_time: initialData.breakfast_policy?.end_time || '',
-            breakfast_price: initialData.breakfast_policy?.price || null,
+            breakfast_start_time: normalizeTime(initialData.breakfast_policy?.start_time) || '',
+            breakfast_end_time: normalizeTime(initialData.breakfast_policy?.end_time) || '',
+            breakfast_price: normalizePrice(initialData.breakfast_policy?.price),
             breakfast_type: initialData.breakfast_policy?.breakfast_type || undefined,
             
-            // Parking policy
+            // Parking policy (normalize prices)
             outdoor_parking: initialData.parking_policy?.outdoor_parking || 'no',
             outdoor_fee_type: initialData.parking_policy?.outdoor_fee_type || null,
-            outdoor_price: initialData.parking_policy?.outdoor_price || null,
+            outdoor_price: normalizePrice(initialData.parking_policy?.outdoor_price),
             indoor_parking: initialData.parking_policy?.indoor_parking || 'no',
             indoor_fee_type: initialData.parking_policy?.indoor_fee_type || null,
-            indoor_price: initialData.parking_policy?.indoor_price || null,
+            indoor_price: normalizePrice(initialData.parking_policy?.indoor_price),
             
-            // Child policy
+            // Child policy (normalize extra bed price)
             allow_children: initialData.child_policy?.allow_children || false,
             max_child_age: initialData.child_policy?.max_child_age || undefined,
             child_bed_available: initialData.child_policy?.child_bed_available || undefined,
             allow_extra_bed: initialData.child_policy?.allow_extra_bed || false,
-            extra_bed_price: initialData.child_policy?.extra_bed_price || null,
+            extra_bed_price: normalizePrice(initialData.child_policy?.extra_bed_price),
           };
           
           setInitialValues(normalizedValues);
@@ -214,8 +231,9 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       
       child_policy: {
         allow_children: data.allow_children,
-        max_child_age: data.allow_children ? data.max_child_age : null,
-        child_bed_available: data.allow_children ? data.child_bed_available : null,
+        // Backend currently rejects null for these fields, so send safe defaults when children are not allowed.
+        max_child_age: data.allow_children ? data.max_child_age : 0,
+        child_bed_available: data.allow_children ? data.child_bed_available : 'no',
         allow_extra_bed: data.allow_extra_bed || false,
         extra_bed_price: data.allow_extra_bed ? data.extra_bed_price : null,
       },

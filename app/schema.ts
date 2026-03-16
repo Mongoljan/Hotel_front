@@ -453,19 +453,28 @@ export const schemaHotelSteps3 = z.object({
   allow_extra_bed: z.boolean().optional(),
   extra_bed_price: z.string().nullable().optional(),
 }).refine((data) => {
-  // Validate breakfast times when breakfast is not 'no'
-  if (data.breakfast_status !== 'no') {
-    // Only validate if user has started filling breakfast fields or both are empty (allow empty initially)
-    if (data.breakfast_start_time === '' && data.breakfast_end_time === '') {
-      return true; // Allow empty initially - will be caught on final submit if still empty
-    }
-    if (!data.breakfast_start_time || !data.breakfast_end_time) {
-      return false;
-    }
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    return timeRegex.test(data.breakfast_start_time) && timeRegex.test(data.breakfast_end_time);
-  }
-  return true;
+  if (data.breakfast_status === 'no') return true;
+  const startTime = data.breakfast_start_time?.trim() || '';
+  return startTime !== '';
+}, {
+  message: "Өглөөний цайны эхлэх цагийг оруулна уу",
+  path: ["breakfast_start_time"],
+}).refine((data) => {
+  if (data.breakfast_status === 'no') return true;
+  const endTime = data.breakfast_end_time?.trim() || '';
+  return endTime !== '';
+}, {
+  message: "Өглөөний цайны дуусах цагийг оруулна уу",
+  path: ["breakfast_end_time"],
+}).refine((data) => {
+  if (data.breakfast_status === 'no') return true;
+  const startTime = data.breakfast_start_time?.trim() || '';
+  const endTime = data.breakfast_end_time?.trim() || '';
+  if (!startTime || !endTime) return true;
+
+  // Validate time format (accept both HH:MM and HH:MM:SS)
+  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
+  return timeRegex.test(startTime) && timeRegex.test(endTime);
 }, {
   message: "Өглөөний цайны цагийг зөв оруулна уу",
   path: ["breakfast_start_time"],
@@ -482,7 +491,9 @@ export const schemaHotelSteps3 = z.object({
   // Validate breakfast price when breakfast is 'paid'
   if (data.breakfast_status === 'paid') {
     if (!data.breakfast_price) return false;
-    const price = parseFloat(data.breakfast_price);
+    // Strip commas from formatted price (e.g., "15,000" -> "15000")
+    const priceStr = data.breakfast_price.replace(/,/g, '');
+    const price = parseFloat(priceStr);
     return !isNaN(price) && price > 0;
   }
   return true;
@@ -494,7 +505,9 @@ export const schemaHotelSteps3 = z.object({
   if (data.outdoor_parking === 'paid') {
     if (!data.outdoor_fee_type) return false;
     if (!data.outdoor_price) return false;
-    const price = parseFloat(data.outdoor_price);
+    // Strip commas from formatted price (e.g., "15,000" -> "15000")
+    const priceStr = data.outdoor_price.replace(/,/g, '');
+    const price = parseFloat(priceStr);
     return !isNaN(price) && price > 0;
   }
   return true;
@@ -506,7 +519,9 @@ export const schemaHotelSteps3 = z.object({
   if (data.indoor_parking === 'paid') {
     if (!data.indoor_fee_type) return false;
     if (!data.indoor_price) return false;
-    const price = parseFloat(data.indoor_price);
+    // Strip commas from formatted price
+    const priceStr = data.indoor_price.replace(/,/g, '');
+    const price = parseFloat(priceStr);
     return !isNaN(price) && price > 0;
   }
   return true;
@@ -515,20 +530,25 @@ export const schemaHotelSteps3 = z.object({
   path: ["indoor_price"],
 }).refine((data) => {
   // Validate child age when children are allowed
-  if (data.allow_children) {
-    // Use explicit undefined/null check instead of falsy check (0 is a valid age)
-    if (data.max_child_age === undefined || data.max_child_age === null) return false;
-    if (!data.child_bed_available) return false;
-  }
-  return true;
+  if (!data.allow_children) return true;
+  return !(data.max_child_age === undefined || data.max_child_age === null);
 }, {
-  message: "Хүүхдийн дээд нас болон хүүхдийн орны мэдээллийг оруулна уу",
+  message: "Хүүхдийн дээд насыг оруулна уу",
   path: ["max_child_age"],
+}).refine((data) => {
+  // Validate child bed availability when children are allowed
+  if (!data.allow_children) return true;
+  return !!data.child_bed_available;
+}, {
+  message: "Хүүхдийн ор байгаа эсэхийг сонгоно уу",
+  path: ["child_bed_available"],
 }).refine((data) => {
   // Validate extra bed price when extra bed is allowed
   if (data.allow_extra_bed) {
     if (!data.extra_bed_price) return false;
-    const price = parseFloat(data.extra_bed_price);
+    // Strip commas from formatted price
+    const priceStr = data.extra_bed_price.replace(/,/g, '');
+    const price = parseFloat(priceStr);
     return !isNaN(price) && price > 0;
   }
   return true;

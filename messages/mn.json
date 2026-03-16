@@ -1179,6 +1179,14 @@
       "international": "Олон улсын:",
       "other": "Бусад:"
     },
+    "paymentMethodsHint": "Төлөв солих унтраалгыг дарж тухайн төлбөрийн хэрэгслийг идэвхжүүлнэ эсвэл идэвхгүй болгоно.",
+    "paymentMethodsCount": "Идэвхтэй: {active}/{total}",
+    "paymentStatus": {
+      "active": "Идэвхтэй",
+      "inactive": "Идэвхгүй",
+      "clickToEnable": "Идэвхжүүлэхийн тулд унтраалгыг асаана уу",
+      "clickToDisable": "Идэвхгүй болгохын тулд унтраалгыг унтраана уу"
+    },
     "messages": {
       "currencyAdded": "Валют амжилттай нэмэгдлээ",
       "currencyUpdated": "Валютын ханш амжилттай шинэчлэгдлээ",
