@@ -3,6 +3,40 @@ import { getAuthToken } from '@/utils/jwt';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn';
 
+// Map ISO 4217 currency code -> ISO 3166-1 alpha-2 country/region code for flags.
+// This keeps flag rendering stable when backend `code` contains values like USD/CNY/JPY.
+const CURRENCY_TO_COUNTRY: Record<string, string> = {
+  USD: 'US',
+  EUR: 'EU',
+  GBP: 'GB',
+  CNY: 'CN',
+  JPY: 'JP',
+  RUB: 'RU',
+  KRW: 'KR',
+  MNT: 'MN',
+  HKD: 'HK',
+  SGD: 'SG',
+  AUD: 'AU',
+  CAD: 'CA',
+  CHF: 'CH',
+  TRY: 'TR',
+  INR: 'IN',
+  KZT: 'KZ',
+};
+
+const resolveCountryCode = (code: string): string => {
+  const normalized = (code || '').trim().toUpperCase();
+  if (!normalized) return 'UN';
+
+  // If backend already returns country code (e.g. MN), use as-is.
+  if (/^[A-Z]{2}$/.test(normalized)) {
+    return normalized;
+  }
+
+  // Otherwise map from currency code; fallback to first 2 chars for best effort.
+  return CURRENCY_TO_COUNTRY[normalized] || normalized.slice(0, 2) || 'UN';
+};
+
 /**
  * GET /api/currencies
  * Fetches all available currencies
@@ -39,13 +73,12 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
     
-    // Add flag URL to each currency using flagcdn.com (free CDN)
-    // The code field contains ISO 3166-1 alpha-2 country code (e.g., "MN" for Mongolia)
+    // Add flag URL to each currency using flagcdn.com (free CDN).
+    // Backend may return either country code (MN) or currency code (USD), so resolve first.
     const currenciesWithFlags = (Array.isArray(data) ? data : []).map((currency: { id: number; name: string; code: string; symbol: string }) => ({
       ...currency,
-      // flagcdn.com uses lowercase country codes
-      flagUrl: `https://flagcdn.com/w40/${currency.code.toLowerCase()}.png`,
-      flagUrlSvg: `https://flagcdn.com/${currency.code.toLowerCase()}.svg`,
+      flagUrl: `https://flagcdn.com/w40/${resolveCountryCode(currency.code).toLowerCase()}.png`,
+      flagUrlSvg: `https://flagcdn.com/${resolveCountryCode(currency.code).toLowerCase()}.svg`,
     }));
 
     return NextResponse.json(currenciesWithFlags);

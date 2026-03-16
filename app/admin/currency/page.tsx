@@ -605,8 +605,8 @@ export default function CurrencyPage() {
                           <TableCell>{currency.symbol}</TableCell>
                           <TableCell>{currency.sellRate.toFixed(2)}</TableCell>
                           <TableCell>{currency.buyRate.toFixed(2)}</TableCell>
+                                                    <TableCell>{currency.updatedBy}</TableCell>
                           <TableCell>{currency.lastUpdated}</TableCell>
-                          <TableCell>{currency.updatedBy}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <Button 
