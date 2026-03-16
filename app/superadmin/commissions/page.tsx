@@ -106,6 +106,8 @@ interface Property {
   CompanyName: string;
 }
 
+type ContractTabKey = 'basic' | 'signer' | 'billing' | 'bank';
+
 export default function PropertyCommissionsPage() {
   const [commissions, setCommissions] = useState<PropertyCommission[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -114,6 +116,7 @@ export default function PropertyCommissionsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCommission, setEditingCommission] = useState<PropertyCommission | null>(null);
+  const [activeContractTab, setActiveContractTab] = useState<ContractTabKey>('basic');
   
   // Price policy states
   const [isPriceDialogOpen, setIsPriceDialogOpen] = useState(false);
@@ -154,6 +157,64 @@ export default function PropertyCommissionsPage() {
     is_active: false,
   });
   const [contractFile, setContractFile] = useState<File | null>(null);
+
+  const requiredFieldsByTab: Record<ContractTabKey, (keyof typeof formData)[]> = {
+    basic: [
+      'property_obj',
+      'company_name',
+      'company_register',
+      'hotel_discount_percent',
+      'platform_markup_percent',
+      'start_date',
+      'end_date',
+      'status',
+      'note',
+    ],
+    signer: ['signer_name', 'signer_email', 'signer_phone'],
+    billing: ['billing_name', 'billing_email', 'billing_phone', 'billing_day'],
+    bank: ['bank_name', 'bank_iban', 'bank_account_name'],
+  };
+
+  const tabLabels: Record<ContractTabKey, string> = {
+    basic: 'Үндсэн',
+    signer: 'Гарын үсэг',
+    billing: 'Төлбөр',
+    bank: 'Банк',
+  };
+
+  const getIncompleteTabs = (): ContractTabKey[] => {
+    const hasExistingContractFile = Boolean(
+      editingCommission?.contract_file_url || editingCommission?.contract_file,
+    );
+
+    return (Object.keys(requiredFieldsByTab) as ContractTabKey[]).filter((tabKey) => {
+      const hasMissingField = requiredFieldsByTab[tabKey].some((field) => {
+        const value = formData[field];
+        return typeof value === 'string' ? value.trim() === '' : false;
+      });
+
+      const isMissingContractFile = tabKey === 'basic' && !contractFile && !hasExistingContractFile;
+      return hasMissingField || isMissingContractFile;
+    });
+  };
+
+  const normalizePercentInput = (value: string) => {
+    if (value.trim() === '') {
+      return '';
+    }
+
+    const numericValue = Number(value);
+    if (Number.isNaN(numericValue)) {
+      return '';
+    }
+
+    return String(Math.min(100, Math.max(0, numericValue)));
+  };
+
+  const isPercentInRange = (value: string) => {
+    const numericValue = Number(value);
+    return !Number.isNaN(numericValue) && numericValue >= 0 && numericValue <= 100;
+  };
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -287,6 +348,20 @@ export default function PropertyCommissionsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const incompleteTabs = getIncompleteTabs();
+    if (incompleteTabs.length > 0) {
+      setActiveContractTab(incompleteTabs[0]);
+      toast.error(`Бүх табын мэдээллийг бүрэн бөглөнө үү: ${incompleteTabs.map((tab) => tabLabels[tab]).join(', ')}`);
+      return;
+    }
+
+    if (!isPercentInRange(formData.hotel_discount_percent) || !isPercentInRange(formData.platform_markup_percent)) {
+      setActiveContractTab('basic');
+      toast.error('Хувийн утга 0-100 хооронд байх ёстой');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -348,6 +423,12 @@ export default function PropertyCommissionsPage() {
 
   const handlePriceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isPercentInRange(priceFormData.hotel_discount_percent) || !isPercentInRange(priceFormData.platform_markup_percent)) {
+      toast.error('Хувийн утга 0-100 хооронд байх ёстой');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -410,6 +491,14 @@ export default function PropertyCommissionsPage() {
     });
     setContractFile(null);
     setEditingCommission(null);
+    setActiveContractTab('basic');
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      resetForm();
+    }
   };
 
   const resetPriceForm = () => {
@@ -446,6 +535,7 @@ export default function PropertyCommissionsPage() {
       is_active: commission.is_active,
     });
     setContractFile(null);
+    setActiveContractTab('basic');
     setIsDialogOpen(true);
   };
 
@@ -474,6 +564,10 @@ export default function PropertyCommissionsPage() {
     inactive: commissions.filter((c) => c.status === 'inactive').length,
     cancelled: commissions.filter((c) => c.status === 'cancelled').length,
   };
+
+  const incompleteTabs = getIncompleteTabs();
+  const incompleteTabsSet = new Set<ContractTabKey>(incompleteTabs);
+  const currentContractFilePath = editingCommission?.contract_file_url || editingCommission?.contract_file;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -540,7 +634,10 @@ export default function PropertyCommissionsPage() {
                         placeholder="0.00"
                         value={priceFormData.hotel_discount_percent}
                         onChange={(e) =>
-                          setPriceFormData({ ...priceFormData, hotel_discount_percent: e.target.value })
+                          setPriceFormData({
+                            ...priceFormData,
+                            hotel_discount_percent: normalizePercentInput(e.target.value),
+                          })
                         }
                         required
                       />
@@ -556,7 +653,10 @@ export default function PropertyCommissionsPage() {
                         placeholder="0.00"
                         value={priceFormData.platform_markup_percent}
                         onChange={(e) =>
-                          setPriceFormData({ ...priceFormData, platform_markup_percent: e.target.value })
+                          setPriceFormData({
+                            ...priceFormData,
+                            platform_markup_percent: normalizePercentInput(e.target.value),
+                          })
                         }
                         required
                       />
@@ -595,9 +695,14 @@ export default function PropertyCommissionsPage() {
           </Dialog>
 
           {/* Commission Dialog */}
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
             <DialogTrigger asChild>
-              <Button>
+              <Button
+                onClick={() => {
+                  resetForm();
+                  setIsDialogOpen(true);
+                }}
+              >
                 <IconPlus className="mr-2 h-4 w-4" />
                 Шинэ гэрээ
               </Button>
@@ -610,12 +715,28 @@ export default function PropertyCommissionsPage() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit}>
-                <Tabs defaultValue="basic" className="w-full">
+                <Tabs
+                  value={activeContractTab}
+                  onValueChange={(value) => setActiveContractTab(value as ContractTabKey)}
+                  className="w-full"
+                >
                   <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="basic">Үндсэн</TabsTrigger>
-                    <TabsTrigger value="signer">Гарын үсэг</TabsTrigger>
-                    <TabsTrigger value="billing">Төлбөр</TabsTrigger>
-                    <TabsTrigger value="bank">Банк</TabsTrigger>
+                    <TabsTrigger value="basic" className="gap-1">
+                      Үндсэн
+                      {!incompleteTabsSet.has('basic') && <IconCheck className="h-3.5 w-3.5 text-green-600" />}
+                    </TabsTrigger>
+                    <TabsTrigger value="signer" className="gap-1">
+                      Гарын үсэг
+                      {!incompleteTabsSet.has('signer') && <IconCheck className="h-3.5 w-3.5 text-green-600" />}
+                    </TabsTrigger>
+                    <TabsTrigger value="billing" className="gap-1">
+                      Төлбөр
+                      {!incompleteTabsSet.has('billing') && <IconCheck className="h-3.5 w-3.5 text-green-600" />}
+                    </TabsTrigger>
+                    <TabsTrigger value="bank" className="gap-1">
+                      Банк
+                      {!incompleteTabsSet.has('bank') && <IconCheck className="h-3.5 w-3.5 text-green-600" />}
+                    </TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="basic" className="space-y-4 mt-4">
@@ -679,7 +800,10 @@ export default function PropertyCommissionsPage() {
                             placeholder="0.00"
                             value={formData.hotel_discount_percent}
                             onChange={(e) =>
-                              setFormData({ ...formData, hotel_discount_percent: e.target.value })
+                              setFormData({
+                                ...formData,
+                                hotel_discount_percent: normalizePercentInput(e.target.value),
+                              })
                             }
                             required
                           />
@@ -695,7 +819,10 @@ export default function PropertyCommissionsPage() {
                             placeholder="0.00"
                             value={formData.platform_markup_percent}
                             onChange={(e) =>
-                              setFormData({ ...formData, platform_markup_percent: e.target.value })
+                              setFormData({
+                                ...formData,
+                                platform_markup_percent: normalizePercentInput(e.target.value),
+                              })
                             }
                             required
                           />
@@ -759,6 +886,20 @@ export default function PropertyCommissionsPage() {
                           accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
                           onChange={(e) => setContractFile(e.target.files?.[0] || null)}
                         />
+                        {currentContractFilePath && editingCommission?.contract_file_url && (
+                          <a
+                            href={editingCommission.contract_file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-primary underline break-all"
+                          >
+                            <IconExternalLink className="h-3.5 w-3.5 shrink-0" />
+                            {currentContractFilePath}
+                          </a>
+                        )}
+                        {currentContractFilePath && !editingCommission?.contract_file_url && (
+                          <p className="text-xs text-muted-foreground break-all">{currentContractFilePath}</p>
+                        )}
                         <p className="text-xs text-muted-foreground">
                           PDF, DOC, эсвэл зураг файл байж болно
                         </p>
