@@ -8,6 +8,7 @@ import {
   IconChevronRight,
   IconDashboard,
   IconFileText,
+  IconUsers,
 } from "@tabler/icons-react";
 
 interface MenuItem {
@@ -27,6 +28,11 @@ const menuItems: MenuItem[] = [
     label: "Гэрээний үнэ",
     href: "/superadmin/commissions",
     icon: <IconFileText className="h-5 w-5" />,
+  },
+  {
+    label: "Буудлын эзэд",
+    href: "/superadmin/owners",
+    icon: <IconUsers className="h-5 w-5" />,
   },
 ];
 

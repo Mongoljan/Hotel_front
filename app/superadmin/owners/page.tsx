@@ -398,8 +398,8 @@ export default function OwnersPage() {
               }
               className={
                 confirmDialog.action === 'approve'
-                  ? 'bg-green-500 hover:bg-green-600'
-                  : 'bg-red-500 hover:bg-red-600'
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'bg-red hover:bg-red-700 text-white'
               }
             >
               {isProcessing && <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -22,11 +22,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const hotelId = payload.hotel;
+    const { searchParams } = new URL(request.url);
+    const propertyParam = searchParams.get('property');
+    const hotelId = propertyParam || payload.hotel;
 
     if (!hotelId) {
       return NextResponse.json(
-        { error: 'Hotel ID not found' },
+        { error: 'Hotel/Property ID not found' },
         { status: 400 }
       );
     }
