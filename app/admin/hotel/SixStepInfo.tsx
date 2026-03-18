@@ -127,6 +127,13 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
   });
 
+  const orderImagesByProfile = useCallback((images: PropertyPhoto[]) => {
+    const profile = images.find((img) => img.is_profile);
+    if (!profile) return images;
+    const rest = images.filter((img) => img.id !== profile.id);
+    return [profile, ...rest];
+  }, []);
+
   // Edit dialog state for About & Video
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editAbout, setEditAbout] = useState('');
@@ -211,7 +218,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         setBasicInfo(basic);
         setPropertyBaseInfo(baseInfo);
         setPropertyTypes(combinedData.property_types || []);
-        setPropertyImages(imageJson);
+        setPropertyImages(orderImagesByProfile(imageJson));
         
         // Sort provinces to show Улаанбаатар first
         const sortedProvinces = [...(combinedData.province || [])].sort((a, b) => {
@@ -241,7 +248,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     }
 
     loadData();
-  }, [setProceed, user?.hotel]);
+  }, [orderImagesByProfile, setProceed, user?.hotel]);
 
 
   const getPropertyTypeName = useCallback(
@@ -590,13 +597,20 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                 }}
               >
                 {propertyImages[0] ? (
-                  <Image
-                    src={propertyImages[0].image}
-                    alt={propertyImages[0].description || 'Hotel image'}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+                  <>
+                    <Image
+                      src={propertyImages[0].image}
+                      alt={propertyImages[0].description || 'Hotel image'}
+                      fill
+                      className="object-cover"
+                      priority
+                    />
+                    {propertyImages[0].is_profile && (
+                      <span className="absolute top-3 right-3 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full shadow">
+                        Профайл зураг
+                      </span>
+                    )}
+                  </>
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <IconPhoto className="h-16 w-16 text-gray-400" />
@@ -631,6 +645,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                             fill
                             className="object-cover"
                           />
+                          {image.is_profile && (
+                            <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] px-2 py-1 rounded-full shadow">
+                              Профайл
+                            </span>
+                          )}
                           {shouldShowMoreOverlay && (
                             <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
                               <span className="text-white text-xl font-semibold">+{galleryExtraCount}</span>
@@ -719,7 +738,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         open={isImagesDialogOpen}
         onOpenChange={setIsImagesDialogOpen}
         propertyImages={propertyImages}
-        onImagesChange={setPropertyImages}
+        onImagesChange={(images) => setPropertyImages(orderImagesByProfile(images))}
         hotelId={user?.hotel}
       />
 
@@ -840,8 +859,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                   <div>
                     {(() => {
                       const coordinates = extractCoordinates(propertyDetail?.google_map);
-                      console.log('Google Map URL:', propertyDetail?.google_map);
-                      console.log('Extracted Coordinates:', coordinates);
+                      // Removed noisy console logs
 
                       if (coordinates) {
                         return (
@@ -1099,6 +1117,8 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           images={propertyImages}
           currentImage={lightboxImage}
           onImageChange={setLightboxImage}
+          hotelId={user?.hotel}
+          onImagesChange={(imgs) => setPropertyImages(orderImagesByProfile(imgs))}
         />
 
     </div>

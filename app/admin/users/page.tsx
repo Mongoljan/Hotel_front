@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { schemaEmployee, schemaEmployeeEdit } from '@/app/schema';
+import { useAuth } from '@/hooks/useAuth';
 import {
   IconPlus,
   IconEdit,
@@ -13,6 +14,8 @@ import {
   IconLoader2,
   IconCheck,
   IconRefresh,
+  IconEye,
+  IconEyeOff,
 } from '@tabler/icons-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,6 +56,9 @@ interface Employee {
   email: string;
   user_type: number;
   approved: boolean;
+  is_active?: boolean;
+  token?: string | null;
+  token_created_at?: string | null;
   created_at: string;
 }
 
@@ -66,6 +72,8 @@ const userRoles = [
 
 export default function UsersPage() {
   const t = useTranslations('UserSettings');
+  const { user } = useAuth();
+  const currentUserType = user?.user_type;
   
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
@@ -89,6 +97,8 @@ export default function UsersPage() {
   const [formRole, setFormRole] = useState('');
   const [formPassword, setFormPassword] = useState('');
   const [formPasswordConfirm, setFormPasswordConfirm] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmVisible, setIsConfirmVisible] = useState(false);
 
   // Password validation states
   const [passwordValidation, setPasswordValidation] = useState({
@@ -123,9 +133,22 @@ export default function UsersPage() {
     fetchUsers();
   }, [fetchUsers]);
 
+  // Scope visible users based on role
+  const scopedUsers = useMemo(() => {
+    if (currentUserType === USER_TYPES.SUPER_ADMIN) {
+      return users.filter((u) => u.user_type === USER_TYPES.OWNER);
+    }
+
+    if (currentUserType === USER_TYPES.OWNER) {
+      return users.filter((u) => u.user_type !== USER_TYPES.OWNER);
+    }
+
+    return users;
+  }, [users, currentUserType]);
+
   // Filter users
   const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
+    return scopedUsers.filter((user) => {
       // Filter by status (approved = active)
       if (filterType === 'active' && !user.approved) return false;
       if (filterType === 'inactive' && user.approved) return false;
@@ -143,7 +166,7 @@ export default function UsersPage() {
 
       return true;
     });
-  }, [users, filterType, searchQuery]);
+  }, [scopedUsers, filterType, searchQuery]);
 
   // Validate password
   const validatePassword = (password: string) => {
@@ -170,12 +193,12 @@ export default function UsersPage() {
     );
 
     try {
-      const res = await fetch('/api/employees', {
-        method: 'PUT',
+      const res = await fetch('/api/EmployeeApprove', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          id: user.id,
+          user: user.id,
           approved: !user.approved,
         }),
       });
@@ -183,7 +206,9 @@ export default function UsersPage() {
       if (!res.ok) {
         throw new Error('Failed to update status');
       }
-      toast.success('Хэрэглэгчийн төлөв өөрчлөгдлөө');
+      const data = await res.json().catch(() => ({}));
+      const message = data?.message || 'Хэрэглэгчийн төлөв өөрчлөгдлөө';
+      toast.success(message);
     } catch (error) {
       // Revert on error
       setUsers(prev =>
@@ -220,6 +245,8 @@ export default function UsersPage() {
     setFormRole('');
     setFormPassword('');
     setFormPasswordConfirm('');
+    setIsPasswordVisible(false);
+    setIsConfirmVisible(false);
     setPasswordValidation({
       hasLetter: false,
       hasNumber: false,
@@ -271,7 +298,7 @@ export default function UsersPage() {
 
     setIsSaving(true);
     try {
-      const url = '/api/employees';
+      const url = editingUser ? `/api/employees/${editingUser.id}` : '/api/employees';
       const method = editingUser ? 'PUT' : 'POST';
       
       const body: Record<string, unknown> = {
@@ -282,9 +309,7 @@ export default function UsersPage() {
         user_type: parseInt(formRole),
       };
 
-      if (editingUser) {
-        body.id = editingUser.id;
-      } else {
+      if (!editingUser) {
         body.password = formPassword;
       }
 
@@ -322,7 +347,7 @@ export default function UsersPage() {
 
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/employees?id=${userToDelete.id}`, {
+      const res = await fetch(`/api/employees/${userToDelete.id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -567,21 +592,43 @@ export default function UsersPage() {
             {!editingUser && (
               <>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Input
-                      type="password"
+                      type={isPasswordVisible ? 'text' : 'password'}
                       placeholder={t('form.password')}
                       value={formPassword}
                       onChange={(e) => handlePasswordChange(e.target.value)}
+                      className="pr-12"
                     />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute inset-y-0 right-2 h-full px-2 flex  -translate-y-2 text-muted-foreground"
+                      onClick={() => setIsPasswordVisible((prev) => !prev)}
+                      aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
+                    >
+                      {isPasswordVisible ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+                    </Button>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Input
-                      type="password"
+                      type={isConfirmVisible ? 'text' : 'password'}
                       placeholder={t('form.passwordConfirm')}
                       value={formPasswordConfirm}
                       onChange={(e) => setFormPasswordConfirm(e.target.value)}
+                      className="pr-12"
                     />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute inset-y-0 right-2  -translate-y-2  h-full px-2 flex text-muted-foreground"
+                      onClick={() => setIsConfirmVisible((prev) => !prev)}
+                      aria-label={isConfirmVisible ? 'Hide password' : 'Show password'}
+                    >
+                      {isConfirmVisible ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+                    </Button>
                   </div>
                 </div>
 

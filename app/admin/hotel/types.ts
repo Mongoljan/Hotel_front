@@ -4,6 +4,7 @@ export interface PropertyPhoto {
   id: number;
   image: string;
   description: string;
+  is_profile?: boolean;
 }
 
 export interface PropertyDetail {

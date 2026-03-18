@@ -68,6 +68,7 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
               const entries = data.map((img: any) => ({
                 images: img.image,
                 descriptions: img.description,
+                is_profile: Boolean(img.is_profile),
               }));
 
               propertyData.step5 = {

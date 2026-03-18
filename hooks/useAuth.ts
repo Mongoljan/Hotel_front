@@ -130,8 +130,20 @@ export function useAuth(): AuthState & {
         })
         return { success: true }
       } else {
-        const errorData = await response.json()
-        return { success: false, error: errorData.error, code: errorData.code }
+        let errorData: any = {}
+        try {
+          errorData = await response.json()
+        } catch (err) {
+          // ignore parse errors
+        }
+
+        const parsedError = errorData?.error
+          || (Array.isArray(errorData?.non_field_errors) ? errorData.non_field_errors[0] : undefined)
+          || errorData?.message
+          || errorData?.detail
+          || 'Login failed'
+
+        return { success: false, error: parsedError, code: errorData?.code }
       }
     } catch (error) {
       console.error('Login error:', error)

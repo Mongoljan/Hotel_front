@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const token = payload.backendToken;
     const hotelId = payload.hotel;
 
     if (!hotelId) {
@@ -33,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(
-      `${BACKEND_URL}/api/employees/${hotelId}/?token=${encodeURIComponent(token)}`,
+      `${BACKEND_URL}/api/employees/?property=${encodeURIComponent(hotelId)}`,
       {
         method: 'GET',
         headers: {
@@ -83,7 +82,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = payload.backendToken;
     const hotelId = payload.hotel;
 
     if (!hotelId) {
@@ -107,7 +105,7 @@ export async function POST(request: NextRequest) {
     };
 
     const response = await fetch(
-      `${BACKEND_URL}/api/EmployeeRegister/?token=${encodeURIComponent(token)}`,
+      `${BACKEND_URL}/api/EmployeeRegister/`,
       {
         method: 'POST',
         headers: {
@@ -153,7 +151,6 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const token = payload.backendToken;
     const body = await request.json();
     const { id, ...updateData } = body;
 
@@ -165,7 +162,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const response = await fetch(
-      `${BACKEND_URL}/api/employees/${id}/?token=${encodeURIComponent(token)}`,
+      `${BACKEND_URL}/api/employees/${id}/`,
       {
         method: 'PUT',
         headers: {
@@ -208,7 +205,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const token = payload.backendToken;
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -220,7 +216,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const response = await fetch(
-      `${BACKEND_URL}/api/employees/${id}/?token=${encodeURIComponent(token)}`,
+      `${BACKEND_URL}/api/employees/${id}/`,
       {
         method: 'DELETE',
         headers: {

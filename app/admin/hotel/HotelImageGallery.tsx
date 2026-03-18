@@ -13,6 +13,7 @@ interface PropertyPhoto {
   id: number;
   image: string;
   description: string;
+  is_profile?: boolean;
 }
 
 interface Props {

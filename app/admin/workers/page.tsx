@@ -52,6 +52,9 @@ interface Employee {
   email: string;
   user_type: number;
   approved: boolean;
+  is_active?: boolean;
+  token?: string | null;
+  token_created_at?: string | null;
   created_at: string;
 }
 
@@ -174,15 +177,18 @@ export default function WorkersPage() {
         return;
       }
 
-      const url = '/api/employees';
+      const url = isEditMode && selectedEmployee ? `/api/employees/${selectedEmployee.id}` : '/api/employees';
       const method = isEditMode ? 'PUT' : 'POST';
-      const body = isEditMode 
-        ? { id: selectedEmployee?.id, ...formData }
-        : formData;
+      const body: Record<string, unknown> = {
+        name: formData.name,
+        position: formData.position,
+        contact_number: formData.contact_number,
+        email: formData.email,
+        user_type: formData.user_type,
+      };
 
-      // Don't send empty password on edit
-      if (isEditMode && !body.password) {
-        delete (body as Record<string, unknown>).password;
+      if (!isEditMode) {
+        body.password = formData.password;
       }
 
       const res = await fetch(url, {
@@ -216,7 +222,7 @@ export default function WorkersPage() {
 
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/employees?id=${selectedEmployee.id}`, {
+      const res = await fetch(`/api/employees/${selectedEmployee.id}`, {
         method: 'DELETE',
         credentials: 'include',
       });

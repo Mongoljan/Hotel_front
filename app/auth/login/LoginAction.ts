@@ -14,9 +14,17 @@ export async function loginAction(formData: {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      return { error: error.message || 'Нэвтрэлт амжилтгүй. Та нууц үг нэвтрэх нэрээ шалгаад дахин оролдоно уу?' };
-      
+      let errorMessage = 'Нэвтрэлт амжилтгүй. Та нууц үг нэвтрэх нэрээ шалгаад дахин оролдоно уу?';
+      try {
+        const error = await response.json();
+        errorMessage = (Array.isArray(error?.non_field_errors) && error.non_field_errors[0])
+          || error?.message
+          || error?.detail
+          || errorMessage;
+      } catch (err) {
+        // ignore parse errors and fall back to default message
+      }
+      return { error: errorMessage };
     }
 
     const data = await response.json();

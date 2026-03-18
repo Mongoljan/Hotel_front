@@ -40,20 +40,20 @@ export default function Topbar() {
   return (
     <div className=" ">
 <div
-  className="  h-[50px] backdrop-blur-md font-semibold   opaicty-[50] border-b-[1px] border-primary border-opacity-30 bg-white px-[50px] text-black flex justify-between items-center"
+  className="h-[50px] backdrop-blur-md font-semibold border-b border-border/60 bg-card/95 px-[50px] text-foreground flex justify-between items-center"
 >
 
 
         <div className="mr-2">
        {/* <LanguageToggle/> */}
-  <div className=" text-black  text-[24px]">
+  <div className="text-foreground text-[24px]">
    {tTop("title")}
   </div>
        </div>
        <div className="flex gap-6">
         <div className="flex gap-2 items-center">
         <Link
-            className="text-black ml-[4px] hover:text-blue-300"
+            className="text-foreground ml-[4px] hover:text-primary transition-colors"
             href={"/auth/login"}
           >
             {t("login")}
@@ -61,7 +61,7 @@ export default function Topbar() {
         </div>
         <div className="flex gap-2 items-center">
         <Link
-            className="text-black ml-[4px] hover:text-blue-300"
+            className="text-foreground ml-[4px] hover:text-primary transition-colors"
             href={"/auth/register"}
           >
                  {t("register")}

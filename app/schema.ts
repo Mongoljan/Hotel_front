@@ -572,8 +572,17 @@ export const schemaHotelSteps5 = z.object({
       descriptions: z
         .string()
         .min(1, { message: 'Description must not be empty.' }),
+      is_profile: z.boolean().default(false),
     })
-  ).min(5, { message: 'At least 5 images are required.' }),
+  ).min(5, { message: 'At least 5 images are required.' })
+  .refine((entries) => entries.some((e) => e.is_profile), {
+    message: 'Select one profile image.',
+    path: ['entries'],
+  })
+  .refine((entries) => entries.filter((e) => e.is_profile).length === 1, {
+    message: 'Only one profile image can be selected.',
+    path: ['entries'],
+  }),
 });
 
 

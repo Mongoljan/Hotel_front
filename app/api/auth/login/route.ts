@@ -22,10 +22,30 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      const errorData = await response.text()
+      // Parse backend error to surface useful message (e.g., non_field_errors)
+      let code = 'auth.invalid'
+      let message: string | undefined
+
+      try {
+        const errorData = await response.json()
+        code = errorData?.code || code
+        if (Array.isArray(errorData?.non_field_errors) && errorData.non_field_errors.length > 0) {
+          message = errorData.non_field_errors[0]
+        } else {
+          message = errorData?.message || errorData?.detail
+        }
+      } catch (err) {
+        // fallback to raw text if JSON parse fails
+        try {
+          message = await response.text()
+        } catch (_) {
+          message = undefined
+        }
+      }
+
       return NextResponse.json(
-        { code: 'auth.invalid' },
-        { status: 401 }
+        { code, error: message || 'Invalid email or password.' },
+        { status: response.status || 401 }
       )
     }
 

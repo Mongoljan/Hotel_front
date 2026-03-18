@@ -43,7 +43,8 @@ export default function LoginForm() {
     const result = await login(data.email, data.password);
 
     if (!result.success) {
-      const msg = (result as any).code ? tErr((result as any).code) : ((result as any).error || tErr('unknown'));
+      const msg = (result as any).error
+        || ((result as any).code ? tErr((result as any).code) : tErr('unknown'));
       setError(msg);
       toast.error(msg);
     } else {

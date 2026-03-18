@@ -37,7 +37,15 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
 
   const defaultValues: FormFields = stored?.step5?.entries
     ? stored.step5
-    : { entries: [{ images: '', descriptions: '' }, { images: '', descriptions: '' }, { images: '', descriptions: '' }, { images: '', descriptions: '' }, { images: '', descriptions: '' }] };
+    : {
+        entries: [
+          { images: '', descriptions: '', is_profile: false },
+          { images: '', descriptions: '', is_profile: false },
+          { images: '', descriptions: '', is_profile: false },
+          { images: '', descriptions: '', is_profile: false },
+          { images: '', descriptions: '', is_profile: false },
+        ],
+      };
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps5),
@@ -62,13 +70,32 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
 
       // First check localStorage
       if (stored?.step5?.raw) {
-        const restored = stored.step5.raw.map((item: any) => ({
+        let restored = stored.step5.raw.map((item: any) => ({
           images: item.image,
           descriptions: item.description,
+          is_profile: Boolean(item.is_profile),
         }));
+
+        const storedProfileIndex = restored.findIndex((item: any) => item.is_profile);
+        if (storedProfileIndex === -1 && restored.length > 0) {
+          restored = restored.map((item: any, idx: number) => ({
+            ...item,
+            is_profile: idx === 0,
+          }));
+        } else if (storedProfileIndex > -1) {
+          restored = restored.map((item: any, idx: number) => ({
+            ...item,
+            is_profile: idx === storedProfileIndex,
+          }));
+        }
         replace(restored);
         setInitialValues({ entries: restored });
-        setExistingImages(stored.step5.raw); // Store existing image data
+        setExistingImages(
+          stored.step5.raw.map((img: any, idx: number) => ({
+            ...img,
+            is_profile: restored[idx]?.is_profile ?? Boolean(img.is_profile),
+          }))
+        ); // Store existing image data
         return;
       }
 
@@ -78,13 +105,32 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            const restored = data.map((item: any) => ({
+            let restored = data.map((item: any) => ({
               images: item.image,
               descriptions: item.description || '',
+              is_profile: Boolean(item.is_profile),
             }));
+
+            const profileIndex = restored.findIndex((item: any) => item.is_profile);
+            if (profileIndex === -1 && restored.length > 0) {
+              restored = restored.map((item: any, idx: number) => ({
+                ...item,
+                is_profile: idx === 0,
+              }));
+            } else if (profileIndex > -1) {
+              restored = restored.map((item: any, idx: number) => ({
+                ...item,
+                is_profile: idx === profileIndex,
+              }));
+            }
             replace(restored);
             setInitialValues({ entries: restored });
-            setExistingImages(data); // Store existing image data
+            setExistingImages(
+              data.map((img: any, idx: number) => ({
+                ...img,
+                is_profile: restored[idx]?.is_profile ?? Boolean(img.is_profile),
+              }))
+            ); // Store existing image data
 
             // Save to localStorage
             const step5Data = {
@@ -106,10 +152,8 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         console.error('Failed to fetch existing images:', error);
       }
     };
-
     fetchExistingImages();
   }, [replace, user?.id, user?.hotel]);
-
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -144,8 +188,20 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       return;
     }
 
+    const profileIndex = data.entries.findIndex((entry) => entry.is_profile);
+    if (profileIndex === -1) {
+      toast.error('Профайл зураг сонгоно уу');
+      return;
+    }
+
+    // Normalize to ensure only one profile image is sent
+    const normalizedEntries = data.entries.map((entry, idx) => ({
+      ...entry,
+      is_profile: idx === profileIndex,
+    }));
+
     // Check if data has changed
-    if (initialValues && JSON.stringify(data) === JSON.stringify(initialValues)) {
+    if (initialValues && JSON.stringify(normalizedEntries) === JSON.stringify(initialValues.entries)) {
       onNext();
       return;
     }
@@ -167,16 +223,17 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       const newEntries: { index: number; entry: typeof data.entries[0] }[] = [];
       const patchTasks: { index: number; entry: typeof data.entries[0]; existingImage: any }[] = [];
       const keepTasks: { index: number; existingImage: any }[] = [];
-
-      for (let i = 0; i < data.entries.length; i++) {
-        const entry = data.entries[i];
+      for (let i = 0; i < normalizedEntries.length; i++) {
+        const entry = normalizedEntries[i];
         const existingImage = existingImages[i];
         const isNewImage = entry.images.startsWith('data:');
 
         if (isNewImage) {
           newEntries.push({ index: i, entry });
         } else if (existingImage) {
-          if (existingImage.description !== entry.descriptions) {
+          const isDescriptionChanged = existingImage.description !== entry.descriptions;
+          const isProfileChanged = Boolean(existingImage.is_profile) !== Boolean(entry.is_profile);
+          if (isDescriptionChanged || isProfileChanged) {
             patchTasks.push({ index: i, entry, existingImage });
           } else {
             keepTasks.push({ index: i, existingImage });
@@ -191,6 +248,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           property: propertyId,
           image: entry.images,
           description: entry.descriptions,
+          is_profile: Boolean(entry.is_profile),
         }));
 
         const res = await fetch(API_URL, {
@@ -210,7 +268,10 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           const updateRes = await fetch(`${API_URL}${existingImage.id}/`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description: entry.descriptions }),
+            body: JSON.stringify({
+              description: entry.descriptions,
+              is_profile: Boolean(entry.is_profile),
+            }),
           });
 
           if (updateRes.ok) {
@@ -243,14 +304,19 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       }
 
       // Build result array in original order
-      for (let i = 0; i < data.entries.length; i++) {
+      for (let i = 0; i < normalizedEntries.length; i++) {
         if (resultMap.has(i)) {
           result.push(resultMap.get(i));
         }
       }
 
+      const storedEntries = normalizedEntries.map((entry, idx) => ({
+        ...entry,
+        images: result[idx]?.image || entry.images,
+      }));
+
       const step5Data = {
-        entries: data.entries,
+        entries: storedEntries,
         property_photos: allImageIds,
         raw: result,
       };
@@ -305,6 +371,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
 
               {fields.map((field, index) => {
                 const previewSrc = watchedEntries?.[index]?.images;
+                const isProfile = Boolean(watchedEntries?.[index]?.is_profile);
                 return (
                   <Card key={field.id} className="border-dashed">
                     <CardContent className="pt-4">
@@ -314,9 +381,27 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                           name={`entries.${index}.images`}
                           render={({ field: fieldProps }) => (
                             <FormItem>
-                              <FormLabel className="flex items-center gap-2">
-                                <Upload className="h-4 w-4" />
-                                {t('1')}
+                              <FormLabel className="flex items-center gap-2 justify-between">
+                                <span className="flex items-center gap-2">
+                                  <Upload className="h-4 w-4" />
+                                  {t('1')}
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant={isProfile ? 'secondary' : 'outline'}
+                                  size="sm"
+                                  disabled={!previewSrc}
+                                  onClick={() => {
+                                    fields.forEach((_, idx) => {
+                                      form.setValue(`entries.${idx}.is_profile`, idx === index, {
+                                        shouldValidate: true,
+                                        shouldDirty: true,
+                                      });
+                                    });
+                                  }}
+                                >
+                                  {isProfile ? 'Профайл зураг' : 'Профайл болгох'}
+                                </Button>
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -334,6 +419,11 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                                     alt={`Preview ${index + 1}`}
                                     className="max-h-28 w-auto rounded-md border object-cover"
                                   />
+                                  {isProfile && (
+                                    <div className="mt-2 inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                                      Профайл зураг
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </FormItem>
@@ -379,7 +469,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ images: '', descriptions: '' })}
+                onClick={() => append({ images: '', descriptions: '', is_profile: false })}
                 className="w-full"
               >
                 <Plus className="mr-2 h-4 w-4" />
