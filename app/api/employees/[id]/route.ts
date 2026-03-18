@@ -13,20 +13,27 @@ async function ensureAuthenticated() {
   return { ok: true };
 }
 
+function getEmployeeIdFromRequest(request: NextRequest): string | null {
+  const segments = request.nextUrl.pathname.split('/').filter(Boolean);
+  const id = segments[segments.length - 1];
+  return id || null;
+}
+
 export async function GET(
-  _request: NextRequest,
-  { params }: { params: { id?: string } }
+  request: NextRequest
 ) {
   try {
     const { error } = await ensureAuthenticated();
     if (error) return error as NextResponse;
 
-    if (!params?.id) {
+    const id = getEmployeeIdFromRequest(request);
+
+    if (!id) {
       return NextResponse.json({ error: 'Employee ID is required' }, { status: 400 });
     }
 
     const response = await fetch(
-      `${BACKEND_URL}/api/employees/${params.id}/`,
+      `${BACKEND_URL}/api/employees/${id}/`,
       {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -55,13 +62,14 @@ export async function GET(
 
 async function forwardUpdate(
   request: NextRequest,
-  params: { id?: string },
   method: 'PUT' | 'PATCH'
 ) {
   const { error } = await ensureAuthenticated();
   if (error) return error as NextResponse;
 
-  if (!params?.id) {
+  const id = getEmployeeIdFromRequest(request);
+
+  if (!id) {
     return NextResponse.json({ error: 'Employee ID is required' }, { status: 400 });
   }
 
@@ -69,7 +77,7 @@ async function forwardUpdate(
 
   try {
     const response = await fetch(
-      `${BACKEND_URL}/api/employees/${params.id}/`,
+      `${BACKEND_URL}/api/employees/${id}/`,
       {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -97,28 +105,29 @@ async function forwardUpdate(
   }
 }
 
-export async function PUT(request: NextRequest, context: { params: { id?: string } }) {
-  return forwardUpdate(request, context.params, 'PUT');
+export async function PUT(request: NextRequest) {
+  return forwardUpdate(request, 'PUT');
 }
 
-export async function PATCH(request: NextRequest, context: { params: { id?: string } }) {
-  return forwardUpdate(request, context.params, 'PATCH');
+export async function PATCH(request: NextRequest) {
+  return forwardUpdate(request, 'PATCH');
 }
 
 export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id?: string } }
+  request: NextRequest
 ) {
   const { error } = await ensureAuthenticated();
   if (error) return error as NextResponse;
 
-  if (!params?.id) {
+  const id = getEmployeeIdFromRequest(request);
+
+  if (!id) {
     return NextResponse.json({ error: 'Employee ID is required' }, { status: 400 });
   }
 
   try {
     const response = await fetch(
-      `${BACKEND_URL}/api/employees/${params.id}/`,
+      `${BACKEND_URL}/api/employees/${id}/`,
       {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
