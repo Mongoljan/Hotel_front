@@ -1,8 +1,5 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -14,8 +11,6 @@ import {
 } from "lucide-react";
 
 export default function NotFound() {
-  const router = useRouter();
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
       <Card className="max-w-2xl w-full shadow-2xl border-border/50">
@@ -68,13 +63,11 @@ export default function NotFound() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button 
-              onClick={() => router.back()} 
-              variant="outline"
-              className="group"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              Буцах
+            <Button asChild variant="outline" className="group">
+              <Link href="/">
+                <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                Буцах
+              </Link>
             </Button>
             <Button asChild className="group">
               <Link href="/">
