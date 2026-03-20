@@ -60,7 +60,7 @@ export const navSections: NavSection[] = [
         url: '/admin/reception',
         icon: IconUsers,
         shortcut: ['f', 'f'],
-        implemented: false,
+        implemented: true,
       },
       {
         title: 'Захиалгууд',
