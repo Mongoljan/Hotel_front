@@ -1093,6 +1093,34 @@ export default function PropertyCommissionsPage() {
         </div>
       </div>
 
+      {/* Alert for pending commissions */}
+      {stats.pending > 0 && (
+        <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-950/20">
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
+                <IconCalendar className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="font-medium text-orange-900 dark:text-orange-100">
+                  {stats.pending} гэрээ үүсгэх хүсэлт байна
+                </p>
+                <p className="text-sm text-orange-700 dark:text-orange-200">
+                  Доорх хүлээгдэж байгаа гэрээнүүдийг шалгаж, батлах эсвэл засах хэрэгтэй
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              className="border-orange-500 text-orange-600 hover:bg-orange-100"
+              onClick={() => setSearchQuery('pending')}
+            >
+              Харах
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -1111,12 +1139,20 @@ export default function PropertyCommissionsPage() {
             <div className="text-2xl font-bold text-green-600">{stats.active}</div>
           </CardContent>
         </Card>
-        <Card className="border-yellow-200 bg-yellow-50/50 dark:border-yellow-800 dark:bg-yellow-950/20">
+        <Card className={`${stats.pending > 0 ? 'border-orange-400 bg-orange-50 dark:border-orange-600 dark:bg-orange-950/30 ring-2 ring-orange-400/20' : 'border-yellow-200 bg-yellow-50/50 dark:border-yellow-800 dark:bg-yellow-950/20'}`}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Хүлээгдэж байгаа</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              Хүлээгдэж байгаа
+              {stats.pending > 0 && (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+            <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
           </CardContent>
         </Card>
         <Card className="border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-950/20">
@@ -1169,17 +1205,30 @@ export default function PropertyCommissionsPage() {
                     <TableHead className="text-center">Хөнгөлөлт</TableHead>
                     <TableHead className="text-center">Платформ</TableHead>
                     <TableHead className="text-center">Хугацаа</TableHead>
+                    <TableHead className="text-center">Хүсэлт илгээсэн</TableHead>
                     <TableHead className="text-center">Төлөв</TableHead>
                     <TableHead className="text-center">Гэрээ</TableHead>
                     <TableHead className="text-center">Үйлдэл</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCommissions.map((commission) => (
-                    <TableRow key={commission.id}>
+                  {filteredCommissions.map((commission) => {
+                    // Check if the request is new (within last 7 days)
+                    const createdDate = new Date(commission.created_at);
+                    const now = new Date();
+                    const daysDiff = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+                    const isNew = daysDiff <= 7 && commission.status === 'pending';
+
+                    return (
+                    <TableRow key={commission.id} className={commission.status === 'pending' ? 'bg-orange-50/30 dark:bg-orange-950/10' : ''}>
                       <TableCell>
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
+                            {isNew && (
+                              <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0">
+                                Шинэ
+                              </Badge>
+                            )}
                             <IconBuilding className="h-4 w-4 text-muted-foreground" />
                             <span className="font-medium">
                               {getPropertyName(commission.property_obj)}
@@ -1214,6 +1263,28 @@ export default function PropertyCommissionsPage() {
                           <span>
                             {formatDate(commission.start_date)} - {formatDate(commission.end_date)}
                           </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(commission.created_at)}
+                          </span>
+                          {daysDiff === 0 && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-orange-500 text-orange-600">
+                              Өнөөдөр
+                            </Badge>
+                          )}
+                          {daysDiff === 1 && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-500 text-blue-600">
+                              Өчигдөр
+                            </Badge>
+                          )}
+                          {daysDiff > 1 && daysDiff <= 7 && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              {daysDiff} өдрийн өмнө
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
@@ -1268,7 +1339,8 @@ export default function PropertyCommissionsPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
