@@ -122,10 +122,10 @@
   },
 
   "5PropertyImages":{
-    "title":"Property Images",
-    "description":"Upload your property images and descriptions",
+    "title":"Hotel Images",
+    "description":"Upload photos of your hotel exterior, interior, and rooms",
     "1":"Upload Image",
-    "2":"Description",
+    "2":"Image Description",
     "3":"Remove",
     "4":"Add more",
     "5": "Back",
@@ -141,10 +141,12 @@
     "alert_formats": "Only PNG, JPG, JPEG, WebP formats accepted",
     "images_count_label": "Images uploaded",
     "min_label": "(minimum)",
-    "description_placeholder": "Enter image description...",
+    "description_placeholder": "e.g., Hotel exterior, Lobby, Standard room, Restaurant, etc...",
     "profile_image_required": "Please select a profile image. Click 'Set as Profile' button on one of the images.",
     "profile_image_label": "Profile Image",
-    "set_as_profile": "Set as Profile"
+    "set_as_profile": "Set as Profile",
+    "hotel_image": "Hotel Image",
+    "hotel_image_suggestions": "Suggestions: Exterior, lobby, rooms, restaurant, pool, etc."
   },
   "6FinalPropertyDetails":{
     "title":"Final Property Details",
