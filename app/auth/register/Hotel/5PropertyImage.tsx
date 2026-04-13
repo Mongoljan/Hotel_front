@@ -190,7 +190,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
 
     const profileIndex = data.entries.findIndex((entry) => entry.is_profile);
     if (profileIndex === -1) {
-      toast.error('Профайл зураг сонгоно уу');
+      toast.error(t('profile_image_required'));
       return;
     }
 
@@ -400,7 +400,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                                     });
                                   }}
                                 >
-                                  {isProfile ? 'Профайл зураг' : 'Профайл болгох'}
+                                  {isProfile ? t('profile_image_label') : t('set_as_profile')}
                                 </Button>
                               </FormLabel>
                               <FormControl>
@@ -421,7 +421,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                                   />
                                   {isProfile && (
                                     <div className="mt-2 inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                                      Профайл зураг
+                                      {t('profile_image_label')}
                                     </div>
                                   )}
                                 </div>

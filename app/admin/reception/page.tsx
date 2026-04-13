@@ -125,7 +125,7 @@ const statusDotClass: Record<RoomItem['status'], string> = {
 export default function ReceptionPage() {
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [step, setStep] = useState(1);
-  const [nightCount, setNightCount] = useState(6);
+  const [nightCount] = useState(6);
   const [adultCount, setAdultCount] = useState(1);
   const [childCount, setChildCount] = useState(1);
 
@@ -164,10 +164,10 @@ export default function ReceptionPage() {
         <CardContent className="space-y-4 p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" className="rounded-full px-3 py-1">7 хоногоор</Badge>
-              <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground">Сараар</Button>
+              <Badge variant="secondary" className="rounded-full bg-muted-foreground/20 px-3 py-1 text-foreground">7 хоногоор</Badge>
+              <Button variant="ghost" size="sm" className="rounded-full bg-muted/40 text-muted-foreground">Сараар</Button>
               <Select defaultValue="type-1">
-                <SelectTrigger className="w-[170px] rounded-full">
+                <SelectTrigger className="h-9 w-[170px] rounded-full bg-background/90">
                   <SelectValue placeholder="Өрөөний төрөл" />
                 </SelectTrigger>
                 <SelectContent>
@@ -175,7 +175,7 @@ export default function ReceptionPage() {
                 </SelectContent>
               </Select>
               <Select defaultValue="channel-1">
-                <SelectTrigger className="w-[180px] rounded-full">
+                <SelectTrigger className="h-9 w-[180px] rounded-full bg-background/90">
                   <SelectValue placeholder="Захиалгын төрөл" />
                 </SelectTrigger>
                 <SelectContent>
@@ -191,13 +191,48 @@ export default function ReceptionPage() {
 
           <div className="overflow-auto rounded-2xl border border-border">
             <div className="min-w-[1050px] bg-muted/20">
-              <div className="grid" style={{ gridTemplateColumns: '200px repeat(7, minmax(120px, 1fr))' }}>
-                <div className="border-b border-r border-border/70 bg-background p-3 text-sm text-muted-foreground">Нийт өрөө:120</div>
-                <div className="col-span-7 flex items-center justify-center gap-6 border-b border-border/70 bg-background p-3 text-sm">
+              <div className="border-b border-border/70 bg-muted/20 px-3 py-3">
+                <div className="flex items-center justify-center gap-6 text-sm">
                   <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                   <span className="font-semibold">2026</span>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
+
+                <div className="mt-2 grid grid-cols-12 gap-1 text-center text-[11px] text-muted-foreground">
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                    <span
+                      key={month}
+                      className={month === 3 ? 'rounded-full bg-foreground px-2 py-0.5 text-background' : ''}
+                    >
+                      {month}-р сар
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-2 grid grid-cols-[repeat(31,minmax(0,1fr))] gap-1 text-center text-[11px] text-muted-foreground">
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((date) => (
+                    <span
+                      key={date}
+                      className={date === 19 ? 'rounded-full bg-muted-foreground px-2 py-0.5 text-background' : ''}
+                    >
+                      {date}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid" style={{ gridTemplateColumns: '200px repeat(7, minmax(120px, 1fr))' }}>
+                <div className="border-b border-r border-border/70 bg-background p-3 text-sm font-semibold text-foreground">Нийт өрөө:120</div>
+                {dayColumns.map((column, index) => (
+                  <div
+                    key={`date-${column.day}`}
+                    className={`border-b border-border/70 bg-background p-2 text-center ${index === 0 ? 'border border-primary/70' : ''}`}
+                  >
+                    {index === 0 && <p className="text-xs font-semibold text-primary">Өнөөдөр</p>}
+                    <p className="text-sm font-semibold text-foreground">{column.day}</p>
+                    <p className="text-xs text-muted-foreground">{column.weekday}</p>
+                  </div>
+                ))}
 
                 <div className="border-r border-border/70 bg-background p-3 text-sm text-muted-foreground">
                   Өрөө дүүргэлт %
@@ -303,13 +338,7 @@ export default function ReceptionPage() {
                       <div className={`absolute left-[50%] top-5 h-[1px] w-full ${done ? 'bg-primary' : 'bg-border'}`} />
                     )}
                     <div className="relative z-10 flex flex-col items-center gap-2 text-center">
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full border ${
-                          done || active
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border bg-background text-muted-foreground'
-                        }`}
-                      >
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-full border ${done || active ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground'}`}>
                         {done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
                       </div>
                       <span className={`text-xs ${active ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
@@ -328,9 +357,10 @@ export default function ReceptionPage() {
                 <div>
                   <p className="mb-1 text-sm font-medium">Check-in & Check-out</p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Button variant="outline" className="justify-start rounded-xl">
+                    <Button variant="outline" className="h-10 justify-start rounded-xl border-primary/60 bg-primary/5">
                       <CalendarDays className="mr-2 h-4 w-4" />
                       2026/01/01 - 2026/01/07
+                      <ChevronDown className="ml-2 h-4 w-4" />
                     </Button>
                     <Badge variant="secondary">{nightCount} шөнө</Badge>
                   </div>
@@ -340,7 +370,7 @@ export default function ReceptionPage() {
                   <div>
                     <p className="mb-1 text-sm text-muted-foreground">Орох цаг</p>
                     <Select defaultValue="14:00">
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10 rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -351,7 +381,7 @@ export default function ReceptionPage() {
                   <div>
                     <p className="mb-1 text-sm text-muted-foreground">Гарах цаг</p>
                     <Select defaultValue="12:00">
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10 rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -365,7 +395,7 @@ export default function ReceptionPage() {
                   <div>
                     <p className="mb-1 text-sm text-muted-foreground">Захиалгын суваг</p>
                     <Select defaultValue="reception">
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10 rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -376,7 +406,7 @@ export default function ReceptionPage() {
                   <div>
                     <p className="mb-1 text-sm text-muted-foreground">Гэрээт байгууллага</p>
                     <Select defaultValue="none">
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10 rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -391,6 +421,23 @@ export default function ReceptionPage() {
                   <div className="grid gap-2 md:grid-cols-2">
                     <GuestCounter label="Том хүн" value={adultCount} onDecrement={() => setAdultCount((v) => Math.max(1, v - 1))} onIncrement={() => setAdultCount((v) => v + 1)} />
                     <GuestCounter label="Хүүхэд" value={childCount} onDecrement={() => setChildCount((v) => Math.max(0, v - 1))} onIncrement={() => setChildCount((v) => v + 1)} />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-primary/40 bg-primary/5 p-3">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Цаг сонгох</span>
+                    <span>2025 Есдүгээр сар</span>
+                  </div>
+                  <div className="mt-3 flex flex-col items-center gap-3">
+                    <div className="rounded-lg bg-primary/20 px-4 py-2 text-4xl font-semibold tracking-wide text-foreground">20 : 00</div>
+                    <div className="grid h-40 w-40 place-items-center rounded-full bg-primary/20">
+                      <div className="h-28 w-28 rounded-full border border-primary/50" />
+                    </div>
+                    <div className="flex w-full items-center justify-between px-2 text-xs">
+                      <span className="text-muted-foreground">Болих</span>
+                      <span className="font-medium text-primary">Хадгалах</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -409,11 +456,14 @@ export default function ReceptionPage() {
                     className={`rounded-2xl border p-3 ${room.selected ? 'border-primary bg-primary/5' : 'border-border'}`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{room.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Үлдэгдэл: <span className="font-semibold text-foreground">{room.free}</span>
-                        </p>
+                      <div className="flex items-start gap-3">
+                        <div className="h-12 w-16 rounded-md bg-muted" />
+                        <div>
+                          <p className="font-medium">{room.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Үлдэгдэл: <span className="font-semibold text-foreground">{room.free}</span>
+                          </p>
+                        </div>
                       </div>
                       <Button variant="outline" className="h-8 rounded-xl px-3">
                         {room.selected ? '2' : '0'}
@@ -421,22 +471,46 @@ export default function ReceptionPage() {
                       </Button>
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                      <Badge>{room.roomNo}</Badge>
-                      <Select defaultValue={String(room.price)}>
-                        <SelectTrigger className="h-8 w-[170px] rounded-full text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={String(room.price)}>Үндсэн үнэ / {room.price.toLocaleString('mn-MN')} ₮</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Switch /> Нэмэлт ор
+                    <div className="mt-2 space-y-2 text-sm">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge className="rounded-full">{room.roomNo}</Badge>
+                        <Select defaultValue={String(room.price)}>
+                          <SelectTrigger className="h-8 w-[190px] rounded-full text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={String(room.price)}>Үндсэн үнэ / {room.price.toLocaleString('mn-MN')} ₮</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch /> Нэмэлт ор
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch /> Хүүхдийн ор
+                        </div>
+                        {room.selected && <X className="h-3.5 w-3.5 text-primary" />}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Switch /> Хүүхдийн ор
-                      </div>
+
+                      {room.selected && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className="rounded-full">{room.roomNo}</Badge>
+                          <Select defaultValue={String(room.price)}>
+                            <SelectTrigger className="h-8 w-[190px] rounded-full text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={String(room.price)}>Үндсэн үнэ / {room.price.toLocaleString('mn-MN')} ₮</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Switch /> Нэмэлт ор
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Switch /> Хүүхдийн ор
+                          </div>
+                          <X className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -446,16 +520,16 @@ export default function ReceptionPage() {
             {step === 3 && (
               <div className="space-y-3 rounded-2xl border border-border p-4">
                 <Field label="Зочны овог">
-                  <Input defaultValue="Zorig" />
+                  <Input defaultValue="Zorig" className="h-10 rounded-xl" />
                 </Field>
                 <Field label="Зочны нэр">
-                  <Input defaultValue="Zolzaya" />
+                  <Input defaultValue="Zolzaya" className="h-10 rounded-xl" />
                 </Field>
                 <Field label="Утасны дугаар">
-                  <Input defaultValue="MN  +976 0000-0000" />
+                  <Input defaultValue="MN  +976 0000-0000" className="h-10 rounded-xl" />
                 </Field>
                 <Field label="Нэмэлт хүсэлт, тайлбар">
-                  <Textarea rows={4} placeholder="Enter a description..." />
+                  <Textarea rows={4} placeholder="Enter a description..." className="rounded-xl" />
                 </Field>
                 <div className="flex items-center gap-2 pt-1 text-sm text-muted-foreground">
                   <Switch /> Одоо бүртгэх
@@ -465,21 +539,21 @@ export default function ReceptionPage() {
 
             {step === 4 && (
               <div className="space-y-4">
-                <div className="rounded-2xl bg-muted p-4">
-                  <Badge className="mb-3 rounded-full bg-foreground text-background">Захиалгын хуураангуй</Badge>
+                <div className="rounded-2xl bg-muted-foreground/70 p-4 text-background">
+                  <Badge className="mb-3 rounded-full bg-background/20 text-background">Захиалгын хуураангуй</Badge>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Захиалагч мэдээлэл</span>
+                      <span className="text-background/70">Захиалагч мэдээлэл</span>
                       <span>Zolzaya Zorig</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Холбогдох утас</span>
+                      <span className="text-background/70">Холбогдох утас</span>
                       <span>9995-4644</span>
                     </div>
                     <div className="grid gap-2 pt-1 md:grid-cols-3">
-                      <div className="rounded-lg bg-background p-2 text-xs">2026/01/01 - 2026/01/07</div>
-                      <div className="rounded-lg bg-background p-2 text-xs">14:00</div>
-                      <div className="rounded-lg bg-background p-2 text-xs">12:00</div>
+                      <div className="rounded-lg bg-background/20 p-2 text-xs">2026/01/01 - 2026/01/07</div>
+                      <div className="rounded-lg bg-background/20 p-2 text-xs">14:00</div>
+                      <div className="rounded-lg bg-background/20 p-2 text-xs">12:00</div>
                     </div>
                   </div>
                 </div>
@@ -503,7 +577,7 @@ export default function ReceptionPage() {
                     <Row label="Хөнгөлөлт" value="0 ₮" hint="Гэрээт -10%" />
                   </div>
 
-                  <div className="mt-3 rounded-xl bg-primary/15 px-3 py-2 text-sm font-semibold text-foreground">
+                  <div className="mt-3 rounded-xl bg-primary/20 px-3 py-2 text-sm font-semibold text-foreground">
                     <div className="flex items-center justify-between">
                       <span>Нийт дүн</span>
                       <span>720,000 ₮</span>
@@ -519,7 +593,7 @@ export default function ReceptionPage() {
           </div>
 
           <div className="border-t border-border bg-card px-6 py-3">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-primary to-primary/80 px-3 py-2 text-sm font-medium text-primary-foreground">
               <div className="flex items-center gap-3">
                 <span>7 шөнө</span>
                 <CircleDot className="h-3 w-3" />

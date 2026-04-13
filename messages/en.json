@@ -141,7 +141,10 @@
     "alert_formats": "Only PNG, JPG, JPEG, WebP formats accepted",
     "images_count_label": "Images uploaded",
     "min_label": "(minimum)",
-    "description_placeholder": "Enter image description..."
+    "description_placeholder": "Enter image description...",
+    "profile_image_required": "Please select a profile image. Click 'Set as Profile' button on one of the images.",
+    "profile_image_label": "Profile Image",
+    "set_as_profile": "Set as Profile"
   },
   "6FinalPropertyDetails":{
     "title":"Final Property Details",
