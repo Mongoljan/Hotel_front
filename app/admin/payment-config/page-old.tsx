@@ -290,7 +290,8 @@ export default function PaymentConfigPage() {
       
     } catch (error) {
       console.error('Error saving payment config:', error);
-      if (error.message !== 'Unauthorized' && error.message !== 'Validation error') {
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage !== 'Unauthorized' && errorMessage !== 'Validation error') {
         toast.error('Тохиргоо хадгалахад алдаа гарлаа');
       }
       throw error; // Re-throw to handle in modal
