@@ -196,7 +196,7 @@ export const navSections: NavSection[] = [
           {
             title: 'Валют, төлбөрийн хэрэгсэл',
             i18nKey: 'currencyPayment',
-            url: '/admin/currency',
+            url: '/admin/payment-config',
             icon: IconCoins,
           },
           {
