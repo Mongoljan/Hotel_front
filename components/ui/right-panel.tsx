@@ -23,7 +23,7 @@ export function RightPanel({
   description,
   children,
   className,
-  width = 'w-[400px] sm:w-[480px]'
+  width = 'w-[400px] sm:w-[600px]'
 }: RightPanelProps) {
   return (
     <AnimatePresence>

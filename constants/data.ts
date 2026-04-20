@@ -79,14 +79,6 @@ export const navSections: NavSection[] = [
         implemented: true,
       },
       {
-        title: 'Өрөө цэвэрлэгээ',
-        i18nKey: 'housekeeping',
-        url: '/admin/housekeeping',
-        icon: IconSparkles,
-        shortcut: ['h', 'h'],
-        implemented: true,
-      },
-      {
         title: 'Ажлын жагсаалт',
         i18nKey: 'taskList',
         url: '/admin/tasks',
@@ -135,6 +127,27 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    title: 'Өрөөний үйлчилгээ',
+    i18nKey: 'roomService',
+    items: [
+      {
+        title: 'Цэвэрлэгээ',
+        i18nKey: 'housekeeping',
+        url: '/admin/housekeeping',
+        icon: IconSparkles,
+        shortcut: ['h', 'h'],
+        implemented: true,
+      },
+      {
+        title: 'Өрөө блок',
+        i18nKey: 'roomBlocks',
+        url: '/admin/room-blocks',
+        icon: IconDoor,
+        implemented: true,
+      },
+    ],
+  },
+  {
     title: 'Бусад',
     i18nKey: 'others',
     items: [
@@ -170,12 +183,6 @@ export const navSections: NavSection[] = [
             icon: IconCurrencyDollar,
           },
           {
-            title: 'Өрөө блок',
-            i18nKey: 'roomBlocks',
-            url: '/admin/room-blocks',
-            icon: IconDoor,
-          },
-          {
             title: 'Дотоод журам',
             i18nKey: 'internalRules',
             url: '/admin/internal-rules',
@@ -194,8 +201,14 @@ export const navSections: NavSection[] = [
             icon: IconSparkles,
           },
           {
-            title: 'Валют, төлбөрийн хэрэгсэл',
-            i18nKey: 'currencyPayment',
+            title: 'Валют',
+            i18nKey: 'currency',
+            url: '/admin/currency',
+            icon: IconCurrencyDollar,
+          },
+          {
+            title: 'Төлбөрийн хэрэгсэл',
+            i18nKey: 'paymentTools',
             url: '/admin/payment-config',
             icon: IconCoins,
           },

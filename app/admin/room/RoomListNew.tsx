@@ -200,6 +200,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
   // ─── Modal state for Create / Edit ─────────────────────────────────────────
   const [selectedRoom, setSelectedRoom] = useState<RoomData | null>(null);
   const [addToGroupMode, setAddToGroupMode] = useState(false); // For adding rooms to existing group
+  const [editGroupMode, setEditGroupMode] = useState(false); // For editing all rooms in a group
 
   // Image preview state
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -310,6 +311,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
   const openCreateModal = () => {
     setSelectedRoom(null);
     setAddToGroupMode(false);
+    setEditGroupMode(false);
     setIsModalOpen(true);
   };
 
@@ -335,6 +337,29 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     setIsModalOpen(true);
   };
 
+  // Handler for editing all rooms in a group (bulk editing)
+  const handleEditGroup = (groupKey: string) => {
+    // groupKey format is "room_type-room_category", find a representative room from that group
+    const [roomTypeStr, roomCategoryStr] = groupKey.split("-");
+    const roomType = parseInt(roomTypeStr, 10);
+    const roomCategory = parseInt(roomCategoryStr, 10);
+    
+    // Find any room from this group to use as template for the group's shared properties
+    const templateRoom = rawRooms.find(
+      (r) => r.room_type === roomType && r.room_category === roomCategory
+    );
+    
+    if (!templateRoom) {
+      console.warn("No template room found for group:", groupKey);
+      return;
+    }
+    
+    setSelectedRoom(templateRoom);
+    setEditGroupMode(true);
+    setAddToGroupMode(false);
+    setIsModalOpen(true);
+  };
+
   // Edit / Delete Handlers
   const handleEdit = (roomId: number | undefined) => {
     if (roomId == null) return;
@@ -345,6 +370,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     }
     setSelectedRoom(found);
     setAddToGroupMode(false);
+    setEditGroupMode(false);
     setIsModalOpen(true);
   };
 
@@ -1064,18 +1090,44 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       cell: ({ row }) => {
         if (row.original.isPreviewRow) return null;
 
-        // For group rows - show "+" button to add more rooms to this group
+        // For group rows - show "+" button to add more rooms to this group and edit button for group editing
         if (row.original.isGroup && row.original.arrowPlaceholder) {
           return (
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleAddToGroup(row.original.arrowPlaceholder)}
-                title="Энэ бүлэгт өрөө нэмэх"
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAddToGroup(row.original.arrowPlaceholder)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Энэ бүлэгт өрөө нэмэх</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditGroup(row.original.arrowPlaceholder)}
+                      className="text-primary hover:text-primary-foreground"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Бүлгийн дата засах (зураг, хэмжээ, г.м)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           );
         }
@@ -1090,13 +1142,6 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                 onClick={() => handleEdit(roomId)}
               >
                 <Edit className="h-3 w-3" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDeleteClick(roomId)}
-              >
-                <Trash2 className="h-3 w-3" />
               </Button>
             </div>
           );
@@ -1263,16 +1308,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
           </div>
         </div>
         <div className="flex gap-2">
-          {selectedRoomIds.size > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleBulkDeleteClick}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Устгах ({selectedRoomIds.size})
-            </Button>
-          )}
+          {/* Delete buttons removed - rooms should not be deleted individually */}
           {/* <Button
             variant="outline"
             size="sm"
@@ -1302,11 +1338,12 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       ) : (
         <>
           <RoomModal
-            key={addToGroupMode ? 'add-to-group' : 'normal'}
+            key={addToGroupMode ? 'add-to-group' : editGroupMode ? 'edit-group' : 'normal'}
             isOpen={isModalOpen}
             onClose={() => {
               setIsModalOpen(false);
               setAddToGroupMode(false);
+              setEditGroupMode(false);
             }}
             roomToEdit={selectedRoom}
             isRoomAdded={isRoomAdded}
@@ -1314,6 +1351,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
             existingRooms={rawRooms}
             hotelRoomLimits={hotelRoomLimits}
             addToGroupMode={addToGroupMode}
+            editGroupMode={editGroupMode}
           />
 
           {/* Advanced Table with sync status in title row */}

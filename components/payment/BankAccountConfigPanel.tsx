@@ -47,18 +47,48 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
     accountNumber: '',
     accountHolder: '',
     currency: 'MNT',
-    autoPayment: false
+    activateImmediately: true,
+    showOnAllBookings: true
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({
+    bank: '',
+    iban: '',
+    accountNumber: '',
+    accountHolder: ''
+  });
 
-  const handleSave = async () => {
+  const validateForm = () => {
+    const newErrors = {
+      bank: '',
+      iban: '',
+      accountNumber: '',
+      accountHolder: ''
+    };
+
     if (!selectedBank) {
-      toast.error('Банк сонгоно уу');
-      return;
+      newErrors.bank = 'Банк сонгоно уу';
     }
 
-    if (!formData.iban.trim() || !formData.accountNumber.trim() || !formData.accountHolder.trim()) {
-      toast.error('Бүх талбарыг бөглөнө үү');
+    if (!formData.iban.trim()) {
+      newErrors.iban = 'IBAN оруулна уу';
+    }
+
+    if (!formData.accountNumber.trim()) {
+      newErrors.accountNumber = 'Дансны дугаар оруулна уу';
+    }
+
+    if (!formData.accountHolder.trim()) {
+      newErrors.accountHolder = 'Данс эзэмшигчийн нэр оруулна уу';
+    }
+
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => error !== '');
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) {
+      toast.error('Бүх шаардлагатай талбарыг бөглөнө үү');
       return;
     }
 
@@ -66,19 +96,21 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
     try {
       const config = {
         payment_type: 'bank_account',
-        bank_id: selectedBank.id,
+        bank_id: selectedBank!.id,
         iban: formData.iban,
         account_number: formData.accountNumber,
         account_holder: formData.accountHolder,
         currency_id: currencies.find(c => c.code === formData.currency)?.id || 1,
-        show_on_booking: formData.autoPayment,
-        is_active: true
+        is_active: formData.activateImmediately,
+        show_on_booking: formData.showOnAllBookings
       };
 
       await onSave(config);
       toast.success('Данс амжилттай нэмэгдлээ');
     } catch (error) {
+      console.error('Error saving bank account:', error);
       toast.error('Данс нэмэхэд алдаа гарлаа');
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -89,6 +121,9 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
       {/* Bank Selection */}
       <div className="space-y-3">
         <Label className="text-base font-medium">Банк сонгох</Label>
+        {errors.bank && (
+          <p className="text-sm text-red-600">{errors.bank}</p>
+        )}
         <div className="grid grid-cols-3 gap-3">
           {banks.map((bank) => (
             <Button
@@ -96,9 +131,13 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
               variant={selectedBank?.id === bank.id ? "default" : "outline"}
               className={cn(
                 "h-16 flex flex-col gap-1 p-2",
-                selectedBank?.id === bank.id && "border-blue-500 bg-blue-50"
+                selectedBank?.id === bank.id && "border-blue-500 bg-blue-50",
+                errors.bank && !selectedBank && "border-red-300"
               )}
-              onClick={() => setSelectedBank(bank)}
+              onClick={() => {
+                setSelectedBank(bank);
+                setErrors(prev => ({ ...prev, bank: '' }));
+              }}
             >
               <div className={cn(
                 "w-8 h-8 rounded text-white flex items-center justify-center text-sm font-bold",
@@ -131,30 +170,51 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
           id="iban"
           placeholder="000000"
           value={formData.iban}
-          onChange={(e) => setFormData(prev => ({ ...prev, iban: e.target.value }))}
+          onChange={(e) => {
+            setFormData(prev => ({ ...prev, iban: e.target.value }));
+            setErrors(prev => ({ ...prev, iban: '' }));
+          }}
+          className={errors.iban ? "border-red-300" : ""}
         />
+        {errors.iban && (
+          <p className="text-sm text-red-600">{errors.iban}</p>
+        )}
       </div>
 
       {/* Account Number */}
       <div className="space-y-2">
-        <Label htmlFor="accountNumber">Данчны дугаар</Label>
+        <Label htmlFor="accountNumber">Дансны дугаар</Label>
         <Input
           id="accountNumber"
           placeholder="5000-0000-00"
           value={formData.accountNumber}
-          onChange={(e) => setFormData(prev => ({ ...prev, accountNumber: e.target.value }))}
+          onChange={(e) => {
+            setFormData(prev => ({ ...prev, accountNumber: e.target.value }));
+            setErrors(prev => ({ ...prev, accountNumber: '' }));
+          }}
+          className={errors.accountNumber ? "border-red-300" : ""}
         />
+        {errors.accountNumber && (
+          <p className="text-sm text-red-600">{errors.accountNumber}</p>
+        )}
       </div>
 
       {/* Account Holder */}
       <div className="space-y-2">
-        <Label htmlFor="accountHolder">Данс эзэмшигч-ийн нэр</Label>
+        <Label htmlFor="accountHolder">Данс эзэмшигчийн нэр</Label>
         <Input
           id="accountHolder"
           placeholder="Майрууд ХХК"
           value={formData.accountHolder}
-          onChange={(e) => setFormData(prev => ({ ...prev, accountHolder: e.target.value }))}
+          onChange={(e) => {
+            setFormData(prev => ({ ...prev, accountHolder: e.target.value }));
+            setErrors(prev => ({ ...prev, accountHolder: '' }));
+          }}
+          className={errors.accountHolder ? "border-red-300" : ""}
         />
+        {errors.accountHolder && (
+          <p className="text-sm text-red-600">{errors.accountHolder}</p>
+        )}
       </div>
 
       {/* Currency Selection */}
@@ -182,22 +242,32 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
       <div className="space-y-4 pt-4 border-t">
         <Label className="text-base font-medium">ДАНСНЫ ТОХИРГОО</Label>
         <div className="space-y-4">
+          {/* Activate Immediately Switcher */}
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium">Төлөв</p>
+              <p className="text-sm font-medium">Төлөв дансыг шууд идэвхижүүлэх</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Данстай авто удирдлагын түвшинд захиалгын авах
+                Идэвхжээр данс шууд ашиглах боломжтой болно
               </p>
             </div>
             <Switch
-              checked={formData.autoPayment}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, autoPayment: checked }))}
+              checked={formData.activateImmediately}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, activateImmediately: checked }))}
             />
           </div>
 
-          {/* Additional configuration text */}
-          <div className="text-xs text-muted-foreground bg-gray-50 p-3 rounded-lg">
-            <p>Энэ нь тус банкны санхүүгийн туйа тойм дээр энэ өгснөөд хэрэг данс</p>
+          {/* Show on All Bookings Switcher */}
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium">Бүх зочны нэхэмжлэх дээр харуулах</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Энийг идэвхжүүлснээр үүсгэсэн нэхэмжлэх болгон дээр банкны мэдээлэл автоматаар багтах болно
+              </p>
+            </div>
+            <Switch
+              checked={formData.showOnAllBookings}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, showOnAllBookings: checked }))}
+            />
           </div>
         </div>
       </div>

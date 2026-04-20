@@ -150,6 +150,9 @@ interface RoomModalProps {
   
   // When true, show only room number fields - used for adding rooms to existing group
   addToGroupMode?: boolean;
+  
+  // When true, edit mode for bulk editing group properties (images, size, etc.)
+  editGroupMode?: boolean;
 }
 
 ///////////////////////////////////////
@@ -165,6 +168,7 @@ export default function RoomModal({
   existingRooms,
   hotelRoomLimits,
   addToGroupMode = false,
+  editGroupMode = false,
 }: RoomModalProps) {
   const [step, setStep] = useState<number>(1);
   const t = useTranslations("RoomModal"); // Changed from "Rooms" to "RoomModal"
@@ -198,6 +202,40 @@ export default function RoomModal({
 
   // Calculate max allowed rooms based on hotel limits (computed once, used by inputs)
   const currentRoomCount = getTotalExistingRooms();
+  
+  // Helper: Get existing room type + category combinations with labels
+  const getExistingCombinationsWithLabels = (): Array<{
+    value: string, 
+    room_type: number, 
+    room_category: number, 
+    label: string
+  }> => {
+    const combinationsSet = new Set<string>();
+    const combinations: Array<{value: string, room_type: number, room_category: number, label: string}> = [];
+    
+    existingRooms.forEach((room) => {
+      const key = `${room.room_type}-${room.room_category}`;
+      if (!combinationsSet.has(key)) {
+        combinationsSet.add(key);
+        
+        // Find the type and category names for display
+        const roomType = combinedData.roomTypes.find(rt => rt.id === room.room_type);
+        const roomCategory = combinedData.room_category.find(rc => rc.id === room.room_category);
+        
+        const label = `${roomCategory?.name || 'Unknown'} - ${roomType?.name || 'Unknown'}`;
+        
+        combinations.push({
+          value: key,
+          room_type: room.room_type,
+          room_category: room.room_category,
+          label
+        });
+      }
+    });
+    
+    console.log("Generated combinations:", combinations); // Debug log
+    return combinations;
+  };
   const totalHotelRooms = hotelRoomLimits?.totalHotelRooms || 0;
   const availableRoomsLimit = hotelRoomLimits?.availableRooms || 0;
   
@@ -255,8 +293,9 @@ export default function RoomModal({
       }
     }
 
-    // Check if at least one image is uploaded
+    // Check if at least one image is uploaded (not required when editing single rooms)
     const hasValidImage = entries?.some(entry => entry.images && entry.images.trim() !== '');
+    const isImageRequired = !roomToEdit || addToGroupMode; // Images only required for new rooms or adding to group
 
     // Check for duplicate room numbers and validate count
     if (roomNo) {
@@ -310,7 +349,7 @@ export default function RoomModal({
       roomCategory &&
       hasValidBeds &&
       roomNo &&
-      hasValidImage &&
+      (!isImageRequired || hasValidImage) &&
       isBathroom &&
       smokingAllowed &&
       roomSize &&
@@ -355,7 +394,8 @@ export default function RoomModal({
 
     const entries = watch("entries");
     const hasValidImage = entries?.some(entry => entry.images && entry.images.trim() !== '');
-    if (!hasValidImage) missing.push(t('images'));
+    const isImageRequired = !roomToEdit || addToGroupMode; // Images only required for new rooms or adding to group
+    if (isImageRequired && !hasValidImage) missing.push(t('images'));
 
     return missing;
   };
@@ -447,8 +487,9 @@ export default function RoomModal({
 
   // Select schema based on mode
   const formSchema = useMemo(() => {
+    // For editGroupMode, use regular schema but room numbers won't be validated since we skip that section
     return addToGroupMode ? schemaAddToGroup : schemaCreateRoom;
-  }, [addToGroupMode]);
+  }, [addToGroupMode, editGroupMode]);
 
   // React Hook Form setup
   const {
@@ -535,12 +576,14 @@ export default function RoomModal({
 
   // 2) If roomToEdit is not null, populate the form with existing values
   useEffect(() => {
-    // Only run when modal is open
-    if (!isOpen) return;
+    // Only run when modal is open AND combinedData is loaded
+    if (!isOpen || combinedData.roomTypes.length === 0) return;
 
     if (roomToEdit) {
       // Build a flat FormFields object from RoomData
       const existing = roomToEdit;
+
+      console.log("Loading room data for edit:", existing); // Debug log
 
       // Convert array of existing images into { images: base64|url, descriptions: string }[] form
       // Since the backend returns URLs, we just store the URL here (we assume no re‐upload in edit, or user can re‐upload if they choose).
@@ -564,47 +607,82 @@ export default function RoomModal({
                            (existing as any).beds || 
                            (existing as any).roomBeds;
       
+      console.log("Room beds data found:", roomBedsData); // Debug log
+      console.log("Full existing room data:", existing); // Debug log to see all fields
+      
       if (roomBedsData && Array.isArray(roomBedsData) && roomBedsData.length > 0) {
         // New format with room_beds array
-        roomBedsForForm = roomBedsData.map((bed: any) => ({
-          bed_type: String(bed.bed_type || bed.bedType || bed.type || bed.id),
-          quantity: bed.quantity || bed.count || 1
-        }));
+        roomBedsForForm = roomBedsData.map((bed: any) => {
+          console.log("Processing bed:", bed); // Debug each bed
+          const bedType = String(bed.bed_type || bed.bedType || bed.type || bed.id || "");
+          const quantity = bed.quantity || bed.count || 1;
+          console.log(`Mapped bed: bed_type=${bedType}, quantity=${quantity}`);
+          return {
+            bed_type: bedType,
+            quantity: quantity
+          };
+        });
       } else if (existing.bed_type !== undefined && existing.bed_type !== null) {
         // Legacy format with single bed_type
+        console.log("Using legacy bed_type:", existing.bed_type);
         roomBedsForForm = [{
           bed_type: String(existing.bed_type),
           quantity: 1
         }];
       } else {
-        // No bed data at all - use empty default
-        roomBedsForForm = [{ bed_type: "", quantity: 1 }];
+        // Check for other possible bed field names
+        console.log("Checking alternative bed fields...");
+        console.log("existing.bedType:", (existing as any).bedType);
+        console.log("existing.bed:", (existing as any).bed);
+        console.log("existing.bed_id:", (existing as any).bed_id);
+        
+        if ((existing as any).bedType) {
+          roomBedsForForm = [{ bed_type: String((existing as any).bedType), quantity: 1 }];
+        } else if ((existing as any).bed_id) {
+          roomBedsForForm = [{ bed_type: String((existing as any).bed_id), quantity: 1 }];
+        } else {
+          console.log("No bed data found, using default");
+          // No bed data at all - use empty default
+          roomBedsForForm = [{ bed_type: "", quantity: 1 }];
+        }
       }
 
+      console.log("Processed room beds for form:", roomBedsForForm); // Debug log
+
       // Convert the RoomData into the shape of our form
-      reset({
+      const formData = {
         room_type: String(existing.room_type),
         room_category: String(existing.room_category),
-        room_size: existing.room_size,
+        room_size: String(existing.room_size),
         room_beds: roomBedsForForm,
         adultQty: String(existing.adultQty),
         childQty: String(existing.childQty),
         // For addToGroupMode, clear room counts and room numbers since user will enter new ones
         number_of_rooms: addToGroupMode ? 1 : existing.number_of_rooms,
         number_of_rooms_to_sell: addToGroupMode ? "1" : String(existing.number_of_rooms_to_sell),
-        room_Description: existing.room_Description,
+        room_Description: existing.room_Description || "",
         smoking_allowed: existing.smoking_allowed ? "true" : "false",
         RoomNo: addToGroupMode ? "" : existing.room_number.toString(),
 
-        room_Facilities: existing.room_Facilities.map(String),
+        room_Facilities: existing.room_Facilities?.map(String) || [],
         is_Bathroom: existing.is_Bathroom ? "true" : "false",
-        bathroom_Items: existing.bathroom_Items.map(String),
-        free_Toiletries: existing.free_Toiletries.map(String),
-        food_And_Drink: existing.food_And_Drink.map(String),
-        outdoor_And_View: existing.outdoor_And_View.map(String),
+        bathroom_Items: existing.bathroom_Items?.map(String) || [],
+        free_Toiletries: existing.free_Toiletries?.map(String) || [],
+        food_And_Drink: existing.food_And_Drink?.map(String) || [],
+        outdoor_And_View: existing.outdoor_And_View?.map(String) || [],
 
         entries: initialEntries,
-      });
+      };
+
+      console.log("Resetting form with data:", formData); // Debug log
+      reset(formData);
+      
+      // Force update of bed fields array after form reset
+      setTimeout(() => {
+        console.log("Current form values after reset:", watch());
+        console.log("Bed fields after reset:", bedFields);
+        console.log("Watched room_beds:", watch("room_beds"));
+      }, 100);
       
       // For addToGroupMode, always start at step 1
       if (addToGroupMode) {
@@ -637,7 +715,7 @@ export default function RoomModal({
       });
       setStep(1); // always start at step 1 for "create" mode
     }
-  }, [roomToEdit, reset, isOpen, addToGroupMode]);
+  }, [roomToEdit, reset, isOpen, addToGroupMode, combinedData.roomTypes.length]);
 
   // Watch for changes in room_type and room_category to check for duplicate combinations
   const roomTypeValue = watch("room_type");
@@ -679,15 +757,117 @@ export default function RoomModal({
     return true;
   };
 
+  // Handle group bulk update - update all rooms in the same group (room_type + room_category combination)
+  const handleGroupBulkUpdate = async (formData: FormFields) => {
+    if (!roomToEdit) return;
+
+    try {
+      const token = await getClientBackendToken() || "";
+      
+      // Find all rooms in the same group (same room_type + room_category)
+      const roomsInGroup = existingRooms.filter(room => 
+        room.room_type === roomToEdit.room_type && 
+        room.room_category === roomToEdit.room_category
+      );
+
+      if (roomsInGroup.length === 0) {
+        toast.error("Бүлэгт өрөө олдсонгүй.");
+        return;
+      }
+
+      // Build the update data (excluding room-specific fields like room numbers)
+      const bulkUpdateData = {
+        room_size: parseFloat(formData.room_size),
+        // Transform room_beds array to API format with numeric bed_type
+        bed_details: formData.room_beds
+          .filter(bed => bed.bed_type && bed.bed_type !== "")
+          .map(bed => ({
+            bed_type: Number(bed.bed_type),
+            quantity: bed.quantity
+          })),
+        is_Bathroom: formData.is_Bathroom === "true",
+        room_Facilities: formData.room_Facilities.map(Number),
+        bathroom_Items: formData.bathroom_Items.map(Number),
+        free_Toiletries: formData.free_Toiletries.map(Number),
+        food_And_Drink: formData.food_And_Drink.map(Number),
+        outdoor_And_View: formData.outdoor_And_View.map(Number),
+        room_Description: formData.room_Description,
+        smoking_allowed: formData.smoking_allowed === "true",
+        childQty: Number(formData.childQty),
+        adultQty: Number(formData.adultQty),
+        // Include images in group edit mode
+        images: formData.entries
+          .filter(entry => entry.images && entry.images.trim() !== '')
+          .map((entry) => ({
+            image: entry.images,
+            description: entry.descriptions || "",
+          })),
+      };
+
+      console.log(`Updating ${roomsInGroup.length} rooms in group:`, roomsInGroup.map(r => r.id));
+
+      // Update each room in the group
+      const updatePromises = roomsInGroup.map(async (room) => {
+        const url = `${API_CREATE_ROOM}?token=${token}`;
+        const bodyData = { 
+          ...bulkUpdateData, 
+          id: room.id,
+          hotel: user?.hotel,
+          room_type: room.room_type,
+          room_category: room.room_category,
+          // Keep individual room data
+          number_of_rooms: 1,
+          number_of_rooms_to_sell: 1,
+          RoomNo: [room.room_number], // Keep original room number
+        };
+
+        const response = await fetch(url, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bodyData),
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(`Room ${room.room_number}: ${err.message || err.error || err.detail}`);
+        }
+
+        return response.json();
+      });
+
+      // Execute all updates
+      await Promise.all(updatePromises);
+
+      // Success
+      setIsRoomAdded(true);
+      toast.success(`Бүлгийн ${roomsInGroup.length} өрөө амжилттай шинэчлэгдлээ`);
+
+      setTimeout(() => {
+        onClose();
+      }, 1200);
+
+    } catch (err: any) {
+      console.error("Group bulk update error:", err);
+      toast.error(err.message || "Бүлгийн дата шинэчлэхэд алдаа гарлаа");
+    }
+  };
+
   // Submit handler: POST if new, PUT if editing
   const onSubmit: SubmitHandler<FormFields> = async (formData) => {
     // Check for duplicate room_type + category combination (only when creating new room)
-    if (!roomToEdit && checkDuplicateRoomTypeCategoryCombination(formData.room_type, formData.room_category)) {
+    if (!roomToEdit && !editGroupMode && checkDuplicateRoomTypeCategoryCombination(formData.room_type, formData.room_category)) {
       toast.error("Энэ өрөөний төрөл ба ангиллын хослол аль хэдийн бүртгэгдсэн байна. Өөр хослол сонгоно уу.");
       setStep(1);
       return;
     }
 
+    // For editGroupMode, skip room number validation and handle group bulk update
+    if (editGroupMode) {
+      await handleGroupBulkUpdate(formData);
+      return;
+    }
+
+    // Continue with normal validation for non-group edit modes
     // Validate Step 1 fields are filled before moving to Step 2
     const step1Fields = [
       "room_type",
@@ -834,7 +1014,9 @@ export default function RoomModal({
           <h2 className="text-lg font-bold">
             {addToGroupMode 
               ? "Бүлэгт өрөө нэмэх" 
-              : (roomToEdit ? t('title_edit') : t('title_add'))}
+              : editGroupMode
+                ? "Бүлгийн дата засах (зураг, хэмжээ, г.м)"
+                : (roomToEdit ? t('title_edit') : t('title_add'))}
           </h2>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="close">
             <X className="h-5 w-5 text-slate-700" />
@@ -929,53 +1111,55 @@ export default function RoomModal({
               </div>
             </section>
 
-            {/* Room Numbers Input */}
-            <section className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Өрөөний дугаарууд <span className="text-red-500">*</span>
-                <span className="text-gray-500 font-normal ml-2">(таслалаар тусгаарлагдсан)</span>
-              </label>
-              <Input
-                {...register("RoomNo")}
-                placeholder="Жнь: 201, 202, 203"
-              />
-              {errors.RoomNo && (
-                <span className="text-red-500 text-xs mt-1 block">{errors.RoomNo.message}</span>
-              )}
-              {/* Duplicate room numbers warning */}
-              {(() => {
-                const roomNo = watch("RoomNo");
-                if (roomNo) {
-                  const roomNumbersArr = roomNo.split(",")
-                    .map(txt => parseInt(txt.trim(), 10))
-                    .filter(n => !isNaN(n));
-                  
-                  const { hasDuplicate, duplicates } = checkDuplicateRoomNumbers(roomNumbersArr);
-                  if (hasDuplicate) {
-                    return (
-                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        <span>Дараах өрөөний дугаар аль хэдийн бүртгэгдсэн: {duplicates.join(", ")}</span>
-                      </div>
-                    );
+            {/* Room Numbers Input - Hidden in group edit mode since each room has individual numbers */}
+            {!editGroupMode && (
+              <section className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Өрөөний дугаарууд <span className="text-red-500">*</span>
+                  <span className="text-gray-500 font-normal ml-2">(таслалаар тусгаарлагдсан)</span>
+                </label>
+                <Input
+                  {...register("RoomNo")}
+                  placeholder="Жнь: 201, 202, 203"
+                />
+                {errors.RoomNo && (
+                  <span className="text-red-500 text-xs mt-1 block">{errors.RoomNo.message}</span>
+                )}
+                {/* Duplicate room numbers warning */}
+                {(() => {
+                  const roomNo = watch("RoomNo");
+                  if (roomNo) {
+                    const roomNumbersArr = roomNo.split(",")
+                      .map(txt => parseInt(txt.trim(), 10))
+                      .filter(n => !isNaN(n));
+                    
+                    const { hasDuplicate, duplicates } = checkDuplicateRoomNumbers(roomNumbersArr);
+                    if (hasDuplicate) {
+                      return (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600 flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <span>Дараах өрөөний дугаар аль хэдийн бүртгэгдсэн: {duplicates.join(", ")}</span>
+                        </div>
+                      );
+                    }
+                    
+                    // Count mismatch warning
+                    const numberOfRooms = Number(watch("number_of_rooms")) || 0;
+                    if (numberOfRooms > 0 && roomNumbersArr.length !== numberOfRooms) {
+                      return (
+                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700 flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <span>
+                            Та {numberOfRooms} өрөө нэмэх гэж байгаа ч {roomNumbersArr.length} дугаар оруулсан байна.
+                          </span>
+                        </div>
+                      );
+                    }
                   }
-                  
-                  // Count mismatch warning
-                  const numberOfRooms = Number(watch("number_of_rooms")) || 0;
-                  if (numberOfRooms > 0 && roomNumbersArr.length !== numberOfRooms) {
-                    return (
-                      <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700 flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        <span>
-                          Та {numberOfRooms} өрөө нэмэх гэж байгаа ч {roomNumbersArr.length} дугаар оруулсан байна.
-                        </span>
-                      </div>
-                    );
-                  }
-                }
-                return null;
-              })()}
-            </section>
+                  return null;
+                })()}
+              </section>
+            )}
 
             {/* Submit Button */}
             <div className="flex justify-end pt-4 border-t">
@@ -991,8 +1175,203 @@ export default function RoomModal({
           </div>
         )}
 
+        {/* ─── Edit Group Mode: Bulk Edit Form ─────────────────────────────── */}
+        {editGroupMode && roomToEdit && (
+          <div className="space-y-6">
+            {/* Info Banner showing what group we're editing */}
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium mb-1">Бүлгийн дата засах</p>
+                  <p>
+                    <span className="font-medium">Категори:</span>{" "}
+                    {combinedData.roomTypes.find(rt => rt.id === Number(watch("room_type")))?.name || "—"}
+                    {" • "}
+                    <span className="font-medium">Төрөл:</span>{" "}
+                    {combinedData.room_category.find(rc => rc.id === Number(watch("room_category")))?.name || "—"}
+                  </p>
+                  <p className="mt-1 text-amber-600">
+                    Энэ бүлгийн бүх өрөөнд өөрчлөлт хамаарна. (Зураг, хэмжээ, ор, тохижилт г.м.)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Room Type & Category (Read-only in group edit mode) */}
+            <section className="grid grid-cols-1 gap-10">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Өрөөний төрөл ба ангилал
+                </label>
+                <div className="p-3 bg-muted/50 rounded-md border">
+                  <span className="text-sm font-medium">
+                    {(() => {
+                      const roomTypeName = combinedData.roomTypes.find(rt => rt.id === Number(watch("room_type")))?.name || "—";
+                      const roomCategoryName = combinedData.room_category.find(rc => rc.id === Number(watch("room_category")))?.name || "—";
+                      return `${roomTypeName} - ${roomCategoryName}`;
+                    })()}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Бүлгийн засварт өрөөний төрөл ангилал өөрчлөх боломжгүй
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Room Size - Editable in group mode */}
+            <section className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                {t('room_size')} <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="number"
+                step="0.1"
+                placeholder="0"
+                {...register("room_size")}
+              />
+              {errors.room_size && (
+                <span className="text-red-500 text-xs mt-1 block">
+                  {errors.room_size.message}
+                </span>
+              )}
+            </section>
+
+            {/* Bed Configuration - Editable in group mode */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('bed_type')} <span className="text-red-500">*</span>
+                </label>
+                {(() => {
+                  const allSelectedBedTypes = bedFields
+                    .map((_, i) => watch(`room_beds.${i}.bed_type`))
+                    .filter((bedType) => bedType && bedType !== "");
+                  const canAddMoreBeds = allSelectedBedTypes.length < combinedData.bedTypes.length;
+                  
+                  return (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => appendBed({ bed_type: "", quantity: 1 })}
+                      className="flex items-center gap-1"
+                      disabled={!canAddMoreBeds}
+                      title={!canAddMoreBeds ? "Бүх орны төрөл сонгогдсон байна" : undefined}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Ор нэмэх
+                    </Button>
+                  );
+                })()}
+              </div>
+              
+              {/* Bed entries list */}
+              <div className="space-y-2">
+                {bedFields.map((field, index) => {
+                  const selectedBedTypes = bedFields
+                    .map((f, i) => i !== index ? f.bed_type : null)
+                    .filter((bedType) => bedType && bedType !== "");
+                  
+                  const availableBedTypes = combinedData.bedTypes.filter(
+                    (bedType) => !selectedBedTypes.includes(String(bedType.id))
+                  );
+
+                  return (
+                    <div key={field.id} className="flex items-center gap-3">
+                      <Select
+                        onValueChange={(value) => setValue(`room_beds.${index}.bed_type`, value)}
+                        value={watch(`room_beds.${index}.bed_type`) || ""}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="-- Орны төрөл сонгох --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableBedTypes.map((bedType) => (
+                            <SelectItem key={bedType.id} value={String(bedType.id)}>
+                              {bedType.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="Тоо"
+                        className="w-20"
+                        {...register(`room_beds.${index}.quantity`, {
+                          valueAsNumber: true,
+                          min: { value: 1, message: "1-ээс их байх ёстой" }
+                        })}
+                      />
+                      
+                      {bedFields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeBed(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Adult/Child Capacity */}
+            <section className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Насанд хүрэгчдийн тоо <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  {...register("adultQty")}
+                />
+                {errors.adultQty && (
+                  <span className="text-red-500 text-xs mt-1 block">
+                    {errors.adultQty.message}
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Хүүхдийн тоо <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  {...register("childQty")}
+                />
+                {errors.childQty && (
+                  <span className="text-red-500 text-xs mt-1 block">
+                    {errors.childQty.message}
+                  </span>
+                )}
+              </div>
+            </section>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4 border-t">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6"
+              >
+                {isSubmitting ? "Хадгалж байна..." : "Бүлгийн дата шинэчлэх"}
+                <Edit className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* ─── Regular Mode: Full Form with Steps ─────────────────────────────── */}
-        {!addToGroupMode && (
+        {!addToGroupMode && !editGroupMode && (
           <>
         {/* ─── Step Indicator Bar ───────────────────────────────────────────── */}
         <section className="mb-6">
@@ -1068,76 +1447,142 @@ export default function RoomModal({
         {step === 1 && (
           <div className="space-y-10">
             {/* Row 1: Room Type & Room Category */}
-            <section className="grid grid-cols-2 gap-10">
-              {/* Room Type */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  {t('room_category')} <span className="text-red-500">*</span>
-                </label>
-                <Select 
-                  key={`room_type-${roomToEdit?.id || 'new'}-${watch("room_type")}`}
-                  onValueChange={(value) => setValue("room_type", value)} 
-                  value={watch("room_type") || undefined}
-                  disabled={!!roomToEdit}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="-- Сонгох --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {combinedData.roomTypes.length === 0 ? (
-                      <SelectItem value="loading" disabled>{t('loading')}</SelectItem>
-                    ) : (
-                      combinedData.roomTypes.map((rt) => (
-                        <SelectItem key={rt.id} value={rt.id.toString()}>
-                          {rt.name}
-                        </SelectItem>
-                      ))
+            <section className="grid grid-cols-1 gap-10">
+              {roomToEdit && !addToGroupMode && !editGroupMode ? (
+                /* Single combination dropdown for editing existing rooms */
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Өрөөний төрөл ба ангилал <span className="text-red-500">*</span>
+                  </label>
+                  <Select 
+                    key={`combination-${roomToEdit?.id || 'new'}-${watch("room_type")}-${watch("room_category")}`}
+                    onValueChange={(value) => {
+                      console.log("Combination changed to:", value); // Debug log
+                      const [room_type, room_category] = value.split('-');
+                      setValue("room_type", room_type);
+                      setValue("room_category", room_category);
+                    }} 
+                    value={watch("room_type") && watch("room_category") ? `${watch("room_type")}-${watch("room_category")}` : ""}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="-- Сонгох --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getExistingCombinationsWithLabels().length === 0 ? (
+                        <SelectItem value="loading" disabled>{t('loading')}</SelectItem>
+                      ) : (
+                        getExistingCombinationsWithLabels().map((combination) => (
+                          <SelectItem key={combination.value} value={combination.value}>
+                            {combination.label}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {(errors.room_type || errors.room_category) && (
+                    <span className="text-red-500 text-xs mt-1 block">
+                      {errors.room_type?.message || errors.room_category?.message}
+                    </span>
+                  )}
+                </div>
+              ) : editGroupMode ? (
+                /* Read-only display for group editing mode */
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Өрөөний төрөл ба ангилал
+                  </label>
+                  <div className="p-3 bg-muted/50 rounded-md border">
+                    <span className="text-sm font-medium">
+                      {(() => {
+                        const combinations = getExistingCombinationsWithLabels();
+                        const currentValue = watch("room_type") && watch("room_category") ? `${watch("room_type")}-${watch("room_category")}` : "";
+                        const combination = combinations.find(c => c.value === currentValue);
+                        return combination ? combination.label : "Тодорхойгүй";
+                      })()}
+                    </span>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Бүлгийн засварт өрөөний төрөл ангилал өөрчлөх боломжгүй
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* Separate dropdowns for creating new rooms */
+                <div className="grid grid-cols-2 gap-10">
+                  {/* Room Type */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t('room_category')} <span className="text-red-500">*</span>
+                    </label>
+                    <Select 
+                      key={`room_type-${roomToEdit?.id || 'new'}-${watch("room_type")}`}
+                      onValueChange={(value) => {
+                        setValue("room_type", value);
+                        // When editing and room type changes, clear room category to ensure valid combination
+                        if (roomToEdit && !addToGroupMode) {
+                          setValue("room_category", "");
+                        }
+                      }} 
+                      value={watch("room_type") || undefined}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="-- Сонгох --" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {combinedData.roomTypes.length === 0 ? (
+                          <SelectItem value="loading" disabled>{t('loading')}</SelectItem>
+                        ) : (
+                          combinedData.roomTypes.map((rt) => (
+                            <SelectItem key={rt.id} value={rt.id.toString()}>
+                              {rt.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {errors.room_type && (
+                      <span className="text-red-500 text-xs mt-1 block">
+                        {errors.room_type.message}
+                      </span>
                     )}
-                  </SelectContent>
-                </Select>
-                {errors.room_type && (
-                  <span className="text-red-500 text-xs mt-1 block">
-                    {errors.room_type.message}
-                  </span>
-                )}
-              </div>
+                  </div>
 
-              {/* Room Category */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  {t('room_type')} <span className="text-red-500">*</span>
-                </label>
-                <Select 
-                  key={`room_category-${roomToEdit?.id || 'new'}-${watch("room_category")}`}
-                  onValueChange={(value) => setValue("room_category", value)} 
-                  value={watch("room_category") || undefined}
-                  disabled={!!roomToEdit}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="-- Сонгох --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {combinedData.room_category.length === 0 ? (
-                      <SelectItem value="loading" disabled>{t('loading')}</SelectItem>
-                    ) : (
-                      combinedData.room_category.map((rc) => (
-                        <SelectItem key={rc.id} value={rc.id.toString()}>
-                          {rc.name}
-                        </SelectItem>
-                      ))
+                  {/* Room Category */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t('room_type')} <span className="text-red-500">*</span>
+                    </label>
+                    <Select 
+                      key={`room_category-${roomToEdit?.id || 'new'}-${watch("room_type")}-${watch("room_category")}`}
+                      onValueChange={(value) => setValue("room_category", value)} 
+                      value={watch("room_category") || undefined}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="-- Сонгох --" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {combinedData.room_category.length === 0 ? (
+                          <SelectItem value="loading" disabled>{t('loading')}</SelectItem>
+                        ) : (
+                          combinedData.room_category.map((rc) => (
+                            <SelectItem key={rc.id} value={rc.id.toString()}>
+                              {rc.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {errors.room_category && (
+                      <span className="text-red-500 text-xs mt-1 block">
+                        {errors.room_category.message}
+                      </span>
                     )}
-                  </SelectContent>
-                </Select>
-                {errors.room_category && (
-                  <span className="text-red-500 text-xs mt-1 block">
-                    {errors.room_category.message}
-                  </span>
-                )}
-              </div>
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* Alert for duplicate room_type + category combination - only show when creating new room */}
-            {hasDuplicateCombination && !roomToEdit && (
+            {hasDuplicateCombination && !roomToEdit && !addToGroupMode && (
               <Alert variant="destructive" className="mt-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
@@ -1206,17 +1651,23 @@ export default function RoomModal({
                 )}
               </div>
 
-              {/* Room Size */}
+              {/* Room Size - Show as label when editing single room, input when creating or adding to group */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   {t('room_size')} <span className="text-red-500">*</span>
                 </label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  placeholder="0"
-                  {...register("room_size")}
-                />
+                {roomToEdit && !addToGroupMode ? (
+                  <div className="p-3 bg-gray-100 rounded-md border">
+                    <span className="text-sm text-gray-900">{watch("room_size")} м²</span>
+                  </div>
+                ) : (
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="0"
+                    {...register("room_size")}
+                  />
+                )}
                 {errors.room_size && (
                   <span className="text-red-500 text-xs mt-1 block">
                     {errors.room_size.message}
@@ -1260,8 +1711,8 @@ export default function RoomModal({
                 {bedFields.map((field, index) => {
                   // Get all selected bed types except the current one to filter duplicates
                   const selectedBedTypes = bedFields
-                    .map((_, i) => watch(`room_beds.${i}.bed_type`))
-                    .filter((bedType, i) => i !== index && bedType && bedType !== "");
+                    .map((f, i) => i !== index ? f.bed_type : null)
+                    .filter((bedType) => bedType && bedType !== "");
                   
                   // Filter available bed types for this dropdown
                   const availableBedTypes = combinedData.bedTypes.filter(
@@ -1272,9 +1723,9 @@ export default function RoomModal({
                   <div key={field.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="flex-1">
                       <Select
-                        key={`bed_type-${roomToEdit?.id || 'new'}-${index}-${watch(`room_beds.${index}.bed_type`)}`}
+                        key={`bed-${index}-${watch(`room_beds.${index}.bed_type`)}`}
                         onValueChange={(value) => setValue(`room_beds.${index}.bed_type`, value)}
-                        value={watch(`room_beds.${index}.bed_type`) || undefined}
+                        value={watch(`room_beds.${index}.bed_type`) || ""}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="-- Орны төрөл сонгох --" />
@@ -1297,9 +1748,8 @@ export default function RoomModal({
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => {
-                          const currentQty = watch(`room_beds.${index}.quantity`);
-                          if (currentQty > 1) {
-                            setValue(`room_beds.${index}.quantity`, currentQty - 1);
+                          if (field.quantity > 1) {
+                            setValue(`room_beds.${index}.quantity`, field.quantity - 1);
                           }
                         }}
                       >
@@ -1308,7 +1758,7 @@ export default function RoomModal({
                       <Input
                         type="number"
                         min="1"
-                        value={watch(`room_beds.${index}.quantity`)}
+                        value={field.quantity}
                         onChange={(e) => setValue(`room_beds.${index}.quantity`, Math.max(1, parseInt(e.target.value) || 1))}
                         className="w-16 text-center h-8"
                       />
@@ -1318,14 +1768,13 @@ export default function RoomModal({
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => {
-                          const currentQty = watch(`room_beds.${index}.quantity`);
-                          setValue(`room_beds.${index}.quantity`, currentQty + 1);
+                          setValue(`room_beds.${index}.quantity`, field.quantity + 1);
                         }}
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
                       <Badge variant="secondary" className="ml-1">
-                        {watch(`room_beds.${index}.quantity`)} ор
+                        {field.quantity} ор
                       </Badge>
                     </div>
                     
@@ -1719,7 +2168,8 @@ export default function RoomModal({
               })()}
             </section>
 
-            {/* Row 7: Images */}
+            {/* Row 7: Images - Only show for new rooms or adding to group, not for editing single rooms */}
+            {(!roomToEdit || addToGroupMode) && (
             <section className="space-y-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1795,6 +2245,7 @@ export default function RoomModal({
                 )}
               </div>
             </section>
+            )}
 
             <div className="flex justify-end">
               <Button

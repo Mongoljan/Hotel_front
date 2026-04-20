@@ -12,6 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Plus,
   CreditCard,
   Building2,
@@ -22,6 +28,9 @@ import {
   Settings,
   CheckCircle2,
   AlertCircle,
+  MoreHorizontal,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/context/ThemeContext';
@@ -40,8 +49,8 @@ import { useAuth } from '@/hooks/useAuth';
 const paymentSectionConfig = {
   bank_account: {
     id: 1,
-    title: 'Дансаар',
-    description: 'Дансны хуулшаар гар арчаас төлбөр баталгаажуулах судал',
+    title: 'Данс',
+    description: 'Дансны дугаараар гар бүртгэл төлбөр баталгаажуулах систем',
     icon: Building2,
     bgColor: 'bg-white',
     borderColor: 'border-gray-200',
@@ -52,7 +61,7 @@ const paymentSectionConfig = {
   bank_card: {
     id: 2,
     title: 'Банкны карт',
-    description: 'Банкны гүүгэмэл бүртгэл болон шинэчлэх',
+    description: 'Банкны картын төлбөр болон ПОС терминал',
     icon: CreditCard,
     bgColor: 'bg-white',
     borderColor: 'border-gray-200',
@@ -63,7 +72,7 @@ const paymentSectionConfig = {
   payment_solution: {
     id: 3,
     title: 'Төлбөрийн шийдэл',
-    description: 'Бус банкны агшинаан авлига QR код удаарчлах төлбөр хийгээ өглөг',
+    description: 'Дижитал төлбөрийн системүүд QR код болон мобайл төлбөр',
     icon: Smartphone,
     bgColor: 'bg-white',
     borderColor: 'border-gray-200',
@@ -73,8 +82,8 @@ const paymentSectionConfig = {
   },
   credit: {
     id: 4,
-    title: 'Кредит / Түр тооцоо',
-    description: 'Гэрээт байгууллагуудын зээлийн лимит болон дараа төлбөр тооцоо',
+    title: 'Зээл / Түр тооцоо',
+    description: 'Гэрээт байгууллагын зээлийн лимит болон хойшлуулсан төлбөр',
     icon: Wallet,
     bgColor: 'bg-white',
     borderColor: 'border-gray-200',
@@ -85,7 +94,7 @@ const paymentSectionConfig = {
   bonus_card: {
     id: 5,
     title: 'Бонус / Бэлгийн карт',
-    description: 'Лояалти онооны болон урамшууллын төлбөр бэлгийн картын систем',
+    description: 'Үйлчлүүлэгчийн урамшуулалын оноо болон бэлгийн картын систем',
     icon: Gift,
     bgColor: 'bg-white',
     borderColor: 'border-gray-200',
@@ -96,7 +105,7 @@ const paymentSectionConfig = {
   cash: {
     id: 6,
     title: 'Бэлэн мөнгө',
-    description: 'Ресепшнээр дэрг балгалт мөнгөлөг хүлээмжтэй лимит болон дараа төлбөр хүүхэд',
+    description: 'Ресепшний бэлэн мөнгөний төлбөр болон кассын систем',
     icon: Banknote,
     bgColor: 'bg-white',
     borderColor: 'border-gray-200',
@@ -108,10 +117,10 @@ const paymentSectionConfig = {
 
 // Payment solution types for the 3rd section
 const paymentSolutions = [
-  { id: 'qpay', name: 'QPAY', description: 'Бус банкны агшинахан авлига QR код удаарчлах төлбөр хүүрээг аваа.', api_name: 'qpay' },
-  { id: 'pocket', name: 'POCKET', description: 'Бус банкны агшинахан авлига QR код удаарчлах төлбөр хүүрээг амттг', api_name: 'pocket' },
-  { id: 'socialpay', name: 'SocialPay', description: 'Голомт банкны SocialPay апп-аар хөндлөр төлбөр гүйцэтгэх.', api_name: 'socialpay' },
-  { id: 'monpay', name: 'MONPAY', description: 'Голомт банкны SocialPay апп-аар хөндлөр төлбөр гүйцэтгэх.', api_name: 'monpay' }
+  { id: 'qpay', name: 'QPAY', description: 'Олон банкны агшин зуурын QR код болон мобайл төлбөр', api_name: 'qpay' },
+  { id: 'pocket', name: 'POCKET', description: 'Олон банкны агшин зуурын QR код болон мобайл төлбөр', api_name: 'pocket' },
+  { id: 'socialpay', name: 'SocialPay', description: 'Голомт банкны SocialPay апп-аар хурдан төлбөр гүйцэтгэх', api_name: 'socialpay' },
+  { id: 'monpay', name: 'MONPAY', description: 'Голомт банкны MONPAY апп-аар хурдан төлбөр гүйцэтгэх', api_name: 'monpay' }
 ];
 
 export default function PaymentConfigPage() {
@@ -337,13 +346,13 @@ export default function PaymentConfigPage() {
   // Render bank account section content
   const renderBankAccountContent = (configs: PaymentConfig[]) => {
     if (!configs.length) return (
-      <div className="mt-4 text-center text-gray-500">
+      <div className="mt-4 text-center text-muted-foreground">
         <p className="text-sm">Одоогоор тохиргоо алга</p>
       </div>
     );
 
     return (
-      <div className="mt-4 space-y-2">
+      <div className="space-y-2">
         {configs.map((config) => (
           <div key={config.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-3">
@@ -370,14 +379,47 @@ export default function PaymentConfigPage() {
               )}
               <div>
                 <div className="font-medium text-sm">{config.bank?.name}</div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   {config.account_number && `${config.account_number.slice(0, 4)}****${config.account_number.slice(-4)}`} • МНТ
                 </div>
               </div>
             </div>
-            <Badge className={config.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}>
-              {config.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className={config.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}>
+                {config.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
+              </Badge>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      // Handle edit - open the bank account panel with existing data
+                      setShowBankAccountPanel(true);
+                    }}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Засах
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      // Handle delete
+                      if (confirm('Энэ тохиргоог устгахдаа итгэлтэй байна уу?')) {
+                        console.log('Delete config:', config.id);
+                        // Add delete API call here
+                      }
+                    }}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Устгах
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         ))}
       </div>
@@ -387,13 +429,13 @@ export default function PaymentConfigPage() {
   // Render bank card section content  
   const renderBankCardContent = (configs: PaymentConfig[]) => {
     if (!configs.length) return (
-      <div className="mt-4 text-center text-gray-500">
+      <div className="mt-4 text-center text-muted-foreground">
         <p className="text-sm">Одоогоор тохиргоо алга</p>
       </div>
     );
 
     return (
-      <div className="mt-4 space-y-2">
+      <div className="space-y-2">
         {configs.map((config) => (
           <div key={config.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-3">
@@ -419,15 +461,48 @@ export default function PaymentConfigPage() {
                 </div>
               )}
               <div>
-                <div className="font-medium text-sm">{config.bank?.name} - ПОС Терминал #{config.terminal_id}</div>
-                <div className="text-xs text-gray-500">
+                <div className="font-medium text-sm">{config.bank?.name || 'Голомт Банк'} - ПОС Терминал #{config.terminal_id || '001'}</div>
+                <div className="text-xs text-muted-foreground">
                   хөлболдсон 2023-10-12
                 </div>
               </div>
             </div>
-            <Badge className={config.is_active ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-600"}>
-              {config.is_active ? 'онлайн' : 'офлайн'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className={config.is_active ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-600"}>
+                {config.is_active ? 'онлайн' : 'офлайн'}
+              </Badge>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      // Handle edit - open the bank card POS panel with existing data
+                      setShowBankCardPOSPanel(true);
+                    }}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Засах
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      // Handle delete
+                      if (confirm('Энэ тохиргоог устгахдаа итгэлтэй байна уу?')) {
+                        console.log('Delete POS config:', config.id);
+                        // Add delete API call here
+                      }
+                    }}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Устгах
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         ))}
       </div>
@@ -437,7 +512,7 @@ export default function PaymentConfigPage() {
   // Render payment solution grid with individual toggles
   const renderPaymentSolutionContent = (configs: PaymentConfig[]) => {
     return (
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {paymentSolutions.map((solution) => {
           const isActive = solutionStates[solution.id] || false;
           const isUpdating = updating === `solution-${solution.id}`;
@@ -461,7 +536,7 @@ export default function PaymentConfigPage() {
                   className={isActive ? "data-[state=checked]:bg-primary" : ""}
                 />
               </div>
-              <p className="text-xs text-gray-600 mb-2 leading-tight">
+              <p className="text-xs text-muted-foreground mb-2 leading-tight">
                 {solution.description}
               </p>
               <Badge 
@@ -485,27 +560,25 @@ export default function PaymentConfigPage() {
     const config = configs[0];
     
     return (
-      <div className="mt-4">
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div>
-            <div className="font-medium text-sm mb-1">
-              {sectionConfig.description}
-            </div>
-            <Badge variant="secondary" className="text-xs">
-              төлөв: {config?.is_active ? 'идэвхтэй' : 'идэвхгүй'}
-            </Badge>
+      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        <div>
+          <div className="font-medium text-sm mb-1">
+            {sectionConfig.description}
           </div>
-          <Switch 
-            checked={config?.is_active || false}
-            disabled={updating === config?.id?.toString() || !config}
-            onCheckedChange={(checked) => {
-              if (config) {
-                handleToggleConfig(config.id, checked);
-              }
-            }}
-            className={config?.is_active ? "data-[state=checked]:bg-primary" : ""}
-          />
+          <Badge variant="secondary" className="text-xs">
+            төлөв: {config?.is_active ? 'идэвхтэй' : 'идэвхгүй'}
+          </Badge>
         </div>
+        <Switch 
+          checked={config?.is_active || false}
+          disabled={updating === config?.id?.toString() || !config}
+          onCheckedChange={(checked) => {
+            if (config) {
+              handleToggleConfig(config.id, checked);
+            }
+          }}
+          className={config?.is_active ? "data-[state=checked]:bg-primary" : ""}
+        />
       </div>
     );
   };
@@ -543,27 +616,26 @@ export default function PaymentConfigPage() {
             </div>
 
             {/* Section title and description */}
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <div className="space-y-2 mb-4">
+              <h3 className="text-base font-medium">
                 {sectionConfig.title}
               </h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {sectionConfig.description}
               </p>
             </div>
 
             {/* Add button only for bank sections that have content */}
             {(paymentType === 'bank_account' || paymentType === 'bank_card') && (
-              <div className="mt-4">
+              <div>
                 <Button 
-                  size="sm" 
-                  className="bg-primary hover:bg-primary/90 text-white px-4 py-2 text-sm font-medium"
+                  size="sm"
                   onClick={() => {
                     if (paymentType === 'bank_account') setShowBankAccountPanel(true);
                     if (paymentType === 'bank_card') setShowBankCardPOSPanel(true);
                   }}
                 >
-                  <Plus className="w-4 h-4 mr-1" />
+                  <Plus className="mr-2 h-4 w-4" />
                   {sectionConfig.buttonText}
                 </Button>
               </div>
@@ -584,15 +656,12 @@ export default function PaymentConfigPage() {
   // Early returns for loading and authentication states  
   if (loading || isLoading) {
     return (
-      <div className="space-y-8">
+      <div className="flex-1 space-y-6 p-4 md:p-6">
         <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="h-8 bg-gray-200 rounded w-64 animate-pulse" />
-            <div className="h-5 bg-gray-200 rounded w-80 animate-pulse" />
-          </div>
+          <div className="h-8 bg-gray-200 rounded w-64 animate-pulse" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-80 bg-gray-200 rounded animate-pulse" />
           ))}
@@ -603,38 +672,63 @@ export default function PaymentConfigPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Нэвтрэх шаардлагатай</h2>
-          <p className="text-gray-600">Төлбөрийн тохиргоог үзэхийн тулд нэвтэрнэ үү.</p>
+      <div className="flex-1 space-y-6 p-4 md:p-6">
+        <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Нэвтрэх шаардлагатай</h2>
+            <p className="text-sm text-muted-foreground">Төлбөрийн тохиргоог үзэхийн тулд нэвтэрнэ үү.</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold text-gray-900">Төлбөрийн хэрэгслийн тохиргоо</h1>
-      </div>
+    <>
+      <div className="flex-1 space-y-6 p-4 md:p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Төлбөрийн хэрэгслийн тохиргоо</h1>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.location.href = '/admin/currency'}
+            >
+              Валютын тохиргоо
+            </Button>
+          </div>
+        </div>
 
-      {/* Payment Sections Grid - Matching Figma 3x2 layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* First row: sections 1, 2, 3 */}
-        {(['bank_account', 'bank_card', 'payment_solution'] as PaymentType[]).map(paymentType => {
-          const configs = groupedConfigs[paymentType] || [];
-          return renderPaymentSection(paymentType, configs);
-        })}
-        
-        {/* Second row: sections 4, 5, 6 */}
-        {(['credit', 'bonus_card', 'cash'] as PaymentType[]).map(paymentType => {
-          const configs = groupedConfigs[paymentType] || [];
-          return renderPaymentSection(paymentType, configs);
-        })}
+        {/* Payment Sections Grid - Matching admin interface pattern */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* First row: sections 1, 2 */}
+          {(['bank_account', 'bank_card'] as PaymentType[]).map(paymentType => {
+            const configs = groupedConfigs[paymentType] || [];
+            return renderPaymentSection(paymentType, configs);
+          })}
+          
+          {/* Төлбөрийн шийдэл - only show when sufficient data is available */}
+          {(() => {
+            const paymentSolutionConfigs = groupedConfigs['payment_solution'] || [];
+            const hasActiveSolutions = Object.values(solutionStates).some(state => state === true);
+            const sufficientData = paymentSolutionConfigs.length > 0 || hasActiveSolutions;
+            
+            if (sufficientData) {
+              return renderPaymentSection('payment_solution', paymentSolutionConfigs);
+            }
+            return null;
+          })()}
+          
+          {/* Second row: sections 4, 5, 6 */}
+          {(['credit', 'bonus_card', 'cash'] as PaymentType[]).map(paymentType => {
+            const configs = groupedConfigs[paymentType] || [];
+            return renderPaymentSection(paymentType, configs);
+          })}
+        </div>
       </div>
-
-      {/* Right-side panels matching Figma design */}
+      
+      {/* Right-side panels - outside main container */}
       <BankAccountConfigPanel
         isOpen={showBankAccountPanel}
         onClose={() => setShowBankAccountPanel(false)}
@@ -646,6 +740,6 @@ export default function PaymentConfigPage() {
         onClose={() => setShowBankCardPOSPanel(false)}
         onSave={handleSaveConfig}
       />
-    </div>
+    </>
   );
 }

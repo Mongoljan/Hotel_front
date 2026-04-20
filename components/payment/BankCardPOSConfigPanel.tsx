@@ -308,7 +308,7 @@ export function BankCardPOSConfigPanel({
                   className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  Төхөөрэмж нэмэх
+                  Төхөөрөмж нэмэх
                 </Button>
               </div>
 
