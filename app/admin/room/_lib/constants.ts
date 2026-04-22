@@ -8,5 +8,5 @@ export const ROOM_CACHE_KEYS = {
 
 export const ROOM_API_ENDPOINTS = {
   lookup: "/api/lookup",
-  rooms: "/api/rooms"
+  rooms: "/api/roomsNew"
 } as const;

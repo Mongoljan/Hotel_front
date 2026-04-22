@@ -6,13 +6,8 @@ export const revalidate = 60;
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn';
 
 /**
- * GET /api/rooms
- * Fetches all rooms for the authenticated hotel
- * 
- * Uses ISR with 60-second revalidation because:
- * - Room data updates moderately frequently (pricing, availability, etc.)
- * - Balances data freshness with performance
- * - Reduces backend load while keeping data relatively current
+ * GET /api/roomsNew
+ * Fetches all room groups for the authenticated hotel
  */
 export async function GET(request: NextRequest) {
   try {
@@ -44,7 +39,6 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    // Return the data directly (should be an array)
     return NextResponse.json(data, {
       headers: {
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
@@ -52,7 +46,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in /api/rooms:', error);
+    console.error('Error in GET /api/roomsNew:', error);
     return NextResponse.json(
       { error: 'Failed to fetch rooms', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -61,9 +55,8 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/rooms
- * Creates a new room
- * No caching - always goes to backend
+ * POST /api/roomsNew
+ * Creates a new room group
  */
 export async function POST(request: NextRequest) {
   try {
@@ -101,14 +94,10 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-
-    // Trigger revalidation of GET /api/rooms
-    // Next.js will automatically revalidate on next request after revalidate time
-
     return NextResponse.json(data, { status: 201 });
 
   } catch (error) {
-    console.error('Error in POST /api/rooms:', error);
+    console.error('Error in POST /api/roomsNew:', error);
     return NextResponse.json(
       { error: 'Failed to create room', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -117,11 +106,10 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * PUT /api/rooms
- * Updates an existing room
- * No caching - always goes to backend
+ * PATCH /api/roomsNew
+ * Partially updates an existing room group — backend: PATCH /api/roomsNew/{id}/
  */
-export async function PUT(request: NextRequest) {
+export async function PATCH(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token') ||
@@ -140,7 +128,7 @@ export async function PUT(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: 'Room ID is required' },
+        { error: 'Room group ID is required' },
         { status: 400 }
       );
     }
@@ -148,7 +136,7 @@ export async function PUT(request: NextRequest) {
     const response = await fetch(
       `${BACKEND_URL}/api/roomsNew/${id}/?token=${encodeURIComponent(token)}`,
       {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -159,28 +147,26 @@ export async function PUT(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: 'Failed to update room', details: errorData },
+        { error: 'Failed to update room group', details: errorData },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error('Error in PUT /api/rooms:', error);
+    console.error('Error in PATCH /api/roomsNew:', error);
     return NextResponse.json(
-      { error: 'Failed to update room', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to update room group', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
 }
 
 /**
- * DELETE /api/rooms
- * Deletes a room
- * No caching - always goes to backend
+ * DELETE /api/roomsNew
+ * Deletes a room group — backend: DELETE /api/roomsNew/{id}/
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -200,7 +186,7 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: 'Room ID is required' },
+        { error: 'Room group ID is required' },
         { status: 400 }
       );
     }
@@ -215,7 +201,7 @@ export async function DELETE(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: 'Failed to delete room', details: errorData },
+        { error: 'Failed to delete room group', details: errorData },
         { status: response.status }
       );
     }
@@ -223,9 +209,9 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error('Error in DELETE /api/rooms:', error);
+    console.error('Error in DELETE /api/roomsNew:', error);
     return NextResponse.json(
-      { error: 'Failed to delete room', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to delete room group', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

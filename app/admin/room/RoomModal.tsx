@@ -30,6 +30,7 @@ import { getClientBackendToken } from "@/utils/auth";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/useAuth";
 import UserStorage from "@/utils/storage";
+import type { AllData } from "./_lib/types";
 // Dialog primitives intentionally not used here to keep the modal logic
 // self-contained (we render our own overlay + form). Avoid requiring
 // Dialog context to prevent runtime errors: `DialogTitle` must be used
@@ -43,6 +44,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -52,7 +54,7 @@ import {
 } from "@/components/ui/select";
 
 const API_COMBINED_DATA = "/api/lookup";
-const API_CREATE_ROOM = "/api/rooms";
+const API_CREATE_ROOM = "/api/roomsNew";
 
 ///////////////////////////////////////
 //–– Types & Interfaces ––//
@@ -100,13 +102,11 @@ interface RoomImage {
 interface RoomData {
   id: number;
   hotel: number;
-  room_number: number;
   room_type: number;
   room_category: number;
   room_size: string;
-  bed_type?: number;
-  room_beds?: { bed_type: number; quantity: number }[];
-  bed_details?: { bed_type: number; quantity: number }[]; // API returns this field name
+  /** Bed configuration shared across all rooms in the group */
+  group_beds: { bed_type: number; quantity: number }[];
   is_Bathroom: boolean;
   room_Facilities: number[];
   bathroom_Items: number[];
@@ -119,7 +119,9 @@ interface RoomData {
   number_of_rooms_to_sell: number | string;
   room_Description: string;
   smoking_allowed: boolean;
-  images: RoomImage[];
+  /** All physical room numbers that belong to this group */
+  room_numbers: number[];
+  images?: RoomImage[];
 }
 // The shape of the React Hook Form data (derived from your Zod schema):
 type FormFields = z.infer<typeof schemaCreateRoom>;
@@ -153,6 +155,9 @@ interface RoomModalProps {
   
   // When true, edit mode for bulk editing group properties (images, size, etc.)
   editGroupMode?: boolean;
+
+  // Pre-fetched lookup data from parent — skips the internal /api/lookup fetch when provided
+  lookupData?: AllData | null;
 }
 
 ///////////////////////////////////////
@@ -169,6 +174,7 @@ export default function RoomModal({
   hotelRoomLimits,
   addToGroupMode = false,
   editGroupMode = false,
+  lookupData,
 }: RoomModalProps) {
   const [step, setStep] = useState<number>(1);
   const t = useTranslations("RoomModal"); // Changed from "Rooms" to "RoomModal"
@@ -176,28 +182,9 @@ export default function RoomModal({
   const [hasDuplicateCombination, setHasDuplicateCombination] = useState(false);
   const [roomLimitError, setRoomLimitError] = useState<string | null>(null); // Room limit validation error
 
-  // Helper: Calculate the total number of physical rooms from existing room groups
-  // Rooms are grouped by room_type + room_category. Each room in a group has the same
-  // number_of_rooms value (it's a group property). So we get one room per group and sum their number_of_rooms.
+  // Helper: Calculate the total number of physical rooms from all groups
   const getTotalExistingRooms = (): number => {
-    // Group rooms by room_type + room_category
-    const groupMap = new Map<string, number>();
-    
-    existingRooms.forEach((room) => {
-      const key = `${room.room_type}-${room.room_category}`;
-      // Only set if not already set (take the first room's number_of_rooms as the group's total)
-      if (!groupMap.has(key)) {
-        groupMap.set(key, room.number_of_rooms || 1);
-      }
-    });
-    
-    // Sum up number_of_rooms from each unique group
-    let total = 0;
-    groupMap.forEach((numberOfRooms) => {
-      total += numberOfRooms;
-    });
-    
-    return total;
+    return existingRooms.reduce((total, group) => total + (group.room_numbers?.length ?? 0), 0);
   };
 
   // Calculate max allowed rooms based on hotel limits (computed once, used by inputs)
@@ -400,49 +387,40 @@ export default function RoomModal({
     return missing;
   };
 
-  // Helper: check for duplicate room numbers
+  // Helper: check for duplicate room numbers across all groups
   const checkDuplicateRoomNumbers = (roomNumbers: number[]): { hasDuplicate: boolean; duplicates: number[] } => {
     const duplicates: number[] = [];
 
-    for (const num of roomNumbers) {
-      // When editing (not addToGroupMode), exclude the current room's number from the check
-      // In addToGroupMode, we're creating NEW rooms so check against ALL existing rooms
-      const isDuplicate = existingRooms.some(room =>
-        room.room_number === num &&
-        (!roomToEdit || addToGroupMode || room.id !== roomToEdit.id)
-      );
+    // All room numbers already in use across all groups
+    const allExistingNumbers = existingRooms.flatMap((group) => group.room_numbers ?? []);
 
-      if (isDuplicate) {
+    for (const num of roomNumbers) {
+      const inUse = allExistingNumbers.includes(num);
+      // In addToGroupMode, we're adding new rooms — check all existing
+      // In editGroupMode, exclude numbers that already belong to the group being edited
+      const editingGroupNumbers = (roomToEdit && !addToGroupMode)
+        ? (roomToEdit.room_numbers ?? [])
+        : [];
+
+      if (inUse && !editingGroupNumbers.includes(num)) {
         duplicates.push(num);
       }
     }
 
-    return {
-      hasDuplicate: duplicates.length > 0,
-      duplicates
-    };
+    return { hasDuplicate: duplicates.length > 0, duplicates };
   };
 
   // Helper: check for duplicate room_type + category combination
   const checkDuplicateRoomTypeCategoryCombination = (roomType: string, roomCategory: string): boolean => {
     if (!roomType || !roomCategory) return false;
 
-    // When editing, allow the same combination if it's the same room being edited
-    const hasDuplicate = existingRooms.some(room => {
-      const isSameType = room.room_type === Number(roomType);
-      const isSameCategory = room.room_category === Number(roomCategory);
-      const isSameRoom = roomToEdit && room.id === roomToEdit.id;
-      
-      // If we're editing and this is the same room, don't count it as duplicate
-      if (isSameRoom) {
-        return false;
-      }
-      
-      // Otherwise, check if type + category match
-      return isSameType && isSameCategory;
+    return existingRooms.some((group) => {
+      const isSameType = group.room_type === Number(roomType);
+      const isSameCategory = group.room_category === Number(roomCategory);
+      // Allow the same combination if we're editing this exact group
+      const isSameGroup = roomToEdit && group.id === roomToEdit.id;
+      return isSameType && isSameCategory && !isSameGroup;
     });
-
-    return hasDuplicate;
   };
 
   // Helper: check if room limits would be exceeded
@@ -483,6 +461,54 @@ export default function RoomModal({
     }
     
     return { exceeds: false, errorMessage: null };
+  };
+
+  // Helper: get the set of step-1 field keys that are still incomplete (for visual highlighting)
+  const getIncompleteFields = (): Set<string> => {
+    const incomplete = new Set<string>();
+    const roomType = watch("room_type");
+    const roomCategory = watch("room_category");
+    const roomBeds = watch("room_beds");
+    const isBathroom = watch("is_Bathroom");
+    const smokingAllowed = watch("smoking_allowed");
+    const roomSize = watch("room_size");
+    const adultQty = watch("adultQty");
+    const childQty = watch("childQty");
+    const numberOfRooms = watch("number_of_rooms");
+    const numberOfRoomsToSell = watch("number_of_rooms_to_sell");
+    const entries = watch("entries");
+    const roomNo = watch("RoomNo");
+
+    if (!roomType) incomplete.add("room_type");
+    if (!roomCategory) incomplete.add("room_category");
+    const hasValidBeds = roomBeds?.length > 0 && roomBeds.some(b => b.bed_type && b.bed_type !== "");
+    if (!hasValidBeds) incomplete.add("room_beds");
+    if (!isBathroom) incomplete.add("is_Bathroom");
+    if (!smokingAllowed) incomplete.add("smoking_allowed");
+    if (!roomSize) incomplete.add("room_size");
+    if (!adultQty) incomplete.add("adultQty");
+    if (!childQty) incomplete.add("childQty");
+    if (!roomToEdit) {
+      if (!numberOfRooms) incomplete.add("number_of_rooms");
+      if (!numberOfRoomsToSell) incomplete.add("number_of_rooms_to_sell");
+      if (!roomNo) incomplete.add("RoomNo");
+      const hasValidImage = entries?.some((e: any) => e.images && e.images.trim() !== "");
+      if (!hasValidImage) incomplete.add("images");
+    } else if (addToGroupMode) {
+      if (!roomNo) incomplete.add("RoomNo");
+      const hasValidImage = entries?.some((e: any) => e.images && e.images.trim() !== "");
+      if (!hasValidImage) incomplete.add("images");
+    }
+    return incomplete;
+  };
+
+  // Utility: return border highlight class when field is incomplete AND step 1 not yet complete
+  const fieldHighlight = (key: string): string => {
+    if (isStep1Complete()) return "";
+    const incomplete = getIncompleteFields();
+    return incomplete.has(key)
+      ? "rounded-lg border border-amber-400 bg-amber-50/40 p-3 ring-1 ring-amber-300/60"
+      : "";
   };
 
   // Select schema based on mode
@@ -547,9 +573,23 @@ export default function RoomModal({
   
   const watchedEntries = watch("entries");
 
-  // When the modal opens (or roomToEdit changes), fetch combined lookup data & possibly pre‐fill form
+  // When the modal opens (or roomToEdit changes), populate combinedData.
+  // If the parent passed lookupData, use it directly — skip the network fetch.
   useEffect(() => {
-    // 1) Fetch /api/lookup with token
+    if (lookupData) {
+      setCombinedData({
+        roomTypes: lookupData.room_types || [],
+        bedTypes: lookupData.bed_types || [],
+        facilities: lookupData.room_facilities || [],
+        bathroom_items: lookupData.bathroom_items || [],
+        free_Toiletries: lookupData.free_toiletries || [],
+        food_and_drink: lookupData.food_and_drink || [],
+        outdoor_and_view: lookupData.outdoor_and_view || [],
+        room_category: lookupData.room_category || [],
+      });
+      return;
+    }
+    // 1) Fallback: fetch /api/lookup with token
     const fetchCombined = async () => {
       try {
         const token = await getClientBackendToken() || "";
@@ -572,7 +612,7 @@ export default function RoomModal({
     };
 
     fetchCombined();
-  }, []);
+  }, [lookupData]);
 
   // 2) If roomToEdit is not null, populate the form with existing values
   useEffect(() => {
@@ -586,68 +626,34 @@ export default function RoomModal({
       console.log("Loading room data for edit:", existing); // Debug log
 
       // Convert array of existing images into { images: base64|url, descriptions: string }[] form
-      // Since the backend returns URLs, we just store the URL here (we assume no re‐upload in edit, or user can re‐upload if they choose).
-      const initialEntries = existing.images.map((img) => ({
-        images: img.image, // URL from server
-        descriptions: img.description,
-      }));
+      // Resolve relative URLs (e.g. /media/...) with the backend base URL.
+      const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn';
+      const initialEntries = (existing.images ?? []).map((img) => {
+        let imageUrl = img.image || '';
+        if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('data:image/')) {
+          imageUrl = `${backendBase}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+        }
+        return { images: imageUrl, descriptions: img.description };
+      });
 
       // If there are no existing images, keep one blank "entry"
       if (initialEntries.length === 0) {
         initialEntries.push({ images: "", descriptions: "" });
       }
 
-      // Handle bed data from API - API returns bed_details field
-      // Convert to string bed_type for form
+      // Handle bed data — new API returns group_beds
       let roomBedsForForm: { bed_type: string; quantity: number }[] = [];
       
-      // Check field names: API uses bed_details, but check room_beds for compatibility
-      const roomBedsData = existing.bed_details || 
-                           existing.room_beds || 
-                           (existing as any).beds || 
-                           (existing as any).roomBeds;
+      const roomBedsData = existing.group_beds;
       
-      console.log("Room beds data found:", roomBedsData); // Debug log
-      console.log("Full existing room data:", existing); // Debug log to see all fields
-      
-      if (roomBedsData && Array.isArray(roomBedsData) && roomBedsData.length > 0) {
-        // New format with room_beds array
-        roomBedsForForm = roomBedsData.map((bed: any) => {
-          console.log("Processing bed:", bed); // Debug each bed
-          const bedType = String(bed.bed_type || bed.bedType || bed.type || bed.id || "");
-          const quantity = bed.quantity || bed.count || 1;
-          console.log(`Mapped bed: bed_type=${bedType}, quantity=${quantity}`);
-          return {
-            bed_type: bedType,
-            quantity: quantity
-          };
-        });
-      } else if (existing.bed_type !== undefined && existing.bed_type !== null) {
-        // Legacy format with single bed_type
-        console.log("Using legacy bed_type:", existing.bed_type);
-        roomBedsForForm = [{
-          bed_type: String(existing.bed_type),
-          quantity: 1
-        }];
+      if (Array.isArray(roomBedsData) && roomBedsData.length > 0) {
+        roomBedsForForm = roomBedsData.map((bed: any) => ({
+          bed_type: String(bed.bed_type ?? ""),
+          quantity: bed.quantity ?? 1
+        }));
       } else {
-        // Check for other possible bed field names
-        console.log("Checking alternative bed fields...");
-        console.log("existing.bedType:", (existing as any).bedType);
-        console.log("existing.bed:", (existing as any).bed);
-        console.log("existing.bed_id:", (existing as any).bed_id);
-        
-        if ((existing as any).bedType) {
-          roomBedsForForm = [{ bed_type: String((existing as any).bedType), quantity: 1 }];
-        } else if ((existing as any).bed_id) {
-          roomBedsForForm = [{ bed_type: String((existing as any).bed_id), quantity: 1 }];
-        } else {
-          console.log("No bed data found, using default");
-          // No bed data at all - use empty default
-          roomBedsForForm = [{ bed_type: "", quantity: 1 }];
-        }
+        roomBedsForForm = [{ bed_type: "", quantity: 1 }];
       }
-
-      console.log("Processed room beds for form:", roomBedsForForm); // Debug log
 
       // Convert the RoomData into the shape of our form
       const formData = {
@@ -662,7 +668,10 @@ export default function RoomModal({
         number_of_rooms_to_sell: addToGroupMode ? "1" : String(existing.number_of_rooms_to_sell),
         room_Description: existing.room_Description || "",
         smoking_allowed: existing.smoking_allowed ? "true" : "false",
-        RoomNo: addToGroupMode ? "" : existing.room_number.toString(),
+        // In addToGroupMode: empty (user enters new room numbers)
+        // In editGroupMode: show current room numbers (read-only, no edit of room numbers)
+        // In normal edit: show current room numbers
+        RoomNo: addToGroupMode ? "" : (existing.room_numbers ?? []).join(", "),
 
         room_Facilities: existing.room_Facilities?.map(String) || [],
         is_Bathroom: existing.is_Bathroom ? "true" : "false",
@@ -757,97 +766,90 @@ export default function RoomModal({
     return true;
   };
 
-  // Handle group bulk update - update all rooms in the same group (room_type + room_category combination)
+  // Handle group edit — send a PATCH with only the fields that changed
   const handleGroupBulkUpdate = async (formData: FormFields) => {
     if (!roomToEdit) return;
 
     try {
       const token = await getClientBackendToken() || "";
-      
-      // Find all rooms in the same group (same room_type + room_category)
-      const roomsInGroup = existingRooms.filter(room => 
-        room.room_type === roomToEdit.room_type && 
-        room.room_category === roomToEdit.room_category
-      );
 
-      if (roomsInGroup.length === 0) {
-        toast.error("Бүлэгт өрөө олдсонгүй.");
-        return;
+      // Helpers for deep-equality checks
+      const arrEq = (a: number[], b: number[]) =>
+        a.length === b.length && [...a].sort().join() === [...b].sort().join();
+      const bedEq = (
+        a: { bed_type: number; quantity: number }[],
+        b: { bed_type: number; quantity: number }[]
+      ) =>
+        a.length === b.length &&
+        a.every((ab, i) => ab.bed_type === b[i].bed_type && ab.quantity === b[i].quantity);
+
+      const newSize = parseFloat(formData.room_size);
+      const newBeds = formData.room_beds
+        .filter(bed => bed.bed_type && bed.bed_type !== "")
+        .map(bed => ({ bed_type: Number(bed.bed_type), quantity: bed.quantity }));
+      const newIsBathroom = formData.is_Bathroom === "true";
+      const newSmokingAllowed = formData.smoking_allowed === "true";
+      const newAdult = Number(formData.adultQty);
+      const newChild = Number(formData.childQty);
+      const newToSell = Number(formData.number_of_rooms_to_sell);
+      const newFacilities = formData.room_Facilities.map(Number);
+      const newBathroomItems = formData.bathroom_Items.map(Number);
+      const newToiletries = formData.free_Toiletries.map(Number);
+      const newFoodDrink = formData.food_And_Drink.map(Number);
+      const newOutdoorView = formData.outdoor_And_View.map(Number);
+      const newDescription = formData.room_Description;
+      const newImages = formData.entries
+        .filter(entry => entry.images && entry.images.trim() !== '')
+        .map(entry => ({ image: entry.images, description: entry.descriptions || "" }));
+
+      const orig = roomToEdit;
+      const origBeds = (orig.group_beds ?? []).map(b => ({ bed_type: b.bed_type, quantity: b.quantity }));
+
+      const patch: Record<string, any> = {};
+
+      if (newSize !== parseFloat(orig.room_size))                        patch.room_size = newSize;
+      if (!bedEq(newBeds, origBeds))                                     patch.group_beds = newBeds;
+      if (newIsBathroom !== orig.is_Bathroom)                            patch.is_Bathroom = newIsBathroom;
+      if (newSmokingAllowed !== orig.smoking_allowed)                    patch.smoking_allowed = newSmokingAllowed;
+      if (newAdult !== orig.adultQty)                                    patch.adultQty = newAdult;
+      if (newChild !== orig.childQty)                                    patch.childQty = newChild;
+      if (newToSell !== orig.number_of_rooms_to_sell)                    patch.number_of_rooms_to_sell = newToSell;
+      if (!arrEq(newFacilities, orig.room_Facilities ?? []))             patch.room_Facilities = newFacilities;
+      if (!arrEq(newBathroomItems, orig.bathroom_Items ?? []))           patch.bathroom_Items = newBathroomItems;
+      if (!arrEq(newToiletries, orig.free_Toiletries ?? []))             patch.free_Toiletries = newToiletries;
+      if (!arrEq(newFoodDrink, orig.food_And_Drink ?? []))               patch.food_And_Drink = newFoodDrink;
+      if (!arrEq(newOutdoorView, orig.outdoor_And_View ?? []))           patch.outdoor_And_View = newOutdoorView;
+      if (newDescription !== (orig.room_Description ?? ""))              patch.room_Description = newDescription;
+      // Always include images — user may have added/removed them
+      patch.images = newImages;
+
+      if (Object.keys(patch).length === 1 && 'images' in patch) {
+        // Only images key — check if images actually changed
+        const origImageUrls = (orig.images ?? []).map(i => i.image).sort().join();
+        const newImageUrls = newImages.map(i => i.image).sort().join();
+        if (origImageUrls === newImageUrls) {
+          toast.info("Өөрчлөлт олдсонгүй");
+          return;
+        }
       }
 
-      // Build the update data (excluding room-specific fields like room numbers)
-      const bulkUpdateData = {
-        room_size: parseFloat(formData.room_size),
-        // Transform room_beds array to API format with numeric bed_type
-        bed_details: formData.room_beds
-          .filter(bed => bed.bed_type && bed.bed_type !== "")
-          .map(bed => ({
-            bed_type: Number(bed.bed_type),
-            quantity: bed.quantity
-          })),
-        is_Bathroom: formData.is_Bathroom === "true",
-        room_Facilities: formData.room_Facilities.map(Number),
-        bathroom_Items: formData.bathroom_Items.map(Number),
-        free_Toiletries: formData.free_Toiletries.map(Number),
-        food_And_Drink: formData.food_And_Drink.map(Number),
-        outdoor_And_View: formData.outdoor_And_View.map(Number),
-        room_Description: formData.room_Description,
-        smoking_allowed: formData.smoking_allowed === "true",
-        childQty: Number(formData.childQty),
-        adultQty: Number(formData.adultQty),
-        // Include images in group edit mode
-        images: formData.entries
-          .filter(entry => entry.images && entry.images.trim() !== '')
-          .map((entry) => ({
-            image: entry.images,
-            description: entry.descriptions || "",
-          })),
-      };
-
-      console.log(`Updating ${roomsInGroup.length} rooms in group:`, roomsInGroup.map(r => r.id));
-
-      // Update each room in the group
-      const updatePromises = roomsInGroup.map(async (room) => {
-        const url = `${API_CREATE_ROOM}?token=${token}`;
-        const bodyData = { 
-          ...bulkUpdateData, 
-          id: room.id,
-          hotel: user?.hotel,
-          room_type: room.room_type,
-          room_category: room.room_category,
-          // Keep individual room data
-          number_of_rooms: 1,
-          number_of_rooms_to_sell: 1,
-          RoomNo: [room.room_number], // Keep original room number
-        };
-
-        const response = await fetch(url, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(bodyData),
-        });
-
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(`Room ${room.room_number}: ${err.message || err.error || err.detail}`);
-        }
-
-        return response.json();
+      const response = await fetch(`${API_CREATE_ROOM}/${roomToEdit.id}/?token=${token}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
       });
 
-      // Execute all updates
-      await Promise.all(updatePromises);
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || err.error || err.detail || `Server error: ${response.status}`);
+      }
 
-      // Success
       setIsRoomAdded(true);
-      toast.success(`Бүлгийн ${roomsInGroup.length} өрөө амжилттай шинэчлэгдлээ`);
-
-      setTimeout(() => {
-        onClose();
-      }, 1200);
+      toast.success("Бүлгийн мэдээлэл амжилттай шинэчлэгдлээ");
+      setTimeout(() => onClose(), 1200);
 
     } catch (err: any) {
-      console.error("Group bulk update error:", err);
+      console.error("Group update error:", err);
       toast.error(err.message || "Бүлгийн дата шинэчлэхэд алдаа гарлаа");
     }
   };
@@ -911,16 +913,13 @@ export default function RoomModal({
     }
 
     // Build the final payload
-    // For addToGroupMode, we use the template room's data but create NEW rooms
-    
     const transformedData: any = {
       hotel: user?.hotel,
       room_type: Number(formData.room_type),
       room_category: Number(formData.room_category),
       room_size: parseFloat(formData.room_size),
-      // Transform room_beds array to API format with numeric bed_type
-      // API uses "bed_details" field name
-      bed_details: formData.room_beds
+      // New API uses group_beds
+      group_beds: formData.room_beds
         .filter(bed => bed.bed_type && bed.bed_type !== "")
         .map(bed => ({
           bed_type: Number(bed.bed_type),
@@ -932,8 +931,8 @@ export default function RoomModal({
       free_Toiletries: formData.free_Toiletries.map(Number),
       food_And_Drink: formData.food_And_Drink.map(Number),
       outdoor_And_View: formData.outdoor_And_View.map(Number),
-      number_of_rooms: isActualEdit ? 1 : formData.number_of_rooms,
-      number_of_rooms_to_sell: isActualEdit ? 1 : formData.number_of_rooms_to_sell,
+      number_of_rooms: isActualEdit ? (roomToEdit?.room_numbers?.length ?? 1) : formData.number_of_rooms,
+      number_of_rooms_to_sell: isActualEdit ? formData.number_of_rooms_to_sell : formData.number_of_rooms_to_sell,
       room_Description: formData.room_Description,
       smoking_allowed: formData.smoking_allowed === "true",
       childQty: Number(formData.childQty),
@@ -941,7 +940,6 @@ export default function RoomModal({
       RoomNo: roomNumbersArr,
     };
     
-    // Only include images if NOT in addToGroupMode
     if (!addToGroupMode) {
       transformedData.images = formData.entries
         .filter(entry => entry.images && entry.images.trim() !== '')
@@ -954,13 +952,63 @@ export default function RoomModal({
     try {
       const token = await getClientBackendToken() || "";
 
-      // If editing (not addToGroupMode), do PUT /api/rooms with id in body
-      // If creating or addToGroupMode, do POST /api/rooms
-      const url = `${API_CREATE_ROOM}?token=${token}`;
-      const method = isActualEdit ? "PUT" : "POST";
+      let url: string;
+      let method: string;
+      let bodyData: any;
 
-      // For PUT, include id in the body
-      const bodyData = isActualEdit ? { ...transformedData, id: roomToEdit!.id } : transformedData;
+      if (addToGroupMode && roomToEdit) {
+        // POST with only the new room numbers — the backend finds the existing
+        // group by hotel+room_type+room_category and appends the new RoomNo list.
+        // Body: { hotel, room_type, room_category, RoomNo: [newNumbers] }
+        url = `${API_CREATE_ROOM}?token=${token}`;
+        method = "POST";
+        bodyData = {
+          hotel: user?.hotel,
+          room_type: roomToEdit.room_type,
+          room_category: roomToEdit.room_category,
+          RoomNo: roomNumbersArr,
+        };
+      } else if (isActualEdit) {
+        // PATCH — only send fields that changed compared to the original
+        url = `${API_CREATE_ROOM}/${roomToEdit!.id}/?token=${token}`;
+        method = "PATCH";
+        const orig = roomToEdit!;
+        const arrEq = (a: number[], b: number[]) =>
+          a.length === b.length && [...a].sort().join() === [...b].sort().join();
+        const bedEq = (
+          a: { bed_type: number; quantity: number }[],
+          b: { bed_type: number; quantity: number }[]
+        ) =>
+          a.length === b.length &&
+          a.every((ab, i) => ab.bed_type === b[i].bed_type && ab.quantity === b[i].quantity);
+
+        const newBeds = transformedData.group_beds as { bed_type: number; quantity: number }[];
+        const origBeds = (orig.group_beds ?? []).map((b: any) => ({ bed_type: b.bed_type, quantity: b.quantity }));
+
+        const diffed: Record<string, any> = {};
+        if (Number(formData.room_type) !== orig.room_type)                       diffed.room_type = transformedData.room_type;
+        if (Number(formData.room_category) !== orig.room_category)               diffed.room_category = transformedData.room_category;
+        if (parseFloat(formData.room_size) !== parseFloat(orig.room_size))       diffed.room_size = transformedData.room_size;
+        if (!bedEq(newBeds, origBeds))                                            diffed.group_beds = newBeds;
+        if ((formData.is_Bathroom === "true") !== orig.is_Bathroom)              diffed.is_Bathroom = transformedData.is_Bathroom;
+        if ((formData.smoking_allowed === "true") !== orig.smoking_allowed)      diffed.smoking_allowed = transformedData.smoking_allowed;
+        if (Number(formData.adultQty) !== orig.adultQty)                         diffed.adultQty = transformedData.adultQty;
+        if (Number(formData.childQty) !== orig.childQty)                         diffed.childQty = transformedData.childQty;
+        if (!arrEq(formData.room_Facilities.map(Number), orig.room_Facilities ?? []))     diffed.room_Facilities = transformedData.room_Facilities;
+        if (!arrEq(formData.bathroom_Items.map(Number), orig.bathroom_Items ?? []))       diffed.bathroom_Items = transformedData.bathroom_Items;
+        if (!arrEq(formData.free_Toiletries.map(Number), orig.free_Toiletries ?? []))     diffed.free_Toiletries = transformedData.free_Toiletries;
+        if (!arrEq(formData.food_And_Drink.map(Number), orig.food_And_Drink ?? []))       diffed.food_And_Drink = transformedData.food_And_Drink;
+        if (!arrEq(formData.outdoor_And_View.map(Number), orig.outdoor_And_View ?? []))   diffed.outdoor_And_View = transformedData.outdoor_And_View;
+        if (formData.room_Description !== (orig.room_Description ?? ""))         diffed.room_Description = transformedData.room_Description;
+        if (Number(formData.number_of_rooms_to_sell) !== orig.number_of_rooms_to_sell) diffed.number_of_rooms_to_sell = transformedData.number_of_rooms_to_sell;
+        if (transformedData.images)                                               diffed.images = transformedData.images;
+        bodyData = diffed;
+      } else {
+        // POST — create a new room group
+        url = `${API_CREATE_ROOM}?token=${token}`;
+        method = "POST";
+        bodyData = transformedData;
+      }
 
       const response = await fetch(url, {
         method,
@@ -979,8 +1027,8 @@ export default function RoomModal({
       // Success
       setIsRoomAdded(true);
       toast.success(
-        addToGroupMode 
-          ? "Бүлэгт өрөө амжилттай нэмэгдлээ" 
+        addToGroupMode
+          ? "Бүлэгт шинэ өрөөнүүд амжилттай нэмэгдлээ"
           : (isActualEdit ? t('success_updated') : t('success_created'))
       );
 
@@ -1356,6 +1404,250 @@ export default function RoomModal({
               </div>
             </section>
 
+            {/* Is Bathroom & Smoking Allowed */}
+            <section className="grid grid-cols-2 gap-6">
+              {/* Is Bathroom */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Өрөөнд ариун цэврийн өрөө байгаа эсэх <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-3">
+                  <label className="flex items-center cursor-pointer flex-1">
+                    <input
+                      type="radio"
+                      {...register("is_Bathroom")}
+                      value="true"
+                      className="hidden peer"
+                    />
+                    <span className="peer-checked:bg-primary peer-checked:text-primary-foreground border border-gray-300 px-4 py-2 rounded-lg transition w-full text-center text-sm">
+                      Хувийн
+                    </span>
+                  </label>
+                  <label className="flex items-center cursor-pointer flex-1">
+                    <input
+                      type="radio"
+                      {...register("is_Bathroom")}
+                      value="false"
+                      className="hidden peer"
+                    />
+                    <span className="peer-checked:bg-primary peer-checked:text-primary-foreground border border-gray-300 px-4 py-2 rounded-lg transition w-full text-center text-sm">
+                      Нийтийн
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Smoking Allowed */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Тамхи татах боломжтой эсэх
+                </label>
+                <div className="flex items-center gap-3 pt-2">
+                  <Switch
+                    checked={watch("smoking_allowed") === "true"}
+                    onCheckedChange={(checked) =>
+                      setValue("smoking_allowed", checked ? "true" : "false")
+                    }
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {watch("smoking_allowed") === "true" ? "Тийм" : "Үгүй"}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            {/* Facilities & Bathroom Items */}
+            <section className="flex justify-between gap-4">
+              {/* Room Facilities */}
+              <div className="w-[48%]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Өрөөний ерөнхий онцлог зүйлс
+                </label>
+                <div className="border p-2 rounded-lg max-h-60 overflow-y-auto flex flex-col gap-2">
+                  {combinedData.facilities.map((f) => (
+                    <label key={f.id} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        value={String(f.id)}
+                        {...register("room_Facilities")}
+                        className="form-checkbox accent-primary"
+                      />
+                      <span className="text-sm">{f.name_en}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bathroom Items */}
+              <div className="w-[48%]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ариун цэврийн өрөөнд:
+                </label>
+                <div className="border p-2 rounded-lg max-h-60 overflow-y-auto flex flex-col gap-2">
+                  {combinedData.bathroom_items.map((b) => (
+                    <label key={b.id} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        value={String(b.id)}
+                        {...register("bathroom_Items")}
+                        className="form-checkbox accent-primary"
+                      />
+                      <span className="text-sm">{b.name_en}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Free Toiletries */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Үнэгүй 1 удаагийн хэрэглэл:
+              </label>
+              <div className="flex flex-wrap gap-x-2 gap-y-3">
+                {combinedData.free_Toiletries.map((ft) => (
+                  <div key={ft.id}>
+                    <input
+                      type="checkbox"
+                      value={String(ft.id)}
+                      id={`eg-ft-${ft.id}`}
+                      {...register("free_Toiletries")}
+                      className="hidden peer"
+                    />
+                    <label
+                      htmlFor={`eg-ft-${ft.id}`}
+                      className="peer-checked:bg-primary peer-checked:text-primary-foreground border border-border rounded-lg px-4 py-2 cursor-pointer bg-muted text-foreground transition hover:bg-accent text-sm"
+                    >
+                      {ft.name_en}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Food & Drink (Нэмэлт) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Нэмэлт:
+              </label>
+              <div className="flex flex-wrap gap-x-2 gap-y-3">
+                {combinedData.food_and_drink.map((fd) => (
+                  <div key={fd.id}>
+                    <input
+                      type="checkbox"
+                      value={String(fd.id)}
+                      id={`eg-fd-${fd.id}`}
+                      {...register("food_And_Drink")}
+                      className="hidden peer"
+                    />
+                    <label
+                      htmlFor={`eg-fd-${fd.id}`}
+                      className="peer-checked:bg-primary peer-checked:text-primary-foreground border border-border rounded-lg px-4 py-2 cursor-pointer bg-muted text-foreground transition hover:bg-accent text-sm"
+                    >
+                      {fd.name_en}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Outdoor & View (Бусад) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Бусад:
+              </label>
+              <div className="flex flex-wrap gap-x-2 gap-y-3">
+                {combinedData.outdoor_and_view.map((ov) => (
+                  <div key={ov.id}>
+                    <input
+                      type="checkbox"
+                      value={String(ov.id)}
+                      id={`eg-ov-${ov.id}`}
+                      {...register("outdoor_And_View")}
+                      className="hidden peer"
+                    />
+                    <label
+                      htmlFor={`eg-ov-${ov.id}`}
+                      className="peer-checked:bg-primary peer-checked:text-primary-foreground border border-border rounded-lg px-4 py-2 cursor-pointer bg-muted text-foreground transition hover:bg-accent text-sm"
+                    >
+                      {ov.name_en}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Room Description */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('description')}
+              </label>
+              <textarea
+                {...register("room_Description")}
+                placeholder={t('description_placeholder')}
+                className="border rounded-lg p-2 w-full h-24 text-sm bg-background"
+              />
+            </div>
+
+            {/* Images */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Зургууд
+              </label>
+              <p className="text-xs text-muted-foreground mb-3">
+                Одоо байгаа зургийг устгах эсвэл шинэ зураг нэмэх боломжтой. JPG/PNG, 47МБ хүртэл.
+              </p>
+              <div className="grid grid-cols-4 gap-3">
+                {fields.map((field, index) => {
+                  const imgSrc = watch(`entries.${index}.images`);
+                  if (!imgSrc) return null;
+                  return (
+                    <div key={field.id} className="relative group aspect-square">
+                      <img
+                        src={imgSrc}
+                        alt={`Зураг ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg border border-border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="absolute top-1 right-1 h-6 w-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+                {/* Add image button */}
+                {fields.length < 10 && (
+                  <div
+                    className="aspect-square rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/60 transition gap-1"
+                    onClick={() => document.getElementById('eg-add-image')?.click()}
+                  >
+                    <Plus className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Нэмэх</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="eg-add-image"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            append({ images: reader.result as string, descriptions: "" });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                        e.target.value = '';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Submit Button */}
             <div className="flex justify-end pt-4 border-t">
               <Button
@@ -1363,8 +1655,8 @@ export default function RoomModal({
                 disabled={isSubmitting}
                 className="px-6"
               >
-                {isSubmitting ? "Хадгалж байна..." : "Бүлгийн дата шинэчлэх"}
-                <Edit className="ml-2 h-4 w-4" />
+                {isSubmitting ? "Хадгалж байна..." : "Хадгалах"}
+                <Check className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -1509,7 +1801,7 @@ export default function RoomModal({
                 /* Separate dropdowns for creating new rooms */
                 <div className="grid grid-cols-2 gap-10">
                   {/* Room Type */}
-                  <div className="space-y-2">
+                  <div className={`space-y-2 ${fieldHighlight("room_type")}`}>
                     <label className="block text-sm font-medium text-gray-700">
                       {t('room_category')} <span className="text-red-500">*</span>
                     </label>
@@ -1547,7 +1839,7 @@ export default function RoomModal({
                   </div>
 
                   {/* Room Category */}
-                  <div className="space-y-2">
+                  <div className={`space-y-2 ${fieldHighlight("room_category")}`}>
                     <label className="block text-sm font-medium text-gray-700">
                       {t('room_type')} <span className="text-red-500">*</span>
                     </label>
@@ -1594,7 +1886,7 @@ export default function RoomModal({
             {/* Row 2: Occupancy & Room Size */}
             <section className="grid grid-cols-2 gap-10">
               {/* Occupancy (Adults + Children) */}
-              <div className="space-y-2">
+              <div className={`space-y-2 ${fieldHighlight("adultQty")}`}>
                 <label className="block text-sm font-medium text-gray-700">
                   {t('capacity_hint')} <span className="text-red-500">*</span>
                 </label>
@@ -1652,7 +1944,7 @@ export default function RoomModal({
               </div>
 
               {/* Room Size - Show as label when editing single room, input when creating or adding to group */}
-              <div className="space-y-2">
+              <div className={`space-y-2 ${fieldHighlight("room_size")}`}>
                 <label className="block text-sm font-medium text-gray-700">
                   {t('room_size')} <span className="text-red-500">*</span>
                 </label>
@@ -1677,7 +1969,7 @@ export default function RoomModal({
             </section>
 
             {/* Row 3: Bed Types with multiple entries */}
-            <section className="space-y-3">
+            <section className={`space-y-3 ${fieldHighlight("room_beds")}`}>
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700">
                   {t('bed_type')} <span className="text-red-500">*</span>
@@ -1748,9 +2040,8 @@ export default function RoomModal({
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => {
-                          if (field.quantity > 1) {
-                            setValue(`room_beds.${index}.quantity`, field.quantity - 1);
-                          }
+                          const cur = watch(`room_beds.${index}.quantity`) as number;
+                          if (cur > 1) setValue(`room_beds.${index}.quantity`, cur - 1);
                         }}
                       >
                         <Minus className="h-3 w-3" />
@@ -1758,7 +2049,7 @@ export default function RoomModal({
                       <Input
                         type="number"
                         min="1"
-                        value={field.quantity}
+                        value={watch(`room_beds.${index}.quantity`)}
                         onChange={(e) => setValue(`room_beds.${index}.quantity`, Math.max(1, parseInt(e.target.value) || 1))}
                         className="w-16 text-center h-8"
                       />
@@ -1768,13 +2059,14 @@ export default function RoomModal({
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => {
-                          setValue(`room_beds.${index}.quantity`, field.quantity + 1);
+                          const cur = watch(`room_beds.${index}.quantity`) as number;
+                          setValue(`room_beds.${index}.quantity`, cur + 1);
                         }}
                       >
                         <Plus className="h-3 w-3" />
                       </Button>
                       <Badge variant="secondary" className="ml-1">
-                        {field.quantity} ор
+                        {watch(`room_beds.${index}.quantity`)} ор
                       </Badge>
                     </div>
                     
@@ -1810,7 +2102,7 @@ export default function RoomModal({
             {/* Row 4: Is Bathroom? & Smoking Allowed */}
             <section className="grid grid-cols-2 gap-10">
               {/* Is Bathroom */}
-              <div className="space-y-2">
+              <div className={`space-y-2 ${fieldHighlight("is_Bathroom")}`}>
                 <label className="block text-sm font-medium text-gray-700">
                   {t('bathroom_available')} <span className="text-red-500">*</span>
                 </label>
@@ -1850,7 +2142,7 @@ export default function RoomModal({
               </div>
 
               {/* Smoking Allowed */}
-              <div className="space-y-2">
+              <div className={`space-y-2 ${fieldHighlight("smoking_allowed")}`}>
                 <label className="block text-sm font-medium text-gray-700">
                   {t('smoking_allowed')} <span className="text-red-500">*</span>
                 </label>
@@ -1893,7 +2185,7 @@ export default function RoomModal({
             {/* Row 5: Total Rooms & Rooms to Sell */}
             {!roomToEdit && (
               <section className="grid grid-cols-2 gap-10">
-                <div className="space-y-2">
+                <div className={`space-y-2 ${fieldHighlight("number_of_rooms")}`}>
                   {(() => {
                     // Calculate remaining rooms based on hotel limits
                     const currentRoomCount = getTotalExistingRooms();
@@ -1979,7 +2271,7 @@ export default function RoomModal({
                     return null;
                   })()}
                 </div>
-                <div className="space-y-2">
+                <div className={`space-y-2 ${fieldHighlight("number_of_rooms_to_sell")}`}>
                   {(() => {
                     // Calculate remaining available rooms based on hotel's available_rooms limit
                     const currentRoomCount = getTotalExistingRooms();
@@ -2119,7 +2411,7 @@ export default function RoomModal({
             )}
 
             {/* Row 6: Room Numbers */}
-            <section className="space-y-2">
+            <section className={`space-y-2 ${fieldHighlight("RoomNo")}`}>
               <label className="block text-sm font-medium text-gray-700">
                 {roomToEdit 
                   ? "Өрөөний дугаар (1 дугаар байна)" 
@@ -2170,7 +2462,7 @@ export default function RoomModal({
 
             {/* Row 7: Images - Only show for new rooms or adding to group, not for editing single rooms */}
             {(!roomToEdit || addToGroupMode) && (
-            <section className="space-y-2">
+            <section className={`space-y-2 ${fieldHighlight("images")}`}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Зураг нэмэх (Хамгийн багадаа 1 зураг) <span className="text-red-500">*</span>

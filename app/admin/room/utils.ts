@@ -2,10 +2,12 @@ import { GroupedRoomRow, GroupingOptions, RoomApiResponse } from "./types";
 
 const WIFI_KEYWORDS = ["wifi", "wi-fi", "wireless", "интернет"];
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn';
+
 export function normalizeImage(url?: string | null): string | undefined {
   if (!url) return undefined;
-  if (url.startsWith("http")) return url;
-  return `https://dev.kacc.mn${url}`;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image/')) return url;
+  return `${BACKEND_URL}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
 function pickAmenityName(locale: "en" | "mn", value?: { name_en: string; name_mn: string }): string | undefined {

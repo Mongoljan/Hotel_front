@@ -62,7 +62,8 @@ import {
   ChevronRight,
   ChevronLeft,
   ImageIcon,
-  Info
+  Info,
+  ArrowRightLeft
 } from "lucide-react";
 
 import { AiOutlineWifi, AiOutlinePlus } from "react-icons/ai";
@@ -164,8 +165,10 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       }
       
       try {
-        // Fetch from property-basic-info API which contains total_hotel_rooms and available_rooms
-        const url = `https://dev.kacc.mn/api/property-basic-info/?property=${user.hotel}`;
+        const token = await getClientBackendToken();
+        if (!token) return;
+        // Fetch through BFF — keeps backend URL server-side and adds auth token
+        const url = `/api/property-info?property=${user.hotel}&token=${encodeURIComponent(token)}`;
         
         const res = await fetch(url, { cache: 'no-store' });
         
@@ -199,8 +202,16 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
 
   // ─── Modal state for Create / Edit ─────────────────────────────────────────
   const [selectedRoom, setSelectedRoom] = useState<RoomData | null>(null);
-  const [addToGroupMode, setAddToGroupMode] = useState(false); // For adding rooms to existing group
-  const [editGroupMode, setEditGroupMode] = useState(false); // For editing all rooms in a group
+  const [addToGroupMode, setAddToGroupMode] = useState(false);
+  const [editGroupMode, setEditGroupMode] = useState(false);
+
+  // Transfer dialog state
+  const [transferDialog, setTransferDialog] = useState<{
+    open: boolean;
+    roomNumber: number;
+    fromGroupId: number;
+  } | null>(null);
+  const [targetGroupId, setTargetGroupId] = useState<string>("");
 
   // Image preview state
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -281,13 +292,12 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     [lookupMaps, expanded]
   );
 
-  // Calculate totals from group rows (not individual rooms)
+  // Calculate totals directly from rawRooms (each is a group in the new API)
   const groupTotals = useMemo(() => {
-    const groupRows = rows.filter(row => row.isGroup && !row.isPreviewRow);
-    const totalRooms = groupRows.reduce((sum, row) => sum + (row.totalRoomsInGroup ?? 0), 0);
-    const totalForSale = groupRows.reduce((sum, row) => sum + (row.totalRoomsToSellInGroup ?? 0), 0);
+    const totalRooms = rawRooms.reduce((sum, g) => sum + (g.room_numbers?.length ?? 0), 0);
+    const totalForSale = rawRooms.reduce((sum, g) => sum + (Number(g.number_of_rooms_to_sell) || 0), 0);
     return { totalRooms, totalForSale };
-  }, [rows]);
+  }, [rawRooms]);
 
   const insights = useMemo<RoomInsights>(
     () =>
@@ -315,87 +325,45 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     setIsModalOpen(true);
   };
 
-  // Handler for adding rooms to an existing group
   const handleAddToGroup = (groupKey: string) => {
-    // groupKey format is "room_type-room_category", find a representative room from that group
-    const [roomTypeStr, roomCategoryStr] = groupKey.split("-");
-    const roomType = parseInt(roomTypeStr, 10);
-    const roomCategory = parseInt(roomCategoryStr, 10);
-    
-    // Find any room from this group to use as template
-    const templateRoom = rawRooms.find(
-      (r) => r.room_type === roomType && r.room_category === roomCategory
-    );
-    
-    if (!templateRoom) {
-      console.warn("No template room found for group:", groupKey);
-      return;
-    }
-    
-    setSelectedRoom(templateRoom);
+    // groupKey is now the group id (String(group.id))
+    const groupId = parseInt(groupKey, 10);
+    const group = rawRooms.find((r) => r.id === groupId);
+    if (!group) { console.warn("Group not found:", groupKey); return; }
+    setSelectedRoom(group);
     setAddToGroupMode(true);
+    setEditGroupMode(false);
     setIsModalOpen(true);
   };
 
-  // Handler for editing all rooms in a group (bulk editing)
   const handleEditGroup = (groupKey: string) => {
-    // groupKey format is "room_type-room_category", find a representative room from that group
-    const [roomTypeStr, roomCategoryStr] = groupKey.split("-");
-    const roomType = parseInt(roomTypeStr, 10);
-    const roomCategory = parseInt(roomCategoryStr, 10);
-    
-    // Find any room from this group to use as template for the group's shared properties
-    const templateRoom = rawRooms.find(
-      (r) => r.room_type === roomType && r.room_category === roomCategory
-    );
-    
-    if (!templateRoom) {
-      console.warn("No template room found for group:", groupKey);
-      return;
-    }
-    
-    setSelectedRoom(templateRoom);
+    const groupId = parseInt(groupKey, 10);
+    const group = rawRooms.find((r) => r.id === groupId);
+    if (!group) { console.warn("Group not found:", groupKey); return; }
+    setSelectedRoom(group);
     setEditGroupMode(true);
     setAddToGroupMode(false);
     setIsModalOpen(true);
   };
 
-  // Edit / Delete Handlers
-  const handleEdit = (roomId: number | undefined) => {
-    if (roomId == null) return;
-    const found = rawRooms.find((r) => r.id === roomId);
-    if (!found) {
-      console.warn("Room to edit not found:", roomId);
-      return;
-    }
-    setSelectedRoom(found);
-    setAddToGroupMode(false);
-    setEditGroupMode(false);
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteClick = (roomId: number | undefined) => {
-    if (roomId == null) return;
-    setRoomToDelete(roomId);
+  const handleDeleteClick = (groupId: number | undefined) => {
+    if (groupId == null) return;
+    setRoomToDelete(groupId);
     setDeleteDialogOpen(true);
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allRoomIds = new Set(rawRooms.map(room => room.id));
-      setSelectedRoomIds(allRoomIds);
+      const allGroupIds = new Set(rawRooms.map(group => group.id));
+      setSelectedRoomIds(allGroupIds);
     } else {
       setSelectedRoomIds(new Set());
     }
   };
 
-  const handleSelectRoom = (roomId: number, checked: boolean) => {
+  const handleSelectRoom = (groupId: number, checked: boolean) => {
     const newSelected = new Set(selectedRoomIds);
-    if (checked) {
-      newSelected.add(roomId);
-    } else {
-      newSelected.delete(roomId);
-    }
+    if (checked) { newSelected.add(groupId); } else { newSelected.delete(groupId); }
     setSelectedRoomIds(newSelected);
   };
 
@@ -407,27 +375,25 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
   const handleBulkDelete = async () => {
     const token = await getClientBackendToken();
     if (!token) {
-      const message = "Authentication required. Please sign in again to delete rooms.";
+      const message = "Authentication required. Please sign in again to delete room groups.";
       setAuthError(message);
       toast.error(message);
       setBulkDeleteDialogOpen(false);
       return;
     }
 
-    const deletePromises = Array.from(selectedRoomIds).map(async (roomId) => {
+    const deletePromises = Array.from(selectedRoomIds).map(async (groupId) => {
       try {
-        const response = await fetch(`/api/rooms?id=${roomId}&token=${token}`, {
+        const response = await fetch(`/api/roomsNew?id=${groupId}&token=${token}`, {
           method: "DELETE",
         });
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          const errorMessage = errorData.error || errorData.details || `Failed to delete room ${roomId}`;
-          throw new Error(errorMessage);
+          throw new Error(errorData.error || `Failed to delete group ${groupId}`);
         }
-        return { success: true, roomId };
+        return { success: true, groupId };
       } catch (error) {
-        console.error(`Error deleting room ${roomId}:`, error);
-        return { success: false, roomId, error: error instanceof Error ? error.message : 'Unknown error' };
+        return { success: false, groupId, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
 
@@ -435,13 +401,8 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     const successCount = results.filter(r => r.success).length;
     const failCount = results.filter(r => !r.success).length;
 
-    if (successCount > 0) {
-      toast.success(`${successCount} өрөө амжилттай устгагдлаа`);
-      setIsRoomAdded(true);
-    }
-    if (failCount > 0) {
-      toast.error(`${failCount} өрөө устгахад алдаа гарлаа`);
-    }
+    if (successCount > 0) { toast.success(`${successCount} бүлэг амжилттай устгагдлаа`); setIsRoomAdded(true); }
+    if (failCount > 0) { toast.error(`${failCount} бүлэг устгахад алдаа гарлаа`); }
 
     setSelectedRoomIds(new Set());
     setBulkDeleteDialogOpen(false);
@@ -460,17 +421,14 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     }
 
     try {
-      const res = await fetch(
-        `https://dev.kacc.mn/api/roomsNew/${roomToDelete}/?token=${encodeURIComponent(token)}`,
-        {
-          method: "DELETE"
-        }
-      );
+      const res = await fetch(`/api/roomsNew?id=${roomToDelete}&token=${encodeURIComponent(token)}`, {
+        method: "DELETE"
+      });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed to delete room.");
+        throw new Error(err.error || "Failed to delete room group.");
       }
-      toast.success("Өрөө амжилттай устгагдлаа.");
+      toast.success("Өрөөний бүлэг амжилттай устгагдлаа.");
       setIsRoomAdded(true);
       setDeleteDialogOpen(false);
       setRoomToDelete(null);
@@ -481,8 +439,55 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     }
   };
 
+  const handleTransfer = async () => {
+    if (!transferDialog) return;
+    const targetId = parseInt(targetGroupId, 10);
+    if (!targetId || isNaN(targetId)) {
+      toast.error("Шилжүүлэх бүлгийг сонгоно уу");
+      return;
+    }
+
+    const token = await getClientBackendToken();
+    if (!token) {
+      toast.error("Authentication required.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/roomsNew/transfer?token=${encodeURIComponent(token)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_numbers: [transferDialog.roomNumber],
+          target_room_group_id: targetId,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Transfer failed.");
+      }
+      toast.success(`Өрөө №${transferDialog.roomNumber} амжилттай шилжүүлэгдлээ`);
+      setIsRoomAdded(true);
+    } catch (err: any) {
+      toast.error(err.message || "Шилжүүлэхэд алдаа гарлаа");
+    } finally {
+      setTransferDialog(null);
+      setTargetGroupId("");
+    }
+  };
+
   // Column definitions for shadcn table
   const columns: ColumnDef<FlattenRow>[] = [
+    // Hidden searchable column for room numbers (enables global filter to find rooms by number)
+    {
+      id: "roomNumbersSearch",
+      accessorFn: (row) => row.roomNumbersStr ?? "",
+      header: "",
+      cell: () => null,
+      enableHiding: false,
+      size: 0,
+    },
+
     // Checkbox Column
     {
       id: "select",
@@ -494,15 +499,15 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
         />
       ),
       cell: ({ row }) => {
-        if (row.original.isPreviewRow || row.original.isGroup) return null;
-        const roomId = row.original.leafRoomId;
-        if (!roomId) return null;
+        if (row.original.isPreviewRow || !row.original.isGroup) return null;
+        const groupId = row.original.groupId;
+        if (!groupId) return null;
         
         return (
           <Checkbox
-            checked={selectedRoomIds.has(roomId)}
-            onCheckedChange={(checked) => handleSelectRoom(roomId, !!checked)}
-            aria-label="Select row"
+            checked={selectedRoomIds.has(groupId)}
+            onCheckedChange={(checked) => handleSelectRoom(groupId, !!checked)}
+            aria-label="Select group"
           />
         );
       },
@@ -515,6 +520,66 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       id: "expand",
       header: "",
       cell: ({ row, table }) => {
+        // Rooms card row — single expanded row showing all room numbers as cards
+        if (row.original.isRoomsCardRow) {
+          const roomNumbers = row.original.roomNumbersArr || [];
+          const groupId = row.original.groupId!;
+
+          if (roomNumbers.length === 0) return null;
+
+          return (
+            <div className="flex flex-wrap gap-3 py-1">
+              {roomNumbers.map((roomNum: number) => {
+                return (
+                  <div
+                    key={roomNum}
+                    className="flex items-center gap-2 border border-border rounded-xl px-3 py-2.5 bg-background shadow-sm min-w-[110px] justify-between"
+                  >
+                    <span className="font-semibold text-base text-foreground tabular-nums">{roomNum}</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            onClick={() => {
+                              setTransferDialog({ open: true, roomNumber: roomNum, fromGroupId: groupId });
+                              setTargetGroupId("");
+                            }}
+                          >
+                            <ArrowRightLeft className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Өрөөг өөр бүлэгрүү шилжүүлэх</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            disabled
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Өрөөний дугаар засах (удахгүй)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
         // Preview row - thin row showing room numbers when collapsed
         if (row.original.isPreviewRow) {
           const roomNumbers = row.original.roomNumbersStr || "";
@@ -1101,6 +1166,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                       variant="outline"
                       size="sm"
                       onClick={() => handleAddToGroup(row.original.arrowPlaceholder)}
+                      className="border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
@@ -1118,7 +1184,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                       variant="outline"
                       size="sm"
                       onClick={() => handleEditGroup(row.original.arrowPlaceholder)}
-                      className="text-primary hover:text-primary-foreground"
+                      className="border-amber-400/60 text-amber-600 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-colors"
                     >
                       <Edit className="h-3 w-3" />
                     </Button>
@@ -1128,21 +1194,6 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            </div>
-          );
-        }
-
-        if (!row.original.isGroup && row.original.leafRoomId != null) {
-          const roomId = row.original.leafRoomId;
-          return (
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleEdit(roomId)}
-              >
-                <Edit className="h-3 w-3" />
-              </Button>
             </div>
           );
         }
@@ -1281,9 +1332,9 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
     },
   ], [getParentGroupData]);
 
-  // Filter function for export - only export leaf rows (actual rooms)
+  // Export only group rows (each represents a room group in the new API)
   const exportRowFilter = useCallback((row: FlattenRow) => {
-    return !row.isGroup && !row.isPreviewRow && row.leafRoomId != null;
+    return row.isGroup && !row.isPreviewRow;
   }, []);
 
   return (
@@ -1341,9 +1392,16 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
             key={addToGroupMode ? 'add-to-group' : editGroupMode ? 'edit-group' : 'normal'}
             isOpen={isModalOpen}
             onClose={() => {
+              const wasAddingToGroup = addToGroupMode;
               setIsModalOpen(false);
               setAddToGroupMode(false);
               setEditGroupMode(false);
+              // Force a fresh fetch after adding rooms to a group — the reactive
+              // refresh via isRoomAdded fires while the modal is still open and
+              // may complete before onClose is called, missing newly added data.
+              if (wasAddingToGroup) {
+                refreshData();
+              }
             }}
             roomToEdit={selectedRoom}
             isRoomAdded={isRoomAdded}
@@ -1352,6 +1410,7 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
             hotelRoomLimits={hotelRoomLimits}
             addToGroupMode={addToGroupMode}
             editGroupMode={editGroupMode}
+            lookupData={lookup}
           />
 
           {/* Advanced Table with sync status in title row */}
@@ -1487,10 +1546,10 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Өрөө устгах</AlertDialogTitle>
+            <AlertDialogTitle>Өрөөний бүлэг устгах</AlertDialogTitle>
             <AlertDialogDescription>
-              Та үнэхээр энэ өрөөг устгахыг хүсэж байна уу? Энэ үйлдэл буцалтгүй бөгөөд 
-              өрөөтэй холбоотой бүх мэдээлэл устах болно.
+              Та үнэхээр энэ өрөөний бүлгийг устгахыг хүсэж байна уу? Бүлэгт багтах бүх өрөөнүүд болон 
+              тэдгээртэй холбоотой бүх мэдээлэл устах болно.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1506,10 +1565,9 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
       <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Олон өрөө устгах</AlertDialogTitle>
+            <AlertDialogTitle>Олон бүлэг устгах</AlertDialogTitle>
             <AlertDialogDescription>
-              Та үнэхээр {selectedRoomIds.size} өрөөг устгахыг хүсэж байна уу? Энэ үйлдэл буцалтгүй бөгөөд 
-              сонгосон өрөөнүүдтэй холбоотой бүх мэдээлэл устах болно.
+              Та үнэхээр {selectedRoomIds.size} өрөөний бүлгийг устгахыг хүсэж байна уу? Бүлэгт багтах бүх өрөөнүүд устах болно.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1520,6 +1578,48 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Transfer Room Dialog */}
+      <Dialog open={!!transferDialog?.open} onOpenChange={(open) => { if (!open) { setTransferDialog(null); setTargetGroupId(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Өрөө шилжүүлэх</DialogTitle>
+            <DialogDescription>
+              Өрөө №{transferDialog?.roomNumber} — шилжүүлэх зорилтот бүлгийг сонгоно уу
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            {rawRooms
+              .filter(g => g.id !== transferDialog?.fromGroupId)
+              .map(g => {
+                const typeName = lookupMaps.roomTypesMap.get(g.room_type) ?? `Type ${g.room_type}`;
+                const catName = lookupMaps.roomCategoryMap.get(g.room_category) ?? `Cat ${g.room_category}`;
+                return (
+                  <div
+                    key={g.id}
+                    className={cn(
+                      "p-3 rounded-md border cursor-pointer transition-colors",
+                      targetGroupId === String(g.id)
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50"
+                    )}
+                    onClick={() => setTargetGroupId(String(g.id))}
+                  >
+                    <p className="font-medium text-sm">{catName} — {typeName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Өрөөнүүд: {(g.room_numbers ?? []).join(", ") || "—"}
+                    </p>
+                  </div>
+                );
+              })
+            }
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setTransferDialog(null); setTargetGroupId(""); }}>Цуцлах</Button>
+            <Button onClick={handleTransfer} disabled={!targetGroupId}>Шилжүүлэх</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

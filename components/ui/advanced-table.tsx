@@ -404,10 +404,11 @@ export function AdvancedTable<TData, TValue>({
                     const cells = row.getVisibleCells();
                     const expandCell = cells.find(cell => cell.column.id === 'expand');
                     const cellToRender = expandCell || cells[0];
+                    const isRoomsCardRow = (row.original as any)?.isRoomsCardRow;
                     
                     return (
-                      <TableRow key={row.id} className="border-b border-border/30">
-                        <TableCell colSpan={cells.length} className="py-1.5 px-4">
+                      <TableRow key={row.id} className={isRoomsCardRow ? 'border-b border-border/30 bg-muted/20 hover:bg-muted/20' : 'border-b border-border/30'}>
+                        <TableCell colSpan={cells.length} className={isRoomsCardRow ? 'py-3 px-4' : 'py-1.5 px-4'}>
                           {cellToRender && flexRender(cellToRender.column.columnDef.cell, cellToRender.getContext())}
                         </TableCell>
                       </TableRow>

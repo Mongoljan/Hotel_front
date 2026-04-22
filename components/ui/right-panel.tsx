@@ -14,6 +14,10 @@ interface RightPanelProps {
   children: React.ReactNode;
   className?: string;
   width?: string;
+  /** Offset from the right edge, e.g. 'right-[460px]' when stacking panels */
+  rightOffset?: string;
+  /** Whether to show the background overlay (set false for secondary stacked panels) */
+  showOverlay?: boolean;
 }
 
 export function RightPanel({
@@ -23,21 +27,25 @@ export function RightPanel({
   description,
   children,
   className,
-  width = 'w-[400px] sm:w-[600px]'
+  width = 'w-[400px] sm:w-[600px]',
+  rightOffset = 'right-0',
+  showOverlay = true
 }: RightPanelProps) {
   return (
     <AnimatePresence>
       {isOpen && (
         <>
           {/* Background overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/10 z-50"
-            onClick={onClose}
-          />
+          {showOverlay && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/10 z-50"
+              onClick={onClose}
+            />
+          )}
           
           {/* Right sliding panel */}
           <motion.div
@@ -51,7 +59,8 @@ export function RightPanel({
               duration: 0.3 
             }}
             className={cn(
-              'fixed right-0 top-0 h-full bg-white shadow-2xl z-50 flex flex-col border-l border-gray-200',
+              'fixed top-0 h-full bg-white shadow-2xl z-50 flex flex-col border-l border-gray-200',
+              rightOffset,
               width,
               className
             )}

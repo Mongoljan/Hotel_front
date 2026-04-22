@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Force dynamic rendering - this route uses request.url which requires dynamic rendering
-export const dynamic = 'force-dynamic';
+// Revalidate every 24 hours — lookup/reference data changes very rarely
+export const revalidate = 86400;
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn';
 

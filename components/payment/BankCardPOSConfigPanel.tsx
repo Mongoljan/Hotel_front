@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { CheckCircle, Plus, Settings, MoreHorizontal } from 'lucide-react';
+import { CheckCircle, Plus, MoreHorizontal } from 'lucide-react';
 import { RightPanel, RightPanelContent, RightPanelFooter } from '@/components/ui/right-panel';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -230,15 +230,7 @@ export function BankCardPOSConfigPanel({
     await onSave(config);
     setShowNewTerminalForm(false);
     setShowSuccess(true);
-    
-    // Auto-close success after 2 seconds
-    setTimeout(() => {
-      setShowSuccess(false);
-    }, 2000);
-  };
-
-  const handleAddTerminal = () => {
-    setShowNewTerminalForm(true);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   // Success screen component
@@ -260,123 +252,121 @@ export function BankCardPOSConfigPanel({
   );
 
   return (
-    <RightPanel
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Төхөөрөмж нэмэх"
-      description="ПОС терминал болон телбөр тооцооны тохиргоо удирдах"
-      width="w-[400px] sm:w-[460px]"
-    >
-      <AnimatePresence mode="wait">
-        {showSuccess ? (
-          <motion.div
-            key="success"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="h-full"
-          >
-            <SuccessScreen />
-          </motion.div>
-        ) : showNewTerminalForm ? (
-          <motion.div
-            key="form"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-          >
-            <RightPanelContent>
-              <NewTerminalForm
-                onSave={handleSaveNewTerminal}
-                onCancel={() => setShowNewTerminalForm(false)}
-              />
-            </RightPanelContent>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="main"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col h-full"
-          >
-            <RightPanelContent>
-              {/* Add Terminal Button */}
-              <div className="mb-6">
-                <Button 
-                  onClick={handleAddTerminal}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Төхөөрөмж нэмэх
-                </Button>
-              </div>
-
-              {/* Хөшөөдсөн ПОС терминалууд (Connected POS Terminals) */}
-              <div className="space-y-4">
-                <h3 className="font-medium text-gray-900">Хөшөөдсөн ПОС терминалууд</h3>
-                <div className="space-y-3">
-                  {mockTerminals.map((terminal) => (
-                    <Card 
-                      key={terminal.id}
-                      className="p-4 border border-gray-200 hover:border-gray-300 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "w-8 h-8 rounded text-white flex items-center justify-center text-xs font-bold",
-                            terminal.bankColor
-                          )}>
-                            {terminal.bankCode}
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm">
-                              {terminal.bankName}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {terminal.terminalNumber}
-                              {terminal.lastConnection && ` • хөлболдсон ${terminal.lastConnection}`}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge 
-                            className={cn(
-                              "text-xs",
-                              terminal.status === 'online' 
-                                ? "bg-primary/10 text-primary" 
-                                : "bg-gray-100 text-gray-600"
-                            )}
-                          >
-                            {terminal.status === 'online' ? 'идэвхтэй' : 'идэвхгүй'}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                          >
-                            <MoreHorizontal className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+    <>
+      {/* Main panel — always shows the terminal list */}
+      <RightPanel
+        isOpen={isOpen}
+        onClose={onClose}
+        title="ПОС терминал"
+        description="Холбогдсон ПОС терминалууд"
+        width="w-[400px] sm:w-[460px]"
+        rightOffset="right-0"
+      >
+        <AnimatePresence mode="wait">
+          {showSuccess ? (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="h-full"
+            >
+              <SuccessScreen />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="main"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col h-full"
+            >
+              <RightPanelContent>
+                {/* Add Terminal Button */}
+                <div className="mb-6">
+                  <Button 
+                    onClick={() => setShowNewTerminalForm(true)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Төхөөрөмж нэмэх
+                  </Button>
                 </div>
-              </div>
-            </RightPanelContent>
 
-            <RightPanelFooter>
-              <Button 
-                variant="outline" 
-                onClick={onClose}
-                className="w-full"
-              >
-                Буцах
-              </Button>
-            </RightPanelFooter>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </RightPanel>
+                {/* Connected POS Terminals */}
+                <div className="space-y-4">
+                  <h3 className="font-medium text-gray-900">Хөшөөдсөн ПОС терминалууд</h3>
+                  <div className="space-y-3">
+                    {mockTerminals.map((terminal) => (
+                      <Card 
+                        key={terminal.id}
+                        className="p-4 border border-gray-200 hover:border-gray-300 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-8 h-8 rounded text-white flex items-center justify-center text-xs font-bold",
+                              terminal.bankColor
+                            )}>
+                              {terminal.bankCode}
+                            </div>
+                            <div>
+                              <div className="font-medium text-sm">{terminal.bankName}</div>
+                              <div className="text-xs text-gray-500">
+                                {terminal.terminalNumber}
+                                {terminal.lastConnection && ` • хөлболдсон ${terminal.lastConnection}`}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              className={cn(
+                                "text-xs",
+                                terminal.status === 'online' 
+                                  ? "bg-primary/10 text-primary" 
+                                  : "bg-gray-100 text-gray-600"
+                              )}
+                            >
+                              {terminal.status === 'online' ? 'идэвхтэй' : 'идэвхгүй'}
+                            </Badge>
+                            <Button variant="ghost" size="icon" className="h-6 w-6">
+                              <MoreHorizontal className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              </RightPanelContent>
+
+              <RightPanelFooter>
+                <Button variant="outline" onClick={onClose} className="w-full">
+                  Буцах
+                </Button>
+              </RightPanelFooter>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </RightPanel>
+
+      {/* Secondary panel — slides in next to the main panel when adding a terminal */}
+      <RightPanel
+        isOpen={isOpen && showNewTerminalForm}
+        onClose={() => setShowNewTerminalForm(false)}
+        title="Төхөөрөмж нэмэх"
+        description="ПОС терминал болон төлбөр тооцооны тохиргоо"
+        width="w-[400px] sm:w-[460px]"
+        rightOffset="right-[400px] sm:right-[460px]"
+        showOverlay={false}
+      >
+        <RightPanelContent>
+          <NewTerminalForm
+            onSave={handleSaveNewTerminal}
+            onCancel={() => setShowNewTerminalForm(false)}
+          />
+        </RightPanelContent>
+      </RightPanel>
+    </>
   );
 }

@@ -35,19 +35,123 @@ export interface RoomBed {
   quantity: number;
 }
 
+/** Represents one room group as returned by the new /api/roomsNew/ endpoint.
+ *  Each group has a set of attributes that apply to all rooms in it, plus
+ *  `room_numbers` — the list of physical room numbers that belong to this group.
+ */
 export interface RoomData {
   id: number;
   hotel: number;
-  room_number: number;
   room_type: number;
+  room_type_name?: string;
   room_category: number;
+  room_category_name?: string;
   room_size: string;
-  bed_type?: number; // Legacy field, use room_beds/bed_details instead
-  room_beds?: RoomBed[]; // Alternative field name
-  bed_details?: RoomBed[]; // API returns this field name
+  /** Bed configuration for the group (was bed_details/room_beds in old API) */
+  group_beds: RoomBed[];
   is_Bathroom: boolean;
 
   room_Facilities: number[];
+  bathroom_Items: number[];
+  free_Toiletries: number[];
+  food_And_Drink: number[];
+  outdoor_And_View: number[];
+
+  adultQty: number;
+  childQty: number;
+
+  number_of_rooms: number;
+  number_of_rooms_to_sell: number | string;
+  room_Description: string;
+  smoking_allowed: boolean;
+
+  /** All physical room numbers that belong to this group */
+  room_numbers: number[];
+
+  images?: RoomImage[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface GroupEntry {
+  type: string;
+  category: string;
+  /** The single group object (rawRoom IS the group in the new API) */
+  group: RoomData;
+}
+
+export interface LookupMaps {
+  groupMap: Map<string, GroupEntry>;
+  facilitiesMapMn: Map<number, string>;
+  facilitiesMapEn: Map<number, string>;
+  bathroomItemsMap: Map<number, string>;
+  toiletriesMap: Map<number, string>;
+  foodDrinkMap: Map<number, string>;
+  outdoorViewMap: Map<number, string>;
+  bedTypesMap: Map<number, string>;
+  roomTypesMap: Map<number, string>;
+  roomCategoryMap: Map<number, string>;
+}
+
+export interface FlattenRow extends GridValidRowModel {
+  id: string;
+  isGroup: boolean;
+  isPreviewRow?: boolean;
+  arrowPlaceholder: string;
+  images: string[];
+  categoryName?: string;
+  typeName?: string;
+  sizeGroup?: string;
+  hasWifiGroup?: boolean;
+  roomNumberLeaf?: string;
+  viewDescription?: string;
+  roomNumbersStr?: string;
+  totalRoomsInGroup?: number;
+  totalRoomsToSellInGroup?: number;
+  leafSize?: string;
+  leafTotalRooms?: number;
+  leafRoomsToSell?: number;
+  smokingAllowed?: boolean;
+  hasWifi?: boolean;
+  groupHasAdult?: boolean;
+  groupHasChild?: boolean;
+  groupHasSingleBed?: boolean;
+  groupHasDoubleBed?: boolean;
+  adultQty?: number;
+  childQty?: number;
+  bedType?: number;
+  roomBeds?: { bed_type: number; quantity: number; bedTypeName?: string }[];
+  commonFacilitiesArr: string[];
+  thisRoomExtraFacilitiesArr?: string[];
+  commonBathroomArr: string[];
+  thisRoomExtraBathroomArr?: string[];
+  commonToiletriesArr: string[];
+  thisRoomExtraToiletriesArr?: string[];
+  commonFoodDrinkArr: string[];
+  thisRoomExtraFoodDrinkArr?: string[];
+  commonOutdoorViewArr: string[];
+  thisRoomExtraOutdoorViewArr?: string[];
+  /** Database id of the group this row belongs to */
+  groupId?: number;
+  /** Actual room number integer (leaf rows only; replaces old leafRoomId) */
+  leafRoomNumber?: number;
+  /** True for the single expanded "rooms card" row showing all room number cards */
+  isRoomsCardRow?: boolean;
+  /** All room numbers for a group (used in the rooms card row) */
+  roomNumbersArr?: number[];
+}
+
+export interface RoomInsights {
+  totalRooms: number;
+  totalInventory: number;
+  available: number;
+  sold: number;
+  occupancyRate: number;
+  avgCapacity: number;
+  categories: number;
+  wifiShare: number;
+}
+
   bathroom_Items: number[];
   free_Toiletries: number[];
   food_And_Drink: number[];
