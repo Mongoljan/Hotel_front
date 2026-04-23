@@ -152,28 +152,6 @@ export interface RoomInsights {
   wifiShare: number;
 }
 
-  bathroom_Items: number[];
-  free_Toiletries: number[];
-  food_And_Drink: number[];
-  outdoor_And_View: number[];
-
-  adultQty: number;
-  childQty: number;
-
-  number_of_rooms: number;
-  number_of_rooms_to_sell: number | string;
-  room_Description: string;
-  smoking_allowed: boolean;
-
-  images: RoomImage[];
-}
-
-export interface GroupEntry {
-  type: string;
-  category: string;
-  rooms: RoomData[];
-}
-
 export interface LookupMaps {
   groupMap: Map<string, GroupEntry>;
   facilitiesMapMn: Map<number, string>;
