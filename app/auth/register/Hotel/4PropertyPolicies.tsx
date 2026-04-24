@@ -41,6 +41,16 @@ const normalizePrice = (price: string | number | null | undefined): string | nul
   return priceStr;
 };
 
+// Helper to normalize percentage values from API. The backend may return decimals
+// like "8.00" but the form schema requires positive whole-number strings, otherwise
+// users see "Зөвхөн эерэг бүхэл тоо оруулна уу" on a successfully-saved step.
+const normalizePercent = (val: string | number | null | undefined): string => {
+  if (val === null || val === undefined || val === '') return '';
+  const num = parseFloat(String(val).replace(/,/g, ''));
+  if (Number.isNaN(num)) return '';
+  return String(Math.round(num));
+};
+
 type Props = {
   onNext: () => void;
   onBack: () => void;
@@ -121,12 +131,12 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
             
             // Cancellation fee
             cancel_time: normalizeTime(initialData.cancellation_fee?.cancel_time) || '12:00',
-            single_before_time_percentage: initialData.cancellation_fee?.single_before_time_percentage || '',
-            single_after_time_percentage: initialData.cancellation_fee?.single_after_time_percentage || '',
-            multi_5days_before_percentage: initialData.cancellation_fee?.multi_5days_before_percentage || '',
-            multi_3days_before_percentage: initialData.cancellation_fee?.multi_3days_before_percentage || '',
-            multi_2days_before_percentage: initialData.cancellation_fee?.multi_2days_before_percentage || '',
-            multi_1day_before_percentage: initialData.cancellation_fee?.multi_1day_before_percentage || '',
+            single_before_time_percentage: normalizePercent(initialData.cancellation_fee?.single_before_time_percentage),
+            single_after_time_percentage: normalizePercent(initialData.cancellation_fee?.single_after_time_percentage),
+            multi_5days_before_percentage: normalizePercent(initialData.cancellation_fee?.multi_5days_before_percentage),
+            multi_3days_before_percentage: normalizePercent(initialData.cancellation_fee?.multi_3days_before_percentage),
+            multi_2days_before_percentage: normalizePercent(initialData.cancellation_fee?.multi_2days_before_percentage),
+            multi_1day_before_percentage: normalizePercent(initialData.cancellation_fee?.multi_1day_before_percentage),
             
             // Breakfast policy (normalize times)
             breakfast_status: initialData.breakfast_policy?.status || 'no',
@@ -269,16 +279,16 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
   };
 
   return (
-    <div className="flex justify-center items-center">
-      <Card className="w-full max-w-[700px] md:min-w-[500px]">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold text-center">
+    <div className="flex justify-center px-4">
+      <Card className="w-full max-w-[640px]">
+        <CardHeader className="space-y-1 pb-4">
+          <CardTitle className="text-xl font-semibold text-center">
             {t('title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               
               <CheckInOutSection form={form} t={t} />
 
@@ -298,7 +308,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
 
               <ChildPolicySection form={form} t={t} />
 
-              <div className="flex gap-4 pt-6">
+              <div className="flex gap-3 pt-2">
                 <Button
                   type="button"
                   variant="outline"

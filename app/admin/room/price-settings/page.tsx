@@ -252,7 +252,7 @@ export default function PriceSettingsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Үнийн тохиргоо</h1>
+            <h1 className="text-2xl font-semibold">Үнийн тохиргоо</h1>
             <p className="text-muted-foreground">
               Өрөөний үнийн нэмэгдэл болон хасалт тохируулах
             </p>
@@ -271,7 +271,7 @@ export default function PriceSettingsPage() {
     <div className="">
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Үнийн тохиргоо</h1>
+          <h1 className="text-2xl font-semibold">Үнийн тохиргоо</h1>
           <p className="text-muted-foreground">
             Өрөөний үнийн нэмэгдэл болон хасалт тохируулах
           </p>

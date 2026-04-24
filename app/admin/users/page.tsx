@@ -20,6 +20,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
@@ -381,7 +382,7 @@ export default function UsersPage() {
     <div className="flex flex-col gap-6 p-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -391,10 +392,7 @@ export default function UsersPage() {
           >
             <IconRefresh className="h-4 w-4" />
           </Button>
-          <Button
-            onClick={() => openModal()}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
+          <Button onClick={() => openModal()}>
             <IconPlus className="mr-2 h-4 w-4" />
             {t('addUser')}
           </Button>
@@ -484,7 +482,6 @@ export default function UsersPage() {
                       <Switch
                         checked={user.approved}
                         onCheckedChange={() => toggleUserStatus(user)}
-                        className="data-[state=checked]:bg-green-500"
                       />
                     </TableCell>
                     <TableCell>
@@ -535,15 +532,19 @@ export default function UsersPage() {
             {/* Row 1: Name & Position */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="formName">{t('form.name')} *</Label>
                 <Input
-                  placeholder={`${t('form.name')} *`}
+                  id="formName"
+                  placeholder={t('form.name')}
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="formPosition">{t('form.position')} *</Label>
                 <Input
-                  placeholder={`${t('form.position')} *`}
+                  id="formPosition"
+                  placeholder={t('form.position')}
                   value={formPosition}
                   onChange={(e) => setFormPosition(e.target.value)}
                 />
@@ -553,16 +554,20 @@ export default function UsersPage() {
             {/* Row 2: Email & Phone */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="formEmail">{t('form.email')} *</Label>
                 <Input
+                  id="formEmail"
                   type="email"
-                  placeholder={`${t('form.email')} *`}
+                  placeholder={t('form.email')}
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="formPhone">{t('form.phone')} *</Label>
                 <Input
-                  placeholder={`${t('form.phone')} *`}
+                  id="formPhone"
+                  placeholder={t('form.phone')}
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
                 />
@@ -572,6 +577,7 @@ export default function UsersPage() {
             {/* Row 3: Role */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label>{t('form.role')}</Label>
                 <Select value={formRole} onValueChange={setFormRole}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('form.role')} />
@@ -593,7 +599,9 @@ export default function UsersPage() {
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 relative">
+                    <Label htmlFor="formPassword">{t('form.password')}</Label>
                     <Input
+                      id="formPassword"
                       type={isPasswordVisible ? 'text' : 'password'}
                       placeholder={t('form.password')}
                       value={formPassword}
@@ -612,7 +620,9 @@ export default function UsersPage() {
                     </Button>
                   </div>
                   <div className="space-y-2 relative">
+                    <Label htmlFor="formPasswordConfirm">{t('form.passwordConfirm')}</Label>
                     <Input
+                      id="formPasswordConfirm"
                       type={isConfirmVisible ? 'text' : 'password'}
                       placeholder={t('form.passwordConfirm')}
                       value={formPasswordConfirm}
@@ -678,7 +688,6 @@ export default function UsersPage() {
             <Button
               onClick={handleSaveUser}
               disabled={isSaving}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isSaving && <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('save')}

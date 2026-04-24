@@ -47,7 +47,8 @@
     "2": "Next",
     "user_info_missing": "User information missing",
     "loading_map": "Loading Google Maps...",
-    "error_loading_map": "Error loading Google Maps"
+    "error_loading_map": "Error loading Google Maps",
+    "search_placeholder": "Search for a place or address..."
   },
 
   "4PropertyPolicies":{
@@ -338,7 +339,7 @@
     "basicInfo":"Property Basic Info",
     "confirmAddress":"Confirm Address",
     "googleMap":"Google Map",
-    "propertyPolicies":"Property Policies",
+    "internalRules":"Internal Rules",
     "propertyImage":"Property Image",
     "propertyDetails":"Property Details"
   },

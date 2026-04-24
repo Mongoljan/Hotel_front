@@ -89,7 +89,7 @@ export default function CreateHotel() {
         onSubmit={handleSubmit(onSubmit, showValidationErrors)}
         className="bg-white border-[#4A90E2] border-solid border-[1px]  p-10 px-10 max-w-[500px] rounded-[10px] text-gray-600"
       >
-        <h2 className="text-2xl font-bold mx-auto text-center text-blue-500 mb-10">
+        <h2 className="text-xl font-semibold mx-auto text-center mb-6">
           Зочид буудлын бүртгэл
         </h2>
 

@@ -16,7 +16,7 @@ import { IconPalette, IconCheck, IconSun, IconMoon } from '@tabler/icons-react';
 export function ThemeSwitcher() {
   const { themeColor, setThemeColor, isDark, toggleDarkMode } = useTheme();
 
-  const themeColors: ThemeColor[] = ['default', 'emerald', 'rose', 'amber', 'violet', 'cyan'];
+  const themeColors: ThemeColor[] = ['black', 'default', 'emerald', 'rose', 'amber', 'violet', 'cyan'];
 
   // Get computed background style for preview circles
   const getPreviewStyle = (color: ThemeColor) => {

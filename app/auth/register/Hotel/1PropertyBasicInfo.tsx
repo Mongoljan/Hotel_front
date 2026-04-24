@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { OptionButton } from "@/components/ui/option-button";
 
 const API_URL = 'https://dev.kacc.mn/api/property-basic-info/';
 const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
@@ -194,19 +195,14 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
   if (defaultValues === null) return null;
 
   return (
-    <div className="flex justify-center items-center  p-4">
-
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-          
-          </div>
-          <CardTitle className="text-2xl font-bold">{t('title')}</CardTitle>
-          
+    <div className="flex justify-center px-4">
+      <Card className="w-full max-w-[640px]">
+        <CardHeader className="space-y-1 pb-4">
+          <CardTitle className="text-xl font-semibold text-center">{t('title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <FormField
                 control={form.control}
                 name="property_name_mn"
@@ -436,33 +432,9 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                   <FormItem>
                     <FormLabel>{t('5')}?</FormLabel>
                     <FormControl>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => field.onChange(true)}
-                          className={`
-                            px-8 py-2 rounded-md text-sm font-medium transition-all border
-                            ${field.value === true
-                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                              : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                            }
-                          `}
-                        >
-                          {t('yes')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => field.onChange(false)}
-                          className={`
-                            px-8 py-2 rounded-md text-sm font-medium transition-all border
-                            ${field.value === false
-                              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                              : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                            }
-                          `}
-                        >
-                          {t('no')}
-                        </button>
+                      <div className="flex gap-2">
+                        <OptionButton selected={field.value === true} onClick={() => field.onChange(true)}>{t('yes')}</OptionButton>
+                        <OptionButton selected={field.value === false} onClick={() => field.onChange(false)}>{t('no')}</OptionButton>
                       </div>
                     </FormControl>
                     <FormMessage />

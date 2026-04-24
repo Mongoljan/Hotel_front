@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { DatePickerWithValue } from '@/components/ui/date-picker';
+import { OptionButton } from '@/components/ui/option-button';
 
 interface Language {
   id: number;
@@ -194,29 +195,19 @@ export function EditBasicInfoDialog({
           </div>
           <div className="space-y-2">
             <Label>Танай буудал сүлжээ буудал эсэх</Label>
-            <div className="flex gap-3">
-              <button
-                type="button"
+            <div className="flex gap-2">
+              <OptionButton
+                selected={draftBasicInfo.part_of_group === true}
                 onClick={() => setDraftBasicInfo({ ...draftBasicInfo, part_of_group: true })}
-                className={`px-8 py-2 rounded-md text-sm font-medium transition-all border ${
-                  draftBasicInfo.part_of_group === true
-                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                    : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                }`}
               >
                 Тийм
-              </button>
-              <button
-                type="button"
+              </OptionButton>
+              <OptionButton
+                selected={draftBasicInfo.part_of_group === false}
                 onClick={() => setDraftBasicInfo({ ...draftBasicInfo, part_of_group: false, group_name: '' })}
-                className={`px-8 py-2 rounded-md text-sm font-medium transition-all border ${
-                  draftBasicInfo.part_of_group === false
-                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                    : 'border-input bg-background hover:bg-accent hover:text-accent-foreground'
-                }`}
               >
                 Үгүй
-              </button>
+              </OptionButton>
             </div>
             {draftBasicInfo.part_of_group && (
               <div className="space-y-2 mt-3">

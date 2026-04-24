@@ -6,7 +6,7 @@ import { Coffee } from 'lucide-react';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { OptionButton } from "@/components/ui/option-button";
 import { NumericFormat } from 'react-number-format';
 import { z } from 'zod';
 import { schemaHotelSteps3 } from '../../../../schema';
@@ -18,42 +18,30 @@ type Props = {
   t: (key: string) => string;
 };
 
+const timeOptions = Array.from({ length: 96 }, (_, i) => {
+  const hour = Math.floor(i / 4).toString().padStart(2, '0');
+  const minute = ((i % 4) * 15).toString().padStart(2, '0');
+  return { value: `${hour}:${minute}`, label: `${hour}:${minute}` };
+});
+
 export default function BreakfastPolicySection({ form, t }: Props) {
   const breakfastStatus = form.watch('breakfast_status');
 
-  // Safari may render a locale placeholder-like value for empty native time inputs.
-  // Keep breakfast time fields as explicit HH:MM text to ensure consistent UI in all browsers.
-  const formatTimeInput = (raw: string): string => {
-    const digits = raw.replace(/\D/g, '').slice(0, 4);
-    if (digits.length <= 2) return digits;
-    return `${digits.slice(0, 2)}:${digits.slice(2)}`;
-  };
-
-  // Clear validation errors and set default times when status changes to free/paid
   React.useEffect(() => {
     if (breakfastStatus !== 'no') {
-      // Get current values
       const startTime = form.getValues('breakfast_start_time');
       const endTime = form.getValues('breakfast_end_time');
-      
-      // If times are empty, set default values to avoid validation issues
-      if (!startTime) {
-        form.setValue('breakfast_start_time', '', { shouldValidate: false });
-      }
-      if (!endTime) {
-        form.setValue('breakfast_end_time', '', { shouldValidate: false });
-      }
-      
-      // Clear any stale errors on the time fields
+      if (!startTime) form.setValue('breakfast_start_time', '', { shouldValidate: false });
+      if (!endTime) form.setValue('breakfast_end_time', '', { shouldValidate: false });
       form.clearErrors(['breakfast_start_time', 'breakfast_end_time']);
     }
   }, [breakfastStatus, form]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Coffee className="h-5 w-5" />
-        <h3 className="text-lg font-semibold">{t('breakfast')}</h3>
+        <Coffee className="h-4 w-4" />
+        <h3 className="text-base font-semibold">{t('breakfast')}</h3>
       </div>
 
       <FormField
@@ -63,21 +51,15 @@ export default function BreakfastPolicySection({ form, t }: Props) {
           <FormItem>
             <FormLabel>{t('10')}</FormLabel>
             <FormControl>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 {(['no', 'free', 'paid'] as const).map((value) => (
-                  <button
+                  <OptionButton
                     key={value}
-                    type="button"
+                    selected={field.value === value}
                     onClick={() => field.onChange(value)}
-                    className={cn(
-                      "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                      field.value === value
-                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                        : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                    )}
                   >
                     {value === 'no' ? t('17') : value === 'free' ? t('18') : t('19')}
-                  </button>
+                  </OptionButton>
                 ))}
               </div>
             </FormControl>
@@ -87,7 +69,7 @@ export default function BreakfastPolicySection({ form, t }: Props) {
       />
 
       {breakfastStatus !== 'no' && (
-        <div className="space-y-4 p-4 border border-dashed rounded-lg">
+        <div className="space-y-3 p-3 border border-dashed rounded-lg">
           <div className="flex items-center gap-4">
             <FormLabel className="min-w-[150px]">{t('breakfast_time')}</FormLabel>
             <FormField
@@ -95,21 +77,20 @@ export default function BreakfastPolicySection({ form, t }: Props) {
               name="breakfast_start_time"
               render={({ field }) => (
                 <FormItem>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      value={field.value || ''}
-                      onChange={(e) => field.onChange(formatTimeInput(e.target.value || ''))}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                      inputMode="numeric"
-                      autoComplete="off"
-                      placeholder="HH:MM"
-                      maxLength={5}
-                      className="w-32"
-                    />
-                  </FormControl>
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
+                    <FormControl>
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue placeholder="ЦЦ:ММ" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {timeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -120,21 +101,20 @@ export default function BreakfastPolicySection({ form, t }: Props) {
               name="breakfast_end_time"
               render={({ field }) => (
                 <FormItem>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      value={field.value || ''}
-                      onChange={(e) => field.onChange(formatTimeInput(e.target.value || ''))}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                      inputMode="numeric"
-                      autoComplete="off"
-                      placeholder="HH:MM"
-                      maxLength={5}
-                      className="w-32"
-                    />
-                  </FormControl>
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
+                    <FormControl>
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue placeholder="ЦЦ:ММ" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {timeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

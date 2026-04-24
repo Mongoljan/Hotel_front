@@ -6,73 +6,68 @@ interface StepIndicatorProps {
   currentStep: number;
 }
 
-
-const StepIndicator: React.FC<StepIndicatorProps> =  ({ totalSteps, currentStep }) => {
-  const t =  useTranslations('6Step');
+const StepIndicator: React.FC<StepIndicatorProps> = ({ totalSteps, currentStep }) => {
+  const t = useTranslations('6Step');
   const stepNames = [
-    t("basicInfo"),
-    t("confirmAddress"),
-    t("googleMap"),
-   "Дотоод журам",
-    t("propertyImage"),
-    t("propertyDetails"),
+    t('basicInfo'),
+    t('confirmAddress'),
+    t('googleMap'),
+    t('internalRules'),
+    t('propertyImage'),
+    t('propertyDetails'),
   ];
+
   return (
-    <div className="flex items-center justify-center mb-6 ">
-      <div className="flex items-center space-x-4">
-        <div className=" items-center justify-center ">
-          <div className="flex items-center">
-            {[...Array(totalSteps)].map((_, i) => {
-              const stepNumber = i + 1;
-              const isCompleted = stepNumber < currentStep;
-              const isActive = stepNumber === currentStep;
-
-              return (
-                <div key={stepNumber} className="flex items-center">
-                  <div
-                    className={`w-10 h-10 flex items-center justify-center rounded-full border-[1px] ${
-                      isCompleted
-                        ? 'bg-primary text-white border-primary border-[2px]'
-                        : isActive
-                        ? 'border-primary text-primary'
-                        : 'bg-white text-black border-gray-300'
-                    }`}
-                  >
-                    {isCompleted ? <FaCheck className="text-white" /> : stepNumber}
-                  </div>
-
-                  {stepNumber < totalSteps && (
-                    <div
-                      className={`w-40 h-[2px] ${
-                        isCompleted ? 'bg-primary' : 'bg-gray-200'
-                      }`}
-                    ></div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          
-      <div className="flex items-center space-x-40 mt-2">
-        {stepNames.map((name, i) => {
+    <div className="w-full mb-6">
+      <div className="flex items-start justify-between gap-1 sm:gap-2">
+        {Array.from({ length: totalSteps }).map((_, i) => {
           const stepNumber = i + 1;
           const isCompleted = stepNumber < currentStep;
           const isActive = stepNumber === currentStep;
 
           return (
-            <div key={i} className="w-10 text-center">
+            <div
+              key={stepNumber}
+              className="flex-1 flex flex-col items-center min-w-0 relative"
+            >
+              {/* Connector line — drawn to the LEFT of every step except the first */}
+              {stepNumber > 1 && (
+                <div
+                  className={`absolute top-4 sm:top-5 right-1/2 h-[2px] w-full -z-0 ${
+                    isCompleted || isActive ? 'bg-primary' : 'bg-border'
+                  }`}
+                />
+              )}
+
+              {/* Circle */}
               <div
-                className={`text-[11px] text-center text ${
-                  isCompleted || isActive ? 'text-primary' : 'text-black'
+                className={`relative z-10 h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center rounded-full border-2 text-xs sm:text-sm font-medium bg-background ${
+                  isCompleted
+                    ? 'bg-primary border-primary text-primary-foreground'
+                    : isActive
+                    ? 'border-primary text-primary'
+                    : 'border-border text-muted-foreground'
                 }`}
               >
-                {name}
+                {isCompleted ? (
+                  <FaCheck className="h-3 w-3 sm:h-4 sm:w-4" />
+                ) : (
+                  stepNumber
+                )}
+              </div>
+
+              {/* Label */}
+              <div
+                className={`mt-2 text-[10px] sm:text-xs text-center leading-tight px-1 line-clamp-2 ${
+                  isCompleted || isActive ? 'text-foreground font-medium' : 'text-muted-foreground'
+                }`}
+                title={stepNames[i]}
+              >
+                {stepNames[i]}
               </div>
             </div>
           );
         })}
-      </div>
-        </div>
       </div>
     </div>
   );

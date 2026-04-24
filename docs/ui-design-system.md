@@ -4,6 +4,139 @@
 
 This document outlines the consistent design patterns and visual characteristics used throughout the Hotel Admin application for future reference and consistency.
 
+---
+
+## 🧱 Binding Layout Tokens (AUTHORITATIVE — use these everywhere)
+
+These tokens are the **single source of truth** for spacing, widths, and typography. Every admin page, registration step, form, and modal **must** use these exact classes. Do not invent new widths, paddings, or title sizes — change this document first and then update the codebase.
+
+### Admin Page Shell
+```tsx
+<div className="flex-1 space-y-6 p-4 md:p-6">
+  <div className="flex items-center justify-between">
+    <h1 className="text-2xl font-semibold">Page Title</h1>
+    <div className="flex items-center gap-2">{/* actions */}</div>
+  </div>
+  {/* content — inherits space-y-6 from shell */}
+</div>
+```
+- Outer wrapper: `flex-1 space-y-6 p-4 md:p-6`
+- Header row: `flex items-center justify-between`
+- Page title: `text-2xl font-semibold` (NO `mb-*` — rely on `space-y-6`)
+- Action button group: `flex items-center gap-2`
+
+### Registration Step / Centered Form Card
+```tsx
+<div className="flex justify-center px-4">
+  <Card className="w-full max-w-[640px]">
+    <CardHeader className="space-y-1 pb-4">
+      <CardTitle className="text-xl font-semibold text-center">Title</CardTitle>
+      <CardDescription className="text-center">Optional description</CardDescription>
+    </CardHeader>
+    <CardContent>
+      <Form {...form}>
+        <form className="space-y-5">
+          {/* fields */}
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" className="flex-1">Back</Button>
+            <Button type="submit" className="flex-1">Next</Button>
+          </div>
+        </form>
+      </Form>
+    </CardContent>
+  </Card>
+</div>
+```
+- Outer: `flex justify-center px-4` (no `items-center` — let content flow from the top)
+- Card width: **always** `w-full max-w-[640px]` for registration / settings forms
+- CardHeader: `space-y-1 pb-4`
+- CardTitle: `text-xl font-semibold text-center` (NEVER `font-bold` — reserved for hero cards)
+- CardDescription: `text-center`
+- Form spacing (between sections): `space-y-5`
+- Button row: `flex gap-3 pt-2` with `flex-1` buttons
+- Button icons: `h-4 w-4`, `mr-2` / `ml-2`
+
+### Form Field Spacing
+- **Between sections** (groups of related fields): `space-y-5`
+- **Between related fields in a section**: handled by default `FormItem` gap (no custom wrapper)
+- **Inside a single field cluster** (e.g. label + horizontal group): `space-y-2`
+- **Inner padding for "conditional panel"** (a sub-form that appears when a toggle is on): `p-3 border border-dashed rounded-lg` with `space-y-3` inside
+- **Label min-width for inline label/control rows**: `min-w-[200px]` (desktop) — but prefer stacked `FormLabel` on top for new code
+- **Numeric input widths**: `w-20` (short, e.g. "%"), `w-32` (medium), `w-40` / `w-48` (currency)
+
+### Dialog / Modal
+```tsx
+<DialogContent className="sm:max-w-[640px] max-h-[90vh] overflow-y-auto">
+  <DialogHeader>
+    <DialogTitle>Title</DialogTitle>
+  </DialogHeader>
+  <form className="space-y-5">
+    {/* body */}
+    <DialogFooter className="gap-2 pt-2">
+      <Button variant="outline">Cancel</Button>
+      <Button type="submit">Save</Button>
+    </DialogFooter>
+  </form>
+</DialogContent>
+```
+- Dialog width: `sm:max-w-[640px]` (matches form card width — consistency when Dialog holds the same form content)
+- Always scroll-safe: `max-h-[90vh] overflow-y-auto`
+- Footer: `gap-2 pt-2`
+
+### Typography Hierarchy
+| Use | Class |
+|-----|-------|
+| Page title | `text-2xl font-semibold` |
+| Card title | `text-xl font-semibold` |
+| Section heading (inside card) | `text-base font-semibold` |
+| Sub-section heading | `text-sm font-medium` |
+| Body / field label | `text-sm` (default FormLabel) |
+| Secondary / helper text | `text-sm text-muted-foreground` |
+| Dense meta (labels above values) | `text-xs text-muted-foreground` |
+
+- **font-bold is reserved** for hero gradient cards and hero numeric stats only.
+- Never combine title text with `mb-*` — rely on the parent `space-y-*` to create gap.
+
+### Read-only Info Display (InfoRow pattern)
+When showing saved values in a read-only settings view, use a consistent key-value pattern:
+```tsx
+<div className="grid grid-cols-2 gap-6">
+  <div className="space-y-0.5">
+    <p className="text-xs text-muted-foreground">Label</p>
+    <p className="text-sm font-medium">Value</p>
+  </div>
+</div>
+```
+- Grid gap: `gap-6` (24px) — consistent with card-to-card gap elsewhere
+- Label/value pair spacing: `space-y-0.5` (2px) so they read as a unit
+
+### Sidebar / Vertical Menu (inside a settings card)
+```tsx
+<nav className="flex flex-col gap-0.5 text-sm">
+  <button
+    className={cn(
+      'w-full text-left py-2 px-3 rounded-md transition-colors',
+      active
+        ? 'bg-muted text-foreground font-medium'
+        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+    )}
+    aria-current={active ? 'page' : undefined}
+  >
+    Menu Item
+  </button>
+</nav>
+```
+- Always use `<button>`, never `<p onClick>` (accessibility).
+- Active state uses `bg-muted` (neutral), NOT `bg-primary/10` — primary is reserved for CTAs (see COLOR-STANDARD.md).
+
+### Step Indicator (Multi-step flow)
+- Responsive: circle `h-8 w-8 sm:h-10 sm:w-10`
+- Label: `text-[10px] sm:text-xs`, `line-clamp-2` for long Mongolian labels
+- Connector line: `h-[2px]` absolute-positioned to avoid fixed `space-x-*` breaking on mobile
+- All step names **must** go through `useTranslations` (no hardcoded strings)
+
+---
+
 ## 🎨 Core Design Philosophy
 
 ### Visual Identity

@@ -142,8 +142,8 @@ export default function DashboardPage() {
                   </Badge>
                 </div>
               </div>
-              <div className="rounded-full bg-blue-100 p-3">
-                <IconCloud className="h-5 w-5 text-blue-600" />
+              <div className="rounded-full bg-primary/10 p-3">
+                <IconCloud className="h-5 w-5 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -160,8 +160,8 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">12 ирсэн • 12 хүлээгдэж байгаа</p>
               </div>
-              <div className="rounded-full bg-green-100 p-3">
-                <IconLogin className="h-5 w-5 text-green-600" />
+              <div className="rounded-full bg-primary/10 p-3">
+                <IconLogin className="h-5 w-5 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -178,8 +178,8 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">3 үлдсэн • 4 гарсан</p>
               </div>
-              <div className="rounded-full bg-orange-100 p-3">
-                <IconLogout className="h-5 w-5 text-orange-600" />
+              <div className="rounded-full bg-primary/10 p-3">
+                <IconLogout className="h-5 w-5 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -202,8 +202,8 @@ export default function DashboardPage() {
                   </Badge>
                 </div>
               </div>
-              <div className="rounded-full bg-emerald-100 p-3">
-                <IconCash className="h-5 w-5 text-emerald-600" />
+              <div className="rounded-full bg-primary/10 p-3">
+                <IconCash className="h-5 w-5 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -314,7 +314,7 @@ export default function DashboardPage() {
                 />
                 <Bar
                   dataKey="count"
-                  fill="#22c55e"
+                  fill="hsl(var(--primary))"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={40}
                 />

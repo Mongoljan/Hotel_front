@@ -6,7 +6,7 @@ import { Car } from 'lucide-react';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { OptionButton } from "@/components/ui/option-button";
 import { NumericFormat } from 'react-number-format';
 import { z } from 'zod';
 import { schemaHotelSteps3 } from '../../../../schema';
@@ -56,7 +56,7 @@ function ParkingSubSection({
   }, [parkingValue, feeTypeValue, priceValue, form, priceFieldName, feeTypeFieldName]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <FormField
         control={form.control}
         name={parkingFieldName}
@@ -64,21 +64,15 @@ function ParkingSubSection({
           <FormItem>
             <FormLabel>{label}</FormLabel>
             <FormControl>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 {(['no', 'free', 'paid'] as const).map((value) => (
-                  <button
+                  <OptionButton
                     key={value}
-                    type="button"
+                    selected={field.value === value}
                     onClick={() => field.onChange(value)}
-                    className={cn(
-                      "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                      field.value === value
-                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                        : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                    )}
                   >
                     {value === 'no' ? t('17') : value === 'free' ? t('18') : t('19')}
-                  </button>
+                  </OptionButton>
                 ))}
               </div>
             </FormControl>
@@ -88,7 +82,7 @@ function ParkingSubSection({
       />
 
       {parkingValue === 'paid' && (
-        <div className="flex gap-4 p-4 border border-dashed rounded-lg">
+        <div className="flex gap-3 p-3 border border-dashed rounded-lg">
           <FormField
             control={form.control}
             name={feeTypeFieldName}
@@ -153,10 +147,10 @@ function ParkingSubSection({
 
 export default function ParkingPolicySection({ form, t }: Props) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Car className="h-5 w-5" />
-        <h3 className="text-lg font-semibold">{t('parking_info')}</h3>
+        <Car className="h-4 w-4" />
+        <h3 className="text-base font-semibold">{t('parking_info')}</h3>
       </div>
 
       <ParkingSubSection

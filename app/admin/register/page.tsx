@@ -125,7 +125,7 @@ export default function RegisterPage() {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white border-primary border-solid border-[1px] p-10 px-10 max-w-[600px] rounded-md text-gray-600"
       >
-        <h2 className="text-2xl font-bold mx-auto text-center text-blue-500 mb-10">Бүртүүлэх</h2>
+        <h2 className="text-xl font-semibold mx-auto text-center mb-6">Бүртүүлэх</h2>
 
         <div className="mb-5">Аккаунт байгаа юу?
           <Link className="text-blue-500 ml-[4px] hover:text-blue-300" href={"/auth/login"}>

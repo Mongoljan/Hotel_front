@@ -84,20 +84,20 @@ export default function BookingsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [bookRes, guestRes] = await Promise.all([
+      const [bookRes, guestRes, roomRes] = await Promise.all([
         fetch('/api/mock/bookings'),
         fetch('/api/mock/guests'),
+        fetch('/api/mock/rooms'),
       ]);
-      const bookData  = await bookRes.json();
-      const guestData = await guestRes.json();
+      const [bookData, guestData, roomData] = await Promise.all([
+        bookRes.json(),
+        guestRes.json(),
+        roomRes.json(),
+      ]);
 
       const guestMap = new Map<number, Guest>(
         (guestData.results ?? []).map((g: Guest) => [g.id, g])
       );
-
-      // Also fetch rooms to get room numbers
-      const roomRes  = await fetch('/api/mock/rooms');
-      const roomData = await roomRes.json();
       const roomMap  = new Map<number, string>(
         (roomData.results ?? []).map((r: { id: number; room_number: string }) => [r.id, r.room_number])
       );
@@ -162,7 +162,7 @@ export default function BookingsPage() {
             <IconPrinter className="mr-2 h-4 w-4" />
             Хэвлэх
           </Button>
-          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+          <Button size="sm">
             <IconPlus className="mr-2 h-4 w-4" />
             Шинэ захиалга
           </Button>

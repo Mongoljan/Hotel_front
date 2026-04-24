@@ -28,11 +28,11 @@
     --accent-foreground: 222 47% 11%;
     
     /* ─────────────────────────────────────────────────────────────────────────
-       ACCENT COLORS - Changed by theme switcher
+       ACCENT COLORS - Changed by theme switcher (default: near-black)
        ─────────────────────────────────────────────────────────────────────── */
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 100%;
-    --ring: 221 83% 53%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --ring: 240 5.9% 10%;
     
     /* ─────────────────────────────────────────────────────────────────────────
        SEMANTIC STATUS COLORS - Consistent across all themes
@@ -55,7 +55,7 @@
        ─────────────────────────────────────────────────────────────────────── */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --input-focus: 221 83% 53%;
+    --input-focus: 240 5.9% 10%;
     
     /* ─────────────────────────────────────────────────────────────────────────
        RADIUS SCALE - Use these for consistent rounded corners
@@ -82,17 +82,17 @@
        ─────────────────────────────────────────────────────────────────────── */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 220 14% 96%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-ring: 240 5.9% 10%;
 
     /* ─────────────────────────────────────────────────────────────────────────
        CHART COLORS
        ─────────────────────────────────────────────────────────────────────── */
-    --chart-1: 221 83% 53%;
+    --chart-1: 240 5.9% 10%;
     --chart-2: 160 84% 39%;
     --chart-3: 38 92% 50%;
     --chart-4: 280 65% 60%;
@@ -118,9 +118,9 @@
     --accent-foreground: 210 40% 98%;
     
     /* Accent colors - dark mode (changed by theme) */
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --ring: 217 91% 60%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --ring: 0 0% 98%;
     
     /* Semantic status colors - dark mode */
     --success: 142 76% 45%;
@@ -139,7 +139,7 @@
     /* Borders & inputs - dark mode */
     --border: 217 33% 20%;
     --input: 217 33% 20%;
-    --input-focus: 217 91% 60%;
+    --input-focus: 0 0% 98%;
     
     /* Shadows - dark mode (use colored shadows) */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -151,12 +151,12 @@
     /* Sidebar - dark mode */
     --sidebar-background: 222 30% 11%;
     --sidebar-foreground: 210 35% 92%;
-    --sidebar-primary: 217 88% 64%;
-    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
     --sidebar-accent: 220 22% 18%;
     --sidebar-accent-foreground: 210 40% 96%;
     --sidebar-border: 220 18% 24%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-ring: 0 0% 98%;
   }
 
   * {

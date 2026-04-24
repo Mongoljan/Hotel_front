@@ -1,8 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-export type ThemeColor = 'default' | 'emerald' | 'rose' | 'amber' | 'violet' | 'cyan';
+export type ThemeColor = 'black' | 'default' | 'emerald' | 'rose' | 'amber' | 'violet' | 'cyan';
 
 interface ThemeContextType {
   themeColor: ThemeColor;
@@ -28,6 +28,19 @@ export const themePresets: Record<ThemeColor, {
   chart4: string;
   chart5: string;
 }> = {
+  black: {
+    name: 'Black',
+    preview: 'bg-neutral-900',
+    primary: { light: '240 5.9% 10%', dark: '0 0% 98%' },
+    primaryForeground: { light: '0 0% 98%', dark: '240 5.9% 10%' },
+    ring: { light: '240 5.9% 10%', dark: '0 0% 98%' },
+    sidebarPrimary: { light: '240 5.9% 10%', dark: '0 0% 98%' },
+    chart1: '240 5.9% 10%',
+    chart2: '160 84% 39%',
+    chart3: '38 92% 50%',
+    chart4: '280 65% 60%',
+    chart5: '340 75% 55%',
+  },
   default: {
     name: 'Blue',
     preview: 'bg-blue-500',
@@ -109,7 +122,7 @@ export const themePresets: Record<ThemeColor, {
 };
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeColor, setThemeColorState] = useState<ThemeColor>('default');
+  const [themeColor, setThemeColorState] = useState<ThemeColor>('black');
   const [isDark, setIsDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -154,7 +167,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
     
     // Apply initial theme colors
-    const initialTheme = savedTheme && themePresets[savedTheme] ? savedTheme : 'default';
+    const initialTheme = savedTheme && themePresets[savedTheme] ? savedTheme : 'black';
     applyThemeColors(initialTheme, savedDark);
   }, []);
 
@@ -181,8 +194,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const contextValue = useMemo(
+    () => ({ themeColor, setThemeColor, isDark, toggleDarkMode }),
+    [themeColor, isDark]
+  );
+
   return (
-    <ThemeContext.Provider value={{ themeColor, setThemeColor, isDark, toggleDarkMode }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );

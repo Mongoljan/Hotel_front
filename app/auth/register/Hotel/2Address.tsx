@@ -218,16 +218,14 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
   };
 
   return (
-    <div className="flex justify-center h-full rounded-[12px]">
-
-      <Card className="w-full max-w-[440px]">
-        <CardHeader>
-          <CardTitle className="text-[30px] font-bold text-center text-black">{t("title")}</CardTitle>
-       
+    <div className="flex justify-center px-4">
+      <Card className="w-full max-w-[640px]">
+        <CardHeader className="space-y-1 pb-4">
+          <CardTitle className="text-xl font-semibold text-center">{t("title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <FormField
                 control={form.control}
                 name="province_city"
@@ -369,7 +367,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                 )}
               />
 
-              <div className="flex gap-4 pt-6">
+              <div className="flex gap-3 pt-2">
                 <Button
                   type="button"
                   variant="outline"

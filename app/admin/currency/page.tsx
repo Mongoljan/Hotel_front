@@ -503,7 +503,7 @@ export default function CurrencyPage() {
     <div className="flex flex-col gap-6 p-6">
       {/* Page Title */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Валют, төлбөрийн хэрэгсэл</h1>
+        <h1 className="text-2xl font-semibold">Валют, төлбөрийн хэрэгсэл</h1>
       </div>
 
       {/* Main Content */}
@@ -547,7 +547,7 @@ export default function CurrencyPage() {
               <>
                 {/* Currency Tab Header */}
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold">{t('currency')}</h2>
+                  <h2 className="text-base font-semibold">{t('currency')}</h2>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -648,7 +648,7 @@ export default function CurrencyPage() {
               <>
                 {/* Payment Methods Tab */}
                 <div className="mb-6">
-                  <h2 className="text-lg font-semibold mb-2">{t('paymentMethods')}</h2>
+                  <h2 className="text-base font-semibold">{t('paymentMethods')}</h2>
                   <p className="text-sm text-muted-foreground">
                     {t('paymentMethodsDescription')}
                   </p>

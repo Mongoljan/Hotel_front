@@ -5,7 +5,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { Baby } from 'lucide-react';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { OptionButton } from "@/components/ui/option-button";
 import { NumericFormat } from 'react-number-format';
 import { z } from 'zod';
 import { schemaHotelSteps3 } from '../../../../schema';
@@ -36,10 +36,10 @@ export default function ChildPolicySection({ form, t }: Props) {
   }, [allowExtraBed, form]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Baby className="h-5 w-5" />
-        <h3 className="text-lg font-semibold">{t('children_extra_bed')}</h3>
+        <Baby className="h-4 w-4" />
+        <h3 className="text-base font-semibold">{t('children_extra_bed')}</h3>
       </div>
 
       <FormField
@@ -49,31 +49,9 @@ export default function ChildPolicySection({ form, t }: Props) {
           <FormItem>
             <FormLabel>{t('11')}</FormLabel>
             <FormControl>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => field.onChange(true)}
-                  className={cn(
-                    "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                    field.value === true
-                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                  )}
-                >
-                  {t('yes')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => field.onChange(false)}
-                  className={cn(
-                    "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                    field.value === false
-                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                  )}
-                >
-                  {t('no_label')}
-                </button>
+              <div className="flex gap-2">
+                <OptionButton selected={field.value === true} onClick={() => field.onChange(true)}>{t('yes')}</OptionButton>
+                <OptionButton selected={field.value === false} onClick={() => field.onChange(false)}>{t('no_label')}</OptionButton>
               </div>
             </FormControl>
             <FormMessage />
@@ -82,7 +60,7 @@ export default function ChildPolicySection({ form, t }: Props) {
       />
 
       {allowChildren && (
-        <div className="space-y-4 p-4 border border-dashed rounded-lg">
+        <div className="space-y-3 p-3 border border-dashed rounded-lg">
           <FormField
             control={form.control}
             name="max_child_age"
@@ -116,31 +94,9 @@ export default function ChildPolicySection({ form, t }: Props) {
               <FormItem>
                 <FormLabel>{t('child_bed_available')}</FormLabel>
                 <FormControl>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => field.onChange('yes')}
-                      className={cn(
-                        "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                        field.value === 'yes'
-                          ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                          : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                      )}
-                    >
-                      {t('yes')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => field.onChange('no')}
-                      className={cn(
-                        "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                        field.value === 'no'
-                          ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                          : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                      )}
-                    >
-                      {t('no_label')}
-                    </button>
+                  <div className="flex gap-2">
+                    <OptionButton selected={field.value === 'yes'} onClick={() => field.onChange('yes')}>{t('yes')}</OptionButton>
+                    <OptionButton selected={field.value === 'no'} onClick={() => field.onChange('no')}>{t('no_label')}</OptionButton>
                   </div>
                 </FormControl>
                 <FormMessage />
@@ -157,31 +113,9 @@ export default function ChildPolicySection({ form, t }: Props) {
           <FormItem>
             <FormLabel>{t('extra_bed_available')}</FormLabel>
             <FormControl>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => field.onChange(true)}
-                  className={cn(
-                    "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                    field.value === true
-                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                  )}
-                >
-                  {t('yes')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => field.onChange(false)}
-                  className={cn(
-                    "px-8 py-2 rounded-md text-sm font-medium transition-all border",
-                    field.value === false
-                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                      : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                  )}
-                >
-                  {t('no_label')}
-                </button>
+              <div className="flex gap-2">
+                <OptionButton selected={field.value === true} onClick={() => field.onChange(true)}>{t('yes')}</OptionButton>
+                <OptionButton selected={field.value === false} onClick={() => field.onChange(false)}>{t('no_label')}</OptionButton>
               </div>
             </FormControl>
             <FormMessage />
@@ -190,7 +124,7 @@ export default function ChildPolicySection({ form, t }: Props) {
       />
 
       {allowExtraBed && (
-        <div className="p-4 border border-dashed rounded-lg">
+        <div className="p-3 border border-dashed rounded-lg">
           <FormField
             control={form.control}
             name="extra_bed_price"

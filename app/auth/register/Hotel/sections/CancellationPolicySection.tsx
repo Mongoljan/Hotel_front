@@ -4,6 +4,7 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { z } from 'zod';
 import { schemaHotelSteps3 } from '../../../../schema';
@@ -14,6 +15,12 @@ type Props = {
   form: UseFormReturn<FormFields>;
   t: (key: string, values?: Record<string, string>) => string;
 };
+
+const timeOptions = Array.from({ length: 96 }, (_, i) => {
+  const hour = Math.floor(i / 4).toString().padStart(2, '0');
+  const minute = ((i % 4) * 15).toString().padStart(2, '0');
+  return { value: `${hour}:${minute}`, label: `${hour}:${minute}` };
+});
 
 function clampPercent(value: string): string {
   const cleaned = value.replace(/[^0-9]/g, '');
@@ -27,8 +34,8 @@ export default function CancellationPolicySection({ form, t }: Props) {
   const displayCancelTime = cancelTime ? cancelTime.slice(0, 5) : '...';
 
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold">{t('cancellation_policy')}</h3>
+    <div className="space-y-3">
+      <h3 className="text-base font-semibold">{t('cancellation_policy')}</h3>
 
       <FormField
         control={form.control}
@@ -37,19 +44,30 @@ export default function CancellationPolicySection({ form, t }: Props) {
           <FormItem>
             <div className="flex items-center gap-4">
               <FormLabel className="min-w-[200px]">{t('cancellable_time')}</FormLabel>
-              <FormControl>
-                <Input type="time" {...field} className="w-40" />
-              </FormControl>
+              <Select onValueChange={field.onChange} value={field.value || undefined}>
+                <FormControl>
+                  <SelectTrigger className="w-[110px]">
+                    <SelectValue placeholder="ЦЦ:ММ" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {timeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <FormMessage />
           </FormItem>
         )}
       />
 
-      <Separator className="my-4" />
+      <Separator className="my-2" />
 
       {/* Single Room Section */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         <h4 className="font-medium text-base">{t('single_room_fee_label')}</h4>
 
         <FormField
@@ -89,10 +107,10 @@ export default function CancellationPolicySection({ form, t }: Props) {
         />
       </div>
 
-      <Separator className="my-4" />
+      <Separator className="my-2" />
 
       {/* Multi Room Section */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         <h4 className="font-medium text-base">{t('multi_room_fee_label')}</h4>
 
         <FormField

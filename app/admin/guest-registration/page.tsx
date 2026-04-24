@@ -173,7 +173,7 @@ export default function GuestRegistrationPage() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <Button variant="outline" size="sm" onClick={fetchData}>
           <IconRefresh className="mr-2 h-4 w-4" />
           Шинэчлэх

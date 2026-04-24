@@ -246,10 +246,10 @@ export default function WorkersPage() {
   const getUserTypeBadge = (userType: number) => {
     const name = USER_TYPE_NAMES[userType] || 'Unknown';
     const variants: Record<number, string> = {
-      2: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', // Owner
-      3: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', // Manager
-      4: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300', // Reception
-      5: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300', // User
+      2: 'bg-blue-100 text-blue-800',    // Owner
+      3: 'bg-green-100 text-green-800',  // Manager
+      4: 'bg-purple-100 text-purple-800', // Reception
+      5: 'bg-muted text-muted-foreground', // User
     };
     return (
       <Badge className={cn('font-medium', variants[userType] || 'bg-muted')}>

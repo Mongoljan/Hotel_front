@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useState, useContext, ReactNode } from 'react';
+import { createContext, useState, useContext, useMemo, useCallback, ReactNode } from 'react';
 
 // Define the shape of the user state
 interface UserContextType {
@@ -23,16 +23,18 @@ export function useUser() {
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<{ role: string } | null>(null);
 
-  const login = (role: string) => {
+  const login = useCallback((role: string) => {
     setUser({ role });
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
-  };
+  }, []);
+
+  const value = useMemo(() => ({ user, login, logout }), [user, login, logout]);
 
   return (
-    <UserContext.Provider value={{ user, login, logout }}>
+    <UserContext.Provider value={value}>
       {children}
     </UserContext.Provider>
   );

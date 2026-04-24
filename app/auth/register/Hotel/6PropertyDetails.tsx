@@ -4,14 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Star, X } from 'lucide-react';
 import { schemaHotelSteps6 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -297,29 +296,22 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
             {/* Selected section */}
             {selectedItems.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">
+                <p className="text-xs font-medium text-primary uppercase tracking-wide">
                   {t('selected_label')} ({selectedItems.length})
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {selectedItems.map((item) => {
                     const label = locale === 'mn' ? item.name_mn : item.name_en;
                     return (
-                      <div
+                      <button
                         key={item.id}
-                        className="flex items-center gap-2 p-2 rounded-md bg-green-50 border border-green-200"
+                        type="button"
+                        onClick={() => toggleItem(key, item.id)}
+                        className="group inline-flex items-center gap-1.5 rounded-full bg-primary/15 text-primary px-3 py-1 text-xs font-medium hover:bg-primary/25 transition-colors"
                       >
-                        <Checkbox
-                          id={`${key}-${item.id}`}
-                          checked
-                          onCheckedChange={() => toggleItem(key, item.id)}
-                        />
-                        <label
-                          htmlFor={`${key}-${item.id}`}
-                          className="flex-1 text-sm cursor-pointer leading-none"
-                        >
-                          {label}
-                        </label>
-                      </div>
+                        {label}
+                        <X className="h-3 w-3 opacity-70 group-hover:opacity-100 flex-shrink-0" />
+                      </button>
                     );
                   })}
                 </div>
@@ -333,30 +325,22 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
 
             {/* Unselected section */}
             {unselectedItems.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   {t('available_label')} ({unselectedItems.length})
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {unselectedItems.map((item) => {
                     const label = locale === 'mn' ? item.name_mn : item.name_en;
                     return (
-                      <div
+                      <button
                         key={item.id}
-                        className="flex items-center gap-2 p-2 rounded-md border border-muted hover:bg-muted/30 transition-colors"
+                        type="button"
+                        onClick={() => toggleItem(key, item.id)}
+                        className="inline-flex items-center rounded-full bg-muted/40 text-muted-foreground px-3 py-1 text-xs hover:bg-muted hover:text-foreground transition-colors"
                       >
-                        <Checkbox
-                          id={`${key}-${item.id}`}
-                          checked={false}
-                          onCheckedChange={() => toggleItem(key, item.id)}
-                        />
-                        <label
-                          htmlFor={`${key}-${item.id}`}
-                          className="flex-1 text-sm cursor-pointer leading-none text-muted-foreground"
-                        >
-                          {label}
-                        </label>
-                      </div>
+                        {label}
+                      </button>
                     );
                   })}
                 </div>
@@ -373,13 +357,13 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
   };
 
   return (
-    <div className="flex justify-center items-center">
-      <Card className="w-full max-w-[640px] md:min-w-[440px]">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">{t('title')}</CardTitle>
+    <div className="flex justify-center px-4">
+      <Card className="w-full max-w-[640px]">
+        <CardHeader className="space-y-1 pb-4">
+          <CardTitle className="text-xl font-semibold text-center">{t('title')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
             {groups.map(renderGroup)}
 
             {form.formState.errors.general_facilities && (
@@ -388,7 +372,7 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
               </p>
             )}
 
-            <div className="flex gap-4 pt-6">
+            <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" onClick={onBack} className="flex-1">
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 {t('5')}

@@ -444,7 +444,7 @@ export default function ReceptionPage() {
   // ────────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-6">
+    <div className="flex-1 space-y-6 p-4 md:p-6">
 
       {/* Title bar */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -462,18 +462,22 @@ export default function ReceptionPage() {
 
       {/* Calendar card */}
       <Card className="border-border/80 bg-card shadow-sm">
-        <CardContent className="space-y-4 p-4">
+        <CardContent className="space-y-5 p-6">
 
           {/* Toolbar */}
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap gap-2">
               {/* View toggle */}
-              <div className="flex overflow-hidden rounded-full border border-border">
+              <div className="flex overflow-hidden rounded-md">
                 {(['week','month'] as const).map((m) => (
                   <button
                     key={m}
                     onClick={() => setViewMode(m)}
-                    className={`px-4 py-1.5 text-sm transition ${viewMode === m ? 'bg-foreground text-background font-medium' : 'text-muted-foreground hover:bg-muted/50'}`}
+                    className={`px-4 py-1.5 text-sm font-medium transition-colors rounded-md ${
+                      viewMode === m
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
                   >
                     {m === 'week' ? '7 хоногоор' : 'Сараар'}
                   </button>
@@ -1106,8 +1110,8 @@ export default function ReceptionPage() {
 
                   <div className="mt-3 rounded-xl bg-primary/15 px-3 py-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-primary">Нийт дүн</span>
-                      <span className="text-lg font-bold text-primary">{fmt(modalTotals.total)}</span>
+                      <span className="text-sm font-semibold text-primary">Нийт дүн</span>
+                      <span className="text-base font-semibold text-primary">{fmt(modalTotals.total)}</span>
                     </div>
                   </div>
                 </div>

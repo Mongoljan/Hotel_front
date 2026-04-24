@@ -70,7 +70,8 @@
     "2": "Дараах",
     "user_info_missing": "Хэрэглэгчийн мэдээлэл олдсонгүй",
     "loading_map": "Google Maps ачааллаж байна...",
-    "error_loading_map": "Google Maps ачаалахад алдаа гарлаа"
+    "error_loading_map": "Google Maps ачаалахад алдаа гарлаа",
+    "search_placeholder": "Газар, хаягаар хайх..."
   },
 "4PropertyPolicies": {
   "title": "Дотоод журам",
@@ -347,7 +348,7 @@
   "basicInfo": "Үндсэн мэдээлэл",
   "confirmAddress": "Хаяг баталгаажуулах",
   "googleMap": "Гүүгл газрын зураг",
-  "propertyPolicies": "Үл хөдлөхийн бодлогууд",
+  "internalRules": "Дотоод журам",
   "propertyImage": "Үл хөдлөхийн зураг",
   "propertyDetails": "Үл хөдлөхийн дэлгэрэнгүй"
 },

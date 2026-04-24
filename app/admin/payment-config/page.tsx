@@ -354,10 +354,10 @@ export default function PaymentConfigPage() {
     return (
       <div className="space-y-2">
         {configs.map((config) => (
-          <div key={config.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div key={config.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <div className="flex items-center gap-3">
               {config.bank?.logo ? (
-                <div className="w-8 h-8 rounded overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
+                <div className="w-8 h-8 rounded overflow-hidden bg-white border border-border flex items-center justify-center">
                   <img 
                     src={config.bank.logo} 
                     alt={config.bank.name || 'Bank'}
@@ -385,7 +385,7 @@ export default function PaymentConfigPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge className={config.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}>
+              <Badge className={config.is_active ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}>
                 {config.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
               </Badge>
               <DropdownMenu>
@@ -437,10 +437,10 @@ export default function PaymentConfigPage() {
     return (
       <div className="space-y-2">
         {configs.map((config) => (
-          <div key={config.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div key={config.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <div className="flex items-center gap-3">
               {config.bank?.logo ? (
-                <div className="w-8 h-8 rounded overflow-hidden bg-white border border-gray-200 flex items-center justify-center">
+                <div className="w-8 h-8 rounded overflow-hidden bg-white border border-border flex items-center justify-center">
                   <img 
                     src={config.bank.logo} 
                     alt={config.bank.name || 'Bank'}
@@ -468,7 +468,7 @@ export default function PaymentConfigPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge className={config.is_active ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-600"}>
+              <Badge className={config.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}>
                 {config.is_active ? 'онлайн' : 'офлайн'}
               </Badge>
               <DropdownMenu>
@@ -522,7 +522,7 @@ export default function PaymentConfigPage() {
               key={solution.id} 
               className={cn(
                 "p-3 rounded-lg border-2 transition-all duration-200",
-                isActive ? "bg-primary/5 border-primary/20" : "bg-gray-50 border-gray-200"
+                isActive ? "bg-primary/5 border-primary/20" : "bg-muted border-border"
               )}
             >
               <div className="flex items-center justify-between mb-2">
@@ -543,7 +543,7 @@ export default function PaymentConfigPage() {
                 variant="secondary" 
                 className={cn(
                   "text-xs",
-                  isActive ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-600"
+                  isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
                 )}
               >
                 төлөв: {isActive ? 'идэвхтэй' : 'идэвхгүй'}
@@ -560,7 +560,7 @@ export default function PaymentConfigPage() {
     const config = configs[0];
     
     return (
-      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
         <div>
           <div className="font-medium text-sm mb-1">
             {sectionConfig.description}
@@ -658,12 +658,12 @@ export default function PaymentConfigPage() {
     return (
       <div className="flex-1 space-y-6 p-4 md:p-6">
         <div className="flex items-center justify-between">
-          <div className="h-8 bg-gray-200 rounded w-64 animate-pulse" />
+          <div className="h-8 bg-muted rounded w-64 animate-pulse" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-80 bg-gray-200 rounded animate-pulse" />
+            <div key={i} className="h-80 bg-muted rounded animate-pulse" />
           ))}
         </div>
       </div>

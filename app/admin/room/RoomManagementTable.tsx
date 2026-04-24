@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo } from "react";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { ThemeProvider } from "@mui/material/styles";
 import { Box, IconButton, Tooltip } from "@mui/material";
@@ -34,7 +34,7 @@ interface RoomManagementTableProps {
   loading?: boolean;
 }
 
-function AmenityPills({ amenities, overflow }: { amenities?: string[]; overflow?: number }) {
+const AmenityPills = memo(function AmenityPills({ amenities, overflow }: { amenities?: string[]; overflow?: number }) {
   if (!amenities || amenities.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-1">
@@ -50,9 +50,9 @@ function AmenityPills({ amenities, overflow }: { amenities?: string[]; overflow?
       ) : null}
     </div>
   );
-}
+});
 
-function OccupancyMeter({ sold, total, label }: { sold?: number; total?: number; label: string }) {
+const OccupancyMeter = memo(function OccupancyMeter({ sold, total, label }: { sold?: number; total?: number; label: string }) {
   if (total == null || sold == null) return <span className="text-muted-foreground">—</span>;
   const ratio = total > 0 ? Math.round((sold / total) * 100) : 0;
   return (
@@ -65,9 +65,9 @@ function OccupancyMeter({ sold, total, label }: { sold?: number; total?: number;
       </Tooltip>
     </div>
   );
-}
+});
 
-function CapacityCell({ adults, kids }: { adults?: number; kids?: number }) {
+const CapacityCell = memo(function CapacityCell({ adults, kids }: { adults?: number; kids?: number }) {
   if (adults == null && kids == null) return <span className="text-muted-foreground">—</span>;
   return (
     <div className="flex items-center gap-3 text-sm">
@@ -85,9 +85,9 @@ function CapacityCell({ adults, kids }: { adults?: number; kids?: number }) {
       ) : null}
     </div>
   );
-}
+});
 
-function HousekeepingChip({ status, label }: { status?: string; label: (status: string) => string }) {
+const HousekeepingChip = memo(function HousekeepingChip({ status, label }: { status?: string; label: (status: string) => string }) {
   if (!status) return <Badge variant="secondary">{label("unknown")}</Badge>;
   const variants: Record<string, string> = {
     clean: "bg-success/20 text-success-600",
@@ -97,7 +97,7 @@ function HousekeepingChip({ status, label }: { status?: string; label: (status: 
   return (
     <Badge className={cn("capitalize", variants[status] ?? "bg-muted/70 text-muted-foreground")}>{label(status)}</Badge>
   );
-}
+});
 
 export function RoomManagementTable({ rooms, lookups, onEdit, onDeleted, loading }: RoomManagementTableProps) {
   const locale = useLocale() as "en" | "mn";

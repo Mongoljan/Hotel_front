@@ -227,10 +227,10 @@ export default function ReceptionPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex-1 space-y-6 p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+        <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <Button
           onClick={() => setIsAddModalOpen(true)}
           className="bg-primary text-primary-foreground hover:bg-primary/90"

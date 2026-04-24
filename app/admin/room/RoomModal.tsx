@@ -1059,7 +1059,7 @@ export default function RoomModal({
 
         {/* ─── Header + Close Button ───────────────────────────────────────────── */}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">
+          <h2 className="text-base font-semibold">
             {addToGroupMode 
               ? "Бүлэгт өрөө нэмэх" 
               : editGroupMode

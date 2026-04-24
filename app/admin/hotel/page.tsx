@@ -360,7 +360,7 @@ export default function RegisterHotel() {
                 <div className="space-y-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                      <h1 className="text-2xl font-semibold">
                         {hotelDisplayData.hotelName}
                       </h1>
                       {basicInfo?.property_name_en && (
@@ -369,7 +369,7 @@ export default function RegisterHotel() {
                         </p>
                       )}
                     </div>
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 shrink-0">
+                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 shrink-0">
                       <IconCheck className="mr-1 h-3.5 w-3.5" />
                       {t('verified')}
                     </Badge>
@@ -395,7 +395,7 @@ export default function RegisterHotel() {
                         <p className="text-xs text-muted-foreground">{t('total_rooms')}</p>
                         <div className="flex items-baseline gap-2">
                           <IconBed className="h-4 w-4 text-primary" />
-                          <p className="text-lg font-bold">{hotelDisplayData.totalRooms}</p>
+                          <p className="text-base font-semibold">{hotelDisplayData.totalRooms}</p>
                         </div>
                       </div>
 
@@ -403,7 +403,7 @@ export default function RegisterHotel() {
                         <p className="text-xs text-muted-foreground">{t('start_date')}</p>
                         <div className="flex items-baseline gap-2">
                           <IconCalendar className="h-4 w-4 text-primary" />
-                          <p className="text-lg font-bold">{hotelDisplayData.startDate}</p>
+                          <p className="text-base font-semibold">{hotelDisplayData.startDate}</p>
                         </div>
                       </div>
 
@@ -411,7 +411,7 @@ export default function RegisterHotel() {
                         <p className="text-xs text-muted-foreground">{t('children')}</p>
                         <div className="flex items-baseline gap-2">
                           <IconMoodKid className="h-4 w-4 text-primary" />
-                          <p className="text-lg font-bold">{hotelDisplayData.childrenAllowed}</p>
+                          <p className="text-base font-semibold">{hotelDisplayData.childrenAllowed}</p>
                         </div>
                       </div>
 
@@ -421,7 +421,7 @@ export default function RegisterHotel() {
                           <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <p className="text-lg font-bold">{hotelDisplayData.petsAllowed}</p>
+                          <p className="text-base font-semibold">{hotelDisplayData.petsAllowed}</p>
                         </div>
                       </div>
 
@@ -431,7 +431,7 @@ export default function RegisterHotel() {
                           <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                           </svg>
-                          <p className="text-lg font-bold">{hotelDisplayData.breakfast}</p>
+                          <p className="text-base font-semibold">{hotelDisplayData.breakfast}</p>
                         </div>
                       </div>
 
@@ -441,7 +441,7 @@ export default function RegisterHotel() {
                           <svg className="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                           </svg>
-                          <p className="text-lg font-bold">{hotelDisplayData.starRating}</p>
+                          <p className="text-base font-semibold">{hotelDisplayData.starRating}</p>
                         </div>
                       </div>
                     </div>

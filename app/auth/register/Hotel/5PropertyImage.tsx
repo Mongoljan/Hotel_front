@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Image as ImageIcon, Upload, X, Expand } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, Image as ImageIcon, Upload, X, Expand, Star } from 'lucide-react';
 import { schemaHotelSteps5 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations } from 'next-intl';
@@ -168,31 +168,61 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Check file type
-      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    const selectedFiles = Array.from(event.target.files || []);
+    if (selectedFiles.length === 0) return;
+
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    const accepted: File[] = [];
+    for (const file of selectedFiles) {
       if (!validTypes.includes(file.type)) {
         toast.error(t('image_format_error'));
-        event.target.value = '';
-        return;
+        continue;
       }
-
-      // Check file size (minimum 100KB)
-      const fileSizeKB = file.size / 1024;
-      if (fileSizeKB < 100) {
+      if (file.size / 1024 < 100) {
         toast.error(t('image_size_error'));
-        event.target.value = '';
-        return;
+        continue;
       }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64Image = reader.result as string;
-        form.setValue(`entries.${index}.images`, base64Image, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
+      accepted.push(file);
     }
+
+    if (accepted.length === 0) {
+      event.target.value = '';
+      return;
+    }
+
+    // Build a queue of indexes to fill: start at the clicked slot, then fill
+    // any subsequent empty slots, then append new entries at the end.
+    const currentEntries = form.getValues('entries') || [];
+    const targetIndexes: number[] = [index];
+    for (let i = 0; i < currentEntries.length && targetIndexes.length < accepted.length; i++) {
+      if (i === index) continue;
+      if (!currentEntries[i]?.images) targetIndexes.push(i);
+    }
+
+    // Read all files in parallel then assign
+    Promise.all(
+      accepted.map(
+        (file) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          })
+      )
+    ).then((base64s) => {
+      base64s.forEach((b64, i) => {
+        const targetIdx = targetIndexes[i];
+        if (targetIdx !== undefined && targetIdx < currentEntries.length) {
+          form.setValue(`entries.${targetIdx}.images`, b64, { shouldValidate: true, shouldDirty: true });
+        } else {
+          // Overflow — append new entries
+          append({ images: b64, descriptions: '', is_profile: false });
+        }
+      });
+    });
+
+    event.target.value = '';
   };
 
   const onInvalid = () => {
@@ -361,11 +391,10 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   };
 
   return (
-    <div className="flex justify-center items-center">
-
-      <Card className="w-full max-w-[620px] md:min-w-[440px]">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-xl font-bold text-center flex items-center justify-center gap-2">
+    <div className="flex justify-center px-4">
+      <Card className="w-full max-w-[640px]">
+        <CardHeader className="space-y-1 pb-4">
+          <CardTitle className="text-xl font-semibold text-center flex items-center justify-center gap-2">
             <ImageIcon className="h-5 w-5" />
             {t('title')}
           </CardTitle>
@@ -400,17 +429,17 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           </Alert>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-3">
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="">
 
               {fields.map((field, index) => {
                 const previewSrc = watchedEntries?.[index]?.images;
                 const isProfile = Boolean(watchedEntries?.[index]?.is_profile);
                 return (
-                  <Card key={field.id} className="border-dashed">
-                    <CardContent className="p-3">
-                      <div className="flex gap-3">
+                  <div key={field.id} className={`border-dashed ${isProfile ? 'border-yellow-400/70 bg-yellow-50/30' : ''}`}>
+                    <div className="p-2.5">
+                      <div className="flex gap-2.5">
                         {/* Image preview or placeholder */}
-                        <div className="flex-shrink-0 w-20 h-20">
+                        <div className="flex-shrink-0 w-16 h-16">
                           {previewSrc ? (
                             <div
                               className="relative w-full h-full group cursor-pointer"
@@ -427,8 +456,8 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                                 </div>
                               </div>
                               {isProfile && (
-                                <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5">
-                                  <ImageIcon className="h-3 w-3" />
+                                <div className="absolute -top-2 -right-2 rounded-full p-1 bg-yellow-400 shadow-md ring-2 ring-white">
+                                  <Star className="h-3.5 w-3.5 fill-white text-white" />
                                 </div>
                               )}
                             </div>
@@ -440,8 +469,9 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                         </div>
 
                         {/* Controls */}
-                        <div className="flex-1 space-y-2">
+                        <div className="flex-1">
                           <div className="flex gap-2">
+                     
                             <FormField
                               control={form.control}
                               name={`entries.${index}.images`}
@@ -452,8 +482,9 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                                       <Input
                                         type="file"
                                         accept="image/png,image/jpeg,image/jpg,image/webp"
+                                        multiple
                                         onChange={(e) => handleImageChange(e, index)}
-                                        className="text-xs h-8 file:text-xs cursor-pointer"
+                                        className="text-xs  file:text-xs cursor-pointer"
                                       />
                                     </div>
                                   </FormControl>
@@ -461,6 +492,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                                 </FormItem>
                               )}
                             />
+                        
                             <Button
                               type="button"
                               variant={isProfile ? 'default' : 'outline'}
@@ -474,9 +506,10 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                                   });
                                 });
                               }}
-                              className="h-8 px-2 text-xs"
+                              className=" px-2 text-xs gap-1"
                             >
-                              {isProfile ? '✓' : ''} {t('set_as_profile')}
+                              <Star className={`h-3 w-3 flex-shrink-0 ${isProfile ? 'fill-current' : ''}`} />
+                              {t('set_as_profile')}
                             </Button>
                             {fields.length > 5 && (
                               <Button
@@ -492,6 +525,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                           </div>
 
                           <FormField
+                          
                             control={form.control}
                             name={`entries.${index}.descriptions`}
                             render={({ field }) => (
@@ -499,7 +533,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                                 <FormControl>
                                   <Textarea
                                     placeholder={t('description_placeholder')}
-                                    rows={2}
+                                    rows={1}
                                     className="text-xs resize-none"
                                     {...field}
                                   />
@@ -508,10 +542,11 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                               </FormItem>
                             )}
                           />
+                         
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 );
               })}
 

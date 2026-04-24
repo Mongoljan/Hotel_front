@@ -200,13 +200,9 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-
+    <div className="max-w-3xl mx-auto px-4 py-4">
       <StepIndicator totalSteps={totalSteps} currentStep={currentStep} />
-      <div className="mt-4">
-      
       {renderStep()}
-      </div>
     </div>
   );
 }
