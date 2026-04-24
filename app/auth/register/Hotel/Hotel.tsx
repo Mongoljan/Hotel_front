@@ -106,9 +106,14 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
 
       const resumeStep = lastCompletedStep === 3 ? 4 : Math.min(lastCompletedStep + 1, 6);
 
+      // Preserve step3 (google map) from existing local storage — it isn't in any API endpoint
+      const existingDataStr = UserStorage.getItem<string>('propertyData', userId);
+      const existingData = existingDataStr ? JSON.parse(existingDataStr) : {};
+
       const finalDataToStore = {
         step1: propertyData.step1,
         step2: propertyData.step2,
+        step3: existingData.step3 || null,
         step4: propertyData.step4,
         step5: propertyData.step5,
         step6: propertyData.step6,

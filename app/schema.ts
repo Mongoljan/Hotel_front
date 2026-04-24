@@ -586,10 +586,15 @@ export const schemaHotelSteps5 = z.object({
 });
 
 
+const facilityItemSchema = z.object({ id: z.number(), is_highlight: z.boolean() });
+
 export const schemaHotelSteps6 = (msg?: string) => z.object({
   general_facilities: z
-    .array(z.string())
+    .array(facilityItemSchema)
     .min(1, { message: msg || 'Select at least one general facility' }),
+  additional_facilities: z.array(facilityItemSchema).default([]),
+  activities: z.array(facilityItemSchema).default([]),
+  accessibility_features: z.array(facilityItemSchema).default([]),
 });
 
 export const schemaRegistrationEmployee2 =z.object({

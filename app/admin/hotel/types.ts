@@ -7,6 +7,11 @@ export interface PropertyPhoto {
   is_profile?: boolean;
 }
 
+export interface FacilityRef {
+  id: number;
+  is_highlight: boolean;
+}
+
 export interface PropertyDetail {
   id: number;
   propertyBasicInfo: number;
@@ -15,7 +20,10 @@ export interface PropertyDetail {
   google_map: string;
   parking_situation: string;
   property: number;
-  general_facilities: number[];
+  general_facilities: FacilityRef[];
+  additional_facilities: FacilityRef[];
+  activities: FacilityRef[];
+  accessibility_features: FacilityRef[];
   Additional_Information: number | null;
 }
 

@@ -1084,11 +1084,12 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
               {/* Ерөнхий үйлчилгээ Tab */}
               <TabsContent value="services" className="mt-4">
                 <ServicesTab
-                  facilityIds={propertyDetail?.general_facilities || []}
-                  hotelId={typeof user?.hotel === 'number' ? user.hotel : (propertyDetail?.property || 0)}
+                  generalFacilities={propertyDetail?.general_facilities || []}
+                  additionalFacilities={propertyDetail?.additional_facilities || []}
+                  activities={propertyDetail?.activities || []}
+                  accessibilityFeatures={propertyDetail?.accessibility_features || []}
                   propertyDetailId={propertyDetail?.id || null}
                   onUpdate={() => {
-                    // Reload property detail data
                     if (user?.hotel) {
                       fetch(`https://dev.kacc.mn/api/property-details/?property=${user.hotel}`)
                         .then(res => res.json())

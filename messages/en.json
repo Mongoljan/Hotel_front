@@ -146,7 +146,8 @@
     "profile_image_label": "Profile Image",
     "set_as_profile": "Set as Profile",
     "hotel_image": "Hotel Image",
-    "hotel_image_suggestions": "Suggestions: Exterior, lobby, rooms, restaurant, pool, etc."
+    "hotel_image_suggestions": "Suggestions: Exterior, lobby, rooms, restaurant, pool, etc.",
+    "profile_selected": "Profile selected"
   },
   "6FinalPropertyDetails":{
     "title":"Final Property Details",
@@ -161,7 +162,20 @@
     "details_saved_success": "Property details saved successfully!",
     "error_try_again": "An error occurred. Please try again.",
     "user_info_missing": "User information missing",
-    "select_facility_error": "Select at least one general facility"
+    "select_facility_error": "Select at least one general facility",
+    "additional_facilities_title": "Additional Facilities",
+    "activities_title": "Activities",
+    "accessibility_title": "Accessibility Features",
+    "selected_label": "Selected",
+    "available_label": "Available",
+    "highlights_title": "Select Highlights",
+    "highlights_description": "Choose up to 12 items to feature on your property listing",
+    "highlights_selected": "selected",
+    "highlights_max_reached": "Maximum reached",
+    "highlights_no_items": "No items selected yet",
+    "finish": "Finish",
+    "select_all": "Select all",
+    "deselect_all": "Deselect all"
   },
   "HotelPage": {
     "loading": "Loading...",

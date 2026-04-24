@@ -61,6 +61,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   });
 
   const watchedEntries = form.watch('entries');
+  const hasProfileSelected = watchedEntries.some((e) => e.is_profile && e.images);
 
   const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
@@ -191,6 +192,14 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         form.setValue(`entries.${index}.images`, base64Image, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const onInvalid = () => {
+    if (!watchedEntries.some((e) => e.is_profile && e.images)) {
+      toast.error(t('profile_image_required'));
+    } else {
+      toast.error(t('please_fix_errors') || 'Please fix the errors before continuing');
     }
   };
 
@@ -375,18 +384,23 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                   <div>{t('alert_min_images')} • {t('alert_min_size')}</div>
                   <div className="text-[11px]">{t('alert_formats')}</div>
                 </div>
-                <div className="text-sm font-medium text-right">
-                  <span className={`${watchedEntries.filter(e => e.images).length >= 5 ? 'text-green-600' : 'text-orange-600'}`}>
-                    {watchedEntries.filter(e => e.images).length}
-                  </span>
-                  <span className="text-muted-foreground">/5</span>
+                <div className="text-sm font-medium text-right space-y-0.5">
+                  <div>
+                    <span className={`${watchedEntries.filter(e => e.images).length >= 5 ? 'text-green-600' : 'text-orange-600'}`}>
+                      {watchedEntries.filter(e => e.images).length}
+                    </span>
+                    <span className="text-muted-foreground">/5</span>
+                  </div>
+                  <div className={`text-[11px] ${hasProfileSelected ? 'text-green-600' : 'text-orange-600'}`}>
+                    {hasProfileSelected ? '✓ ' + (t('profile_selected') || 'Profile selected') : '⚠ ' + (t('profile_image_required') || 'No profile selected')}
+                  </div>
                 </div>
               </div>
             </AlertDescription>
           </Alert>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-3">
 
               {fields.map((field, index) => {
                 const previewSrc = watchedEntries?.[index]?.images;

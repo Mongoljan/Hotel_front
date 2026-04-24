@@ -167,7 +167,8 @@
   "profile_image_label": "Профайл зураг",
   "set_as_profile": "Профайл болгох",
   "hotel_image": "Буудлын зураг",
-  "hotel_image_suggestions": "Зөвлөмж: Гадна тал, лобби, өрөөнүүд, ресторан, бассейн гэх мэт"
+  "hotel_image_suggestions": "Зөвлөмж: Гадна тал, лобби, өрөөнүүд, ресторан, бассейн гэх мэт",
+  "profile_selected": "Профайл зураг сонгогдсон"
 },
 "6FinalPropertyDetails": {
   "title": "Үл хөдлөхийн эцсийн мэдээлэл",
@@ -183,7 +184,20 @@
   "details_saved_success": "✔️ Байршлын дэлгэрэнгүй мэдээлэл амжилттай хадгалагдлаа!",
   "error_try_again": "Алдаа гарлаа. Дахин оролдоно уу.",
   "user_info_missing": "Хэрэглэгчийн мэдээлэл олдсонгүй",
-  "select_facility_error": "Дор хаяж нэг ерөнхий байгууламж сонгоно уу"
+  "select_facility_error": "Дор хаяж нэг ерөнхий байгууламж сонгоно уу",
+  "additional_facilities_title": "Нэмэлт байгууламжууд",
+  "activities_title": "Үйл ажиллагаанууд",
+  "accessibility_title": "Хүртээмжийн тохиромжийн онцлог",
+  "selected_label": "Сонгогдсон",
+  "available_label": "Боломжтой",
+  "highlights_title": "Онцлох зүйлсийг сонгоно уу",
+  "highlights_description": "Таны байршлын жагсаалтад хамгийн ихдээ 12 зүйлийг онцолно уу",
+  "highlights_selected": "сонгогдсон",
+  "highlights_max_reached": "Дээд хязгаарт хүрлээ",
+  "highlights_no_items": "Сонгосон зүйл байхгүй байна",
+  "finish": "Дуусгах",
+  "select_all": "Бүгдийг сонгох",
+  "deselect_all": "Бүгдийг цуцлах"
 },
 "RoomModal": {
   "title_add": "Өрөө нэмэх",
