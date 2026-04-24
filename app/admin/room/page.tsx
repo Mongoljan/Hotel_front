@@ -23,6 +23,7 @@ export default function RegisterRoom() {
 
   return (
     <div className="w-full">
+      
       <RoomListNew isRoomAdded={isRoomAdded} setIsRoomAdded={setIsRoomAdded}/>
     </div>
   );
