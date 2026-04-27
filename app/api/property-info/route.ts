@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Revalidate every 10 minutes — property basic info changes infrequently
-export const revalidate = 600;
+// Route reads request.url query params, so it must be rendered dynamically.
+export const dynamic = 'force-dynamic';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn';
 

@@ -14,7 +14,15 @@ import {
   Star,
   Building2,
   Landmark,
+  Edit,
+  Trash2,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   RightPanel,
   RightPanelContent,
@@ -22,14 +30,7 @@ import {
 } from '@/components/ui/right-panel';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-
-const banks = [
-  { id: 1, name: 'Khan Bank', code: 'K', shortCode: 'khan' },
-  { id: 2, name: 'Ариг банк', code: 'А', shortCode: '210000' },
-  { id: 3, name: 'Богд банк', code: 'Б', shortCode: '380000' },
-  { id: 4, name: 'Golomt Bank', code: 'G', shortCode: 'golomt' },
-  { id: 5, name: 'TDB Bank', code: 'T', shortCode: 'tdb' },
-];
+import { useBanks, type Bank } from '@/hooks/useBanks';
 
 const currencies = [
   { id: 1, code: 'MNT', name: 'MNT' },
@@ -53,6 +54,8 @@ interface BankAccountConfigPanelProps {
   onSave?: (config: any) => Promise<void>;
   accounts?: BankAccountDisplay[];
   onToggleAccount?: (id: string | number, active: boolean) => void;
+  onEditAccount?: (id: string | number) => void;
+  onDeleteAccount?: (id: string | number) => void;
   /**
    * Which view to show when the panel opens.
    * - 'hub' (default): the "Дансны тохиргоо" hub with featured invoice account + active accounts list.
@@ -67,7 +70,8 @@ interface BankAccountFormProps {
 }
 
 function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
-  const [selectedBank, setSelectedBank] = useState<typeof banks[0] | null>(null);
+  const { banks, loading: banksLoading } = useBanks();
+  const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [formData, setFormData] = useState({
     iban: '',
     accountNumber: '',
@@ -126,6 +130,9 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
       <div className="space-y-3">
         <Label className="text-base font-medium">Банк сонгох</Label>
         {errors.bank && <p className="text-sm text-destructive">{errors.bank}</p>}
+        {banksLoading ? (
+          <p className="text-xs text-muted-foreground">Банкны жагсаалт уншиж байна…</p>
+        ) : (
         <div className="grid grid-cols-3 gap-3">
           {banks.map((bank) => (
             <Button
@@ -143,18 +150,24 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
             >
               <div
                 className={cn(
-                  'w-8 h-8 rounded flex items-center justify-center text-sm font-bold',
+                  'w-8 h-8 rounded flex items-center justify-center text-sm font-bold overflow-hidden',
                   selectedBank?.id === bank.id
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-foreground'
                 )}
               >
-                {bank.code}
+                {bank.logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={bank.logo} alt={bank.name} className="w-full h-full object-contain" />
+                ) : (
+                  <span>{bank.name.charAt(0)}</span>
+                )}
               </div>
-              <span className="text-xs text-center">{bank.name}</span>
+              <span className="text-[10px] text-center leading-tight line-clamp-2">{bank.name}</span>
             </Button>
           ))}
         </div>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -296,6 +309,8 @@ export function BankAccountConfigPanel({
   onSave = async () => {},
   accounts = [],
   onToggleAccount,
+  onEditAccount,
+  onDeleteAccount,
   initialView = 'hub',
 }: BankAccountConfigPanelProps) {
   const [showNewAccountForm, setShowNewAccountForm] = useState(false);
@@ -516,13 +531,30 @@ export function BankAccountConfigPanel({
                                   onToggleAccount?.(acc.id, checked)
                                 }
                               />
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                              >
-                                <MoreHorizontal className="h-3.5 w-3.5" />
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                  >
+                                    <MoreHorizontal className="h-3.5 w-3.5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => onEditAccount?.(acc.id)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Засварлах
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => onDeleteAccount?.(acc.id)}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Устгах
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
                         </Card>

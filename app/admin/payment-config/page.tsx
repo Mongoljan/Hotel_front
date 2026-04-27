@@ -91,13 +91,24 @@ const paymentSectionConfig = {
   }
 };
 
-// Payment solution types for the 3rd section
-const paymentSolutions = [
-  { id: 'qpay', name: 'QPAY', description: 'Бүх банкны аппликейшн ашиглан QR код уншуулж төлбөр хүлээн авах.', api_name: 'qpay' },
-  { id: 'pocket', name: 'POCKET', description: 'Бүх банкны аппликейшн ашиглан QR код уншуулж төлбөр хүлээн авах.', api_name: 'pocket' },
-  { id: 'socialpay', name: 'SocialPay', description: 'Голомт банкны SocialPay апп-аар хэлбэр төлбөр гүйцэтгэх.', api_name: 'socialpay' },
-  { id: 'monpay', name: 'MONPAY', description: 'Голомт банкны MONPAY апп-аар хэлбэр төлбөр гүйцэтгэх.', api_name: 'monpay' }
-];
+// Static descriptions / display tweaks per provider name. The list of
+// available providers is fetched live from /api/payment-solution-types/.
+const solutionDescriptions: Record<string, string> = {
+  QPAY: 'Бүх банкны аппликейшн ашиглан QR код уншуулж төлбөр хүлээн авах.',
+  POCKET: 'Бүх банкны аппликейшн ашиглан QR код уншуулж төлбөр хүлээн авах.',
+  MBANK: 'M-Bank аппликейшнээр төлбөр хүлээн авах.',
+  SOCIALPAY: 'Голомт банкны SocialPay апп-аар төлбөр гүйцэтгэх.',
+  MONPAY: 'Голомт банкны MonPay апп-аар төлбөр гүйцэтгэх.',
+  HIPAY: 'HiPay аргаар төлбөр хүлээн авах.',
+};
+
+interface SolutionType {
+  id: number;
+  name: string;
+  config_json?: Record<string, any>;
+  logo: string | null;
+  is_active: boolean;
+}
 
 export default function PaymentConfigPage() {
   const t = useTranslations();
@@ -106,16 +117,23 @@ export default function PaymentConfigPage() {
   
   // State management
   const [paymentConfigs, setPaymentConfigs] = useState<PaymentConfig[]>([]);
+  const [solutionTypes, setSolutionTypes] = useState<SolutionType[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   
-  // State for individual payment solution toggles
-  const [solutionStates, setSolutionStates] = useState<Record<string, boolean>>({
-    qpay: false,
-    pocket: false,
-    socialpay: false,
-    monpay: false
-  });
+  // Active solution-type IDs derived from the parent payment_solution
+  // config row's `solution_types` array. Backend may return either
+  // [1, 3, …] (ids) or [{ id: 1, … }, …] (objects), so we normalise.
+  const paymentSolutionConfig = paymentConfigs.find(
+    (c) => c.payment_type === 'payment_solution'
+  );
+  const activeSolutionIds: number[] = (() => {
+    const raw = (paymentSolutionConfig as any)?.solution_types ?? [];
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((it: any) => (typeof it === 'number' ? it : it?.id))
+      .filter((id: any): id is number => typeof id === 'number');
+  })();
   
   // Panel states - matching Figma right-side panels
   // Each section has TWO entry modes:
@@ -141,7 +159,8 @@ export default function PaymentConfigPage() {
       setLoading(true);
       console.log('Fetching payment configs with cookie authentication');
       const response = await fetch('/api/payment-config/', {
-        credentials: 'include'
+        credentials: 'include',
+        cache: 'no-store',
       });
       
       if (!response.ok) {
@@ -168,34 +187,75 @@ export default function PaymentConfigPage() {
     fetchPaymentConfigs();
   }, [fetchPaymentConfigs]);
 
-  // Toggle individual payment solution
-  const handleToggleSolution = async (solutionId: string, newActiveStatus: boolean) => {
+  // Fetch the catalogue of available payment solution types (QPAY, POCKET,
+  // MBANK, SOCIALPAY, MONPAY, HIPAY, …) once on mount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/payment-solution-types/', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data)) setSolutionTypes(data);
+      } catch (err) {
+        console.error('Failed to load payment solution types:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Toggle a single payment-solution provider on the parent payment_solution
+  // config row by mutating its `solution_type_ids` array. This is the real
+  // backend contract — each provider's id (1=QPAY, 2=POCKET, …) is appended
+  // or removed and the row is PATCHed.
+  const handleToggleSolution = async (solutionId: number, newActiveStatus: boolean) => {
     if (!isAuthenticated) {
       toast.error('Нэвтрэх шаардлагатай');
       return;
     }
+    if (!paymentSolutionConfig) {
+      toast.error('Төлбөрийн шийдэл тохиргоо олдсонгүй');
+      return;
+    }
+
+    const currentIds = new Set(activeSolutionIds);
+    if (newActiveStatus) currentIds.add(solutionId);
+    else currentIds.delete(solutionId);
+    const nextIds = Array.from(currentIds);
+
+    const solutionLabel =
+      solutionTypes.find((s) => s.id === solutionId)?.name || `#${solutionId}`;
 
     setUpdating(`solution-${solutionId}`);
     try {
-      console.log(`Toggling solution ${solutionId} to ${newActiveStatus}`);
-      
-      // Update local state immediately for better UX
-      setSolutionStates(prev => ({
-        ...prev,
-        [solutionId]: newActiveStatus
-      }));
-      
-      // For now, just show success - you can implement API call later
-      toast.success(`${solutionId.toUpperCase()} ${newActiveStatus ? 'идэвхжүүлэгдлээ' : 'идэвхгүй болгогдлоо'}`);
-      
+      const response = await fetch(`/api/payment-config/?id=${paymentSolutionConfig.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          solution_type_ids: nextIds,
+          // Keep parent row active whenever at least one sub-solution is on.
+          is_active: nextIds.length > 0,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Эрх хүрэхгүй байна. Дахин нэвтэрнэ үү.');
+          return;
+        }
+        const errorText = await response.text();
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+
+      toast.success(
+        `${solutionLabel} ${newActiveStatus ? 'идэвхжүүлэгдлээ' : 'идэвхгүй болгогдлоо'}`
+      );
+      // Reconcile with backend so the UI shows what was actually persisted.
+      fetchPaymentConfigs();
     } catch (error) {
       console.error('Error toggling solution:', error);
       toast.error('Тохиргоо өөрчлөхөд алдаа гарлаа');
-      // Revert state on error
-      setSolutionStates(prev => ({
-        ...prev,
-        [solutionId]: !newActiveStatus
-      }));
     } finally {
       setUpdating(null);
     }
@@ -239,20 +299,77 @@ export default function PaymentConfigPage() {
       }
 
       const result = await response.json();
-      console.log('Toggle successful:', result);
-      
-      // Update local state
-      setPaymentConfigs(prev => prev.map(config => 
-        config.id === configId 
-          ? { ...config, is_active: newActiveStatus }
+      console.log('Toggle successful, backend response:', result);
+
+      // Backends commonly return either the updated row directly or a
+      // wrapped { config: {...} } / { data: {...} } shape. Pull the new
+      // active flag from whichever shape we can find, then refetch to make
+      // sure the UI is in sync with what was actually persisted.
+      const persisted =
+        result?.config?.is_active ??
+        result?.data?.is_active ??
+        result?.is_active;
+
+      if (typeof persisted === 'boolean' && persisted !== newActiveStatus) {
+        console.warn('Backend persisted a different value than requested', {
+          requested: newActiveStatus,
+          persisted,
+        });
+      }
+
+      // Optimistic local update first…
+      setPaymentConfigs(prev => prev.map(config =>
+        config.id === configId
+          ? { ...config, is_active: typeof persisted === 'boolean' ? persisted : newActiveStatus }
           : config
       ));
-      
+
+      // …then reconcile with the source of truth so a stale backend can't
+      // silently leave the UI lying to the user.
+      fetchPaymentConfigs();
+
       toast.success(`Тохиргоо ${newActiveStatus ? 'идэвхжүүлэгдлээ' : 'идэвхгүй болгогдлоо'}`);
       
     } catch (error) {
       console.error('Error toggling payment config:', error);
       toast.error('Тохиргоо өөрчлөхөд алдаа гарлаа');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  // "Delete" payment configuration. Backend rows are not actually removable
+  // (they map 1:1 to the six payment_type slots), so we soft-delete by
+  // PATCHing is_active=false. The row stays in the list but appears as
+  // disabled, which is the closest we can get to deletion semantics.
+  const handleDeleteConfig = async (configId: number) => {
+    if (!isAuthenticated) {
+      toast.error('Нэвтрэх шаардлагатай');
+      return;
+    }
+    if (!confirm('Энэ тохиргоог идэвхгүй болгохдоо итгэлтэй байна уу?')) return;
+    setUpdating(configId.toString());
+    try {
+      const response = await fetch(`/api/payment-config/?id=${configId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ is_active: false }),
+      });
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('Soft-delete API Error:', response.status, errText);
+        if (response.status === 401) {
+          toast.error('Эрх хүрэхгүй байна. Дахин нэвтэрнэ үү.');
+          return;
+        }
+        throw new Error(`API Error: ${response.status}`);
+      }
+      toast.success('Тохиргоо идэвхгүй болгогдлоо');
+      fetchPaymentConfigs();
+    } catch (error) {
+      console.error('Error soft-deleting payment config:', error);
+      toast.error('Идэвхгүй болгоход алдаа гарлаа');
     } finally {
       setUpdating(null);
     }
@@ -492,13 +609,14 @@ export default function PaymentConfigPage() {
   const renderPaymentSolutionContent = (configs: PaymentConfig[]) => {
     return (
       <div className="grid grid-cols-2 gap-3">
-        {paymentSolutions.map((solution) => {
-          const isActive = solutionStates[solution.id] || false;
+        {solutionTypes.map((solution) => {
+          const isActive = activeSolutionIds.includes(solution.id);
           const isUpdating = updating === `solution-${solution.id}`;
-          
+          const description = solutionDescriptions[solution.name.toUpperCase()] || '';
+
           return (
-            <div 
-              key={solution.id} 
+            <div
+              key={solution.id}
               className={cn(
                 "p-3 rounded-lg border-2 transition-all duration-200",
                 isActive ? "bg-primary/5 border-primary/20" : "bg-muted border-border"
@@ -506,7 +624,7 @@ export default function PaymentConfigPage() {
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="font-semibold text-sm">{solution.name}</div>
-                <Switch 
+                <Switch
                   checked={isActive}
                   disabled={isUpdating}
                   onCheckedChange={(checked) => {
@@ -516,10 +634,10 @@ export default function PaymentConfigPage() {
                 />
               </div>
               <p className="text-xs text-muted-foreground mb-2 leading-tight">
-                {solution.description}
+                {description}
               </p>
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className={cn(
                   "text-xs",
                   isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
@@ -612,14 +730,36 @@ export default function PaymentConfigPage() {
                   • MNT
                 </div>
               </div>
-              <span
-                className={cn(
-                  'text-xs font-medium shrink-0',
-                  config.is_active ? 'text-primary' : 'text-muted-foreground'
-                )}
-              >
-                {config.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
-              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <span
+                  className={cn(
+                    'text-xs font-medium',
+                    config.is_active ? 'text-primary' : 'text-muted-foreground'
+                  )}
+                >
+                  {config.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                      <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setBankAccountPanel('hub')}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Засварлах
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDeleteConfig(config.id)}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Устгах
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           ))}
         </div>
@@ -692,9 +832,26 @@ export default function PaymentConfigPage() {
                 >
                   {config.is_active ? 'ONLINE' : 'OFFLINE'}
                 </Badge>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                      <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setBankCardPanel('hub')}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Засварлах
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDeleteConfig(config.id)}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Устгах
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           ))}
@@ -720,9 +877,14 @@ export default function PaymentConfigPage() {
       <CardContent className="p-6">
         <SectionHeader paymentType="payment_solution" />
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
-          {paymentSolutions.map((solution) => {
-            const isActive = solutionStates[solution.id] || false;
+          {solutionTypes.length === 0 ? (
+            <div className="text-xs text-muted-foreground py-4">
+              Төлбөрийн шийдэл уншиж байна…
+            </div>
+          ) : solutionTypes.map((solution) => {
+            const isActive = activeSolutionIds.includes(solution.id);
             const isUpdating = updating === `solution-${solution.id}`;
+            const description = solutionDescriptions[solution.name.toUpperCase()] || '';
             return (
               <div
                 key={solution.id}
@@ -735,7 +897,7 @@ export default function PaymentConfigPage() {
                   {solution.name}
                 </div>
                 <p className="text-xs text-muted-foreground leading-snug min-h-[48px] mb-3">
-                  {solution.description}
+                  {description}
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
@@ -909,6 +1071,10 @@ export default function PaymentConfigPage() {
             handleToggleConfig(id, active);
           }
         }}
+        onEditAccount={() => setBankAccountPanel('add')}
+        onDeleteAccount={(id) => {
+          if (typeof id === 'number') handleDeleteConfig(id);
+        }}
       />
 
       <BankCardPOSConfigPanel
@@ -947,6 +1113,10 @@ export default function PaymentConfigPage() {
           }
           return apiTerminals;
         })()}
+        onEditTerminal={() => setBankCardPanel('add')}
+        onDeleteTerminal={(id) => {
+          if (typeof id === 'number') handleDeleteConfig(id);
+        }}
       />
     </>
   );

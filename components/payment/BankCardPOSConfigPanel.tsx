@@ -8,11 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { CheckCircle, Plus, MoreHorizontal } from 'lucide-react';
+import { CheckCircle, Plus, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { RightPanel, RightPanelContent, RightPanelFooter } from '@/components/ui/right-panel';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTheme } from '@/context/ThemeContext';
+import { useBanks, type Bank } from '@/hooks/useBanks';
 
 // Bank configurations matching API data
 const banks = [
@@ -50,6 +57,8 @@ interface BankCardPOSConfigPanelProps {
    * - 'add': open straight into the "Төхөөрөмж нэмэх" form as a single panel.
    */
   initialView?: 'hub' | 'add';
+  onEditTerminal?: (id: string | number) => void;
+  onDeleteTerminal?: (id: string | number) => void;
 }
 
 interface NewTerminalFormProps {
@@ -58,7 +67,8 @@ interface NewTerminalFormProps {
 }
 
 function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
-  const [selectedBank, setSelectedBank] = useState<typeof banks[0] | null>(null);
+  const { banks: apiBanks, loading: banksLoading } = useBanks();
+  const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [formData, setFormData] = useState({
     terminalId: '',
     currency: 'MNT',
@@ -97,8 +107,11 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
       {/* Bank Selection */}
       <div className="space-y-3">
         <Label className="text-base font-medium">Банк сонгох</Label>
+        {banksLoading ? (
+          <p className="text-xs text-muted-foreground">Банкны жагсаалт уншиж байна…</p>
+        ) : (
         <div className="grid grid-cols-3 gap-3">
-          {banks.map((bank) => (
+          {apiBanks.map((bank) => (
             <Button
               key={bank.id}
               variant="outline"
@@ -109,17 +122,23 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
               onClick={() => setSelectedBank(bank)}
             >
               <div className={cn(
-                "w-8 h-8 rounded flex items-center justify-center text-sm font-bold",
+                "w-8 h-8 rounded flex items-center justify-center text-sm font-bold overflow-hidden",
                 selectedBank?.id === bank.id
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-foreground"
               )}>
-                {bank.code}
+                {bank.logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={bank.logo} alt={bank.name} className="w-full h-full object-contain" />
+                ) : (
+                  <span>{bank.name.charAt(0)}</span>
+                )}
               </div>
-              <span className="text-xs text-center">{bank.name}</span>
+              <span className="text-[10px] text-center leading-tight line-clamp-2">{bank.name}</span>
             </Button>
           ))}
         </div>
+        )}
       </div>
 
       {/* Auto-filled short name */}
@@ -206,6 +225,8 @@ export function BankCardPOSConfigPanel({
   onSave = async () => {},
   terminals = [],
   initialView = 'hub',
+  onEditTerminal,
+  onDeleteTerminal,
 }: BankCardPOSConfigPanelProps) {
   const { themeColor } = useTheme();
   const [showNewTerminalForm, setShowNewTerminalForm] = useState(false);
@@ -373,9 +394,26 @@ export function BankCardPOSConfigPanel({
                             >
                               {terminal.status === 'online' ? 'идэвхтэй' : 'идэвхгүй'}
                             </Badge>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                              <MoreHorizontal className="h-3 w-3" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                  <MoreHorizontal className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => onEditTerminal?.(terminal.id)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Засварлах
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => onDeleteTerminal?.(terminal.id)}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Устгах
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       </Card>

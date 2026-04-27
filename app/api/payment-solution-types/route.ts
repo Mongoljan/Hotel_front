@@ -64,14 +64,14 @@ export async function GET() {
         headers: {
           'Content-Type': 'application/json',
         },
-        next: { revalidate: 3600 }
+        cache: 'no-store',
       });
 
       if (response.ok) {
         const solutionTypes = await response.json();
         return NextResponse.json(solutionTypes, {
           headers: {
-            'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
+            'Cache-Control': 'no-store',
           }
         });
       } else {

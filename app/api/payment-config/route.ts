@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PaymentConfigRequest } from '@/types/payment';
 import { getAuthToken } from '@/utils/jwt';
 
+// Always render dynamically and never cache — payment config must reflect
+// the latest backend state immediately after a PATCH.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn';
 
 /**
@@ -105,6 +110,7 @@ export async function GET(request: NextRequest) {
           headers: {
             'Content-Type': 'application/json',
           },
+          cache: 'no-store',
         }
       );
 
@@ -121,30 +127,16 @@ export async function GET(request: NextRequest) {
       const paymentConfigs = await response.json();
       return NextResponse.json(paymentConfigs, {
         headers: {
-          'Cache-Control': 'private, max-age=300',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
         }
       });
 
     } catch (networkError) {
-      console.warn('Network error fetching payment configs, using mock data:', networkError);
-      // Return mock data as fallback
-      const mockData = [
-        {
-          id: 1,
-          payment_type: 'bank_card',
-          bank_id: 1,
-          bank: { id: 1, name: 'Khan Bank', short_code: 'khan', is_active: true },
-          terminal_id: 'HAs-37373г',
-          currency_id: 1,
-          short_name: 'Khan Bank ПОС',
-          description: 'ПОС терминал - HAs-37373г',
-          is_active: true,
-          show_on_booking: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
-      return NextResponse.json(mockData);
+      console.error('Network error fetching payment configs:', networkError);
+      return NextResponse.json(
+        { error: 'Backend unavailable', detail: String(networkError) },
+        { status: 502 }
+      );
     }
 
   } catch (error) {
@@ -231,18 +223,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(result, { status: 200 });
 
     } catch (networkError) {
-      console.warn('Network error saving payment config:', networkError);
-      // For development: simulate successful save
-      const mockResult = {
-        message: 'Амжилттай хадгалагдлаа.',
-        data: {
-          id: Date.now(), // Generate unique ID
-          ...body,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      };
-      return NextResponse.json(mockResult, { status: 200 });
+      console.error('Network error saving payment config:', networkError);
+      return NextResponse.json(
+        { error: 'Backend unavailable', detail: String(networkError) },
+        { status: 502 }
+      );
     }
 
   } catch (error) {
@@ -282,53 +267,102 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json();
 
+    const backendUrl = `${BACKEND_URL}/api/payment-config/${id}/?token=${encodeURIComponent(payload.backendToken)}`;
+    console.log('[PATCH payment-config] forwarding to', backendUrl, 'body=', body);
+
+    let response: Response;
     try {
-      const response = await fetch(
-        `${BACKEND_URL}/api/payment-config/${id}/?token=${encodeURIComponent(payload.backendToken)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          return NextResponse.json(
-            { error: 'Invalid or expired token' },
-            { status: 401 }
-          );
-        }
-        if (response.status === 404) {
-          return NextResponse.json(
-            { error: 'Configuration not found' },
-            { status: 404 }
-          );
-        }
-        throw new Error(`API returned ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      return NextResponse.json(result, { status: 200 });
-
+      response = await fetch(backendUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
     } catch (networkError) {
-      console.warn('Network error updating payment config:', networkError);
-      // For development: simulate successful update
-      const mockResult = {
-        message: 'Тохиргоо шинэчлэгдлээ.',
-        data: {
-          id: parseInt(id),
-          ...body,
-          updated_at: new Date().toISOString()
-        }
-      };
-      return NextResponse.json(mockResult, { status: 200 });
+      console.error('[PATCH payment-config] network error:', networkError);
+      return NextResponse.json(
+        { error: 'Backend unavailable', detail: String(networkError) },
+        { status: 502 }
+      );
     }
+
+    const rawText = await response.text();
+    let parsed: any = null;
+    try { parsed = rawText ? JSON.parse(rawText) : null; } catch { parsed = { raw: rawText }; }
+
+    if (!response.ok) {
+      console.error('[PATCH payment-config] backend error', response.status, parsed);
+      return NextResponse.json(
+        parsed ?? { error: `Backend returned ${response.status}` },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json(parsed ?? { ok: true }, { status: 200 });
 
   } catch (error) {
     console.error('Payment Config PATCH Error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/payment-config?id={id}
+ * Removes a payment configuration row.
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Configuration ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const payload = await getAuthToken();
+    if (!payload || !payload.backendToken) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const backendUrl = `${BACKEND_URL}/api/payment-config/${id}/?token=${encodeURIComponent(payload.backendToken)}`;
+    console.log('[DELETE payment-config] forwarding to', backendUrl);
+
+    let response: Response;
+    try {
+      response = await fetch(backendUrl, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (networkError) {
+      console.error('[DELETE payment-config] network error:', networkError);
+      return NextResponse.json(
+        { error: 'Backend unavailable', detail: String(networkError) },
+        { status: 502 }
+      );
+    }
+
+    if (!response.ok) {
+      const rawText = await response.text();
+      console.error('[DELETE payment-config] backend error', response.status, rawText);
+      let parsed: any = null;
+      try { parsed = rawText ? JSON.parse(rawText) : null; } catch { parsed = { raw: rawText }; }
+      return NextResponse.json(
+        parsed ?? { error: `Backend returned ${response.status}` },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json({ ok: true }, { status: 200 });
+  } catch (error) {
+    console.error('Payment Config DELETE Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
