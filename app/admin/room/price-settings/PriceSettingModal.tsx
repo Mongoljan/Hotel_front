@@ -6,7 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePickerWithValue } from '@/components/ui/date-picker';
-import { X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { schemaPriceSetting } from '@/app/schema';
@@ -262,29 +269,20 @@ export default function PriceSettingModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
-      <div className="min-h-screen flex items-start justify-center p-4 pt-20">
-        <div className="relative bg-background border border-border rounded-2xl shadow-xl w-full max-w-2xl my-8">
-          {/* Header */}
-          <div className="sticky top-0 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(false); }}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
             {editData ? 'Үнийн тохиргоо засах' : 'Шинэ үнийн тохиргоо'}
-          </h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onClose(false)}
-            className="hover:bg-accent"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+          </DialogTitle>
+          <DialogDescription>
+            Өрөөний үнийн нэмэгдэл болон хасалтыг тохируулна уу
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name */}
           <div className="space-y-2">
             <Label htmlFor="name">
@@ -294,7 +292,7 @@ export default function PriceSettingModal({
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Үнийн тохиргооны нэр оруулах"
+              placeholder="Үнийн тохиргооны нэр оруулах, жишээ нь: 'Зуны улиралд нэмэгдүүлэх'"
               className="border-input"
             />
           </div>
@@ -512,7 +510,7 @@ export default function PriceSettingModal({
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -524,14 +522,12 @@ export default function PriceSettingModal({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isSubmitting ? 'Хадгалж байна...' : editData ? 'Шинэчлэх' : 'Нэмэх'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

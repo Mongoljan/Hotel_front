@@ -45,6 +45,7 @@ const routeI18nKeys: Record<string, string> = {
   '/admin/corporate': 'corporate',
   '/admin/additional-services': 'additionalServices',
   '/admin/currency': 'currencyPayment',
+  '/admin/payment-config': 'paymentTools',
   '/admin/users': 'userSettings',
   '/admin/internal-rules': 'internalRules',
 };
@@ -60,6 +61,7 @@ const routeParentKeys: Record<string, string> = {
   '/admin/corporate': 'settings',
   '/admin/additional-services': 'settings',
   '/admin/currency': 'settings',
+  '/admin/payment-config': 'settings',
   '/admin/users': 'settings',
   '/admin/internal-rules': 'settings',
 };

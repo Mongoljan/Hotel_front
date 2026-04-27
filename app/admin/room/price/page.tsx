@@ -27,16 +27,14 @@ export default function RoomPriceManagement() {
       </div>
 
       {/* Room Price List */}
-      <Card>
-        <CardContent>
+  
           <RoomPriceList 
             isRoomAdded={isRoomAdded} 
             setIsRoomAdded={setIsRoomAdded}
             openAdd={openAddDialog}
             setOpenAdd={setOpenAddDialog}
           />
-        </CardContent>
-      </Card>
+   
     </div>
   );
 }

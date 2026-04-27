@@ -4,7 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { IconPlus, IconPencil, IconTrash, IconCalendar, IconPercentage, IconCurrencyDollar } from '@tabler/icons-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { IconPlus, IconPencil, IconTrash, IconCurrencyDollar } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 import { getClientBackendToken } from '@/utils/auth';
@@ -249,7 +257,7 @@ export default function PriceSettingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="flex-1 space-y-6 p-4 md:p-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold">Үнийн тохиргоо</h1>
@@ -268,8 +276,8 @@ export default function PriceSettingsPage() {
   }
 
   return (
-    <div className="">
-      <div className="flex items-center justify-between mb-2">
+    <div className="flex-1 space-y-6 p-4 md:p-6">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Үнийн тохиргоо</h1>
           <p className="text-muted-foreground">
@@ -279,7 +287,7 @@ export default function PriceSettingsPage() {
         <Button
           onClick={handleAdd}
           disabled={loading || availableRoomOptions.length === 0}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          size="sm"
           title={availableRoomOptions.length === 0 ? 'Бүх өрөөний үнийн тохиргоо хийгдсэн байна' : 'Үнийн тохиргоо нэмэх'}
         >
           <IconPlus className="mr-2 h-4 w-4" />
@@ -289,7 +297,7 @@ export default function PriceSettingsPage() {
 
       {/* Show info when all rooms have price settings */}
       {!loading && roomOptions.length > 0 && availableRoomOptions.length === 0 && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
           <p className="text-sm text-blue-800">
             <strong>Мэдээлэл:</strong> Бүх өрөөний үнийн тохиргоо хийгдсэн байна. Шинэ тохиргоо нэмэхийн тулд эхлээд шинэ өрөө нэмэх эсвэл одоогийн тохиргоог устгана уу.
           </p>
@@ -298,99 +306,88 @@ export default function PriceSettingsPage() {
 
       {/* Show info when there are available room options */}
       {!loading && availableRoomOptions.length > 0 && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <div className="rounded-lg border border-green-200 bg-green-50 p-3">
           <p className="text-sm text-green-800">
             <strong>{availableRoomOptions.length}</strong> өрөөний бүлэг үнийн тохиргоо хийх боломжтой байна
           </p>
         </div>
       )}
 
-      <Card className="border border-border/50 shadow-sm">
-        <CardContent className="pt-6">
+      <Card>
+        <CardContent className="p-0">
           {priceSettings.length === 0 ? (
-            <div className="text-center py-8">
-              <IconCurrencyDollar className="mx-auto h-12 w-12 text-muted-foreground" />
+            <div className="text-center py-12">
+              <IconCurrencyDollar className="mx-auto h-12 w-12 text-muted-foreground/50" />
               <h3 className="mt-2 text-sm font-semibold text-foreground">Тохиргоо байхгүй</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Эхний үнийн тохиргоог нэмэх товчийг дарж эхлүүлээрэй
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {priceSettings.map((setting) => (
-                <Card key={setting.id} className="overflow-hidden border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-lg font-semibold text-foreground">{setting.name}</h3>
-                            <Badge 
-                              variant={setting.is_active ? "default" : "secondary"}
-                              className={setting.is_active ? "bg-green-100 text-green-700 hover:bg-green-100" : ""}
-                            >
-                              {setting.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(setting)}
-                            >
-                              <IconPencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteClick(setting.id)}
-                              className="text-destructive hover:text-destructive/90"
-                            >
-                              <IconTrash className="h-4 w-4" />
-                            </Button>
-                          </div>
+            <div className="overflow-hidden rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead>№</TableHead>
+                    <TableHead>Нэр</TableHead>
+                    <TableHead>Өрөөний төрөл</TableHead>
+                    <TableHead>Ангилал</TableHead>
+                    <TableHead className="text-center">Хугацаа</TableHead>
+                    <TableHead className="text-center">Тохируулга</TableHead>
+                    <TableHead className="text-center">Төлөв</TableHead>
+                    <TableHead className="text-center">Үйлдэл</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {priceSettings.map((setting, index) => (
+                    <TableRow key={setting.id} className="hover:bg-muted/50">
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell className="font-medium">{setting.name}</TableCell>
+                      <TableCell>{getRoomTypeName(setting.room_type)}</TableCell>
+                      <TableCell>{getRoomCategoryName(setting.room_category)}</TableCell>
+                      <TableCell className="text-center text-sm text-muted-foreground">
+                        {formatDate(setting.start_date)} - {formatDate(setting.end_date)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={`font-semibold ${
+                          setting.adjustment_type === 'ADD' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {getAdjustmentLabel(setting.adjustment_type, setting.value_type, setting.value)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge
+                          variant={setting.is_active ? 'default' : 'secondary'}
+                          className={setting.is_active ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}
+                        >
+                          {setting.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(setting)}
+                            title="Засах"
+                          >
+                            <IconPencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteClick(setting.id)}
+                            title="Устгах"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <IconTrash className="h-4 w-4" />
+                          </Button>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">Өрөөний төрөл</p>
-                            <p className="text-sm font-medium text-foreground">
-                              {getRoomTypeName(setting.room_type)}
-                            </p>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">Ангилал</p>
-                            <p className="text-sm font-medium text-foreground">
-                              {getRoomCategoryName(setting.room_category)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-6 text-sm">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <IconCalendar className="h-4 w-4" />
-                            <span>
-                              {formatDate(setting.start_date)} - {formatDate(setting.end_date)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {setting.value_type === 'PERCENT' ? (
-                              <IconPercentage className="h-4 w-4 text-primary" />
-                            ) : (
-                              <IconCurrencyDollar className="h-4 w-4 text-primary" />
-                            )}
-                            <span className={`font-semibold ${
-                              setting.adjustment_type === 'ADD' ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {getAdjustmentLabel(setting.adjustment_type, setting.value_type, setting.value)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

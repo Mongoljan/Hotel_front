@@ -189,15 +189,25 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
   const hotel = user?.hotel || 0;
 
   useEffect(() => {
+    // Wait for auth to populate the hotel id; firing with hotel=0 hits the
+    // backend with an invalid hotel and causes the page to render empty.
+    if (!hotel) {
+      return;
+    }
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = await getClientBackendToken();
+        let token = await getClientBackendToken();
         if (!token) throw new Error("Token not found");
 
-        const lookupCache = localStorage.getItem("roomLookup");
-        const roomsCache = localStorage.getItem("roomData");
-        const priceCache = localStorage.getItem(`roomPrices_${hotel}`);
+        // Scope cache keys per hotel so switching accounts can't show stale data
+        const lookupKey = `roomLookup_${hotel}`;
+        const roomsKey = `roomData_${hotel}`;
+        const pricesKey = `roomPrices_${hotel}`;
+
+        const lookupCache = localStorage.getItem(lookupKey);
+        const roomsCache = localStorage.getItem(roomsKey);
+        const priceCache = localStorage.getItem(pricesKey);
 
         // Always fetch policy to ensure it's up to date
         const policyRes = await fetch(`https://dev.kacc.mn/api/property-policies/?property=${hotel}`);
@@ -207,38 +217,87 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
           setBreakfastPolicy(policy?.breakfast_policy || 'no');
         }
 
+        // Use cache only when ALL three exist AND rooms cache actually has rooms.
+        // An empty rooms array could be from a previously failed/expired fetch
+        // — better to re-fetch than render an empty state forever.
         if (lookupCache && roomsCache && priceCache && !isRoomAdded) {
-          const allData = JSON.parse(lookupCache);
-          const roomsData = JSON.parse(roomsCache);
-          const pricesData: PriceEntry[] = JSON.parse(priceCache);
-          
-          setLookup(allData);
-          setPrices(pricesData); // ← CRITICAL: Set prices state from cache
-          setRows(buildRows(allData, roomsData, pricesData));
-          setLoading(false);
-          return;
+          try {
+            const allData = JSON.parse(lookupCache);
+            const roomsData = JSON.parse(roomsCache);
+            const pricesData: PriceEntry[] = JSON.parse(priceCache);
+
+            if (Array.isArray(roomsData) && roomsData.length > 0) {
+              setLookup(allData);
+              setPrices(pricesData);
+              setRows(buildRows(allData, roomsData, pricesData));
+              setLoading(false);
+              return;
+            }
+          } catch {
+            // Corrupt cache — fall through to re-fetch and overwrite below
+          }
         }
 
-        const [allRes, roomsRes, pricesRes] = await Promise.all([
-          fetch(`/api/lookup?token=${token}`),
-          fetch(`/api/rooms?token=${token}`),
-          fetch(`https://dev.kacc.mn/api/room-prices?hotel=${hotel}`)
+        const fetchAll = async (currentToken: string) => Promise.all([
+          fetch(`/api/lookup?token=${currentToken}`),
+          fetch(`/api/rooms?token=${currentToken}`),
+          fetch(`https://dev.kacc.mn/api/room-prices/?hotel=${hotel}`)
         ]);
-        if (!allRes.ok || !roomsRes.ok || !pricesRes.ok) throw new Error("Fetch failed");
+
+        let [allRes, roomsRes, pricesRes] = await fetchAll(token);
+
+        // If auth expired, ask the server to silently re-authenticate (the
+        // refresh route uses the encrypted credential vault) and retry once.
+        const isAuth = (s: number) => s === 401 || s === 403;
+        if (isAuth(allRes.status) || isAuth(roomsRes.status)) {
+          try {
+            const refreshRes = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+            if (refreshRes.ok) {
+              const newToken = await getClientBackendToken();
+              if (newToken) {
+                token = newToken;
+                [allRes, roomsRes, pricesRes] = await fetchAll(token);
+              }
+            }
+          } catch (refreshErr) {
+            console.warn('Silent refresh failed:', refreshErr);
+          }
+        }
+
+        // Still unauthorised after retry → clear and bubble up
+        if (isAuth(allRes.status) || isAuth(roomsRes.status)) {
+          localStorage.removeItem(lookupKey);
+          localStorage.removeItem(roomsKey);
+          localStorage.removeItem(pricesKey);
+          throw new Error("Session expired. Please sign in again.");
+        }
+
+        // Lookup + rooms are required; prices may legitimately be empty for a
+        // newly onboarded hotel — handle that without throwing.
+        if (!allRes.ok || !roomsRes.ok) {
+          const lookupErr = !allRes.ok ? `lookup ${allRes.status}` : null;
+          const roomsErr = !roomsRes.ok ? `rooms ${roomsRes.status}` : null;
+          throw new Error(`Fetch failed: ${[lookupErr, roomsErr].filter(Boolean).join(', ')}`);
+        }
 
         const allData = await allRes.json() as AllData;
         const roomsData = await roomsRes.json();
-        const pricesData: PriceEntry[] = await pricesRes.json();
+        const pricesData: PriceEntry[] = pricesRes.ok
+          ? await pricesRes.json().catch(() => [])
+          : [];
 
-        localStorage.setItem("roomLookup", JSON.stringify(allData));
-        localStorage.setItem("roomData", JSON.stringify(roomsData));
-        localStorage.setItem(`roomPrices_${hotel}`, JSON.stringify(pricesData));
+        localStorage.setItem(lookupKey, JSON.stringify(allData));
+        localStorage.setItem(roomsKey, JSON.stringify(roomsData));
+        localStorage.setItem(pricesKey, JSON.stringify(pricesData));
 
         setLookup(allData);
         setPrices(pricesData);
         setRows(buildRows(allData, roomsData, pricesData));
       } catch (e) {
         console.error("RoomPriceList fetch error:", e);
+        // Make sure stale rows from a previous render don't linger
+        setRows([]);
+        setPrices([]);
       } finally {
         setLoading(false);
         if (isRoomAdded) setIsRoomAdded(false);
@@ -465,6 +524,15 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
 
 
   if (loading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Auth still resolving — don't flash the "no rooms" empty state
+  if (!hotel) {
     return (
       <div className="flex items-center justify-center h-32">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

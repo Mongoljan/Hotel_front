@@ -102,8 +102,9 @@ export const useRoomData = ({
         fetch(`${ROOM_API_ENDPOINTS.rooms}?token=${encodeURIComponent(token)}`)
       ]);
 
-      // Handle 401 authentication errors specifically
-      if (roomsRes.status === 401) {
+      // Handle auth errors: 401 (unauthorized) and 403 (token expired) from backend
+      const isAuthError = (status: number) => status === 401 || status === 403;
+      if (isAuthError(roomsRes.status) || isAuthError(allRes.status)) {
         onAuthLostRef.current?.();
         clearRoomCache();
         const message = "Session expired. Please sign in again.";

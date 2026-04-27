@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { setAuthCookies, UserPayload } from '@/utils/jwt'
+import { storeCredentials } from '@/utils/credentialVault'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,7 +85,12 @@ export async function POST(request: NextRequest) {
     // Set secure httpOnly cookies
     await setAuthCookies(userPayload)
 
-    // Calculate session expiry (30 minutes from now)
+    // Stash credentials (encrypted, httpOnly) so /api/auth/refresh can
+    // re-authenticate against the backend until the backend exposes a
+    // proper refresh endpoint.
+    await storeCredentials({ email, password })
+
+    // Calculate session expiry (1 hour from now)
     const sessionExpiresAt = Date.now() + 60 * 60 * 1000
 
     // Return non-sensitive user info with session info

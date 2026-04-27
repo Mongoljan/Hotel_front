@@ -1073,7 +1073,7 @@ export default function RoomModal({
 
         {/* ─── Add to Group Mode: Simplified Form ─────────────────────────────── */}
         {addToGroupMode && roomToEdit && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Info Banner showing what group we're adding to */}
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-start gap-3">
@@ -1095,7 +1095,7 @@ export default function RoomModal({
             </div>
 
             {/* Room Count Fields */}
-            <section className="grid grid-cols-2 gap-6">
+            <section className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Нэмэх өрөөний тоо <span className="text-red-500">*</span>
@@ -1225,7 +1225,7 @@ export default function RoomModal({
 
         {/* ─── Edit Group Mode: Bulk Edit Form ─────────────────────────────── */}
         {editGroupMode && roomToEdit && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Info Banner showing what group we're editing */}
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <div className="flex items-start gap-3">
@@ -1247,7 +1247,7 @@ export default function RoomModal({
             </div>
 
             {/* Room Type & Category (Read-only in group edit mode) */}
-            <section className="grid grid-cols-1 gap-10">
+            <section className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Өрөөний төрөл ба ангилал
@@ -1371,7 +1371,7 @@ export default function RoomModal({
             </section>
 
             {/* Adult/Child Capacity */}
-            <section className="grid grid-cols-2 gap-6">
+            <section className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Насанд хүрэгчдийн тоо <span className="text-red-500">*</span>
@@ -1405,7 +1405,7 @@ export default function RoomModal({
             </section>
 
             {/* Is Bathroom & Smoking Allowed */}
-            <section className="grid grid-cols-2 gap-6">
+            <section className="grid grid-cols-2 gap-4">
               {/* Is Bathroom */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
@@ -1737,9 +1737,9 @@ export default function RoomModal({
         {/* ─── Step 1: Basic Room Info ───────────────────────────────────────── */}
         {/* ───────────────────────────────────────────────────────────────────── */}
         {step === 1 && (
-          <div className="space-y-10">
+          <div className="space-y-5">
             {/* Row 1: Room Type & Room Category */}
-            <section className="grid grid-cols-1 gap-10">
+            <section className="grid grid-cols-1 gap-4">
               {roomToEdit && !addToGroupMode && !editGroupMode ? (
                 /* Single combination dropdown for editing existing rooms */
                 <div className="space-y-2">
@@ -1799,7 +1799,7 @@ export default function RoomModal({
                 </div>
               ) : (
                 /* Separate dropdowns for creating new rooms */
-                <div className="grid grid-cols-2 gap-10">
+                <div className="grid grid-cols-2 gap-4">
                   {/* Room Type */}
                   <div className={`space-y-2 ${fieldHighlight("room_type")}`}>
                     <label className="block text-sm font-medium text-gray-700">
@@ -1884,7 +1884,7 @@ export default function RoomModal({
             )}
 
             {/* Row 2: Occupancy & Room Size */}
-            <section className="grid grid-cols-2 gap-10">
+            <section className="grid grid-cols-2 gap-4">
               {/* Occupancy (Adults + Children) */}
               <div className={`space-y-2 ${fieldHighlight("adultQty")}`}>
                 <label className="block text-sm font-medium text-gray-700">
@@ -2100,7 +2100,7 @@ export default function RoomModal({
             </section>
 
             {/* Row 4: Is Bathroom? & Smoking Allowed */}
-            <section className="grid grid-cols-2 gap-10">
+            <section className="grid grid-cols-2 gap-4">
               {/* Is Bathroom */}
               <div className={`space-y-2 ${fieldHighlight("is_Bathroom")}`}>
                 <label className="block text-sm font-medium text-gray-700">
@@ -2184,7 +2184,7 @@ export default function RoomModal({
 
             {/* Row 5: Total Rooms & Rooms to Sell */}
             {!roomToEdit && (
-              <section className="grid grid-cols-2 gap-10">
+              <section className="grid grid-cols-2 gap-4">
                 <div className={`space-y-2 ${fieldHighlight("number_of_rooms")}`}>
                   {(() => {
                     // Calculate remaining rooms based on hotel limits

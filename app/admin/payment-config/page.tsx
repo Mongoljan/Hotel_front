@@ -50,77 +50,53 @@ const paymentSectionConfig = {
   bank_account: {
     id: 1,
     title: 'Данс',
-    description: 'Дансны дугаараар гар бүртгэл төлбөр баталгаажуулах систем',
+    description: 'Дансны хуулгаар гар аргаар төлбөр баталгаажуулах суваг.',
     icon: Building2,
-    bgColor: 'bg-white',
-    borderColor: 'border-gray-200',
-    iconColor: 'text-gray-700',
-    buttonText: 'Данс нэмэх',
-    buttonColor: 'bg-green-500 hover:bg-green-600'
+    buttonText: 'Данс нэмэх'
   },
   bank_card: {
     id: 2,
     title: 'Банкны карт',
-    description: 'Банкны картын төлбөр болон ПОС терминал',
+    description: 'Банкны гүйлгээний бүртгэл болон шимтгэл.',
     icon: CreditCard,
-    bgColor: 'bg-white',
-    borderColor: 'border-gray-200',
-    iconColor: 'text-gray-700',
-    buttonText: 'Төхөөрөмж нэмэх',
-    buttonColor: 'bg-green-500 hover:bg-green-600'
+    buttonText: 'Төхөөрөмж нэмэх'
   },
   payment_solution: {
     id: 3,
     title: 'Төлбөрийн шийдэл',
     description: 'Дижитал төлбөрийн системүүд QR код болон мобайл төлбөр',
     icon: Smartphone,
-    bgColor: 'bg-white',
-    borderColor: 'border-gray-200',
-    iconColor: 'text-gray-700',
-    buttonText: 'Төхөөрөмж нэмэх',
-    buttonColor: 'bg-green-500 hover:bg-green-600'
+    buttonText: 'Төхөөрөмж нэмэх'
   },
   credit: {
     id: 4,
-    title: 'Зээл / Түр тооцоо',
-    description: 'Гэрээт байгууллагын зээлийн лимит болон хойшлуулсан төлбөр',
+    title: 'Кредит / Түр тооцоо',
+    description: 'Гэрээт байгууллагуудын зээлийн лимит болон дараа төлбөрт тооцоо.',
     icon: Wallet,
-    bgColor: 'bg-white',
-    borderColor: 'border-gray-200',
-    iconColor: 'text-gray-700',
-    buttonText: 'Төхөөрөмж нэмэх',
-    buttonColor: 'bg-green-500 hover:bg-green-600'
+    buttonText: 'Төхөөрөмж нэмэх'
   },
   bonus_card: {
     id: 5,
     title: 'Бонус / Бэлгийн карт',
-    description: 'Үйлчлүүлэгчийн урамшуулалын оноо болон бэлгийн картын систем',
+    description: 'Лоялти оноо болон урьдчилсан төлбөрт бэлгийн картын систем.',
     icon: Gift,
-    bgColor: 'bg-white',
-    borderColor: 'border-gray-200',
-    iconColor: 'text-gray-700',
-    buttonText: 'Төхөөрөмж нэмэх',
-    buttonColor: 'bg-green-500 hover:bg-green-600'
+    buttonText: 'Төхөөрөмж нэмэх'
   },
   cash: {
     id: 6,
     title: 'Бэлэн мөнгө',
-    description: 'Ресепшний бэлэн мөнгөний төлбөр болон кассын систем',
+    description: 'Ресепшин дээр бэлэн мөнгөвөр төлбөр хүлээн авах, гар бүртгэл хөтлөх.',
     icon: Banknote,
-    bgColor: 'bg-white',
-    borderColor: 'border-gray-200',
-    iconColor: 'text-gray-700',
-    buttonText: 'Төхөөрөмж нэмэх',
-    buttonColor: 'bg-green-500 hover:bg-green-600'
+    buttonText: 'Төхөөрөмж нэмэх'
   }
 };
 
 // Payment solution types for the 3rd section
 const paymentSolutions = [
-  { id: 'qpay', name: 'QPAY', description: 'Олон банкны агшин зуурын QR код болон мобайл төлбөр', api_name: 'qpay' },
-  { id: 'pocket', name: 'POCKET', description: 'Олон банкны агшин зуурын QR код болон мобайл төлбөр', api_name: 'pocket' },
-  { id: 'socialpay', name: 'SocialPay', description: 'Голомт банкны SocialPay апп-аар хурдан төлбөр гүйцэтгэх', api_name: 'socialpay' },
-  { id: 'monpay', name: 'MONPAY', description: 'Голомт банкны MONPAY апп-аар хурдан төлбөр гүйцэтгэх', api_name: 'monpay' }
+  { id: 'qpay', name: 'QPAY', description: 'Бүх банкны аппликейшн ашиглан QR код уншуулж төлбөр хүлээн авах.', api_name: 'qpay' },
+  { id: 'pocket', name: 'POCKET', description: 'Бүх банкны аппликейшн ашиглан QR код уншуулж төлбөр хүлээн авах.', api_name: 'pocket' },
+  { id: 'socialpay', name: 'SocialPay', description: 'Голомт банкны SocialPay апп-аар хэлбэр төлбөр гүйцэтгэх.', api_name: 'socialpay' },
+  { id: 'monpay', name: 'MONPAY', description: 'Голомт банкны MONPAY апп-аар хэлбэр төлбөр гүйцэтгэх.', api_name: 'monpay' }
 ];
 
 export default function PaymentConfigPage() {
@@ -142,8 +118,11 @@ export default function PaymentConfigPage() {
   });
   
   // Panel states - matching Figma right-side panels
-  const [showBankAccountPanel, setShowBankAccountPanel] = useState(false);
-  const [showBankCardPOSPanel, setShowBankCardPOSPanel] = useState(false);
+  // Each section has TWO entry modes:
+  //  - 'hub'  : opens the hub panel (list/management view)
+  //  - 'add'  : opens directly into the add form as a single panel
+  const [bankAccountPanel, setBankAccountPanel] = useState<null | 'hub' | 'add'>(null);
+  const [bankCardPanel, setBankCardPanel] = useState<null | 'hub' | 'add'>(null);
 
   // Fetch payment configurations
   const fetchPaymentConfigs = useCallback(async () => {
@@ -357,7 +336,7 @@ export default function PaymentConfigPage() {
           <div key={config.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <div className="flex items-center gap-3">
               {config.bank?.logo ? (
-                <div className="w-8 h-8 rounded overflow-hidden bg-white border border-border flex items-center justify-center">
+                <div className="w-8 h-8 rounded overflow-hidden bg-background border border-border flex items-center justify-center">
                   <img 
                     src={config.bank.logo} 
                     alt={config.bank.name || 'Bank'}
@@ -368,12 +347,12 @@ export default function PaymentConfigPage() {
                       target.nextElementSibling?.classList.remove('hidden');
                     }}
                   />
-                  <div className="w-8 h-8 bg-primary text-white rounded text-xs font-bold items-center justify-center hidden">
+                  <div className="w-8 h-8 bg-primary/10 text-primary rounded text-xs font-bold items-center justify-center hidden">
                     {config.bank?.name?.slice(0, 2).toUpperCase() || 'БН'}
                   </div>
                 </div>
               ) : (
-                <div className="w-8 h-8 bg-primary text-white rounded text-xs font-bold flex items-center justify-center">
+                <div className="w-8 h-8 bg-primary/10 text-primary rounded text-xs font-bold flex items-center justify-center">
                   {config.bank?.name?.slice(0, 2).toUpperCase() || 'БН'}
                 </div>
               )}
@@ -398,7 +377,7 @@ export default function PaymentConfigPage() {
                   <DropdownMenuItem 
                     onClick={() => {
                       // Handle edit - open the bank account panel with existing data
-                      setShowBankAccountPanel(true);
+                      setBankAccountPanel('hub');
                     }}
                   >
                     <Edit className="mr-2 h-4 w-4" />
@@ -440,7 +419,7 @@ export default function PaymentConfigPage() {
           <div key={config.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <div className="flex items-center gap-3">
               {config.bank?.logo ? (
-                <div className="w-8 h-8 rounded overflow-hidden bg-white border border-border flex items-center justify-center">
+                <div className="w-8 h-8 rounded overflow-hidden bg-background border border-border flex items-center justify-center">
                   <img 
                     src={config.bank.logo} 
                     alt={config.bank.name || 'Bank'}
@@ -451,19 +430,19 @@ export default function PaymentConfigPage() {
                       target.nextElementSibling?.classList.remove('hidden');
                     }}
                   />
-                  <div className="w-8 h-8 bg-primary text-white rounded text-xs font-bold items-center justify-center hidden">
-                    ΠΟΣ
+                  <div className="w-8 h-8 bg-muted text-foreground rounded text-xs font-bold items-center justify-center hidden">
+                    POS
                   </div>
                 </div>
               ) : (
-                <div className="w-8 h-8 bg-primary text-white rounded text-xs font-bold flex items-center justify-center">
-                  ΠΟΣ
+                <div className="w-8 h-8 bg-muted text-foreground rounded text-xs font-bold flex items-center justify-center">
+                  POS
                 </div>
               )}
               <div>
-                <div className="font-medium text-sm">{config.bank?.name || 'Голомт Банк'} - ПОС Терминал #{config.terminal_id || '001'}</div>
+                <div className="font-medium text-sm">{`${config.bank?.name || 'Банк'} - ПОС Терминал${config.terminal_id ? ` #${config.terminal_id}` : ''}`}</div>
                 <div className="text-xs text-muted-foreground">
-                  хөлболдсон 2023-10-12
+                  {config.created_at ? `холбогдсон ${new Date(config.created_at).toISOString().slice(0, 10)}` : 'холбогдсон огноо бүртгээгүй'}
                 </div>
               </div>
             </div>
@@ -481,7 +460,7 @@ export default function PaymentConfigPage() {
                   <DropdownMenuItem 
                     onClick={() => {
                       // Handle edit - open the bank card POS panel with existing data
-                      setShowBankCardPOSPanel(true);
+                      setBankCardPanel('hub');
                     }}
                   >
                     <Edit className="mr-2 h-4 w-4" />
@@ -583,75 +562,207 @@ export default function PaymentConfigPage() {
     );
   };
 
-  // Render payment section
-  const renderPaymentSection = (paymentType: PaymentType, configs: PaymentConfig[]) => {
-    const sectionConfig = paymentSectionConfig[paymentType];
-    if (!sectionConfig) return null;
-
-    const Icon = sectionConfig.icon;
-
+  // Card header with icon + numbered title (figma: "1. Дансаар" style)
+  const SectionHeader = ({ paymentType, action }: { paymentType: PaymentType; action?: React.ReactNode }) => {
+    const sc = paymentSectionConfig[paymentType];
+    const Icon = sc.icon;
     return (
-      <motion.div
-        key={sectionConfig.id}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: sectionConfig.id * 0.1 }}
-        className="w-full"
-      >
-        <Card className={cn(
-          "h-full transition-all duration-300 hover:shadow-lg border-2",
-          sectionConfig.borderColor,
-          sectionConfig.bgColor,
-          "relative"
-        )}>
-          <CardContent className="p-6">
-            {/* Header with icon and number - NO ADD BUTTON */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Icon className="w-6 h-6 text-primary" />
-              </div>
-              <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">
-                {sectionConfig.id}
-              </div>
-            </div>
-
-            {/* Section title and description */}
-            <div className="space-y-2 mb-4">
-              <h3 className="text-base font-medium">
-                {sectionConfig.title}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {sectionConfig.description}
-              </p>
-            </div>
-
-            {/* Add button only for bank sections that have content */}
-            {(paymentType === 'bank_account' || paymentType === 'bank_card') && (
-              <div>
-                <Button 
-                  size="sm"
-                  onClick={() => {
-                    if (paymentType === 'bank_account') setShowBankAccountPanel(true);
-                    if (paymentType === 'bank_card') setShowBankCardPOSPanel(true);
-                  }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  {sectionConfig.buttonText}
-                </Button>
-              </div>
-            )}
-
-            {/* Content based on section type */}
-            {paymentType === 'bank_account' && renderBankAccountContent(configs)}
-            {paymentType === 'bank_card' && renderBankCardContent(configs)}
-            {paymentType === 'payment_solution' && renderPaymentSolutionContent(configs)}
-            {(['credit', 'bonus_card', 'cash'] as PaymentType[]).includes(paymentType) && 
-             renderSimpleToggleContent(configs, sectionConfig)}
-          </CardContent>
-        </Card>
-      </motion.div>
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+            <Icon className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold leading-tight">
+              {sc.id}. {sc.title}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              {sc.description}
+            </p>
+          </div>
+        </div>
+        {action}
+      </div>
     );
   };
+
+  // Card 1: Дансаар — list + 2 stacked buttons
+  const renderBankAccountCard = (configs: PaymentConfig[]) => (
+    <Card className="h-full transition-shadow hover:shadow-md">
+      <CardContent className="p-6 flex flex-col h-full">
+        <SectionHeader paymentType="bank_account" />
+        <div className="flex-1 space-y-2">
+          {configs.length === 0 ? (
+            <div className="text-center text-xs text-muted-foreground py-6">
+              Одоогоор данс бүртгээгүй байна
+            </div>
+          ) : configs.map((config) => (
+            <div
+              key={config.id}
+              className="flex items-center justify-between gap-3 rounded-lg border-l-4 border-primary bg-primary/5 px-3 py-2"
+            >
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-foreground truncate uppercase">
+                  {config.bank?.name || 'Банк'}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {config.account_number
+                    ? `${config.account_number.slice(0, 4)}******${config.account_number.slice(-4)}`
+                    : '••••••'}{' '}
+                  • MNT
+                </div>
+              </div>
+              <span
+                className={cn(
+                  'text-xs font-medium shrink-0',
+                  config.is_active ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                {config.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 space-y-2">
+          <Button
+            variant="outline"
+            className="w-full border-primary text-primary hover:bg-primary/5"
+            onClick={() => setBankAccountPanel('add')}
+          >
+            Данс нэмэх
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setBankAccountPanel('hub')}
+          >
+            Тохируулах
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Card 2: Банкны карт — top-right add button, terminal list, "Бүгдийг харах" link
+  const renderBankCardCard = (configs: PaymentConfig[]) => (
+    <Card className="h-full transition-shadow hover:shadow-md">
+      <CardContent className="p-6 flex flex-col h-full">
+        <SectionHeader
+          paymentType="bank_card"
+          action={
+            <Button size="sm" onClick={() => setBankCardPanel('add')}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Төхөөрөмж нэмэх
+            </Button>
+          }
+        />
+        <div className="flex-1 space-y-2">
+          {configs.length === 0 ? (
+            <div className="text-center text-xs text-muted-foreground py-6">
+              Терминал бүртгээгүй байна
+            </div>
+          ) : configs.slice(0, 2).map((config) => (
+            <div
+              key={config.id}
+              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2.5"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded bg-muted text-foreground flex items-center justify-center shrink-0">
+                  <CreditCard className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium truncate">
+                    {`${config.bank?.name || 'Банк'} - ПОС Терминал${config.terminal_id ? ` #${config.terminal_id}` : ''}`}
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate uppercase tracking-wide">
+                    {config.created_at
+                      ? `Холбогдсон: ${new Date(config.created_at).toISOString().slice(0, 10)}`
+                      : 'Холбогдсон огноо бүртгээгүй'}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <Badge
+                  className={cn(
+                    'text-[10px] uppercase font-semibold',
+                    config.is_active
+                      ? 'bg-primary/10 text-primary hover:bg-primary/10'
+                      : 'bg-muted text-muted-foreground hover:bg-muted'
+                  )}
+                >
+                  {config.is_active ? 'ONLINE' : 'OFFLINE'}
+                </Badge>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        {configs.length > 0 && (
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setBankCardPanel('hub')}
+              className="text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              Бүгдийг харах →
+            </button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  // Card 3: Төлбөрийн шийдэл — full-width horizontal scrolling carousel of solutions
+  const renderPaymentSolutionCard = () => (
+    <Card className="h-full transition-shadow hover:shadow-md md:col-span-2 lg:col-span-3">
+      <CardContent className="p-6">
+        <SectionHeader paymentType="payment_solution" />
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
+          {paymentSolutions.map((solution) => {
+            const isActive = solutionStates[solution.id] || false;
+            const isUpdating = updating === `solution-${solution.id}`;
+            return (
+              <div
+                key={solution.id}
+                className={cn(
+                  'shrink-0 snap-start w-[240px] rounded-lg border p-3 transition-colors',
+                  isActive ? 'bg-primary/5 border-primary/30' : 'bg-background border-border'
+                )}
+              >
+                <div className="inline-flex items-center px-2 py-0.5 rounded bg-background border border-border text-xs font-bold mb-2">
+                  {solution.name}
+                </div>
+                <p className="text-xs text-muted-foreground leading-snug min-h-[48px] mb-3">
+                  {solution.description}
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    төлөв: {isActive ? 'идэвхтэй' : 'идэвхгүй'}
+                  </span>
+                  <Switch
+                    checked={isActive}
+                    disabled={isUpdating}
+                    onCheckedChange={(checked) => handleToggleSolution(solution.id, checked)}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Cards 4, 5, 6: simple info cards (no inner toggle per figma)
+  const renderInfoCard = (paymentType: PaymentType) => (
+    <Card className="h-full transition-shadow hover:shadow-md">
+      <CardContent className="p-6">
+        <SectionHeader paymentType={paymentType} />
+      </CardContent>
+    </Card>
+  );
 
   // Early returns for loading and authentication states  
   if (loading || isLoading) {
@@ -700,45 +811,110 @@ export default function PaymentConfigPage() {
           </div>
         </div>
 
-        {/* Payment Sections Grid - Matching admin interface pattern */}
+        {/* Payment Sections Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* First row: sections 1, 2 */}
-          {(['bank_account', 'bank_card'] as PaymentType[]).map(paymentType => {
-            const configs = groupedConfigs[paymentType] || [];
-            return renderPaymentSection(paymentType, configs);
-          })}
-          
-          {/* Төлбөрийн шийдэл - only show when sufficient data is available */}
-          {(() => {
-            const paymentSolutionConfigs = groupedConfigs['payment_solution'] || [];
-            const hasActiveSolutions = Object.values(solutionStates).some(state => state === true);
-            const sufficientData = paymentSolutionConfigs.length > 0 || hasActiveSolutions;
-            
-            if (sufficientData) {
-              return renderPaymentSection('payment_solution', paymentSolutionConfigs);
-            }
-            return null;
-          })()}
-          
-          {/* Second row: sections 4, 5, 6 */}
-          {(['credit', 'bonus_card', 'cash'] as PaymentType[]).map(paymentType => {
-            const configs = groupedConfigs[paymentType] || [];
-            return renderPaymentSection(paymentType, configs);
-          })}
+          {/* Row 1: Дансаар + Банкны карт (карт is wider per figma) */}
+          <div className="md:col-span-1">
+            {renderBankAccountCard(groupedConfigs['bank_account'] || [])}
+          </div>
+          <div className="md:col-span-1 lg:col-span-2">
+            {renderBankCardCard(groupedConfigs['bank_card'] || [])}
+          </div>
+
+          {/* Row 2: Төлбөрийн шийдэл — full width */}
+          {renderPaymentSolutionCard()}
+
+          {/* Row 3: simple info cards 4, 5, 6 */}
+          {(['credit', 'bonus_card', 'cash'] as PaymentType[]).map((pt) => (
+            <React.Fragment key={pt}>{renderInfoCard(pt)}</React.Fragment>
+          ))}
         </div>
       </div>
       
       {/* Right-side panels - outside main container */}
       <BankAccountConfigPanel
-        isOpen={showBankAccountPanel}
-        onClose={() => setShowBankAccountPanel(false)}
+        isOpen={bankAccountPanel !== null}
+        onClose={() => setBankAccountPanel(null)}
         onSave={handleSaveConfig}
+        initialView={bankAccountPanel ?? 'hub'}
+        accounts={(() => {
+          const apiAccounts = (groupedConfigs['bank_account'] || []).map((c, idx) => ({
+            id: c.id,
+            bankName: `${c.bank?.name || 'Банк'}${idx === 0 ? ' (Үндсэн)' : ' (Валют)'}`,
+            accountNumber: c.account_number || '—',
+            holder: c.account_holder || undefined,
+            currency: (c as any).currency?.code || 'MNT',
+            isActive: !!c.is_active,
+            isPrimary: idx === 0,
+          }));
+          // Provide realistic placeholder rows when nothing is configured yet
+          if (apiAccounts.length === 0) {
+            return [
+              {
+                id: 'placeholder-1',
+                bankName: 'Хаан Банк (Үндсэн)',
+                accountNumber: '5023 4492 1198',
+                holder: 'СТРАКТУР БЛУ ХХК',
+                currency: 'MNT',
+                isActive: true,
+                isPrimary: true,
+              },
+              {
+                id: 'placeholder-2',
+                bankName: 'Голомт Банк (Валют)',
+                accountNumber: '1105 1293 8840',
+                holder: 'СТРАКТУР БЛУ ХХК',
+                currency: 'USD',
+                isActive: false,
+                isPrimary: false,
+              },
+            ];
+          }
+          return apiAccounts;
+        })()}
+        onToggleAccount={(id, active) => {
+          if (typeof id === 'number') {
+            handleToggleConfig(id, active);
+          }
+        }}
       />
 
       <BankCardPOSConfigPanel
-        isOpen={showBankCardPOSPanel}
-        onClose={() => setShowBankCardPOSPanel(false)}
+        isOpen={bankCardPanel !== null}
+        onClose={() => setBankCardPanel(null)}
         onSave={handleSaveConfig}
+        initialView={bankCardPanel ?? 'hub'}
+        terminals={(() => {
+          const apiTerminals = (groupedConfigs['bank_card'] || []).map((c) => ({
+            id: c.id,
+            bankName: `${c.bank?.name || 'Банк'} - ПОС Терминал`,
+            terminalNumber: c.terminal_id ? `SN: ${c.terminal_id}` : '',
+            lastConnection: c.created_at ? new Date(c.created_at).toISOString().slice(0, 10) : undefined,
+            status: (c.is_active ? 'online' : 'offline') as 'online' | 'offline',
+            bankCode: c.bank?.name?.slice(0, 2).toUpperCase() || 'БН',
+          }));
+          if (apiTerminals.length === 0) {
+            return [
+              {
+                id: 'pos-placeholder-1',
+                bankName: 'ХХБ - ПОС Терминал',
+                terminalNumber: 'SN: 8821',
+                lastConnection: '2026-04-12',
+                status: 'online' as const,
+                bankCode: 'ХХ',
+              },
+              {
+                id: 'pos-placeholder-2',
+                bankName: 'Голомт Банк - ПОС Терминал',
+                terminalNumber: 'SN: 1104',
+                lastConnection: '2026-03-28',
+                status: 'offline' as const,
+                bankCode: 'ГО',
+              },
+            ];
+          }
+          return apiTerminals;
+        })()}
       />
     </>
   );

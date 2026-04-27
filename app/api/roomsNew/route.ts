@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
     );
 
     if (!response.ok) {
-      throw new Error(`Backend returned ${response.status}`);
+      const errorBody = await response.json().catch(() => ({ error: `Backend returned ${response.status}` }));
+      return NextResponse.json(errorBody, { status: response.status });
     }
 
     const data = await response.json();

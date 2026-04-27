@@ -16,11 +16,11 @@ import { useTheme } from '@/context/ThemeContext';
 
 // Bank configurations matching API data
 const banks = [
-  { id: 1, name: 'Khan Bank', code: 'K', shortCode: 'khan', bgColor: 'bg-green-600' },
-  { id: 2, name: 'Ариг банк', code: 'А', shortCode: '210000', bgColor: 'bg-blue-600' },
-  { id: 3, name: 'Богд банк', code: 'Б', shortCode: '380000', bgColor: 'bg-purple-600' },
-  { id: 4, name: 'Golomt Bank', code: 'G', shortCode: 'golomt', bgColor: 'bg-blue-600' },
-  { id: 5, name: 'TDB Bank', code: 'T', shortCode: 'tdb', bgColor: 'bg-orange-600' }
+  { id: 1, name: 'Khan Bank', code: 'K', shortCode: 'khan' },
+  { id: 2, name: 'Ариг банк', code: 'А', shortCode: '210000' },
+  { id: 3, name: 'Богд банк', code: 'Б', shortCode: '380000' },
+  { id: 4, name: 'Golomt Bank', code: 'G', shortCode: 'golomt' },
+  { id: 5, name: 'TDB Bank', code: 'T', shortCode: 'tdb' }
 ];
 
 // Currency options
@@ -30,41 +30,26 @@ const currencies = [
   { id: 3, code: 'CNY', name: 'CNY' }
 ];
 
-// Mock terminal data matching Figma screenshots
-const mockTerminals = [
-  {
-    id: '1',
-    bankName: 'XXB - ПОС Терминал',
-    terminalNumber: '#8821',
-    lastConnection: '2023-10-12',
-    status: 'online',
-    bankCode: 'XXB',
-    bankColor: 'bg-purple-600'
-  },
-  {
-    id: '2',
-    bankName: 'Голомт банк - ПОС Терминал',
-    terminalNumber: '#1104',
-    lastConnection: '2023-08-05', 
-    status: 'online',
-    bankCode: 'Г',
-    bankColor: 'bg-blue-600'
-  },
-  {
-    id: '3',
-    bankName: 'Storage B Terminal',
-    terminalNumber: 'SN TX.73402.ZZ',
-    lastConnection: '',
-    status: 'offline',
-    bankCode: 'S',
-    bankColor: 'bg-gray-600'
-  }
-];
+export interface POSTerminalDisplay {
+  id: string | number;
+  bankName: string;
+  terminalNumber: string;
+  lastConnection?: string;
+  status: 'online' | 'offline';
+  bankCode: string;
+}
 
 interface BankCardPOSConfigPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onSave?: (config: any) => Promise<void>;
+  terminals?: POSTerminalDisplay[];
+  /**
+   * Which view to show when the panel opens.
+   * - 'hub' (default): the ПОС терминал list panel; user can stack the add form on top.
+   * - 'add': open straight into the "Төхөөрөмж нэмэх" form as a single panel.
+   */
+  initialView?: 'hub' | 'add';
 }
 
 interface NewTerminalFormProps {
@@ -116,16 +101,18 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
           {banks.map((bank) => (
             <Button
               key={bank.id}
-              variant={selectedBank?.id === bank.id ? "default" : "outline"}
+              variant="outline"
               className={cn(
-                "h-16 flex flex-col gap-1 p-2",
-                selectedBank?.id === bank.id && "border-blue-500 bg-blue-50"
+                "h-16 flex flex-col gap-1 p-2 bg-background",
+                selectedBank?.id === bank.id && "border-primary ring-1 ring-primary bg-primary/5"
               )}
               onClick={() => setSelectedBank(bank)}
             >
               <div className={cn(
-                "w-8 h-8 rounded text-white flex items-center justify-center text-sm font-bold",
-                bank.bgColor
+                "w-8 h-8 rounded flex items-center justify-center text-sm font-bold",
+                selectedBank?.id === bank.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-foreground"
               )}>
                 {bank.code}
               </div>
@@ -135,15 +122,15 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
         </div>
       </div>
 
-      {/* Төвчаар (Auto-filled) */}
+      {/* Auto-filled short name */}
       <div className="space-y-2">
-        <Label htmlFor="terminalType">Төвчаар</Label>
+        <Label htmlFor="terminalType">Товч нэр</Label>
         <Input
           id="terminalType"
           value={selectedBank ? `${selectedBank.name} POS` : ''}
           placeholder="Khanbank POS"
           readOnly
-          className="bg-gray-50"
+          className="bg-muted"
         />
       </div>
 
@@ -152,7 +139,7 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
         <Label htmlFor="terminalId">Terminal ID</Label>
         <Input
           id="terminalId"
-          placeholder="HAs-37373y"
+          placeholder="POS-8821-HAS"
           value={formData.terminalId}
           onChange={(e) => setFormData(prev => ({ ...prev, terminalId: e.target.value }))}
         />
@@ -167,10 +154,6 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
               key={currency.code}
               size="sm"
               variant={formData.currency === currency.code ? "default" : "outline"}
-              className={cn(
-                formData.currency === currency.code && currency.code === 'MNT' && 
-                "bg-primary hover:bg-primary/90 text-white"
-              )}
               onClick={() => setFormData(prev => ({ ...prev, currency: currency.code }))}
             >
               {currency.name}
@@ -179,13 +162,13 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
         </div>
       </div>
 
-      {/* Phone Delivery Toggle */}
+      {/* Activate Toggle */}
       <div className="space-y-3">
         <Label>Төлөв</Label>
         <div className="flex items-center justify-between py-2">
           <div>
             <p className="text-sm text-muted-foreground">
-              Төлбөрийн суурь дээр түрүүлсэнгүүтэн
+              Төхөөрөмжийг шууд идэвхжүүлэх
             </p>
           </div>
           <Switch
@@ -207,7 +190,7 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
         </Button>
         <Button 
           onClick={handleSave}
-          className="flex-1 bg-primary hover:bg-primary/90"
+          className="flex-1"
           disabled={loading}
         >
           {loading ? 'Хадгалж байна...' : 'Бүртгэх'}
@@ -220,17 +203,31 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
 export function BankCardPOSConfigPanel({ 
   isOpen, 
   onClose, 
-  onSave = async () => {} 
+  onSave = async () => {},
+  terminals = [],
+  initialView = 'hub',
 }: BankCardPOSConfigPanelProps) {
   const { themeColor } = useTheme();
   const [showNewTerminalForm, setShowNewTerminalForm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  const isAddOnly = initialView === 'add';
+
+  // Close any open secondary panel when the primary closes so they
+  // don't end up out of sync.
+  const handleClosePrimary = () => {
+    setShowNewTerminalForm(false);
+    onClose();
+  };
+
   const handleSaveNewTerminal = async (config: any) => {
     await onSave(config);
     setShowNewTerminalForm(false);
     setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
+    setTimeout(() => {
+      setShowSuccess(false);
+      if (isAddOnly) onClose();
+    }, 2000);
   };
 
   // Success screen component
@@ -240,11 +237,11 @@ export function BankCardPOSConfigPanel({
         <CheckCircle className="w-8 h-8 text-primary" />
       </div>
       <h3 className="text-lg font-semibold mb-2">
-        Шинэ төхөөрэмж амжилттай бүртгэгдлээ.
+        Шинэ төхөөрөмж амжилттай бүртгэгдлээ.
       </h3>
       <Button 
         onClick={() => setShowSuccess(false)}
-        className="mt-4 bg-green-600 hover:bg-green-700"
+        className="mt-4"
       >
         Хаах
       </Button>
@@ -253,10 +250,50 @@ export function BankCardPOSConfigPanel({
 
   return (
     <>
+      {isAddOnly ? (
+        // Single-panel add-form mode (entry: card-level "Төхөөрөмж нэмэх" button)
+        <RightPanel
+          isOpen={isOpen}
+          onClose={onClose}
+          title="Төхөөрөмж нэмэх"
+          description="ПОС терминал болон төлбөр тооцооны тохиргоо"
+          width="w-[400px] sm:w-[460px]"
+        >
+          <AnimatePresence mode="wait">
+            {showSuccess ? (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="h-full"
+              >
+                <SuccessScreen />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="form"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col h-full"
+              >
+                <RightPanelContent>
+                  <NewTerminalForm
+                    onSave={handleSaveNewTerminal}
+                    onCancel={onClose}
+                  />
+                </RightPanelContent>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </RightPanel>
+      ) : (
+        <>
       {/* Main panel — always shows the terminal list */}
       <RightPanel
         isOpen={isOpen}
-        onClose={onClose}
+        onClose={handleClosePrimary}
         title="ПОС терминал"
         description="Холбогдсон ПОС терминалууд"
         width="w-[400px] sm:w-[460px]"
@@ -286,7 +323,7 @@ export function BankCardPOSConfigPanel({
                 <div className="mb-6">
                   <Button 
                     onClick={() => setShowNewTerminalForm(true)}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                    className="w-full flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" />
                     Төхөөрөмж нэмэх
@@ -295,26 +332,33 @@ export function BankCardPOSConfigPanel({
 
                 {/* Connected POS Terminals */}
                 <div className="space-y-4">
-                  <h3 className="font-medium text-gray-900">Хөшөөдсөн ПОС терминалууд</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-foreground">Холбогдсон ПОС терминалууд</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {terminals.filter(t => t.status === 'online').length} идэвхтэй төхөөрөмж
+                    </p>
+                  </div>
+                  {terminals.length === 0 ? (
+                    <div className="text-center text-sm text-muted-foreground py-8">
+                      Төхөөрөмж бүртгээгүй байна
+                    </div>
+                  ) : (
                   <div className="space-y-3">
-                    {mockTerminals.map((terminal) => (
+                    {terminals.map((terminal) => (
                       <Card 
                         key={terminal.id}
-                        className="p-4 border border-gray-200 hover:border-gray-300 transition-colors"
+                        className="p-4 hover:border-primary/40 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "w-8 h-8 rounded text-white flex items-center justify-center text-xs font-bold",
-                              terminal.bankColor
-                            )}>
+                            <div className="w-8 h-8 rounded bg-muted text-foreground flex items-center justify-center text-xs font-bold">
                               {terminal.bankCode}
                             </div>
                             <div>
                               <div className="font-medium text-sm">{terminal.bankName}</div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 {terminal.terminalNumber}
-                                {terminal.lastConnection && ` • хөлболдсон ${terminal.lastConnection}`}
+                                {terminal.lastConnection && ` • холбогдсон ${terminal.lastConnection}`}
                               </div>
                             </div>
                           </div>
@@ -324,7 +368,7 @@ export function BankCardPOSConfigPanel({
                                 "text-xs",
                                 terminal.status === 'online' 
                                   ? "bg-primary/10 text-primary" 
-                                  : "bg-gray-100 text-gray-600"
+                                  : "bg-muted text-muted-foreground"
                               )}
                             >
                               {terminal.status === 'online' ? 'идэвхтэй' : 'идэвхгүй'}
@@ -337,12 +381,13 @@ export function BankCardPOSConfigPanel({
                       </Card>
                     ))}
                   </div>
+                  )}
                 </div>
               </RightPanelContent>
 
               <RightPanelFooter>
-                <Button variant="outline" onClick={onClose} className="w-full">
-                  Буцах
+                <Button variant="outline" onClick={handleClosePrimary} className="w-full">
+                  ← Буцах
                 </Button>
               </RightPanelFooter>
             </motion.div>
@@ -350,15 +395,16 @@ export function BankCardPOSConfigPanel({
         </AnimatePresence>
       </RightPanel>
 
-      {/* Secondary panel — slides in next to the main panel when adding a terminal */}
+      {/* Secondary panel — slides out from behind the primary panel when adding a terminal */}
       <RightPanel
-        isOpen={isOpen && showNewTerminalForm}
+        isOpen={isOpen && showNewTerminalForm && !showSuccess}
         onClose={() => setShowNewTerminalForm(false)}
         title="Төхөөрөмж нэмэх"
         description="ПОС терминал болон төлбөр тооцооны тохиргоо"
         width="w-[400px] sm:w-[460px]"
         rightOffset="right-[400px] sm:right-[460px]"
         showOverlay={false}
+        slideFrom="inner-right"
       >
         <RightPanelContent>
           <NewTerminalForm
@@ -367,6 +413,8 @@ export function BankCardPOSConfigPanel({
           />
         </RightPanelContent>
       </RightPanel>
+        </>
+      )}
     </>
   );
 }
