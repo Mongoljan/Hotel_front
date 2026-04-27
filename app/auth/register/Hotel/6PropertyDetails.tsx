@@ -299,7 +299,7 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
                 <p className="text-xs font-medium text-primary uppercase tracking-wide">
                   {t('selected_label')} ({selectedItems.length})
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {selectedItems.map((item) => {
                     const label = locale === 'mn' ? item.name_mn : item.name_en;
                     return (
@@ -329,7 +329,7 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   {t('available_label')} ({unselectedItems.length})
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {unselectedItems.map((item) => {
                     const label = locale === 'mn' ? item.name_mn : item.name_en;
                     return (
@@ -337,7 +337,7 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
                         key={item.id}
                         type="button"
                         onClick={() => toggleItem(key, item.id)}
-                        className="inline-flex items-center rounded-full bg-muted/40 text-muted-foreground px-3 py-1 text-xs hover:bg-muted hover:text-foreground transition-colors"
+                        className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-3 py-1 text-xs hover:bg-muted/80 hover:text-foreground transition-colors"
                       >
                         {label}
                       </button>

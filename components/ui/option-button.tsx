@@ -17,7 +17,7 @@ const OptionButton = React.forwardRef<HTMLButtonElement, OptionButtonProps>(
           "px-5 py-2 rounded-md text-sm font-medium transition-colors",
           selected
             ? "bg-primary text-primary-foreground shadow-sm"
-            : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+            : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground",
           className
         )}
         {...props}

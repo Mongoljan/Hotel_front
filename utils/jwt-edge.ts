@@ -30,7 +30,7 @@ function unicodeToBtoa(str: string): string {
 }
 
 // Simple JWT implementation for Edge Runtime
-export function createSimpleJWT(payload: UserPayload, expiresInMinutes: number = 30): string {
+export function createSimpleJWT(payload: UserPayload, expiresInMinutes: number = 60): string {
   const header = { alg: 'HS256', typ: 'JWT' }
   const now = Math.floor(Date.now() / 1000)
   const jwtPayload = {

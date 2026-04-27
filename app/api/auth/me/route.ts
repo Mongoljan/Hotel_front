@@ -17,7 +17,7 @@ export async function GET() {
     // Calculate remaining session time
     const now = Math.floor(Date.now() / 1000)
     const expiresIn = payload.exp ? payload.exp - now : 0
-    const expiresAt = payload.exp ? payload.exp * 1000 : Date.now() + 30 * 60 * 1000
+    const expiresAt = payload.exp ? payload.exp * 1000 : Date.now() + 60 * 60 * 1000
 
     // Return non-sensitive user info with session info
     return NextResponse.json({

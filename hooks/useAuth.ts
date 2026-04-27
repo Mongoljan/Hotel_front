@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import UserStorage from '@/utils/storage'
 
 interface User {
@@ -45,6 +46,7 @@ export function useAuth(): AuthState & {
   })
   const [sessionTimeRemaining, setSessionTimeRemaining] = useState<number | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const warnedRef = useRef<{ five: boolean; one: boolean }>({ five: false, one: false })
 
   const router = useRouter()
 
@@ -126,7 +128,7 @@ export function useAuth(): AuthState & {
           hotel: data.user.hotel,
           isUserApproved: data.user.approved,
           isHotelApproved: data.user.hotelApproved,
-          sessionExpiresAt: data.session?.expiresAt || Date.now() + 30 * 60 * 1000,
+          sessionExpiresAt: data.session?.expiresAt || Date.now() + 60 * 60 * 1000,
         })
         return { success: true }
       } else {
@@ -203,7 +205,7 @@ export function useAuth(): AuthState & {
           user: data.user,
           isUserApproved: data.user.approved,
           isHotelApproved: data.user.hotelApproved,
-          sessionExpiresAt: data.session?.expiresAt || Date.now() + 30 * 60 * 1000,
+          sessionExpiresAt: data.session?.expiresAt || Date.now() + 60 * 60 * 1000,
         }))
         return { success: true }
       } else {
@@ -234,13 +236,43 @@ export function useAuth(): AuthState & {
   useEffect(() => {
     if (!authState.sessionExpiresAt) {
       setSessionTimeRemaining(null)
+      warnedRef.current = { five: false, one: false }
       return
     }
+
+    // Reset warning flags whenever session expiry changes (e.g. after refresh/login)
+    warnedRef.current = { five: false, one: false }
 
     const updateTimeRemaining = () => {
       const remaining = Math.max(0, Math.floor((authState.sessionExpiresAt! - Date.now()) / 1000))
       setSessionTimeRemaining(remaining)
-      
+
+      // 5-minute warning (between 4:55 and 5:00, fire once)
+      if (!warnedRef.current.five && remaining <= 300 && remaining > 295) {
+        warnedRef.current.five = true
+        toast.warning('Сесс удахгүй дуусна', {
+          description: '5 минутын дотор сесс дуусна. Үргэлжлүүлэхийн тулд "Сесс шинэчлэх" товчийг дарна уу.',
+          duration: 10000,
+          action: {
+            label: 'Шинэчлэх',
+            onClick: () => { void refreshSession() },
+          },
+        })
+      }
+
+      // 1-minute critical warning
+      if (!warnedRef.current.one && remaining <= 60 && remaining > 55) {
+        warnedRef.current.one = true
+        toast.error('Сесс 1 минутын дараа дуусна', {
+          description: 'Та одоо сессээ шинэчилнэ үү, эс бөгөөс системээс гарна.',
+          duration: 15000,
+          action: {
+            label: 'Шинэчлэх',
+            onClick: () => { void refreshSession() },
+          },
+        })
+      }
+
       // Auto logout when session expires
       if (remaining <= 0) {
         logout()

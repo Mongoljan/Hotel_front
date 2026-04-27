@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
+import { BadgeCheck } from 'lucide-react';
 import type { BasicInfo, PropertyBaseInfo } from '../types';
 
 interface HotelHeaderProps {
@@ -19,12 +19,13 @@ export function HotelHeader({ basicInfo, propertyBaseInfo }: HotelHeaderProps) {
           <p className="text-sm text-muted-foreground">{basicInfo.property_name_en}</p>
         )}
       </div>
-      <Badge
-        variant="default"
-        className="bg-green-600 hover:bg-green-600 cursor-default px-4 py-2 text-sm font-medium"
+      <span
+        className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20"
+        title="Баталгаажсан буудал"
       >
-        Баталгаажсан ✓
-      </Badge>
+        <BadgeCheck className="h-3.5 w-3.5 fill-primary text-primary-foreground" />
+        Баталгаажсан
+      </span>
     </div>
   );
 }

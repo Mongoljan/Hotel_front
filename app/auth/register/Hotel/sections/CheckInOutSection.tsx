@@ -56,7 +56,7 @@ export default function CheckInOutSection({ form, t }: Props) {
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <Clock className="h-4 w-4" />
-        <h3 className="text-base font-semibold">{t('set_time_title')}</h3>
+        <h3 className="text-sm font-semibold">{t('set_time_title')}</h3>
       </div>
       <p className="text-sm text-muted-foreground">
         {t('set_time_description')}

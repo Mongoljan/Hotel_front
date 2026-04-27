@@ -14,7 +14,7 @@ interface StorageMetadata {
 class UserStorage {
   private static METADATA_KEY = '__user_session_metadata__';
   private static PREFIX = 'hotel_';
-  private static SESSION_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds (matches JWT)
+  private static SESSION_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds (matches JWT)
 
   /**
    * Initialize storage for current user

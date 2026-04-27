@@ -62,7 +62,7 @@ function ParkingSubSection({
         name={parkingFieldName}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{label}</FormLabel>
+            <FormLabel className="text-slate-600 " >{label}</FormLabel>
             <FormControl>
               <div className="flex gap-2">
                 {(['no', 'free', 'paid'] as const).map((value) => (
@@ -88,7 +88,7 @@ function ParkingSubSection({
             name={feeTypeFieldName}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('payment_unit')}</FormLabel>
+                <FormLabel className="text-muted-foreground">{t('payment_unit')}</FormLabel>
                 <Select
                   onValueChange={(value) => {
                     form.setValue(feeTypeFieldName, value as any, {
@@ -118,7 +118,7 @@ function ParkingSubSection({
             name={priceFieldName}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('price_label')}</FormLabel>
+                <FormLabel className="text-muted-foreground">{t('price_label')}</FormLabel>
                 <FormControl>
                   <NumericFormat
                     thousandSeparator=","
@@ -150,7 +150,7 @@ export default function ParkingPolicySection({ form, t }: Props) {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Car className="h-4 w-4" />
-        <h3 className="text-base font-semibold">{t('parking_info')}</h3>
+        <h3 className="text-sm font-semibold">{t('parking_info')}</h3>
       </div>
 
       <ParkingSubSection

@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +13,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { IconSparkles, IconPencil } from '@tabler/icons-react';
-import { Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { Star, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_COMBINED = 'https://dev.kacc.mn/api/combined-data/';
@@ -113,14 +112,24 @@ export default function ServicesTab({
     load();
   }, []);
 
-  // Handle both legacy number[] and new {id,is_highlight}[] from the API
+  // Handle multiple shapes coming from the API:
+  //   - legacy: number[]                                       (just IDs)
+  //   - registration step 6: [{ id, is_highlight }]
+  //   - property-details GET: [{ id (junction), facility_id|activity_id|feature_id, name_*, is_highlight }]
   const normalize = (raw: any[]): SelectedItem[] => {
     if (!Array.isArray(raw)) return [];
-    return raw.map((item) =>
-      typeof item === 'number'
-        ? { id: item, is_highlight: false }
-        : { id: Number(item.id), is_highlight: Boolean(item.is_highlight) }
-    );
+    return raw.map((item) => {
+      if (typeof item === 'number') {
+        return { id: item, is_highlight: false };
+      }
+      const realId =
+        item.facility_id ??
+        item.activity_id ??
+        item.feature_id ??
+        item.accessibility_id ??
+        item.id;
+      return { id: Number(realId), is_highlight: Boolean(item.is_highlight) };
+    });
   };
 
   const openEdit = () => {
@@ -236,10 +245,10 @@ export default function ServicesTab({
       items: resolveItems(activities, lists.activities),
     },
     {
-      title: 'Хүртээмжийн онцлог',
+      title: 'Хүртээмжийн тохиромжийн онцлог',
       items: resolveItems(accessibilityFeatures, lists.accessibility_features),
     },
-  ].filter((g) => g.items.length > 0);
+  ];
 
   const totalSelected =
     generalFacilities.length +
@@ -255,16 +264,61 @@ export default function ServicesTab({
     { key: 'general_facilities', title: 'Ерөнхий байгууламжууд', items: lists.facilities },
     { key: 'additional_facilities', title: 'Нэмэлт байгууламжууд', items: lists.additionalFacilities },
     { key: 'activities', title: 'Үйл ажиллагаанууд', items: lists.activities },
-    { key: 'accessibility_features', title: 'Хүртээмжийн онцлог', items: lists.accessibility_features },
+    { key: 'accessibility_features', title: 'Хүртээмжийн тохиромжийн онцлог', items: lists.accessibility_features },
   ];
 
   const renderEditGroup = ({ key, title, items }: GroupConfig) => {
     const selected = draft[key];
     const selectedIds = new Set(selected.map((s) => s.id));
     const selectedItems = items.filter((i) => selectedIds.has(i.id));
+    const highlightedSelectedItems = selectedItems.filter(
+      (i) => selected.find((s) => s.id === i.id)?.is_highlight
+    );
+    const regularSelectedItems = selectedItems.filter(
+      (i) => !selected.find((s) => s.id === i.id)?.is_highlight
+    );
     const unselectedItems = items.filter((i) => !selectedIds.has(i.id));
     const isExpanded = expandedGroup === key;
     const allSelected = items.length > 0 && items.every((i) => selectedIds.has(i.id));
+
+    const renderChip = (item: FacilityItem, isHighlighted: boolean) => {
+      const canHighlight = isHighlighted || totalDraftHighlights < MAX_HIGHLIGHTS;
+      return (
+        <div
+          key={item.id}
+          className={`group inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            isHighlighted
+              ? 'bg-yellow-100 text-yellow-900 ring-1 ring-yellow-300'
+              : 'bg-primary/15 text-primary hover:bg-primary/25'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => toggleHighlight(key, item.id)}
+            disabled={!canHighlight}
+            title={isHighlighted ? 'Онцлохоос хасах' : 'Онцлох болгох'}
+            className={`shrink-0 ${!canHighlight ? 'opacity-30 cursor-not-allowed' : ''}`}
+          >
+            <Star
+              className={`h-3 w-3 transition-colors ${
+                isHighlighted
+                  ? 'fill-yellow-500 text-yellow-500'
+                  : 'text-current opacity-50 hover:opacity-100'
+              }`}
+            />
+          </button>
+          <span>{item.name_mn}</span>
+          <button
+            type="button"
+            onClick={() => toggleItem(key, item.id)}
+            aria-label="Хасах"
+            className="shrink-0 opacity-60 hover:opacity-100"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      );
+    };
 
     return (
       <div key={key} className="border rounded-lg overflow-hidden">
@@ -302,81 +356,52 @@ export default function ServicesTab({
 
         {isExpanded && (
           <div className="p-4 space-y-4">
-            {selectedItems.length > 0 && (
+            {/* Highlighted section */}
+            {highlightedSelectedItems.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">
-                  Сонгогдсон ({selectedItems.length})
+                <p className="text-xs font-medium text-yellow-700 uppercase tracking-wide flex items-center gap-1">
+                  <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                  Онцолсон ({highlightedSelectedItems.length})
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {selectedItems.map((item) => {
-                    const sel = selected.find((s) => s.id === item.id)!;
-                    const canHighlight =
-                      sel.is_highlight || totalDraftHighlights < MAX_HIGHLIGHTS;
-                    return (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-2 p-2 rounded-md bg-green-50 border border-green-200"
-                      >
-                        <Checkbox
-                          id={`edit-${key}-${item.id}`}
-                          checked
-                          onCheckedChange={() => toggleItem(key, item.id)}
-                        />
-                        <label
-                          htmlFor={`edit-${key}-${item.id}`}
-                          className="flex-1 text-sm cursor-pointer leading-none"
-                        >
-                          {item.name_mn}
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => toggleHighlight(key, item.id)}
-                          disabled={!canHighlight}
-                          title={sel.is_highlight ? 'Онцлохоос хасах' : 'Онцлох болгох'}
-                          className={`shrink-0 ${!canHighlight ? 'opacity-30 cursor-not-allowed' : ''}`}
-                        >
-                          <Star
-                            className={`h-4 w-4 transition-colors ${
-                              sel.is_highlight
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-muted-foreground hover:text-yellow-400'
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    );
-                  })}
+                <div className="flex flex-wrap gap-2">
+                  {highlightedSelectedItems.map((item) => renderChip(item, true))}
                 </div>
               </div>
             )}
 
+            {/* Regular selected section */}
+            {regularSelectedItems.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-primary uppercase tracking-wide">
+                  Сонгогдсон ({regularSelectedItems.length})
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {regularSelectedItems.map((item) => renderChip(item, false))}
+                </div>
+              </div>
+            )}
+
+            {/* Divider between sections */}
             {selectedItems.length > 0 && unselectedItems.length > 0 && (
               <div className="border-t" />
             )}
 
+            {/* Unselected section */}
             {unselectedItems.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   Боломжтой ({unselectedItems.length})
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="flex flex-wrap gap-2">
                   {unselectedItems.map((item) => (
-                    <div
+                    <button
                       key={item.id}
-                      className="flex items-center gap-2 p-2 rounded-md border border-muted hover:bg-muted/30 transition-colors"
+                      type="button"
+                      onClick={() => toggleItem(key, item.id)}
+                      className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-3 py-1 text-xs hover:bg-muted/80 hover:text-foreground transition-colors"
                     >
-                      <Checkbox
-                        id={`edit-${key}-${item.id}`}
-                        checked={false}
-                        onCheckedChange={() => toggleItem(key, item.id)}
-                      />
-                      <label
-                        htmlFor={`edit-${key}-${item.id}`}
-                        className="flex-1 text-sm cursor-pointer leading-none text-muted-foreground"
-                      >
-                        {item.name_mn}
-                      </label>
-                    </div>
+                      {item.name_mn}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -457,6 +482,11 @@ export default function ServicesTab({
 
                   {isExpanded && (
                     <div className="p-3">
+                      {items.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-3">
+                          Сонгогдоогүй байна
+                        </p>
+                      ) : (
                       <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                         {items.map((item) => (
                           <div
@@ -481,6 +511,7 @@ export default function ServicesTab({
                           </div>
                         ))}
                       </div>
+                      )}
                     </div>
                   )}
                 </div>

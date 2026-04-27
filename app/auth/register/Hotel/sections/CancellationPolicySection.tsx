@@ -35,7 +35,7 @@ export default function CancellationPolicySection({ form, t }: Props) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-base font-semibold">{t('cancellation_policy')}</h3>
+      <h3 className="text-sm font-semibold">{t('cancellation_policy')}</h3>
 
       <FormField
         control={form.control}
@@ -43,7 +43,7 @@ export default function CancellationPolicySection({ form, t }: Props) {
         render={({ field }) => (
           <FormItem>
             <div className="flex items-center gap-4">
-              <FormLabel className="min-w-[200px]">{t('cancellable_time')}</FormLabel>
+              <FormLabel className="min-w-[200px] text-sm font-normal text-muted-foreground">{t('cancellable_time')}</FormLabel>
               <Select onValueChange={field.onChange} value={field.value || undefined}>
                 <FormControl>
                   <SelectTrigger className="w-[110px]">
@@ -68,15 +68,15 @@ export default function CancellationPolicySection({ form, t }: Props) {
 
       {/* Single Room Section */}
       <div className="space-y-2">
-        <h4 className="font-medium text-base">{t('single_room_fee_label')}</h4>
+        <h4 className="text-sm font-medium">{t('single_room_fee_label')}</h4>
 
         <FormField
           control={form.control}
           name="single_before_time_percentage"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center gap-4">
-                <FormLabel className="min-w-[200px]">
+              <div className="flex items-center gap-4 text-muted-foreground">
+                <FormLabel className="min-w-[200px] text-sm font-normal">
                   {t('before_cancel_label', { time: displayCancelTime })}
                 </FormLabel>
                 <FormControl>
@@ -93,8 +93,8 @@ export default function CancellationPolicySection({ form, t }: Props) {
           name="single_after_time_percentage"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center gap-4">
-                <FormLabel className="min-w-[200px]">
+              <div className="flex items-center gap-4 text-muted-foreground">
+                <FormLabel className="min-w-[200px] text-sm font-normal">
                   {t('after_cancel_label', { time: displayCancelTime })}
                 </FormLabel>
                 <FormControl>
@@ -111,15 +111,15 @@ export default function CancellationPolicySection({ form, t }: Props) {
 
       {/* Multi Room Section */}
       <div className="space-y-2">
-        <h4 className="font-medium text-base">{t('multi_room_fee_label')}</h4>
+        <h4 className="text-sm font-medium">{t('multi_room_fee_label')}</h4>
 
         <FormField
           control={form.control}
           name="multi_5days_before_percentage"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center gap-4">
-                <FormLabel className="min-w-[200px]">{t('five_days_before')}</FormLabel>
+              <div className="flex items-center gap-4 ">
+                <FormLabel className="min-w-[200px] text-sm font-normal text-muted-foreground">{t('five_days_before')}</FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="0" min={0} max={100} step={1} {...field} onChange={(e) => field.onChange(clampPercent(e.target.value))} className="w-32" />
                 </FormControl>
@@ -134,8 +134,8 @@ export default function CancellationPolicySection({ form, t }: Props) {
           name="multi_3days_before_percentage"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center gap-4">
-                <FormLabel className="min-w-[200px]">{t('three_days_before')}</FormLabel>
+              <div className="flex items-center gap-4 ">
+                <FormLabel className="min-w-[200px] text-muted-foreground text-sm font-normal">{t('three_days_before')}</FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="0" min={0} max={100} step={1} {...field} onChange={(e) => field.onChange(clampPercent(e.target.value))} className="w-32" />
                 </FormControl>
@@ -151,7 +151,7 @@ export default function CancellationPolicySection({ form, t }: Props) {
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center gap-4">
-                <FormLabel className="min-w-[200px]">{t('two_days_before')}</FormLabel>
+                <FormLabel className="min-w-[200px] text-sm  text-muted-foreground font-normal">{t('two_days_before')}</FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="0" min={0} max={100} step={1} {...field} onChange={(e) => field.onChange(clampPercent(e.target.value))} className="w-32" />
                 </FormControl>
@@ -167,7 +167,7 @@ export default function CancellationPolicySection({ form, t }: Props) {
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center gap-4">
-                <FormLabel className="min-w-[200px]">{t('one_day_before')}</FormLabel>
+                <FormLabel className="min-w-[200px] text-sm text-muted-foreground font-normal">{t('one_day_before')}</FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="0" min={0} max={100} step={1} {...field} onChange={(e) => field.onChange(clampPercent(e.target.value))} className="w-32" />
                 </FormControl>

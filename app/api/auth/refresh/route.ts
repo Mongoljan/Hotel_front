@@ -57,7 +57,7 @@ export async function POST() {
     await setAuthCookies(userPayload)
 
     // Calculate new session expiry
-    const sessionExpiresAt = Date.now() + 30 * 60 * 1000
+    const sessionExpiresAt = Date.now() + 60 * 60 * 1000
 
     return NextResponse.json({
       success: true,
@@ -75,7 +75,7 @@ export async function POST() {
       },
       session: {
         expiresAt: sessionExpiresAt,
-        expiresIn: 30 * 60,
+        expiresIn: 60 * 60,
       }
     })
 

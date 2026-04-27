@@ -398,7 +398,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
             <ImageIcon className="h-5 w-5" />
             {t('title')}
           </CardTitle>
-          <CardDescription className="text-center text-sm">
+          <CardDescription className="text-center text-sm text-muted-foreground">
             <div>{t('description')}</div>
             <div className="text-xs text-muted-foreground/80 mt-1">
               {t('hotel_image_suggestions')}
@@ -431,13 +431,16 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="">
 
-              {fields.map((field, index) => {
-                const previewSrc = watchedEntries?.[index]?.images;
-                const isProfile = Boolean(watchedEntries?.[index]?.is_profile);
-                return (
-                  <div key={field.id} className={`border-dashed ${isProfile ? 'border-yellow-400/70 bg-yellow-50/30' : ''}`}>
-                    <div className="p-2.5">
-                      <div className="flex gap-2.5">
+              <div className="space-y-2.5">
+                {fields.map((field, index) => {
+                  const previewSrc = watchedEntries?.[index]?.images;
+                  const isProfile = Boolean(watchedEntries?.[index]?.is_profile);
+                  return (
+                    <div
+                      key={field.id}
+                      className={`rounded-md border p-3 ${isProfile ? 'border-yellow-400/70 bg-yellow-50/30' : ''}`}
+                    >
+                      <div className="flex gap-3">
                         {/* Image preview or placeholder */}
                         <div className="flex-shrink-0 w-16 h-16">
                           {previewSrc ? (
@@ -451,48 +454,45 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                                 className="w-full h-full rounded border object-cover transition-opacity group-hover:opacity-90"
                               />
                               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                <div className="bg-black/50 rounded-full p-1.5">
-                                  <Expand className="h-4 w-4 text-white" />
+                                <div className="bg-black/50 rounded-full p-1">
+                                  <Expand className="h-3 w-3 text-white" />
                                 </div>
                               </div>
                               {isProfile && (
-                                <div className="absolute -top-2 -right-2 rounded-full p-1 bg-yellow-400 shadow-md ring-2 ring-white">
-                                  <Star className="h-3.5 w-3.5 fill-white text-white" />
+                                <div className="absolute -top-1.5 -right-1.5 rounded-full p-0.5 bg-yellow-400 shadow ring-2 ring-white">
+                                  <Star className="h-3 w-3 fill-white text-white" />
                                 </div>
                               )}
                             </div>
                           ) : (
                             <div className="w-full h-full rounded border-2 border-dashed border-muted-foreground/25 flex items-center justify-center">
-                              <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
+                              <ImageIcon className="h-7 w-7 text-muted-foreground/40" />
                             </div>
                           )}
                         </div>
 
                         {/* Controls */}
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0 space-y-2">
                           <div className="flex gap-2">
-                     
                             <FormField
                               control={form.control}
                               name={`entries.${index}.images`}
-                              render={({ field: fieldProps }) => (
-                                <FormItem className="flex-1">
+                              render={() => (
+                                <FormItem className="flex-1 space-y-0">
                                   <FormControl>
-                                    <div className="relative">
-                                      <Input
-                                        type="file"
-                                        accept="image/png,image/jpeg,image/jpg,image/webp"
-                                        multiple
-                                        onChange={(e) => handleImageChange(e, index)}
-                                        className="text-xs  file:text-xs cursor-pointer"
-                                      />
-                                    </div>
+                                    <Input
+                                      type="file"
+                                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                                      multiple
+                                      onChange={(e) => handleImageChange(e, index)}
+                                      className="h-8 text-xs file:text-xs cursor-pointer"
+                                    />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
                                 </FormItem>
                               )}
                             />
-                        
+
                             <Button
                               type="button"
                               variant={isProfile ? 'default' : 'outline'}
@@ -506,11 +506,12 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                                   });
                                 });
                               }}
-                              className=" px-2 text-xs gap-1"
+                              className="h-8 px-2 text-xs gap-1"
                             >
-                              <Star className={`h-3 w-3 flex-shrink-0 ${isProfile ? 'fill-current' : ''}`} />
+                              <Star className={`h-3 w-3 ${isProfile ? 'fill-current' : ''}`} />
                               {t('set_as_profile')}
                             </Button>
+
                             {fields.length > 5 && (
                               <Button
                                 type="button"
@@ -525,15 +526,14 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                           </div>
 
                           <FormField
-                          
                             control={form.control}
                             name={`entries.${index}.descriptions`}
                             render={({ field }) => (
-                              <FormItem>
+                              <FormItem className="space-y-0">
                                 <FormControl>
                                   <Textarea
                                     placeholder={t('description_placeholder')}
-                                    rows={1}
+                                    rows={2}
                                     className="text-xs resize-none"
                                     {...field}
                                   />
@@ -542,19 +542,19 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                               </FormItem>
                             )}
                           />
-                         
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
 
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={() => append({ images: '', descriptions: '', is_profile: false })}
-                className="w-full h-9 text-sm"
+                className="w-full h-9 text-xs mt-3"
               >
                 <Plus className="mr-1.5 h-3.5 w-3.5" />
                 {t('4')}

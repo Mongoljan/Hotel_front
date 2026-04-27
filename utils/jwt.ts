@@ -23,7 +23,7 @@ export interface JWTPayload extends UserPayload {
   exp: number
 }
 
-export function createJWT(payload: UserPayload, expiresIn: string = '30m'): string {
+export function createJWT(payload: UserPayload, expiresIn: string = '60m'): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn } as SignOptions)
 }
 
@@ -36,7 +36,7 @@ export function verifyJWT(token: string): JWTPayload | null {
 }
 
 export function createRefreshToken(userId: string): string {
-  return jwt.sign({ userId, type: 'refresh' }, JWT_SECRET, { expiresIn: '30m' } as SignOptions)
+  return jwt.sign({ userId, type: 'refresh' }, JWT_SECRET, { expiresIn: '60m' } as SignOptions)
 }
 
 export function verifyRefreshToken(token: string): { userId: string } | null {
@@ -63,7 +63,7 @@ export async function setAuthCookies(payload: UserPayload) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 30 * 60, // 30 minutes
+    maxAge: 60 * 60, // 1 hour
     path: '/',
   })
   
@@ -71,7 +71,7 @@ export async function setAuthCookies(payload: UserPayload) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 30 * 60, // 30 minutes
+    maxAge: 60 * 60, // 1 hour
     path: '/',
   })
 
@@ -80,7 +80,7 @@ export async function setAuthCookies(payload: UserPayload) {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 30 * 60,
+    maxAge: 60 * 60,
     path: '/',
   })
   
@@ -88,7 +88,7 @@ export async function setAuthCookies(payload: UserPayload) {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 30 * 60,
+    maxAge: 60 * 60,
     path: '/',
   })
 
@@ -97,7 +97,7 @@ export async function setAuthCookies(payload: UserPayload) {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 30 * 60,
+      maxAge: 60 * 60,
       path: '/',
     })
   }

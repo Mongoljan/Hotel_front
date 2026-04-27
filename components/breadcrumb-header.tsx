@@ -140,7 +140,7 @@ export function BreadcrumbHeader() {
     const result = await refreshSession();
     if (result.success) {
       toast.success('Session шинэчлэгдлээ', {
-        description: '30 минутын дараа дахин шинэчлэнэ үү',
+        description: '60 минутын дотор дахин шинэчилнэ үү',
         duration: 3000,
       });
     } else {

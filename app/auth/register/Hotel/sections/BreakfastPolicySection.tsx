@@ -41,7 +41,7 @@ export default function BreakfastPolicySection({ form, t }: Props) {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Coffee className="h-4 w-4" />
-        <h3 className="text-base font-semibold">{t('breakfast')}</h3>
+        <h3 className="text-sm font-semibold">{t('breakfast')}</h3>
       </div>
 
       <FormField
@@ -49,7 +49,7 @@ export default function BreakfastPolicySection({ form, t }: Props) {
         name="breakfast_status"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t('10')}</FormLabel>
+            {/* <FormLabel className="font-normal">{t('10')}</FormLabel> */}
             <FormControl>
               <div className="flex gap-2">
                 {(['no', 'free', 'paid'] as const).map((value) => (
@@ -71,8 +71,9 @@ export default function BreakfastPolicySection({ form, t }: Props) {
       {breakfastStatus !== 'no' && (
         <div className="space-y-3 p-3 border border-dashed rounded-lg">
           <div className="flex items-center gap-4">
-            <FormLabel className="min-w-[150px]">{t('breakfast_time')}</FormLabel>
-            <FormField
+            <FormLabel className="min-w-[150px] text-sm font-normal">{t('breakfast_time')}</FormLabel>
+          <div className="ml-2">
+            <FormField 
               control={form.control}
               name="breakfast_start_time"
               render={({ field }) => (
@@ -95,6 +96,7 @@ export default function BreakfastPolicySection({ form, t }: Props) {
                 </FormItem>
               )}
             />
+            </div>
             <span>-</span>
             <FormField
               control={form.control}
@@ -125,8 +127,8 @@ export default function BreakfastPolicySection({ form, t }: Props) {
             control={form.control}
             name="breakfast_type"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('breakfast_type_label')}</FormLabel>
+              <FormItem className="flex items-center gap-4 ">
+                <FormLabel className="text-sm font-normal">{t('breakfast_type_label')}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="w-[200px]">
@@ -145,13 +147,15 @@ export default function BreakfastPolicySection({ form, t }: Props) {
           />
 
           {breakfastStatus === 'paid' && (
+          
             <FormField
               control={form.control}
               name="breakfast_price"
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center gap-4">
-                    <FormLabel className="min-w-[150px]">{t('price_label')}</FormLabel>
+                    <FormLabel className="min-w-[150px] font-normal">{t('price_label')}</FormLabel>
+                     <div className="ml-2">
                     <FormControl>
                       <NumericFormat
                         thousandSeparator=","
@@ -162,11 +166,13 @@ export default function BreakfastPolicySection({ form, t }: Props) {
                         className="w-40"
                       />
                     </FormControl>
+                    </div>
                   </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
+      
           )}
         </div>
       )}

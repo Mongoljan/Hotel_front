@@ -15,7 +15,7 @@ import {
   IconInfoCircle,
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, Libraries } from '@react-google-maps/api';
 
 import ServicesTab from './ServicesTab';
 import { useAuth } from '@/hooks/useAuth';
@@ -71,6 +71,7 @@ interface ProceedProps {
 }
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+const GOOGLE_MAPS_LIBRARIES: Libraries = ['places'];
 
 const mapContainerStyle = {
   width: '100%',
@@ -125,6 +126,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const { isLoaded: isMapLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   const orderImagesByProfile = useCallback((images: PropertyPhoto[]) => {
@@ -1087,7 +1089,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                   generalFacilities={propertyDetail?.general_facilities || []}
                   additionalFacilities={propertyDetail?.additional_facilities || []}
                   activities={propertyDetail?.activities || []}
-                  accessibilityFeatures={propertyDetail?.accessibility_features || []}
+                  accessibilityFeatures={
+                    propertyDetail?.accessibility_features ||
+                    (propertyDetail as any)?.accessibility_feature ||
+                    []
+                  }
                   propertyDetailId={propertyDetail?.id || null}
                   onUpdate={() => {
                     if (user?.hotel) {
