@@ -755,14 +755,46 @@ export default function PaymentConfigPage() {
     </Card>
   );
 
-  // Cards 4, 5, 6: simple info cards (no inner toggle per figma)
-  const renderInfoCard = (paymentType: PaymentType) => (
-    <Card className="h-full transition-shadow hover:shadow-md">
-      <CardContent className="p-6">
-        <SectionHeader paymentType={paymentType} />
-      </CardContent>
-    </Card>
-  );
+  // Cards 4, 5, 6: info cards with on/off switch wired to backend `is_active`
+  const renderInfoCard = (paymentType: PaymentType) => {
+    const configs = groupedConfigs[paymentType] || [];
+    const config = configs[0];
+    const isActive = !!config?.is_active;
+    const isUpdating = updating === config?.id?.toString();
+
+    return (
+      <Card className="h-full transition-shadow hover:shadow-md">
+        <CardContent className="p-6 flex flex-col h-full">
+          <SectionHeader paymentType={paymentType} />
+          <div className="mt-auto flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+            <div className="flex items-center gap-2 min-w-0">
+              {isActive ? (
+                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+              )}
+              <span className="text-xs text-muted-foreground truncate">
+                төлөв:{' '}
+                <span className={cn('font-medium', isActive ? 'text-primary' : 'text-foreground')}>
+                  {isActive ? 'идэвхтэй' : 'идэвхгүй'}
+                </span>
+              </span>
+            </div>
+            <Switch
+              checked={isActive}
+              disabled={isUpdating || !config}
+              onCheckedChange={(checked) => {
+                if (config) {
+                  handleToggleConfig(config.id, checked);
+                }
+              }}
+              className={isActive ? 'data-[state=checked]:bg-primary' : ''}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Early returns for loading and authentication states  
   if (loading || isLoading) {

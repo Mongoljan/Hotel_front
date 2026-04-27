@@ -150,6 +150,51 @@ export const schemaAddToGroup = z.object({
   path: ["number_of_rooms_to_sell"],
 });
 
+// Schema for editGroupMode - validates the group's shared data fields but
+// treats per-room fields (RoomNo, counts) as optional since they aren't
+// editable from this modal mode.
+export const schemaEditGroup = z.object({
+  entries: z.array(
+    z.object({
+      images: z.string(),
+      descriptions: z.string(),
+    })
+  ).refine(
+    (entries) => entries.some(entry => {
+      const img = entry.images.trim();
+      return img.length > 0 && (
+        img.startsWith('http://') ||
+        img.startsWith('https://') ||
+        img.startsWith('data:image/')
+      );
+    }),
+    { message: 'At least one valid image is required.' }
+  ),
+  room_type: z.string().min(1, { message: "Room type is required" }),
+  room_category: z.string().min(1, { message: "Room category is required" }),
+  room_size: z.string().min(1, { message: "Room size must be at least 5m²" }),
+  room_beds: z.array(
+    z.object({
+      bed_type: z.string().min(1, { message: "Bed type is required" }),
+      quantity: z.number().min(1, { message: "Quantity must be at least 1" }),
+    })
+  ).min(1, { message: "At least one bed type is required" }),
+  is_Bathroom: z.string().min(1, { message: "Нэгийг сонгонo уу?" }),
+  room_Facilities: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+  bathroom_Items: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+  free_Toiletries: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+  food_And_Drink: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+  outdoor_And_View: z.array(z.string()).min(1, { message: "Select at least one facility" }),
+  adultQty: z.string().min(1, { message: "Орох насанд хүрсэн хүний тоог оруулна уу?" }),
+  childQty: z.string().min(1, { message: "Орох хүүхдийн тоог оруулна уу?" }),
+  room_Description: z.string().min(5, { message: "Description is required" }),
+  smoking_allowed: z.string().min(1, { message: "Нэгийг сонгонo уу?" }),
+  // Per-room fields are not editable in editGroupMode — accept any value
+  RoomNo: z.string().optional(),
+  number_of_rooms: z.any().optional(),
+  number_of_rooms_to_sell: z.string().optional(),
+});
+
 export const schemaRegistration = z
 .object({
   email: z

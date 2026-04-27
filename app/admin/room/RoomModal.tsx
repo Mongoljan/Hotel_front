@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
-import { schemaCreateRoom, schemaAddToGroup } from "@/app/schema"; // your Zod schema
+import { schemaCreateRoom, schemaAddToGroup, schemaEditGroup } from "@/app/schema"; // your Zod schema
 import { z } from "zod";
 import { toast } from "sonner";
 import {
@@ -513,8 +513,9 @@ export default function RoomModal({
 
   // Select schema based on mode
   const formSchema = useMemo(() => {
-    // For editGroupMode, use regular schema but room numbers won't be validated since we skip that section
-    return addToGroupMode ? schemaAddToGroup : schemaCreateRoom;
+    if (addToGroupMode) return schemaAddToGroup;
+    if (editGroupMode) return schemaEditGroup;
+    return schemaCreateRoom;
   }, [addToGroupMode, editGroupMode]);
 
   // React Hook Form setup
@@ -798,11 +799,48 @@ export default function RoomModal({
       const newFoodDrink = formData.food_And_Drink.map(Number);
       const newOutdoorView = formData.outdoor_And_View.map(Number);
       const newDescription = formData.room_Description;
-      const newImages = formData.entries
-        .filter(entry => entry.images && entry.images.trim() !== '')
-        .map(entry => ({ image: entry.images, description: entry.descriptions || "" }));
 
       const orig = roomToEdit;
+
+      // Build current image set from form entries (kept + newly added)
+      const currentEntries = formData.entries.filter(
+        (entry) => entry.images && entry.images.trim() !== ''
+      );
+
+      // Map of original images keyed by their resolved absolute URL so we can
+      // tell which original images are still present in the form.
+      const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn';
+      const resolveOriginalUrl = (raw: string) => {
+        if (!raw) return '';
+        if (raw.startsWith('http') || raw.startsWith('data:image/')) return raw;
+        return `${backendBase}${raw.startsWith('/') ? '' : '/'}${raw}`;
+      };
+      const originalImages = (orig.images ?? []).map((img) => ({
+        id: img.id,
+        url: resolveOriginalUrl(img.image),
+        description: img.description ?? '',
+      }));
+
+      const keptOriginalIds = new Set<number>();
+      const newImages: { image: string; description: string }[] = [];
+      currentEntries.forEach((entry) => {
+        const value = entry.images.trim();
+        const matched = originalImages.find((o) => o.url === value);
+        if (matched) {
+          keptOriginalIds.add(matched.id);
+          return;
+        }
+        // Brand-new image (data: URI from new upload, or fresh URL).
+        newImages.push({
+          image: entry.images,
+          description: entry.descriptions || '',
+        });
+      });
+
+      const deletedImageIds = originalImages
+        .filter((o) => !keptOriginalIds.has(o.id))
+        .map((o) => o.id);
+
       const origBeds = (orig.group_beds ?? []).map(b => ({ bed_type: b.bed_type, quantity: b.quantity }));
 
       const patch: Record<string, any> = {};
@@ -820,17 +858,16 @@ export default function RoomModal({
       if (!arrEq(newFoodDrink, orig.food_And_Drink ?? []))               patch.food_And_Drink = newFoodDrink;
       if (!arrEq(newOutdoorView, orig.outdoor_And_View ?? []))           patch.outdoor_And_View = newOutdoorView;
       if (newDescription !== (orig.room_Description ?? ""))              patch.room_Description = newDescription;
-      // Always include images — user may have added/removed them
-      patch.images = newImages;
 
-      if (Object.keys(patch).length === 1 && 'images' in patch) {
-        // Only images key — check if images actually changed
-        const origImageUrls = (orig.images ?? []).map(i => i.image).sort().join();
-        const newImageUrls = newImages.map(i => i.image).sort().join();
-        if (origImageUrls === newImageUrls) {
-          toast.info("Өөрчлөлт олдсонгүй");
-          return;
-        }
+      // Image diff: only send `images` (new uploads) and `delete_images`
+      // (ids of removed originals) when there is something to send. This
+      // matches the API contract shown in the docs.
+      if (newImages.length > 0)        patch.images = newImages;
+      if (deletedImageIds.length > 0)  patch.delete_images = deletedImageIds;
+
+      if (Object.keys(patch).length === 0) {
+        toast.info("Өөрчлөлт олдсонгүй");
+        return;
       }
 
       const response = await fetch(`${API_CREATE_ROOM}/${roomToEdit.id}/?token=${token}`, {
@@ -1051,7 +1088,11 @@ export default function RoomModal({
     >
       <form
         onSubmit={handleSubmit(onSubmit, (errors) => {
-          toast.error('Форм бөглөхөд алдаа гарлаа. Талбаруудаа шалгана уу.');
+          console.warn('Room form validation errors:', errors);
+          const firstKey = Object.keys(errors)[0];
+          const firstError: any = firstKey ? (errors as any)[firstKey] : null;
+          const firstMsg = firstError?.message || (firstError?.root?.message);
+          toast.error(firstMsg || 'Форм бөглөхөд алдаа гарлаа. Талбаруудаа шалгана уу.');
         })}
         onClick={(e) => e.stopPropagation()}
         className="p-6 bg-white border max-w-3xl w-full max-h-[80vh] overflow-y-auto rounded-2xl shadow-2xl relative mx-auto"

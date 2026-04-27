@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -10,7 +10,6 @@ import {
   IconEdit,
   IconHistory,
   IconX,
-  IconChevronRight,
   IconLoader2,
   IconRefresh,
   IconTrash,
@@ -19,7 +18,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -56,19 +54,6 @@ interface CurrencyRate {
   currency: number;
 }
 
-interface PaymentMethod {
-  id: number;
-  name: string;
-  method_type: string;
-  logo: string | null;
-}
-
-interface PropertyPaymentMethod {
-  id?: number;
-  payment_method: number;
-  is_enabled: boolean;
-}
-
 // Currency from /api/currencies
 interface Currency {
   id: number;
@@ -94,75 +79,8 @@ interface CurrencyDisplay {
   currencyId: number;
 }
 
-interface PaymentMethodDisplay {
-  id: number;
-  name: string;
-  category: 'bank' | 'digital' | 'international' | 'other';
-  enabled: boolean;
-}
-
-// Payment method category mapping
-const getPaymentCategory = (methodType: string): 'bank' | 'digital' | 'international' | 'other' => {
-  switch (methodType) {
-    case 'bank': return 'bank';
-    case 'digital': return 'digital';
-    case 'international': return 'international';
-    default: return 'other';
-  }
-};
-
-// Memoized payment method item to prevent unnecessary re-renders
-const PaymentMethodItem = memo(function PaymentMethodItem({ 
-  pm, 
-  onToggle,
-  labels,
-}: { 
-  pm: PaymentMethodDisplay; 
-  onToggle: (id: number) => void;
-  labels: {
-    active: string;
-    inactive: string;
-    clickToEnable: string;
-    clickToDisable: string;
-  };
-}) {
-  const isEnabled = pm.enabled;
-
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
-      <div className="min-w-0">
-        <p className="text-sm font-medium truncate">{pm.name}</p>
-        <p className="text-xs text-muted-foreground">
-          {isEnabled ? labels.clickToDisable : labels.clickToEnable}
-        </p>
-      </div>
-
-      <div className="flex items-center gap-2 shrink-0">
-        <span
-          className={cn(
-            'text-xs font-medium',
-            isEnabled ? 'text-primary' : 'text-muted-foreground'
-          )}
-        >
-          {isEnabled ? labels.active : labels.inactive}
-        </span>
-        <Switch
-          checked={isEnabled}
-          onCheckedChange={() => onToggle(pm.id)}
-          aria-label={`${pm.name} ${isEnabled ? labels.active : labels.inactive}`}
-        />
-      </div>
-    </div>
-  );
-});
-
-type TabType = 'currency' | 'payment';
-
 export default function CurrencyPage() {
   const t = useTranslations('Currency');
-
-  // Tab state
-  const [activeTab, setActiveTab] = useState<TabType>('currency');
 
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
@@ -172,11 +90,6 @@ export default function CurrencyPage() {
   const [currencyRates, setCurrencyRates] = useState<CurrencyRate[]>([]);
   const [currencies, setCurrencies] = useState<CurrencyDisplay[]>([]);
   const [availableCurrencies, setAvailableCurrencies] = useState<Currency[]>([]);
-  
-  // Payment methods state
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodDisplay[]>([]);
-  const [allPaymentMethods, setAllPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [propertyPaymentMethods, setPropertyPaymentMethods] = useState<PropertyPaymentMethod[]>([]);
 
   // Modal states
   const [isAddCurrencyModalOpen, setIsAddCurrencyModalOpen] = useState(false);
@@ -204,11 +117,9 @@ export default function CurrencyPage() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [currencyRes, currenciesRes, paymentMethodsRes, propertyPaymentRes] = await Promise.all([
+      const [currencyRes, currenciesRes] = await Promise.all([
         fetch('/api/currency-rates', { credentials: 'include' }),
         fetch('/api/currencies', { credentials: 'include' }),
-        fetch('/api/payment-methods', { credentials: 'include' }),
-        fetch('/api/property-payment-methods', { credentials: 'include' }),
       ]);
 
       // Process available currencies (for dropdown)
@@ -247,18 +158,6 @@ export default function CurrencyPage() {
         });
         setCurrencies(displayCurrencies);
       }
-
-      // Process payment methods
-      if (paymentMethodsRes.ok) {
-        const paymentData: PaymentMethod[] = await paymentMethodsRes.json();
-        setAllPaymentMethods(Array.isArray(paymentData) ? paymentData : []);
-      }
-
-      // Process property payment methods
-      if (propertyPaymentRes.ok) {
-        const propPaymentData: PropertyPaymentMethod[] = await propertyPaymentRes.json();
-        setPropertyPaymentMethods(Array.isArray(propPaymentData) ? propPaymentData : []);
-      }
     } catch (error) {
       console.error('Error fetching data:', error);
       // Using hardcoded text since fetchData is called before t is available
@@ -272,62 +171,10 @@ export default function CurrencyPage() {
     fetchData();
   }, [fetchData]);
 
-  // Combine payment methods with enabled status
-  useEffect(() => {
-    const combined: PaymentMethodDisplay[] = allPaymentMethods.map(pm => ({
-      id: pm.id,
-      name: pm.name,
-      category: getPaymentCategory(pm.method_type),
-      enabled: propertyPaymentMethods.some(ppm => ppm.payment_method === pm.id && ppm.is_enabled),
-    }));
-    setPaymentMethods(combined);
-  }, [allPaymentMethods, propertyPaymentMethods]);
-
   // Get selected currency details
   const selectedCurrencyDetails = useMemo(() => {
     return availableCurrencies.find(c => c.id.toString() === selectedCurrencyId);
   }, [selectedCurrencyId]);
-
-  // Handle payment method toggle - memoized to prevent re-renders
-  const togglePaymentMethod = useCallback(async (id: number) => {
-    const currentMethod = paymentMethods.find(pm => pm.id === id);
-    if (!currentMethod) return;
-
-    const newEnabled = !currentMethod.enabled;
-    
-    // Optimistic update
-    setPaymentMethods(prev =>
-      prev.map(pm =>
-        pm.id === id ? { ...pm, enabled: newEnabled } : pm
-      )
-    );
-
-    try {
-      const res = await fetch('/api/property-payment-methods', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          payment_method: id,
-          is_enabled: newEnabled,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to update payment method');
-      }
-      
-      toast.success(newEnabled ? t('messages.paymentEnabled') : t('messages.paymentDisabled'));
-    } catch (error) {
-      // Revert on error
-      setPaymentMethods(prev =>
-        prev.map(pm =>
-          pm.id === id ? { ...pm, enabled: !newEnabled } : pm
-        )
-      );
-      toast.error(t('messages.error'));
-    }
-  }, [paymentMethods, t]);
 
   // Open history modal
   const openHistoryModal = (currency: CurrencyDisplay) => {
@@ -470,25 +317,6 @@ export default function CurrencyPage() {
   };
 
   // Payment methods grouped by category
-  const groupedPaymentMethods = useMemo(() => {
-    return {
-      bank: paymentMethods.filter(pm => pm.category === 'bank'),
-      digital: paymentMethods.filter(pm => pm.category === 'digital'),
-      international: paymentMethods.filter(pm => pm.category === 'international'),
-      other: paymentMethods.filter(pm => pm.category === 'other'),
-    };
-  }, [paymentMethods]);
-
-  const paymentMethodLabels = useMemo(
-    () => ({
-      active: t('paymentStatus.active'),
-      inactive: t('paymentStatus.inactive'),
-      clickToEnable: t('paymentStatus.clickToEnable'),
-      clickToDisable: t('paymentStatus.clickToDisable'),
-    }),
-    [t]
-  );
-
   // Show loading state
   if (isLoading) {
     return (
@@ -503,48 +331,13 @@ export default function CurrencyPage() {
     <div className="flex flex-col gap-6 p-6">
       {/* Page Title */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Валют, төлбөрийн хэрэгсэл</h1>
+        <h1 className="text-2xl font-semibold">{t('currency')}</h1>
       </div>
 
       {/* Main Content */}
-      <div className="flex gap-6">
-        {/* Left Sidebar - Tab Navigation */}
-        <Card className="w-64 shrink-0">
-          <CardContent className="p-4">
-            <nav className="space-y-1">
-              <button
-                onClick={() => setActiveTab('currency')}
-                className={cn(
-                  'w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors text-left',
-                  activeTab === 'currency'
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:bg-muted'
-                )}
-              >
-                <IconChevronRight className={cn('h-4 w-4 transition-transform', activeTab === 'currency' && 'rotate-90')} />
-                {t('currency')}
-              </button>
-              <button
-                onClick={() => setActiveTab('payment')}
-                className={cn(
-                  'w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors text-left',
-                  activeTab === 'payment'
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:bg-muted'
-                )}
-              >
-                <IconChevronRight className={cn('h-4 w-4 transition-transform', activeTab === 'payment' && 'rotate-90')} />
-                {t('paymentMethods')}
-              </button>
-            </nav>
-          </CardContent>
-        </Card>
-
-        {/* Right Content Area */}
-        <Card className="flex-1">
-          <CardContent className="p-6">
-            {activeTab === 'currency' ? (
-              <>
+      <Card>
+        <CardContent className="p-6">
+          <>
                 {/* Currency Tab Header */}
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-base font-semibold">{t('currency')}</h2>
@@ -644,71 +437,8 @@ export default function CurrencyPage() {
                   </Table>
                 </div>
               </>
-            ) : (
-              <>
-                {/* Payment Methods Tab */}
-                <div className="mb-6">
-                  <h2 className="text-base font-semibold">{t('paymentMethods')}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {t('paymentMethodsDescription')}
-                  </p>
-                  <div className="mt-3 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">{t('paymentMethodsHint')}</span>
-                    <span className="ml-2">
-                      {t('paymentMethodsCount', {
-                        active: paymentMethods.filter((pm) => pm.enabled).length,
-                        total: paymentMethods.length,
-                      })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-8">
-                  {/* Bank Cards */}
-                  <div>
-                    <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.bank')}</h3>
-                    <div className="space-y-2">
-                      {groupedPaymentMethods.bank.map((pm) => (
-                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} labels={paymentMethodLabels} />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Digital Payments */}
-                  <div>
-                    <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.digital')}</h3>
-                    <div className="space-y-2">
-                      {groupedPaymentMethods.digital.map((pm) => (
-                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} labels={paymentMethodLabels} />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* International */}
-                  <div>
-                    <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.international')}</h3>
-                    <div className="space-y-2">
-                      {groupedPaymentMethods.international.map((pm) => (
-                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} labels={paymentMethodLabels} />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Other */}
-                  <div>
-                    <h3 className="font-medium mb-4 text-sm">{t('paymentCategories.other')}</h3>
-                    <div className="space-y-2">
-                      {groupedPaymentMethods.other.map((pm) => (
-                        <PaymentMethodItem key={pm.id} pm={pm} onToggle={togglePaymentMethod} labels={paymentMethodLabels} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Add Currency Modal */}
       <Dialog open={isAddCurrencyModalOpen} onOpenChange={setIsAddCurrencyModalOpen}>
