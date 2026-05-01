@@ -385,15 +385,16 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                           <div className="text-sm text-muted-foreground">{t('loading_ratings')}</div>
                         ) : (
                           ratings.map(r => {
-                            const isSelected = field.value === r.id.toString();
                             const starCount = parseInt(r.rating) || 0;
                             const isNA = r.rating.toUpperCase() === 'N/A' || !starCount;
+                            const savedValue = isNA ? r.id.toString() : starCount.toString();
+                            const isSelected = field.value === savedValue;
 
                             return (
                               <button
                                 key={r.id}
                                 type="button"
-                                onClick={() => field.onChange(r.id.toString())}
+                                onClick={() => field.onChange(savedValue)}
                                 className={cn(
                                   "flex items-center gap-1.5 px-3 py-2 rounded-md border transition-all font-medium",
                                   isSelected

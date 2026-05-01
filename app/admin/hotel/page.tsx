@@ -295,7 +295,7 @@ export default function RegisterHotel() {
     childrenAllowed: propertyPolicy?.allow_children ? t('yes') : t('no'),
     petsAllowed: propertyPolicy?.allow_pets ? t('yes') : t('no'),
     breakfast: propertyPolicy?.breakfast_policy || '—',
-    starRating: basicInfo?.star_rating ? `${basicInfo.star_rating} ⭐` : '—',
+    starRating: basicInfo?.star_rating ? `${basicInfo.star_rating > 5 ? basicInfo.star_rating - 2 : basicInfo.star_rating} ⭐` : '—',
     hotelId: user?.hotel || '—'
   }), [basicInfo, propertyBaseInfo, propertyPolicy, user?.hotel, getPropertyTypeName, formatDate, t]);
 

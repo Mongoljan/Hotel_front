@@ -776,7 +776,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                           <p className="font-medium">
                             {basicInfo?.star_rating ? (
                               <span className="flex items-center gap-1">
-                                {Array.from({ length: basicInfo.star_rating }).map((_, i) => (
+                                {Array.from({ length: basicInfo.star_rating > 5 ? basicInfo.star_rating - 2 : basicInfo.star_rating }).map((_, i) => (
                                   <span key={i}>⭐</span>
                                 ))}
                               </span>
