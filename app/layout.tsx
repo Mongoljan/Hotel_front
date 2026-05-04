@@ -8,19 +8,13 @@ import Topbar from "@/components/topbar";
 import { ReactNode } from "react";
 import { cookies } from "next/headers"; // ✅ use next/headers for server-side cookies
 import { Inter, PT_Sans } from "next/font/google";
-import { Toaster } from "sonner";
+import { Manrope } from "next/font/google";
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ["latin", "cyrillic"],
-  variable: "--font-inter",
+  variable: "--font-manrope",
   display: "swap",
-});
-
-const ptSans = PT_Sans({
-  subsets: ["latin", "cyrillic"],
-  variable: "--font-cyrillic",
-  weight: ["400", "700"],
-  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 type RootLayoutProps = {
@@ -47,7 +41,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 
   return (
     <html lang={locale} className="h-full">
-      <body className={`${inter.variable} ${ptSans.variable} antialiased font-sans h-full min-h-screen bg-background text-foreground`}>
+      <body className={`${manrope.variable} font-(family-name:--font-manrope) antialiased h-full min-h-screen bg-background text-foreground`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
           <Toaster position="top-right" />
