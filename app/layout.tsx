@@ -9,6 +9,7 @@ import { ReactNode } from "react";
 import { cookies } from "next/headers"; // ✅ use next/headers for server-side cookies
 import { Inter, PT_Sans } from "next/font/google";
 import { Manrope } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 
 const manrope = Manrope({
   subsets: ["latin", "cyrillic"],
