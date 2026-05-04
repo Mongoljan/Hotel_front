@@ -82,6 +82,13 @@ interface SimpleLookup {
   name: string;
   is_custom: boolean;
 }
+// For room_category which now uses name_en / name_mn
+interface CategoryLookup {
+  id: number;
+  name_en: string;
+  name_mn: string;
+  is_custom: boolean;
+}
 interface CombinedData {
   roomTypes: SimpleLookup[];
   bedTypes: SimpleLookup[];
@@ -90,7 +97,7 @@ interface CombinedData {
   free_Toiletries: LookupItem[];
   food_and_drink: LookupItem[];
   outdoor_and_view: LookupItem[];
-  room_category: SimpleLookup[];
+  room_category: CategoryLookup[];
 }
 
 // The shape of the API’s RoomData object when fetching an existing room:
