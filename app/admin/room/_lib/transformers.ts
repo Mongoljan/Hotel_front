@@ -40,8 +40,9 @@ export const buildLookupMaps = (rawRooms: RoomData[], lookup: AllData): LookupMa
       ?? (lookup.room_types ?? []).find((t) => t.id === room.room_type)?.name
       ?? `Type ${room.room_type}`;
 
+    const _rc = (lookup.room_category ?? []).find((c) => c.id === room.room_category);
     const categoryName = room.room_category_name
-      ?? (lookup.room_category ?? []).find((c) => c.id === room.room_category)?.name
+      ?? (_rc?.name_mn || _rc?.name_en)
       ?? `Category ${room.room_category}`;
 
     groupMap.set(key, { type: typeName, category: categoryName, group: room });
@@ -80,7 +81,7 @@ export const buildLookupMaps = (rawRooms: RoomData[], lookup: AllData): LookupMa
   );
 
   const roomCategoryMap = new Map<number, string>(
-    (lookup.room_category ?? []).map((category) => [category.id, category.name])
+    (lookup.room_category ?? []).map((category) => [category.id, category.name_mn || category.name_en])
   );
 
   return {

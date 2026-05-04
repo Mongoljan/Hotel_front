@@ -100,7 +100,8 @@ interface RoomType {
 
 interface RoomCategory {
   id: number;
-  name: string;
+  name_en: string;
+  name_mn: string;
   is_custom: boolean;
 }
 

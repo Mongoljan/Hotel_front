@@ -12,10 +12,18 @@ export interface SimpleLookup {
   is_custom: boolean;
 }
 
+// room_category now returns name_en + name_mn instead of name
+export interface CategoryLookup {
+  id: number;
+  name_en: string;
+  name_mn: string;
+  is_custom: boolean;
+}
+
 export interface AllData {
   room_types: SimpleLookup[];
   bed_types: SimpleLookup[];
-  room_category: SimpleLookup[];
+  room_category: CategoryLookup[];
 
   room_facilities: LookupItem[];
   bathroom_items: LookupItem[];

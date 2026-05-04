@@ -209,7 +209,7 @@ export default function RoomModal({
         const roomType = combinedData.roomTypes.find(rt => rt.id === room.room_type);
         const roomCategory = combinedData.room_category.find(rc => rc.id === room.room_category);
         
-        const label = `${roomCategory?.name || 'Unknown'} - ${roomType?.name || 'Unknown'}`;
+        const label = `${roomCategory?.name_mn || roomCategory?.name_en || 'Unknown'} - ${roomType?.name || 'Unknown'}`;
         
         combinations.push({
           value: key,
@@ -1126,9 +1126,9 @@ export default function RoomModal({
                     {combinedData.roomTypes.find(rt => rt.id === Number(watch("room_type")))?.name || "—"}
                     {" • "}
                     <span className="font-medium">Төрөл:</span>{" "}
-                    {combinedData.room_category.find(rc => rc.id === Number(watch("room_category")))?.name || "—"}
-                  </p>
-                  <p className="mt-1 text-blue-600">
+                    {combinedData.room_category.find(rc => rc.id === Number(watch("room_category")))?.name_mn
+                      || combinedData.room_category.find(rc => rc.id === Number(watch("room_category")))?.name_en
+                      || "—"}
                     Бусад мэдээлэл (ор, тохижилт, зураг г.м.) автоматаар бүлгийнхтэй ижил болно.
                   </p>
                 </div>
@@ -1278,7 +1278,9 @@ export default function RoomModal({
                     {combinedData.roomTypes.find(rt => rt.id === Number(watch("room_type")))?.name || "—"}
                     {" • "}
                     <span className="font-medium">Төрөл:</span>{" "}
-                    {combinedData.room_category.find(rc => rc.id === Number(watch("room_category")))?.name || "—"}
+                    {combinedData.room_category.find(rc => rc.id === Number(watch("room_category")))?.name_mn
+                      || combinedData.room_category.find(rc => rc.id === Number(watch("room_category")))?.name_en
+                      || "—"}
                   </p>
                   <p className="mt-1 text-amber-600">
                     Энэ бүлгийн бүх өрөөнд өөрчлөлт хамаарна. (Зураг, хэмжээ, ор, тохижилт г.м.)
@@ -1297,7 +1299,8 @@ export default function RoomModal({
                   <span className="text-sm font-medium">
                     {(() => {
                       const roomTypeName = combinedData.roomTypes.find(rt => rt.id === Number(watch("room_type")))?.name || "—";
-                      const roomCategoryName = combinedData.room_category.find(rc => rc.id === Number(watch("room_category")))?.name || "—";
+                      const _rc = combinedData.room_category.find(rc => rc.id === Number(watch("room_category")));
+                      const roomCategoryName = _rc?.name_mn || _rc?.name_en || "—";
                       return `${roomTypeName} - ${roomCategoryName}`;
                     })()}
                   </span>
@@ -1898,7 +1901,7 @@ export default function RoomModal({
                         ) : (
                           combinedData.room_category.map((rc) => (
                             <SelectItem key={rc.id} value={rc.id.toString()}>
-                              {rc.name}
+                              {rc.name_mn || rc.name_en}
                             </SelectItem>
                           ))
                         )}

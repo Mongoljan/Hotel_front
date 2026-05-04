@@ -37,7 +37,8 @@ interface RoomType {
 
 interface RoomCategory {
   id: number;
-  name: string;
+  name_en: string;
+  name_mn: string;
   is_custom: boolean;
 }
 
@@ -154,7 +155,8 @@ export default function PriceSettingsPage() {
       
       const key = `${roomTypeId}-${roomCategoryId}`;
       const typeName = allData.room_types.find(t => t.id === roomTypeId)?.name || `Type ${roomTypeId}`;
-      const categoryName = allData.room_category.find(c => c.id === roomCategoryId)?.name || `Category ${roomCategoryId}`;
+      const _cat = allData.room_category.find(c => c.id === roomCategoryId);
+      const categoryName = _cat?.name_mn || _cat?.name_en || `Category ${roomCategoryId}`;
       
       // Count how many actual room numbers this entry has
       const roomCount = room.room_numbers ? room.room_numbers.split(',').length : 1;
@@ -238,7 +240,8 @@ export default function PriceSettingsPage() {
   };
 
   const getRoomCategoryName = (catId: number) => {
-    return lookup.room_category.find(c => c.id === catId)?.name || `Category ${catId}`;
+    const _c = lookup.room_category.find(c => c.id === catId);
+    return _c?.name_mn || _c?.name_en || `Category ${catId}`;
   };
 
   const formatDate = (dateString: string) => {

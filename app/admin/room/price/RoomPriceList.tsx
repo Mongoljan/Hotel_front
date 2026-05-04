@@ -128,7 +128,7 @@ const FormattedNumberInput: React.FC<FormattedNumberInputProps> = ({
 
 interface AllData {
   room_types: { id: number; name: string; is_custom: boolean }[];
-  room_category: { id: number; name: string; is_custom: boolean }[];
+  room_category: { id: number; name_en: string; name_mn: string; is_custom: boolean }[];
 }
 
 interface PriceEntry {
@@ -359,7 +359,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
         room_type: combo.room_type,
         room_category: combo.room_category,
         type: allData.room_types.find(t => t.id === combo.room_type)?.name ?? `Type ${combo.room_type}`,
-        category: allData.room_category.find(c => c.id === combo.room_category)?.name ?? `Category ${combo.room_category}`,
+        category: (() => { const _c = allData.room_category.find(c => c.id === combo.room_category); return _c?.name_mn || _c?.name_en || `Category ${combo.room_category}`; })(),
         basePrice: price?.base_price ?? null,
         singlePrice: price?.single_person_price ?? null,
         halfDayPrice: price?.half_day_price ?? null,
@@ -673,7 +673,7 @@ export default function RoomPriceList({ isRoomAdded, setIsRoomAdded, openAdd, se
               <Label>Өрөөний бүлэг</Label>
               <div className="text-sm text-muted-foreground p-2 bg-muted rounded break-words">
                 {lookup.room_types.find(t => t.id === form.room_type)?.name} – {' '}
-                {lookup.room_category.find(c => c.id === form.room_category)?.name}
+                {(() => { const _c = lookup.room_category.find(c => c.id === form.room_category); return _c?.name_mn || _c?.name_en; })()}
               </div>
             </div>
             
