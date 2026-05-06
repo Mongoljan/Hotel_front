@@ -260,6 +260,45 @@ export default function RoomModal({
     }
   };
 
+  // ─── Room type ↔ Bed type compatibility ───────────────────────────────────
+  /** Returns the bed type name keywords that are compatible with a given room type name.
+   *  'all' means any bed type is allowed (Family, Apartment, etc.). */
+  const getCompatibleBedKeywords = (roomTypeName: string): string[] | 'all' => {
+    const lower = roomTypeName.toLowerCase();
+    if (lower.includes('single'))                             return ['single'];
+    if (lower.includes('twin') && lower.includes('double'))  return ['twin', 'double', 'semi double', 'extra'];
+    if (lower.includes('twin'))                              return ['twin', 'single', 'extra'];
+    if (lower.includes('triple'))                            return ['twin', 'single', 'extra'];
+    if (lower.includes('double'))                            return ['double', 'semi double', 'queen', 'king', 'super king', 'extra'];
+    if (lower.includes('queen'))                             return ['queen', 'king', 'super king', 'extra'];
+    if (lower.includes('king'))                              return ['king', 'super king', 'extra'];
+    return 'all'; // Family, Apartment, etc.
+  };
+
+  /** Returns the single best default bed type name for a given room type name. */
+  const getDefaultBedKeyword = (roomTypeName: string): string => {
+    const lower = roomTypeName.toLowerCase();
+    if (lower.includes('single'))                            return 'single';
+    if (lower.includes('twin') && lower.includes('double')) return 'twin';
+    if (lower.includes('twin'))                              return 'twin';
+    if (lower.includes('triple'))                            return 'twin';
+    if (lower.includes('double'))                            return 'double';
+    if (lower.includes('queen'))                             return 'queen';
+    if (lower.includes('king'))                              return 'king';
+    return 'double';
+  };
+
+  /** Filters the full bed type list to those compatible with the selected room type. */
+  const getFilteredBedTypes = (roomTypeId: string | number): typeof combinedData.bedTypes => {
+    const rtName = combinedData.roomTypes.find(rt => rt.id === Number(roomTypeId))?.name || '';
+    if (!rtName) return combinedData.bedTypes;
+    const keywords = getCompatibleBedKeywords(rtName);
+    if (keywords === 'all') return combinedData.bedTypes;
+    return combinedData.bedTypes.filter(bt =>
+      keywords.some(kw => bt.name.toLowerCase().includes(kw))
+    );
+  };
+
   // Helper: check if step 1 is complete for validation
   const isStep1Complete = (): boolean => {
     const roomType = watch("room_type");
@@ -1346,7 +1385,7 @@ export default function RoomModal({
                   const allSelectedBedTypes = bedFields
                     .map((_, i) => watch(`room_beds.${i}.bed_type`))
                     .filter((bedType) => bedType && bedType !== "");
-                  const canAddMoreBeds = allSelectedBedTypes.length < combinedData.bedTypes.length;
+                  const canAddMoreBeds = allSelectedBedTypes.length < getFilteredBedTypes(watch("room_type") || '').length;
                   
                   return (
                     <Button
@@ -1372,7 +1411,7 @@ export default function RoomModal({
                     .map((f, i) => i !== index ? f.bed_type : null)
                     .filter((bedType) => bedType && bedType !== "");
                   
-                  const availableBedTypes = combinedData.bedTypes.filter(
+                  const availableBedTypes = getFilteredBedTypes(watch("room_type") || '').filter(
                     (bedType) => !selectedBedTypes.includes(String(bedType.id))
                   );
 
@@ -1512,7 +1551,7 @@ export default function RoomModal({
               {/* Room Facilities */}
               <div className="w-[48%]">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Өрөөний ерөнхий онцлог зүйлс
+                  Өрөөний тохижилт
                 </label>
                 <div className="border p-2 rounded-lg max-h-60 overflow-y-auto flex flex-col gap-2">
                   {combinedData.facilities.map((f) => (
@@ -1523,7 +1562,7 @@ export default function RoomModal({
                         {...register("room_Facilities")}
                         className="form-checkbox accent-primary"
                       />
-                      <span className="text-sm">{f.name_en}</span>
+                      <span className="text-sm">{f.name_mn || f.name_en}</span>
                     </label>
                   ))}
                 </div>
@@ -1543,7 +1582,7 @@ export default function RoomModal({
                         {...register("bathroom_Items")}
                         className="form-checkbox accent-primary"
                       />
-                      <span className="text-sm">{b.name_en}</span>
+                      <span className="text-sm">{b.name_mn || b.name_en}</span>
                     </label>
                   ))}
                 </div>
@@ -1569,7 +1608,7 @@ export default function RoomModal({
                       htmlFor={`eg-ft-${ft.id}`}
                       className="peer-checked:bg-primary peer-checked:text-primary-foreground border border-border rounded-lg px-4 py-2 cursor-pointer bg-muted text-foreground transition hover:bg-accent text-sm"
                     >
-                      {ft.name_en}
+                    {ft.name_mn || ft.name_en}
                     </label>
                   </div>
                 ))}
@@ -1579,10 +1618,8 @@ export default function RoomModal({
             {/* Food & Drink (Нэмэлт) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Нэмэлт:
-              </label>
-              <div className="flex flex-wrap gap-x-2 gap-y-3">
-                {combinedData.food_and_drink.map((fd) => (
+                Хоол, ундаа:
+              </label>.map((fd) => (
                   <div key={fd.id}>
                     <input
                       type="checkbox"
@@ -1595,7 +1632,7 @@ export default function RoomModal({
                       htmlFor={`eg-fd-${fd.id}`}
                       className="peer-checked:bg-primary peer-checked:text-primary-foreground border border-border rounded-lg px-4 py-2 cursor-pointer bg-muted text-foreground transition hover:bg-accent text-sm"
                     >
-                      {fd.name_en}
+                    {fd.name_mn || fd.name_en}
                     </label>
                   </div>
                 ))}
@@ -1605,7 +1642,7 @@ export default function RoomModal({
             {/* Outdoor & View (Бусад) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Бусад:
+                Гадна болон үзэмж:
               </label>
               <div className="flex flex-wrap gap-x-2 gap-y-3">
                 {combinedData.outdoor_and_view.map((ov) => (
@@ -1621,7 +1658,7 @@ export default function RoomModal({
                       htmlFor={`eg-ov-${ov.id}`}
                       className="peer-checked:bg-primary peer-checked:text-primary-foreground border border-border rounded-lg px-4 py-2 cursor-pointer bg-muted text-foreground transition hover:bg-accent text-sm"
                     >
-                      {ov.name_en}
+                    {ov.name_mn || ov.name_en}
                     </label>
                   </div>
                 ))}
@@ -1864,6 +1901,16 @@ export default function RoomModal({
                         if (roomToEdit && !addToGroupMode) {
                           setValue("room_category", "");
                         }
+                        // Pre-select the most appropriate bed type for this room type
+                        const rtName = combinedData.roomTypes.find(rt => rt.id === Number(value))?.name || '';
+                        const defaultKeyword = getDefaultBedKeyword(rtName);
+                        const filteredBeds = getFilteredBedTypes(value);
+                        const defaultBed = filteredBeds.find(bt => bt.name.toLowerCase().includes(defaultKeyword));
+                        if (defaultBed) {
+                          setValue("room_beds", [{ bed_type: String(defaultBed.id), quantity: 1 }]);
+                        } else if (filteredBeds.length > 0) {
+                          setValue("room_beds", [{ bed_type: String(filteredBeds[0].id), quantity: 1 }]);
+                        }
                       }} 
                       value={watch("room_type") || undefined}
                     >
@@ -2030,7 +2077,7 @@ export default function RoomModal({
                   const allSelectedBedTypes = bedFields
                     .map((_, i) => watch(`room_beds.${i}.bed_type`))
                     .filter((bedType) => bedType && bedType !== "");
-                  const canAddMoreBeds = allSelectedBedTypes.length < combinedData.bedTypes.length;
+                  const canAddMoreBeds = allSelectedBedTypes.length < getFilteredBedTypes(watch("room_type") || '').length;
                   
                   return (
                     <Button
@@ -2057,8 +2104,8 @@ export default function RoomModal({
                     .map((f, i) => i !== index ? f.bed_type : null)
                     .filter((bedType) => bedType && bedType !== "");
                   
-                  // Filter available bed types for this dropdown
-                  const availableBedTypes = combinedData.bedTypes.filter(
+                  // Filter available bed types by room type compatibility and dedup
+                  const availableBedTypes = getFilteredBedTypes(watch("room_type") || '').filter(
                     (bt) => !selectedBedTypes.includes(bt.id.toString())
                   );
                   
@@ -2620,7 +2667,7 @@ export default function RoomModal({
                         {...register("room_Facilities")}
                         className="form-checkbox"
                       />
-                      <span>{f.name_en}</span>
+                      <span>{f.name_mn || f.name_en}</span>
                     </label>
                   ))}
                 </div>
@@ -2642,7 +2689,7 @@ export default function RoomModal({
                         {...register("bathroom_Items")}
                         className="form-checkbox"
                       />
-                      <span>{b.name_en}</span>
+                      <span>{b.name_mn || b.name_en}</span>
                     </label>
                   ))}
                 </div>
@@ -2673,7 +2720,7 @@ export default function RoomModal({
                                  border border-gray-300 rounded-lg px-4 py-2 cursor-pointer 
                                  bg-gray-100 text-gray-800 transition hover:bg-accent text-sm"
                     >
-                      {ft.name_en}
+                      {ft.name_mn || ft.name_en}
                     </label>
                   </div>
                 ))}
@@ -2687,7 +2734,7 @@ export default function RoomModal({
 
             {/* Outdoor & View */}
             <div className="mb-4">
-              <label className="block mb-1">{t('view')}</label>
+              <label className="block mb-1">Гадна болон үзэмж</label>
               <div className="flex flex-wrap gap-x-2 gap-y-6">
                 {combinedData.outdoor_and_view.map((ov) => (
                   <div key={ov.id}>
@@ -2704,7 +2751,7 @@ export default function RoomModal({
                                  border border-gray-300 rounded-lg px-4 py-2 cursor-pointer 
                                  bg-gray-100 text-gray-800 transition hover:bg-accent"
                     >
-                      {ov.name_en}
+                      {ov.name_mn || ov.name_en}
                     </label>
                   </div>
                 ))}
@@ -2718,7 +2765,7 @@ export default function RoomModal({
 
             {/* Food & Drink */}
             <div className="mb-4">
-              <label className="block mb-1">Бусад</label>
+              <label className="block mb-1">Хоол, ундаа</label>
               <div className="flex flex-wrap gap-x-2 gap-y-6">
                 {combinedData.food_and_drink.map((fd) => (
                   <div key={fd.id}>
@@ -2735,7 +2782,7 @@ export default function RoomModal({
                                  border border-gray-300 rounded-lg px-4 py-2 cursor-pointer 
                                  bg-gray-100 text-gray-800 transition hover:bg-accent"
                     >
-                      {fd.name_en}
+                      {fd.name_mn || fd.name_en}
                     </label>
                   </div>
                 ))}
