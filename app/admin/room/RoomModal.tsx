@@ -1621,7 +1621,7 @@ export default function RoomModal({
                 Хоол, ундаа:
               </label>
               <div className="flex flex-wrap gap-x-2 gap-y-3">
-                {combinedData.food_And_Drink.map((fd) => (
+                {combinedData.food_and_drink.map((fd) => (
                   <div key={fd.id}>
                     <input
                       type="checkbox"
