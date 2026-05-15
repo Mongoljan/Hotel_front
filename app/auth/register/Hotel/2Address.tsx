@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
+import { useCombinedData } from '@/app/hooks/useCombinedData';
 const API_URL = 'https://dev.kacc.mn/api/confirm-address/';
 
 type FormFields = z.infer<typeof schemaHotelSteps2>;
@@ -53,30 +53,22 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
   const selectedProvinceId = form.watch('province_city');
 
+  // Use cached hook — avoids raw fetch on every step mount
+  const { data: combinedHook } = useCombinedData();
   useEffect(() => {
-    const fetchCombinedData = async () => {
-      try {
-        const res = await fetch(API_COMBINED_DATA);
-        const data = await res.json();
-        
-        // Sort provinces to show Улаанбаатар first
-        const sortedProvinces = [...(data.province || [])].sort((a, b) => {
-          if (a.name === 'Улаанбаатар') return -1;
-          if (b.name === 'Улаанбаатар') return 1;
-          return 0;
-        });
-        
-        setCombinedData({
-          ...data,
-          province: sortedProvinces
-        });
-      } catch (err) {
-        console.error('Error fetching combined data:', err);
-      }
-    };
-
-    fetchCombinedData();
-  }, []);
+    if (!combinedHook) return;
+    // Sort provinces to show Улаанбаатар first
+    const sortedProvinces = [...(combinedHook.province || [])].sort((a, b) => {
+      if (a.name === 'Улаанбаатар') return -1;
+      if (b.name === 'Улаанбаатар') return 1;
+      return 0;
+    });
+    setCombinedData({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ...(combinedHook as any),
+      province: sortedProvinces,
+    });
+  }, [combinedHook]);
 
   useEffect(() => {
     const fetchStep2Data = async () => {

@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { OptionButton } from "@/components/ui/option-button";
 
 const API_URL = 'https://dev.kacc.mn/api/property-basic-info/';
-const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
+import { useCombinedData } from '@/app/hooks/useCombinedData';
 
 interface LanguageType { id: number; languages_name_mn: string }
 interface RatingType { id: number; rating: string }
@@ -40,18 +40,16 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
   const [ratings, setRatings] = useState<RatingType[]>([]);
   const [defaultValues, setDefaultValues] = useState<FormFields | null>(null);
 
+  // Use cached hook — avoids duplicate network fetch on every registration step mount
+  const { data: combinedHook } = useCombinedData();
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(API_COMBINED_DATA);
-        const data = await res.json();
-        setLanguages(data.languages || []);
-        setRatings(data.ratings || []);
-      } catch (error) {
-        console.error('Error fetching combined data:', error);
-      }
-    };
+    if (!combinedHook) return;
+    setLanguages(combinedHook.languages || []);
+    setRatings(combinedHook.ratings || []);
+  }, [combinedHook]);
 
+  // Load default values from cache or API (separate from reference data)
+  useEffect(() => {
     const initDefaults = async () => {
       if (!user?.hotel || !user?.id) {
         setDefaultValues({} as FormFields);
@@ -106,7 +104,6 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       }
     };
 
-    fetchData();
     initDefaults();
   }, [user?.hotel, user?.id]);
 

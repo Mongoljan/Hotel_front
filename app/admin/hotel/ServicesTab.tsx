@@ -16,7 +16,8 @@ import { IconSparkles, IconPencil } from '@tabler/icons-react';
 import { Star, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_COMBINED = 'https://dev.kacc.mn/api/combined-data/';
+import { useCombinedData } from '@/app/hooks/useCombinedData';
+
 const API_DETAILS = 'https://dev.kacc.mn/api/property-details/';
 const MAX_HIGHLIGHTS = 12;
 
@@ -68,6 +69,8 @@ export default function ServicesTab({
   propertyDetailId,
   onUpdate,
 }: ServicesTabProps) {
+  // Use cached hook instead of raw fetch — fires one network request per session max
+  const { data: combinedHook } = useCombinedData();
   const [lists, setLists] = useState<CombinedLists>({
     facilities: [],
     additionalFacilities: [],
@@ -86,31 +89,23 @@ export default function ServicesTab({
   const [expandedGroup, setExpandedGroup] = useState<string | null>('general_facilities');
   const [displayExpanded, setDisplayExpanded] = useState<string | null>('general_facilities');
 
+  // Populate lists from cached hook data (no raw fetch needed)
+  useEffect(() => {
+    if (!combinedHook) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const d = combinedHook as any;
+    setLists({
+      facilities: d.facilities || [],
+      additionalFacilities: d.additionalFacilities || [],
+      activities: d.activities || [],
+      accessibility_features: d.accessibility_features || [],
+    });
+    setIsLoading(false);
+  }, [combinedHook]);
+
   const toggleDisplayGroup = (key: string) => {
     setDisplayExpanded((prev) => (prev === key ? null : key));
   };
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch(API_COMBINED);
-        if (res.ok) {
-          const data = await res.json();
-          setLists({
-            facilities: data.facilities || [],
-            additionalFacilities: data.additionalFacilities || [],
-            activities: data.activities || [],
-            accessibility_features: data.accessibility_features || [],
-          });
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    load();
-  }, []);
 
   // Handle multiple shapes coming from the API:
   //   - legacy: number[]                                       (just IDs)

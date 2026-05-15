@@ -17,8 +17,8 @@ import { Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCombinedData } from '@/app/hooks/useCombinedData';
 
-const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
 const EBARIMT_API = 'https://info.ebarimt.mn/rest/merchant/info?regno=';
 
 interface PropertyType {
@@ -60,20 +60,11 @@ export default function RegisterPage() {
     defaultValues: parsedDefaults,
   });
 
+  // Use cached singleton hook — avoids raw fetch on every mount
+  const { data: combinedHook } = useCombinedData();
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(API_COMBINED_DATA);
-        const data = await response.json();
-        if (data.property_types) {
-          setPropertyTypes(data.property_types);
-        }
-      } catch (error) {
-        console.error("Error fetching combined data:", error);
-      }
-    };
-    fetchData();
-  }, []);
+    if (combinedHook?.property_types) setPropertyTypes(combinedHook.property_types);
+  }, [combinedHook]);
 
   useEffect(() => {
     if (propertyTypes.length > 0 && parsedDefaults.property_type) {

@@ -10,6 +10,7 @@ import StaffWaitingView from './StaffWaitingView';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
+import { useCombinedData } from '@/app/hooks/useCombinedData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,12 @@ export default function RegisterHotel() {
   const [propertyTypes, setPropertyTypes] = useState<{ id: number; name_en: string; name_mn: string }[]>([]);
   const [propertyImages, setPropertyImages] = useState<{ id: number; image: string; description: string }[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+
+  // Use cached singleton hook — avoids re-fetching combined-data on every render
+  const { data: combinedHookData } = useCombinedData();
+  useEffect(() => {
+    if (combinedHookData) setPropertyTypes(combinedHookData.property_types || []);
+  }, [combinedHookData]);
 
   // ✅ Determine proceed state based on approval and completion status
   useEffect(() => {
@@ -196,20 +203,12 @@ export default function RegisterHotel() {
       setIsLoadingData(true);
       
       try {
-        const [hotelRes, basicRes, policyRes, combinedRes, imagesRes] = await Promise.all([
-          fetch(`https://dev.kacc.mn/api/properties/${hid}`),
+        const [basicRes, policyRes, imagesRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/property-basic-info/?property=${hid}`),
           fetch(`https://dev.kacc.mn/api/property-policies/?property=${hid}`),
-          fetch(`https://dev.kacc.mn/api/combined-data/`),
           fetch(`https://dev.kacc.mn/api/property-images/?property=${hid}`)
         ]);
-        
-        if (hotelRes.ok) {
-          const hotelData: Hotel = await hotelRes.json();
-          setHotelApproved(hotelData.is_approved);
-          setStepStatus(hotelData.is_approved ? 3 : 2);
-          setPropertyBaseInfo(hotelData as any);
-        }
+        // Note: properties/${hid} is fetched by the polling effect below (fires immediately + every 30 s)
         
         if (basicRes.ok) {
           const [basicData] = await basicRes.json();
@@ -220,11 +219,7 @@ export default function RegisterHotel() {
           const [policyData] = await policyRes.json();
           setPropertyPolicy(policyData);
         }
-        
-        if (combinedRes.ok) {
-          const combinedData = await combinedRes.json();
-          setPropertyTypes(combinedData.property_types || []);
-        }
+        // propertyTypes populated via useCombinedData hook (see above)
         
         if (imagesRes.ok) {
           const imagesData = await imagesRes.json();
@@ -242,7 +237,7 @@ export default function RegisterHotel() {
     }
   }, [user?.hotel]);
 
-  // ✅ Separate lighter approval polling (less frequent, only approval status)
+  // Approval polling — fires immediately on mount AND every 30 s (replaces the duplicate mount fetch in loadHotelData)
   useEffect(() => {
     const checkApproval = async () => {
       const hid = user?.hotel;
@@ -254,6 +249,7 @@ export default function RegisterHotel() {
           const data: Hotel = await res.json();
           setHotelApproved(data.is_approved);
           setStepStatus(data.is_approved ? 3 : 2);
+          setPropertyBaseInfo(data as any);
         }
       } catch (e) {
         console.error('Error checking approval', e);
@@ -261,7 +257,7 @@ export default function RegisterHotel() {
     };
 
     if (user?.hotel) {
-      // Only poll approval status every 30 seconds (much less aggressive)
+      checkApproval(); // immediate fetch on mount (no duplicate — loadHotelData no longer fetches properties)
       const id = setInterval(checkApproval, 30000);
       return () => clearInterval(id);
     }

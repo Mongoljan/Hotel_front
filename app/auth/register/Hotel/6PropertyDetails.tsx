@@ -21,7 +21,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 
-const API_COMBINED_DATA = 'https://dev.kacc.mn/api/combined-data/';
+import { useCombinedData } from '@/app/hooks/useCombinedData';
 const API_PROPERTY_DETAILS = 'https://dev.kacc.mn/api/property-details/';
 const MAX_HIGHLIGHTS = 12;
 
@@ -66,23 +66,19 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
     },
   });
 
+  // Use cached hook — avoids raw fetch on every step mount
+  const { data: combinedHook } = useCombinedData();
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(API_COMBINED_DATA);
-        const data = await res.json();
-        setDataLists({
-          facilities: data.facilities || [],
-          additionalFacilities: data.additionalFacilities || [],
-          activities: data.activities || [],
-          accessibility_features: data.accessibility_features || [],
-        });
-      } catch (error) {
-        console.error('Error fetching combined data:', error);
-      }
-    };
-    fetchData();
-  }, []);
+    if (!combinedHook) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const d = combinedHook as any;
+    setDataLists({
+      facilities: d.facilities || [],
+      additionalFacilities: d.additionalFacilities || [],
+      activities: d.activities || [],
+      accessibility_features: d.accessibility_features || [],
+    });
+  }, [combinedHook]);
 
   useEffect(() => {
     if (!user?.id) return;

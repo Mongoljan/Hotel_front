@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useCombinedData } from '@/app/hooks/useCombinedData';
 
 type PropertyType = {
   id: number;
@@ -67,6 +68,12 @@ const Proceed: React.FC<ProceedProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Use cached hook — avoids raw combined-data fetch on every mount
+  const { data: combinedHook } = useCombinedData();
+  useEffect(() => {
+    if (combinedHook) setPropertyTypes(combinedHook.property_types || []);
+  }, [combinedHook]);
+
   // Check if user is staff (Manager=3 or Reception=4) - they can only view, not edit
   const isStaffUser = user?.user_type === 3 || user?.user_type === 4;
 
@@ -82,25 +89,16 @@ const Proceed: React.FC<ProceedProps> = ({
       try {
         setIsLoading(true);
         
-        // Fetch hotel data and property types in parallel
-        const [hotelResponse, combinedResponse] = await Promise.all([
-          fetch(`https://dev.kacc.mn/api/properties/${currentHotelId}`),
-          fetch('https://dev.kacc.mn/api/combined-data/')
-        ]);
+        // Fetch hotel data only — property types come from the useCombinedData hook above
+        const hotelResponse = await fetch(`https://dev.kacc.mn/api/properties/${currentHotelId}`);
 
         if (!hotelResponse.ok) {
           throw new Error(`Failed to fetch hotel data: ${hotelResponse.status}`);
         }
 
-        if (!combinedResponse.ok) {
-          throw new Error(`Failed to fetch property types: ${combinedResponse.status}`);
-        }
-
         const hotelData = await hotelResponse.json();
-        const combinedData = await combinedResponse.json();
-
         setHotelData(hotelData);
-        setPropertyTypes(combinedData.property_types || []);
+        // propertyTypes state is populated by the useCombinedData useEffect above
       } catch (error) {
         console.error('Error fetching data:', error);
         setError(tError('failedToLoadHotelInfo'));

@@ -131,7 +131,7 @@ export const navSections: NavSection[] = [
     i18nKey: 'roomService',
     items: [
       {
-        title: 'Цэвэрлэгээ',
+        title: 'Цэвэрлэгээ, хүсэлт',
         i18nKey: 'housekeeping',
         url: '/admin/housekeeping',
         icon: IconSparkles,
