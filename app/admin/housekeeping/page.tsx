@@ -397,7 +397,7 @@ function MultiCheckSelect({
                 onClick={() => { onChange(String(o.id)); setOpen(false); setQ(''); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/60 transition-colors cursor-pointer select-none"
               >
-                <Checkbox checked={String(o.id) === value} readOnly className="pointer-events-none" />
+                <Checkbox checked={String(o.id) === value} className="pointer-events-none" />
                 {o.name}
               </div>
             ))}
