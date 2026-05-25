@@ -867,14 +867,15 @@ export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListPro
               </div>
               {/* Display multiple bed types for individual rooms */}
               {row.original.roomBeds && row.original.roomBeds.length > 0 ? (
-                row.original.roomBeds.map((bed: { bed_type: number; quantity: number; bedTypeName?: string }, idx: number) => {
+                row.original.roomBeds.map((bed: { bed_type: number; bed_size?: number; quantity: number; bedTypeName?: string; bedSizeName?: string }, idx: number) => {
                   const isDouble = (bed.bedTypeName ?? "").toLowerCase().includes("2") || 
                                    (bed.bedTypeName ?? "").toLowerCase().includes("double") ||
                                    (bed.bedTypeName ?? "").toLowerCase().includes("давхар");
                   return (
-                    <div key={idx} className="flex items-center gap-0.5">
+                    <div key={idx} className="flex items-center gap-0.5" title={bed.bedSizeName ? `${bed.bedTypeName} — ${bed.bedSizeName}` : bed.bedTypeName}>
                       {isDouble ? <LuBedDouble className="h-4 w-4" /> : <LuBedSingle className="h-4 w-4" />}
                       {bed.quantity > 1 && <span className="text-xs">×{bed.quantity}</span>}
+                      {bed.bedSizeName && <span className="text-xs text-gray-500 hidden xl:inline">{bed.bedSizeName}</span>}
                     </div>
                   );
                 })

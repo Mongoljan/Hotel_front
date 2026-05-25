@@ -11,11 +11,12 @@ import type {
 // Helper function to get bed info from group_beds
 const getBedInfo = (
   room: RoomData,
-  bedTypesMap: Map<number, string>
-): { hasSingleBed: boolean; hasDoubleBed: boolean; roomBeds: { bed_type: number; quantity: number; bedTypeName?: string }[] } => {
+  bedTypesMap: Map<number, string>,
+  bedSizesMap?: Map<number, string>
+): { hasSingleBed: boolean; hasDoubleBed: boolean; roomBeds: { bed_type: number; bed_size?: number; quantity: number; bedTypeName?: string; bedSizeName?: string }[] } => {
   let hasSingleBed = false;
   let hasDoubleBed = false;
-  const roomBeds: { bed_type: number; quantity: number; bedTypeName?: string }[] = [];
+  const roomBeds: { bed_type: number; bed_size?: number; quantity: number; bedTypeName?: string; bedSizeName?: string }[] = [];
 
   const bedData = room.group_beds ?? [];
 
@@ -23,7 +24,13 @@ const getBedInfo = (
     const bedName = (bedTypesMap.get(bed.bed_type) ?? "").toLowerCase();
     const isDouble = bedName.includes("2") || bedName.includes("double") || bedName.includes("давхар");
     if (isDouble) { hasDoubleBed = true; } else { hasSingleBed = true; }
-    roomBeds.push({ bed_type: bed.bed_type, quantity: bed.quantity, bedTypeName: bedTypesMap.get(bed.bed_type) });
+    roomBeds.push({
+      bed_type: bed.bed_type,
+      bed_size: bed.bed_size?.id,
+      quantity: bed.quantity,
+      bedTypeName: bedTypesMap.get(bed.bed_type),
+      bedSizeName: bed.bed_size?.id ? bedSizesMap?.get(bed.bed_size.id) : undefined,
+    });
   });
 
   return { hasSingleBed, hasDoubleBed, roomBeds };
@@ -76,6 +83,10 @@ export const buildLookupMaps = (rawRooms: RoomData[], lookup: AllData): LookupMa
     (lookup.bed_types ?? []).map((bed) => [bed.id, bed.name])
   );
 
+  const bedSizesMap = new Map<number, string>(
+    (lookup.bed_sizes ?? []).map((bs) => [bs.id, bs.size])
+  );
+
   const roomTypesMap = new Map<number, string>(
     (lookup.room_types ?? []).map((type) => [type.id, type.name])
   );
@@ -93,6 +104,7 @@ export const buildLookupMaps = (rawRooms: RoomData[], lookup: AllData): LookupMa
     foodDrinkMap,
     outdoorViewMap,
     bedTypesMap,
+    bedSizesMap,
     roomTypesMap,
     roomCategoryMap
   };
@@ -131,7 +143,7 @@ export const createFlattenedRows = ({
     const totalRoomsToSellInGroup = Number(group.number_of_rooms_to_sell) || 0;
 
     const { hasSingleBed: groupHasSingleBed, hasDoubleBed: groupHasDoubleBed, roomBeds: groupRoomBeds } =
-      getBedInfo(group, lookupMaps.bedTypesMap);
+      getBedInfo(group, lookupMaps.bedTypesMap, lookupMaps.bedSizesMap);
 
     const groupHasAdult = group.adultQty > 0;
     const groupHasChild = group.childQty > 0;

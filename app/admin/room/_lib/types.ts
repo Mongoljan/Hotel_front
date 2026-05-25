@@ -23,6 +23,7 @@ export interface CategoryLookup {
 export interface AllData {
   room_types: SimpleLookup[];
   bed_types: SimpleLookup[];
+  bed_sizes: BedSize[];
   room_category: CategoryLookup[];
 
   room_facilities: LookupItem[];
@@ -38,8 +39,16 @@ export interface RoomImage {
   description: string;
 }
 
+export interface BedSize {
+  id: number;
+  size: string;
+  is_custom: boolean;
+}
+
 export interface RoomBed {
   bed_type: number;
+  bed_type_name?: string;
+  bed_size: { id: number; size: string } | null;
   quantity: number;
 }
 
@@ -97,6 +106,7 @@ export interface LookupMaps {
   foodDrinkMap: Map<number, string>;
   outdoorViewMap: Map<number, string>;
   bedTypesMap: Map<number, string>;
+  bedSizesMap: Map<number, string>;
   roomTypesMap: Map<number, string>;
   roomCategoryMap: Map<number, string>;
 }
@@ -128,7 +138,7 @@ export interface FlattenRow extends GridValidRowModel {
   adultQty?: number;
   childQty?: number;
   bedType?: number;
-  roomBeds?: { bed_type: number; quantity: number; bedTypeName?: string }[];
+  roomBeds?: { bed_type: number; bed_size?: number; quantity: number; bedTypeName?: string; bedSizeName?: string }[];
   commonFacilitiesArr: string[];
   thisRoomExtraFacilitiesArr?: string[];
   commonBathroomArr: string[];
@@ -169,6 +179,7 @@ export interface LookupMaps {
   foodDrinkMap: Map<number, string>;
   outdoorViewMap: Map<number, string>;
   bedTypesMap: Map<number, string>;
+  bedSizesMap: Map<number, string>;
   roomTypesMap: Map<number, string>;
   roomCategoryMap: Map<number, string>;
 }
@@ -200,7 +211,7 @@ export interface FlattenRow extends GridValidRowModel {
   adultQty?: number;
   childQty?: number;
   bedType?: number;
-  roomBeds?: { bed_type: number; quantity: number; bedTypeName?: string }[]; // Multiple bed types with quantities
+  roomBeds?: { bed_type: number; bed_size?: number; quantity: number; bedTypeName?: string; bedSizeName?: string }[]; // Multiple bed types with quantities
   // Separate feature arrays for each category
   commonFacilitiesArr: string[];
   thisRoomExtraFacilitiesArr?: string[];

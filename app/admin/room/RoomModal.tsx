@@ -113,7 +113,7 @@ interface RoomData {
   room_category: number;
   room_size: string;
   /** Bed configuration shared across all rooms in the group */
-  group_beds: { bed_type: number; quantity: number }[];
+  group_beds: { bed_type: number; bed_size: { id: number; size: string } | null; quantity: number }[];
   is_Bathroom: boolean;
   room_Facilities: number[];
   bathroom_Items: number[];
@@ -581,7 +581,7 @@ export default function RoomModal({
       room_category: "",
       room_size: "",
       // New room_beds array with default empty bed
-      room_beds: [{ bed_type: "", quantity: 1 }],
+      room_beds: [{ bed_type: "", bed_size: "", quantity: 1 }],
       adultQty: "2",
       childQty: "1",
       number_of_rooms: 1,
@@ -689,17 +689,18 @@ export default function RoomModal({
       }
 
       // Handle bed data — new API returns group_beds
-      let roomBedsForForm: { bed_type: string; quantity: number }[] = [];
+      let roomBedsForForm: { bed_type: string; bed_size: string; quantity: number }[] = [];
       
       const roomBedsData = existing.group_beds;
       
       if (Array.isArray(roomBedsData) && roomBedsData.length > 0) {
         roomBedsForForm = roomBedsData.map((bed: any) => ({
           bed_type: String(bed.bed_type ?? ""),
+          bed_size: String(bed.bed_size?.id ?? ""),
           quantity: bed.quantity ?? 1
         }));
       } else {
-        roomBedsForForm = [{ bed_type: "", quantity: 1 }];
+        roomBedsForForm = [{ bed_type: "", bed_size: "", quantity: 1 }];
       }
 
       // Convert the RoomData into the shape of our form
@@ -751,7 +752,7 @@ export default function RoomModal({
         room_category: "",
         room_size: "",
         // New room_beds array with default empty bed
-        room_beds: [{ bed_type: "", quantity: 1 }],
+        room_beds: [{ bed_type: "", bed_size: "", quantity: 1 }],
         adultQty: "2",
         childQty: "1",
         number_of_rooms: 1,
@@ -824,16 +825,16 @@ export default function RoomModal({
       const arrEq = (a: number[], b: number[]) =>
         a.length === b.length && [...a].sort().join() === [...b].sort().join();
       const bedEq = (
-        a: { bed_type: number; quantity: number }[],
-        b: { bed_type: number; quantity: number }[]
+        a: { bed_type: number; bed_size: number; quantity: number }[],
+        b: { bed_type: number; bed_size: number; quantity: number }[]
       ) =>
         a.length === b.length &&
-        a.every((ab, i) => ab.bed_type === b[i].bed_type && ab.quantity === b[i].quantity);
+        a.every((ab, i) => ab.bed_type === b[i].bed_type && ab.bed_size === b[i].bed_size && ab.quantity === b[i].quantity);
 
       const newSize = parseFloat(formData.room_size);
       const newBeds = formData.room_beds
         .filter(bed => bed.bed_type && bed.bed_type !== "")
-        .map(bed => ({ bed_type: Number(bed.bed_type), quantity: bed.quantity }));
+        .map(bed => ({ bed_type: Number(bed.bed_type), bed_size: Number(bed.bed_size), quantity: bed.quantity }));
       const newIsBathroom = formData.is_Bathroom === "true";
       const newSmokingAllowed = formData.smoking_allowed === "true";
       const newAdult = Number(formData.adultQty);
@@ -887,7 +888,7 @@ export default function RoomModal({
         .filter((o) => !keptOriginalIds.has(o.id))
         .map((o) => o.id);
 
-      const origBeds = (orig.group_beds ?? []).map(b => ({ bed_type: b.bed_type, quantity: b.quantity }));
+      const origBeds = (orig.group_beds ?? []).map(b => ({ bed_type: b.bed_type, bed_size: b.bed_size?.id ?? 0, quantity: b.quantity }));
 
       const patch: Record<string, any> = {};
 
@@ -1006,6 +1007,7 @@ export default function RoomModal({
         .filter(bed => bed.bed_type && bed.bed_type !== "")
         .map(bed => ({
           bed_type: Number(bed.bed_type),
+          bed_size: Number(bed.bed_size),
           quantity: bed.quantity
         })),
       is_Bathroom: formData.is_Bathroom === "true",
@@ -1059,14 +1061,14 @@ export default function RoomModal({
         const arrEq = (a: number[], b: number[]) =>
           a.length === b.length && [...a].sort().join() === [...b].sort().join();
         const bedEq = (
-          a: { bed_type: number; quantity: number }[],
-          b: { bed_type: number; quantity: number }[]
+          a: { bed_type: number; bed_size: number; quantity: number }[],
+          b: { bed_type: number; bed_size: number; quantity: number }[]
         ) =>
           a.length === b.length &&
-          a.every((ab, i) => ab.bed_type === b[i].bed_type && ab.quantity === b[i].quantity);
+          a.every((ab, i) => ab.bed_type === b[i].bed_type && ab.bed_size === b[i].bed_size && ab.quantity === b[i].quantity);
 
-        const newBeds = transformedData.group_beds as { bed_type: number; quantity: number }[];
-        const origBeds = (orig.group_beds ?? []).map((b: any) => ({ bed_type: b.bed_type, quantity: b.quantity }));
+        const newBeds = transformedData.group_beds as { bed_type: number; bed_size: number; quantity: number }[];
+        const origBeds = (orig.group_beds ?? []).map((b: any) => ({ bed_type: b.bed_type, bed_size: b.bed_size ?? 0, quantity: b.quantity }));
 
         const diffed: Record<string, any> = {};
         if (Number(formData.room_type) !== orig.room_type)                       diffed.room_type = transformedData.room_type;
@@ -1392,7 +1394,7 @@ export default function RoomModal({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => appendBed({ bed_type: "", quantity: 1 })}
+                      onClick={() => appendBed({ bed_type: "", bed_size: "", quantity: 1 })}
                       className="flex items-center gap-1"
                       disabled={!canAddMoreBeds}
                       title={!canAddMoreBeds ? "Бүх орны төрөл сонгогдсон байна" : undefined}
@@ -1432,6 +1434,22 @@ export default function RoomModal({
                           ))}
                         </SelectContent>
                       </Select>
+
+                      <Select
+                        onValueChange={(value) => setValue(`room_beds.${index}.bed_size`, value)}
+                        value={watch(`room_beds.${index}.bed_size`) || ""}
+                      >
+                        <SelectTrigger className="w-36">
+                          <SelectValue placeholder="-- Хэмжээ --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(lookupData?.bed_sizes ?? []).map((bs: any) => (
+                            <SelectItem key={bs.id} value={String(bs.id)}>
+                              {bs.size}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       
                       <Input
                         type="number"
@@ -1464,7 +1482,7 @@ export default function RoomModal({
             <section className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Насанд хүрэгчдийн тоо <span className="text-red-500">*</span>
+                  Том хүний тоо <span className="text-red-500">*</span>
                 </label>
                 <Input
                   type="number"
@@ -1909,9 +1927,9 @@ export default function RoomModal({
                         const filteredBeds = getFilteredBedTypes(value);
                         const defaultBed = filteredBeds.find(bt => bt.name.toLowerCase().includes(defaultKeyword));
                         if (defaultBed) {
-                          setValue("room_beds", [{ bed_type: String(defaultBed.id), quantity: 1 }]);
+                          setValue("room_beds", [{ bed_type: String(defaultBed.id), bed_size: "", quantity: 1 }]);
                         } else if (filteredBeds.length > 0) {
-                          setValue("room_beds", [{ bed_type: String(filteredBeds[0].id), quantity: 1 }]);
+                          setValue("room_beds", [{ bed_type: String(filteredBeds[0].id), bed_size: "", quantity: 1 }]);
                         }
                       }} 
                       value={watch("room_type") || undefined}
@@ -2086,7 +2104,7 @@ export default function RoomModal({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => appendBed({ bed_type: "", quantity: 1 })}
+                      onClick={() => appendBed({ bed_type: "", bed_size: "", quantity: 1 })}
                       className="flex items-center gap-1"
                       disabled={!canAddMoreBeds}
                       title={!canAddMoreBeds ? "Бүх орны төрөл сонгогдсон байна" : undefined}
@@ -2126,6 +2144,24 @@ export default function RoomModal({
                           {availableBedTypes.map((bt) => (
                             <SelectItem key={bt.id} value={bt.id.toString()}>
                               {bt.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="w-36">
+                      <Select
+                        onValueChange={(value) => setValue(`room_beds.${index}.bed_size`, value)}
+                        value={watch(`room_beds.${index}.bed_size`) || ""}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="-- Хэмжээ --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(lookupData?.bed_sizes ?? []).map((bs: any) => (
+                            <SelectItem key={bs.id} value={String(bs.id)}>
+                              {bs.size}
                             </SelectItem>
                           ))}
                         </SelectContent>

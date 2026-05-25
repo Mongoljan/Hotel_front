@@ -16,6 +16,7 @@ type UseRoomDataParams = {
 const createEmptyLookup = (): AllData => ({
   room_types: [],
   bed_types: [],
+  bed_sizes: [],
   room_category: [],
   room_facilities: [],
   bathroom_items: [],

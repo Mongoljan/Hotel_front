@@ -1,4 +1,4 @@
-import { ROOM_CACHE_KEYS } from "./constants";
+import { ROOM_CACHE_KEYS, ROOM_CACHE_VERSION } from "./constants";
 import type { AllData, RoomData } from "./types";
 
 export type RoomCachePayload = {
@@ -9,6 +9,13 @@ export type RoomCachePayload = {
 
 export const readRoomCache = (): RoomCachePayload | null => {
   try {
+    // Invalidate stale caches from older schema versions.
+    const version = localStorage.getItem(ROOM_CACHE_KEYS.version);
+    if (Number(version) !== ROOM_CACHE_VERSION) {
+      clearRoomCache();
+      return null;
+    }
+
     const lookupRaw = localStorage.getItem(ROOM_CACHE_KEYS.lookup);
     const roomsRaw = localStorage.getItem(ROOM_CACHE_KEYS.data);
 
@@ -33,6 +40,7 @@ export const readRoomCache = (): RoomCachePayload | null => {
 
 export const writeRoomCache = (payload: RoomCachePayload) => {
   try {
+    localStorage.setItem(ROOM_CACHE_KEYS.version, String(ROOM_CACHE_VERSION));
     localStorage.setItem(ROOM_CACHE_KEYS.lookup, JSON.stringify(payload.lookup));
     localStorage.setItem(ROOM_CACHE_KEYS.data, JSON.stringify(payload.rooms));
     if (payload.syncedAt) {
@@ -44,6 +52,7 @@ export const writeRoomCache = (payload: RoomCachePayload) => {
 };
 
 export const clearRoomCache = () => {
+  localStorage.removeItem(ROOM_CACHE_KEYS.version);
   localStorage.removeItem(ROOM_CACHE_KEYS.lookup);
   localStorage.removeItem(ROOM_CACHE_KEYS.data);
   localStorage.removeItem(ROOM_CACHE_KEYS.syncedAt);

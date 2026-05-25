@@ -80,6 +80,7 @@ export const schemaCreateRoom = z.object({
     room_beds: z.array(
       z.object({
         bed_type: z.string().min(1, { message: "Bed type is required" }),
+        bed_size: z.string().min(1, { message: "Bed size is required" }),
         quantity: z.number().min(1, { message: "Quantity must be at least 1" }),
       })
     ).min(1, { message: "At least one bed type is required" }),
@@ -127,6 +128,7 @@ export const schemaAddToGroup = z.object({
   room_size: z.string().optional(),
   room_beds: z.array(z.object({
     bed_type: z.string(),
+    bed_size: z.string().optional(),
     quantity: z.number(),
   })).optional(),
   is_Bathroom: z.string().optional(),
@@ -176,6 +178,7 @@ export const schemaEditGroup = z.object({
   room_beds: z.array(
     z.object({
       bed_type: z.string().min(1, { message: "Bed type is required" }),
+      bed_size: z.string().min(1, { message: "Bed size is required" }),
       quantity: z.number().min(1, { message: "Quantity must be at least 1" }),
     })
   ).min(1, { message: "At least one bed type is required" }),

@@ -10,9 +10,16 @@ export interface RoomSimpleLookup {
   is_custom?: boolean;
 }
 
+export interface RoomBedSizeLookup {
+  id: number;
+  size: string;
+  is_custom: boolean;
+}
+
 export interface RoomLookupPayload {
   room_types: RoomSimpleLookup[];
   bed_types: RoomSimpleLookup[];
+  bed_sizes: RoomBedSizeLookup[];
   room_category: RoomSimpleLookup[];
   room_facilities: RoomAmenityLookup[];
   bathroom_items: RoomAmenityLookup[];
@@ -21,8 +28,15 @@ export interface RoomLookupPayload {
   outdoor_and_view: RoomAmenityLookup[];
 }
 
+export interface BedSize {
+  id: number;
+  size: string;
+  is_custom: boolean;
+}
+
 export interface RoomBed {
   bed_type: number;
+  bed_size: { id: number; size: string } | null;
   quantity: number;
 }
 
