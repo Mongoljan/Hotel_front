@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCombinedData } from '@/app/hooks/useCombinedData';
 
-const EBARIMT_API = 'https://info.ebarimt.mn/rest/merchant/info?regno=';
+const EBARIMT_API = '/api/ebarimt?regno=';
 
 interface PropertyType {
   id: number;
