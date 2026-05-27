@@ -616,7 +616,7 @@ export default function UsersPage() {
                       onClick={() => setIsPasswordVisible((prev) => !prev)}
                       aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
                     >
-                      {isPasswordVisible ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+                      {isPasswordVisible ? <IconEye className="h-4 w-4" /> : <IconEyeOff className="h-4 w-4" />}
                     </Button>
                   </div>
                   <div className="space-y-2 relative">
@@ -637,7 +637,7 @@ export default function UsersPage() {
                       onClick={() => setIsConfirmVisible((prev) => !prev)}
                       aria-label={isConfirmVisible ? 'Hide password' : 'Show password'}
                     >
-                      {isConfirmVisible ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+                      {isConfirmVisible ? <IconEye className="h-4 w-4" /> : <IconEyeOff className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
