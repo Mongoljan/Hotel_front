@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa6';
-import { FaArrowAltCircleRight } from "react-icons/fa";
+
 import { PatternFormat } from 'react-number-format';
 import { useTranslations, useLocale } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCombinedData } from '@/app/hooks/useCombinedData';
 
-const EBARIMT_API = '/api/ebarimt?regno=';
 
 interface PropertyType {
   id: number;
@@ -37,7 +36,6 @@ export default function RegisterPage() {
   const locale = useLocale();
   const router = useRouter();
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
-  const [loadingCompany, setLoadingCompany] = useState(false);
 
   // Restore saved values
   const saved = typeof window !== "undefined" ? localStorage.getItem("hotelFormData") : null;
@@ -80,31 +78,6 @@ export default function RegisterPage() {
     });
     return () => subscription.unsubscribe();
   }, [watch, getValues]);
-
-  const fetchCompanyName = async () => {
-    const trimmedRegNo = regNo.trim();
-    if (!trimmedRegNo) {
-      toast.error(tErr('company.reg_required'));
-      return;
-    }
-
-    try {
-      setLoadingCompany(true);
-      const response = await fetch(`${EBARIMT_API}${trimmedRegNo}`);
-      const data = await response.json();
-      if (data.found && data.name) {
-        setValue("CompanyName", data.name);
-        toast.success(tMsg('company_found', { regno: trimmedRegNo }));
-      } else {
-        toast.error(tErr('company.not_found', { regno: trimmedRegNo }));
-      }
-    } catch (error) {
-      console.error("Error fetching company info:", error);
-      toast.error(tErr('error.internal'));
-    } finally {
-      setLoadingCompany(false);
-    }
-  };
 
   const onSubmit: SubmitHandler<FormFields> = (data) => {
     const phoneRaw = data.phone.replace(/\s/g, '');
@@ -150,8 +123,7 @@ export default function RegisterPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="register" className="text-cyrillic">{t("company_Reg")}</Label>
-                    <div className="flex gap-2">
-                      <Input
+                    <Input
                         id="register"
                         type="text"
                         value={regNo}
@@ -162,31 +134,17 @@ export default function RegisterPage() {
                         }}
                         className={errors.register ? "border-destructive" : ""}
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={fetchCompanyName}
-                        disabled={loadingCompany}
-                      >
-                        {loadingCompany ? "..." : <FaArrowAltCircleRight className="h-4 w-4" />}
-                      </Button>
-                    </div>
                     {errors.register && <p className="text-sm text-destructive">{errors.register.message}</p>}
                   </div>
 
-                  <div className="space-y-2 group relative">
+                  <div className="space-y-2">
                     <Label htmlFor="companyName" className="text-cyrillic">{t("company_name")}</Label>
                     <Input
                       id="companyName"
                       type="text"
                       {...register('CompanyName')}
-                      className="bg-muted"
-                      disabled
+                      className={errors.CompanyName ? "border-destructive" : ""}
                     />
-                    <div className="absolute left-0 -top-8 opacity-0 -translate-y-full group-hover:opacity-100 transition-opacity bg-popover text-popover-foreground px-3 py-2 rounded shadow-lg pointer-events-none z-10 text-xs">
-                      {tTips('ebarimt_lookup')}
-                    </div>
                     {errors.CompanyName && <p className="text-sm text-destructive">{errors.CompanyName.message}</p>}
                   </div>
                 </div>
