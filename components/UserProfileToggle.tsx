@@ -14,7 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { formatPosition, type PositionValue } from '@/utils/formatPosition';
 
 interface UserProfileToggleProps {
   userApproved: boolean;
@@ -29,6 +30,7 @@ interface UserType {
 export default function UserProfileToggle({ userApproved, hotelApproved = false }: UserProfileToggleProps) {
   const { user, logout } = useAuth();
   const t = useTranslations('UserProfile');
+  const locale = useLocale() as 'en' | 'mn';
   const [userTypes, setUserTypes] = useState<UserType[]>([]);
 
   useEffect(() => {
@@ -93,7 +95,7 @@ export default function UserProfileToggle({ userApproved, hotelApproved = false 
             {user.position && (
               <div>
                 <p className="text-xs text-muted-foreground">{t('position')}</p>
-                <p className="text-sm">{user.position}</p>
+                <p className="text-sm">{formatPosition(user.position as PositionValue, locale)}</p>
               </div>
             )}
 

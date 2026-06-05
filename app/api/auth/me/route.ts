@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthToken } from '@/utils/jwt'
+import { normalizePosition } from '@/utils/formatPosition'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +27,7 @@ export async function GET() {
         email: payload.email,
         name: payload.name,
         hotel: payload.hotel,
-        position: payload.position,
+        position: normalizePosition(payload.position as Parameters<typeof normalizePosition>[0]),
         contact_number: payload.contact_number,
         approved: payload.approved,
         hotelApproved: payload.hotelApproved,

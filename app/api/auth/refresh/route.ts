@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthToken, setAuthCookies, UserPayload } from '@/utils/jwt'
 import { readCredentials } from '@/utils/credentialVault'
+import { normalizePosition } from '@/utils/formatPosition'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,7 +51,7 @@ export async function POST() {
         name: data.name,
         backendToken: data.token,
         hotel: hotelId.toString(),
-        position: data.position,
+        position: normalizePosition(data.position),
         contact_number: data.contact_number,
         approved: data.approved,
         hotelApproved: isApproved,
@@ -113,7 +114,7 @@ export async function POST() {
       name: currentPayload.name,
       backendToken: currentPayload.backendToken,
       hotel: currentPayload.hotel,
-      position: currentPayload.position,
+      position: normalizePosition(currentPayload.position as Parameters<typeof normalizePosition>[0]),
       contact_number: currentPayload.contact_number,
       approved: currentPayload.approved,
       hotelApproved: isApproved,

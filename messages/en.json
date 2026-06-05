@@ -593,6 +593,10 @@
   "phone_number": "Phone Number",
   "password": "Password",
   "password_again": "Repeat Password",
+  "passwordMinCharsRule": "At least 8 characters",
+  "passwordComplexityRule": "Must include letters, numbers, and symbols",
+  "passwordMatchOk": "Passwords match",
+  "passwordMismatch": "Passwords do not match",
   "back": "Back",
   "next": "Next"
 },

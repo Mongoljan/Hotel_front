@@ -622,6 +622,10 @@
    "password":"Нууц үг",
    "email":"И-мэйл хаяг",
    "password_again":"Нууц үг давтах",
+   "passwordMinCharsRule":"8 болон түүнээс дээш тэмдэгт байх",
+   "passwordComplexityRule":"Үсэг, тоо, тэмдэгт орсон байх",
+   "passwordMatchOk":"Нууц үг таарч байна",
+   "passwordMismatch":"Нууц үг таарахгүй байна",
       "back":"буцах",
     "next":"дараах"
 

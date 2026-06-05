@@ -48,6 +48,28 @@ interface DatePickerWithValueProps {
   displayFormat?: string
 }
 
+interface MonthYearPickerWithValueProps {
+  value?: string // YYYY-MM-DD or YYYY-MM
+  onChange?: (value: string) => void
+  placeholder?: string
+  disabled?: boolean
+  className?: string
+}
+
+function parseMonthYearValue(value?: string): { year: number; month: number } | null {
+  if (!value?.trim()) return null
+  const match = value.trim().match(/^(\d{4})-(\d{2})/)
+  if (!match) return null
+  const year = parseInt(match[1], 10)
+  const month = parseInt(match[2], 10) - 1
+  if (!Number.isFinite(year) || month < 0 || month > 11) return null
+  return { year, month }
+}
+
+function formatMonthYearValue(year: number, month: number): string {
+  return `${year}-${String(month + 1).padStart(2, '0')}-01`
+}
+
 export function DatePicker({
   date,
   onSelect,
@@ -158,6 +180,103 @@ export function DatePicker({
  * DatePicker that works with string values (YYYY-MM-DD format)
  * Perfect for form integration where you need string dates
  */
+export function MonthYearPickerWithValue({
+  value,
+  onChange,
+  placeholder = "Он, сар сонгох",
+  disabled = false,
+  className,
+}: MonthYearPickerWithValueProps) {
+  const [isOpen, setIsOpen] = React.useState(false)
+  const locale = useLocale()
+
+  const parsed = parseMonthYearValue(value)
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: currentYear - 1949 }, (_, i) => currentYear - i)
+
+  const monthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const monthsMn = ['1-р сар', '2-р сар', '3-р сар', '4-р сар', '5-р сар', '6-р сар', '7-р сар', '8-р сар', '9-р сар', '10-р сар', '11-р сар', '12-р сар']
+  const months = locale === 'mn' ? monthsMn : monthsEn
+
+  const [selectedYear, setSelectedYear] = React.useState<number>(
+    parsed?.year ?? currentYear
+  )
+  const [selectedMonth, setSelectedMonth] = React.useState<number>(
+    parsed?.month ?? new Date().getMonth()
+  )
+
+  React.useEffect(() => {
+    if (!isOpen) return
+    const next = parseMonthYearValue(value)
+    setSelectedYear(next?.year ?? currentYear)
+    setSelectedMonth(next?.month ?? new Date().getMonth())
+  }, [isOpen, value, currentYear])
+
+  const displayLabel = parsed
+    ? locale === 'mn'
+      ? `${parsed.year} оны ${monthsMn[parsed.month]}`
+      : `${monthsEn[parsed.month]} ${parsed.year}`
+    : null
+
+  const applySelection = () => {
+    onChange?.(formatMonthYearValue(selectedYear, selectedMonth))
+    setIsOpen(false)
+  }
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={disabled}
+          className={cn(
+            "w-full justify-start text-left font-normal h-10",
+            !displayLabel && "text-muted-foreground",
+            className
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {displayLabel ?? <span>{placeholder}</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-3" align="start" sideOffset={4} style={{ zIndex: 9999 }}>
+        <div className="flex gap-2">
+          <Select
+            value={selectedYear.toString()}
+            onValueChange={(v) => setSelectedYear(parseInt(v, 10))}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
+            </SelectTrigger>
+            <SelectContent className="max-h-[300px]" position="popper" style={{ zIndex: 10001 }}>
+              {years.map((year) => (
+                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={selectedMonth.toString()}
+            onValueChange={(v) => setSelectedMonth(parseInt(v, 10))}
+          >
+            <SelectTrigger className="w-[130px]">
+              <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
+            </SelectTrigger>
+            <SelectContent position="popper" style={{ zIndex: 10001 }}>
+              {months.map((month, index) => (
+                <SelectItem key={index} value={index.toString()}>{month}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button type="button" className="w-full mt-3" onClick={applySelection}>
+          {locale === 'mn' ? 'Сонгох' : 'Select'}
+        </Button>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 export function DatePickerWithValue({
   value,
   onChange,

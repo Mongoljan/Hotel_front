@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { DatePickerWithValue } from '@/components/ui/date-picker';
+import { MonthYearPickerWithValue } from '@/components/ui/date-picker';
 import { OptionButton } from '@/components/ui/option-button';
 
 interface Language {
@@ -170,10 +170,10 @@ export function EditBasicInfoDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">Үйл ажиллагаа эхэлсэн огноо</Label>
-              <DatePickerWithValue
+              <MonthYearPickerWithValue
                 value={draftBasicInfo.start_date}
                 onChange={(value) => setDraftBasicInfo({ ...draftBasicInfo, start_date: value })}
-                placeholder="Огноо сонгох"
+                placeholder="Он, сар сонгох"
               />
             </div>
             <div className="space-y-2">
