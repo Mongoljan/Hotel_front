@@ -21,6 +21,16 @@ export default async function Topbar() {
         {/* Navigation Actions */}
         <div className="flex items-center space-x-4">
           <LanguageSwitcher />
+
+          <Button variant="ghost" asChild>
+            <a
+              href="https://myroom-two.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t("myroom")}
+            </a>
+          </Button>
           
           <div className="flex items-center space-x-2">
             <Button variant="ghost" asChild>

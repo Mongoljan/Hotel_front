@@ -358,7 +358,8 @@
   "Topbar":{
     "signIn":"Sign In",
     "signUp":"Sign Up",
-    "signOut":"Sign Out"
+    "signOut":"Sign Out",
+    "myroom":"MyRoom"
     },
     "Sidebar":{
       "dashboard": "Dashboard",
@@ -553,7 +554,8 @@
     "ebarimt_lookup": "Click the button to look up your company's name from ebarimt using the entered reg no"
   },
   "TopbarAuth": {
-    "title": "Hotel Admin"
+    "title": "Hotel Admin",
+    "myroom": "MyRoom"
   },
   "BrandName": {
     "hotelAdmin": "Hotel Admin",

@@ -368,7 +368,8 @@
    "Topbar":{
    "signIn":"Нэвтрэх",
    "signUp":"Бүртгүүлэх",
-       "signOut":"Гарах"
+   "signOut":"Гарах",
+   "myroom":"MyRoom"
    },
 
   "HomePage": {
@@ -582,7 +583,8 @@
     "ebarimt_lookup": "Хажууд байрлах товч дээр дарснаар ebarimt-аас таны компаний нэрийг оруулсан РД-аар хайх болно"
   },
   "TopbarAuth": {
-    "title": "Буудлын админ"
+    "title": "Буудлын админ",
+    "myroom": "MyRoom"
   },
   "BrandName": {
     "hotelAdmin": "Зочид буудлын админ",

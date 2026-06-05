@@ -27,6 +27,14 @@ export default function TopbarAuth() {
             </span>
           </Link>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <a
+              href="https://myroom-two.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden h-10 items-center rounded-lg px-3 text-sm font-medium text-gray-700 transition-colors hover:text-primary dark:text-gray-200 sm:inline-flex"
+            >
+              {tTop("myroom")}
+            </a>
             <ThemeSwitcher />
             <LanguageSwitcher />
             <Link
