@@ -13,11 +13,19 @@ import { schemaRegistrationEmployee2 } from '@/app/schema';
 import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
 import { registerHotelAndEmployeeAction } from '../registerHotelAndEmployeeAction';
+import { getEmployeePositions, EmployeePosition } from '@/lib/api';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
 
@@ -28,6 +36,7 @@ export default function RegisterEmployee() {
   const router = useRouter();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [positions, setPositions] = useState<EmployeePosition[]>([]);
 
   const saved = typeof window !== 'undefined' ? localStorage.getItem('employeeFormData') : null;
   const parsedDefaults: Partial<FormFields> = saved ? JSON.parse(saved) : {};
@@ -37,7 +46,7 @@ export default function RegisterEmployee() {
     mode: 'onChange',
     defaultValues: {
       contact_person_name: '',
-      position: '',
+      position: 10,
       contact_number: '',
       email: '',
       password: '',
@@ -59,6 +68,12 @@ export default function RegisterEmployee() {
   useEffect(() => {
     setValue('user_type', 2);
   }, [setValue]);
+
+  useEffect(() => {
+    getEmployeePositions()
+      .then(setPositions)
+      .catch(() => setPositions([]));
+  }, []);
 
   const onError = (formErrors: any) => {
     toast.error(tErr('form.incomplete'));
@@ -128,9 +143,23 @@ export default function RegisterEmployee() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('title')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
+                    <Select
+                      value={field.value ? String(field.value) : undefined}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('title')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {positions.map((pos) => (
+                          <SelectItem key={pos.id} value={String(pos.id)}>
+                            {pos.name_mn}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

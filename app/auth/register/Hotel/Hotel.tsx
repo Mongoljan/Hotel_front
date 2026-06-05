@@ -7,6 +7,7 @@ import RegisterHotel1 from './1PropertyBasicInfo';
 import RegisterHotel2 from './2Address';
 import RegisterHotel3 from './3GoogleMap';
 import RegisterHotel4 from './4PropertyPolicies';
+import RegisterHotel5Cancellation from './5CancellationFees';
 import RegisterHotel5 from './5PropertyImage';
 import RegisterHotel6 from './6PropertyDetails';
 import { useRouter } from 'next/navigation';
@@ -16,6 +17,7 @@ import UserStorage from '@/utils/storage';
 const API_PROPERTY_BASIC_INFO = 'https://dev.kacc.mn/api/property-basic-info/';
 const API_CONFIRM_ADDRESS = 'https://dev.kacc.mn/api/confirm-address/';
 const API_PROPERTY_POLICIES = 'https://dev.kacc.mn/api/property-policies/';
+const API_CANCELLATION_FEES = 'https://dev.kacc.mn/api/cancellation-fees/';
 const API_PROPERTY_IMAGES = 'https://dev.kacc.mn/api/property-images/';
 const API_PROPERTY_DETAILS = 'https://dev.kacc.mn/api/property-details/';
 
@@ -27,8 +29,8 @@ interface ProceedProps {
 
 export default function RegisterPage({ proceed, setProceed, setView }: ProceedProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const { user } = useAuth(); // Get user from auth hook
-  const totalSteps = 6;
+  const { user } = useAuth();
+  const totalSteps = 7;
   const router = useRouter();
   const transitionDelay = 2000;
 
@@ -42,8 +44,9 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
         { step: 1, url: `${API_PROPERTY_BASIC_INFO}?property=${hotelId}`, key: 'step1' },
         { step: 2, url: `${API_CONFIRM_ADDRESS}?property=${hotelId}`, key: 'step2' },
         { step: 4, url: `${API_PROPERTY_POLICIES}?property=${hotelId}`, key: 'step4' },
-        { step: 5, url: `${API_PROPERTY_IMAGES}?property=${hotelId}`, key: 'step5' },
-        { step: 6, url: `${API_PROPERTY_DETAILS}?property=${hotelId}`, key: 'step6' },
+        { step: 5, url: `${API_CANCELLATION_FEES}?property=${hotelId}`, key: 'step5Cancellation' },
+        { step: 6, url: `${API_PROPERTY_IMAGES}?property=${hotelId}`, key: 'step5' },
+        { step: 7, url: `${API_PROPERTY_DETAILS}?property=${hotelId}`, key: 'step6' },
       ];
 
       const propertyData: Record<string, any> = {};
@@ -68,6 +71,7 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
               const entries = data.map((img: any) => ({
                 images: img.image,
                 descriptions: img.description,
+                category: img.category ?? 1,
                 is_profile: Boolean(img.is_profile),
               }));
 
@@ -79,7 +83,6 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
 
               uploadedImageIds = uploadedImages;
             } else {
-              // ✅ Store as object, even if returned as array
               propertyData[key] = Array.isArray(data) ? data[0] : data;
             }
 
@@ -93,20 +96,22 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
         }
       }
 
-      if (lastCompletedStep === 6) {
+      if (lastCompletedStep === 7) {
         toast.success('Та зочид буудлын бүртгэлээ аль хэдийн дуусгасан байна!');
         UserStorage.removeItem('currentStep');
         UserStorage.setItem('proceed', '2', userId);
-        // Cache completion status (tied to user + hotel)
         const cacheKey = `hotelCompletion_${userId}_${hotelId}`;
         localStorage.setItem(cacheKey, 'completed');
         setProceed(2);
         return;
       }
 
-      const resumeStep = lastCompletedStep === 3 ? 4 : Math.min(lastCompletedStep + 1, 6);
+      const resumeStep = lastCompletedStep === 3
+        ? 4
+        : lastCompletedStep === 4
+          ? 5
+          : Math.min(lastCompletedStep + 1, 7);
 
-      // Preserve step3 (google map) from existing local storage — it isn't in any API endpoint
       const existingDataStr = UserStorage.getItem<string>('propertyData', userId);
       const existingData = existingDataStr ? JSON.parse(existingDataStr) : {};
 
@@ -115,6 +120,7 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
         step2: propertyData.step2,
         step3: existingData.step3 || null,
         step4: propertyData.step4,
+        step5Cancellation: propertyData.step5Cancellation,
         step5: propertyData.step5,
         step6: propertyData.step6,
         propertyId: hotelId,
@@ -171,8 +177,10 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
       case 4:
         return <RegisterHotel4 key={currentStep} onNext={() => handleNext(5)} onBack={() => handleBack(4)} />;
       case 5:
-        return <RegisterHotel5 key={currentStep} onNext={() => handleNext(6)} onBack={() => handleBack(5)} />;
+        return <RegisterHotel5Cancellation key={currentStep} onNext={() => handleNext(6)} onBack={() => handleBack(5)} />;
       case 6:
+        return <RegisterHotel5 key={currentStep} onNext={() => handleNext(7)} onBack={() => handleBack(6)} />;
+      case 7:
         return (
           <RegisterHotel6
             key={currentStep}
@@ -184,14 +192,13 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
                 UserStorage.removeItem('currentStep');
                 if (user?.id && user?.hotel) {
                   UserStorage.setItem('proceed', '2', user.id);
-                  // Cache completion status (tied to user + hotel)
                   const cacheKey = `hotelCompletion_${user.id}_${user.hotel}`;
                   localStorage.setItem(cacheKey, 'completed');
                 }
                 setProceed(2);
               }, transitionDelay);
             }}
-            onBack={() => handleBack(6)}
+            onBack={() => handleBack(7)}
           />
         );
       default:

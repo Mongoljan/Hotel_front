@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { z } from 'zod';
-import { schemaHotelSteps3 } from '../../../../schema';
+import { schemaHotelStepsCancellation } from '../../../../schema';
 
-type FormFields = z.infer<typeof schemaHotelSteps3>;
+type FormFields = z.infer<typeof schemaHotelStepsCancellation>;
 
 type Props = {
   form: UseFormReturn<FormFields>;

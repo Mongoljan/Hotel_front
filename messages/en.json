@@ -53,6 +53,10 @@
 
   "4PropertyPolicies":{
     "title":"Property Policies",
+    "general_policy": "General Policy",
+    "pet_policy": "Pet friendly",
+    "min_guest_age": "Minimum guest age",
+    "languages": "Languages",
     "1":"Cancel Time",
     "2":"Before Time",
     "3":"After Fee",
@@ -143,6 +147,7 @@
     "images_count_label": "Images uploaded",
     "min_label": "(minimum)",
     "description_placeholder": "e.g., Hotel exterior, Lobby, Standard room, Restaurant, etc...",
+    "category_placeholder": "Image category",
     "profile_image_required": "Please select a profile image. Click 'Set as Profile' button on one of the images.",
     "profile_image_label": "Profile Image",
     "set_as_profile": "Set as Profile",
@@ -340,6 +345,7 @@
     "confirmAddress":"Confirm Address",
     "googleMap":"Google Map",
     "internalRules":"Internal Rules",
+    "cancellationFees":"Cancellation Fees",
     "propertyImage":"Property Image",
     "propertyDetails":"Property Details"
   },
@@ -566,6 +572,8 @@
   "company_Reg": "Business Registration Number",
   "company_name": "Business Name",
   "hotel_name": "Hotel Name",
+  "hotel_name_en": "Hotel Name (English)",
+  "ownership_type": "Ownership Type",
   "location": "Location",
   "hotel_type": "Hotel Type",
   "select": "Select",

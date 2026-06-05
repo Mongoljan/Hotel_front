@@ -4,6 +4,7 @@ export interface PropertyPhoto {
   id: number;
   image: string;
   description: string;
+  category?: number;
   is_profile?: boolean;
 }
 
@@ -40,7 +41,10 @@ export interface PropertyPolicy {
   check_in_until: string;
   check_out_from: string;
   check_out_until: string;
-  cancellation_fee: {
+  pet_policy?: boolean;
+  min_guest_age?: number;
+  languages?: number[];
+  cancellation_fee?: {
     id?: number;
     property: number;
     cancel_time: string;

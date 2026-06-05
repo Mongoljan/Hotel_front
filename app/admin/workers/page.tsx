@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { USER_TYPES, USER_TYPE_NAMES, UserTypeValue } from '@/lib/userTypes';
+import { getEmployeePositions, EmployeePosition } from '@/lib/api';
 import { toast } from "sonner";
 import { z } from 'zod';
 import { schemaEmployee, schemaEmployeeEdit } from '@/app/schema';
@@ -76,9 +77,10 @@ export default function WorkersPage() {
   
   // Form state
   const [error, setError] = useState('');
+  const [positions, setPositions] = useState<EmployeePosition[]>([]);
   const [formData, setFormData] = useState<{
     name: string;
-    position: string;
+    position: number | '';
     contact_number: string;
     email: string;
     password: string;
@@ -116,6 +118,12 @@ export default function WorkersPage() {
     fetchEmployees();
   }, [fetchEmployees]);
 
+  useEffect(() => {
+    getEmployeePositions()
+      .then(setPositions)
+      .catch(() => setPositions([]));
+  }, []);
+
   // Reset form
   const resetForm = () => {
     setFormData({
@@ -143,7 +151,7 @@ export default function WorkersPage() {
     setIsEditMode(true);
     setFormData({
       name: employee.name,
-      position: employee.position,
+      position: '',
       contact_number: employee.contact_number,
       email: employee.email,
       password: '',
@@ -167,7 +175,10 @@ export default function WorkersPage() {
     try {
       // Validate with Zod
       const schema = isEditMode ? schemaEmployeeEdit : schemaEmployee;
-      const validationResult = schema.safeParse(formData);
+      const validationData = isEditMode
+        ? { ...formData, position: selectedEmployee?.position ?? '' }
+        : formData;
+      const validationResult = schema.safeParse(validationData);
       
       if (!validationResult.success) {
         const firstError = validationResult.error.errors[0];
@@ -181,7 +192,7 @@ export default function WorkersPage() {
       const method = isEditMode ? 'PUT' : 'POST';
       const body: Record<string, unknown> = {
         name: formData.name,
-        position: formData.position,
+        position: isEditMode ? selectedEmployee?.position : formData.position,
         contact_number: formData.contact_number,
         email: formData.email,
         user_type: formData.user_type,
@@ -385,13 +396,30 @@ export default function WorkersPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="position">{t('position')} <span className="text-destructive">*</span></Label>
-              <Input
-                id="position"
-                required
-                value={formData.position}
-                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                placeholder={t('positionPlaceholder')}
-              />
+              {isEditMode ? (
+                <Input
+                  id="position"
+                  readOnly
+                  value={selectedEmployee?.position ?? ''}
+                />
+              ) : (
+                <Select
+                  value={formData.position !== '' ? String(formData.position) : undefined}
+                  onValueChange={(value) => setFormData({ ...formData, position: Number(value) })}
+                  required
+                >
+                  <SelectTrigger id="position">
+                    <SelectValue placeholder={t('positionPlaceholder')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {positions.map((pos) => (
+                      <SelectItem key={pos.id} value={String(pos.id)}>
+                        {pos.name_mn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="contact_number">{t('contactNumber')} <span className="text-destructive">*</span></Label>

@@ -114,6 +114,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [activeTab, setActiveTab] = useState<'basic' | 'location' | 'map' | 'policy' | 'services'>('basic');
   const [isLoading, setIsLoading] = useState(true);
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
+  const [cancellationFee, setCancellationFee] = useState<PropertyPolicy['cancellation_fee'] | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
   const [propertyBaseInfo, setPropertyBaseInfo] = useState<PropertyBaseInfo | null>(null);
@@ -190,7 +191,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
       try {
         setIsLoading(true);
-        const [detailRes, policyRes, addressRes, basicInfoRes, combinedDataRes, baseRes, imagesRes] = await Promise.all([
+        const [detailRes, policyRes, addressRes, basicInfoRes, combinedDataRes, baseRes, imagesRes, cancellationRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/property-policies/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/confirm-address/?property=${hotelId}`),
@@ -198,6 +199,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           fetch(`https://dev.kacc.mn/api/combined-data/`),
           fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`),
           fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`),
+          fetch(`https://dev.kacc.mn/api/cancellation-fees/?property=${hotelId}`),
         ]);
 
         if (!detailRes.ok || !policyRes.ok || !addressRes.ok || !basicInfoRes.ok || !baseRes.ok) {
@@ -213,9 +215,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         const combinedData = await combinedDataRes.json();
         const baseInfo = await baseRes.json();
         const imageJson = imagesRes.ok ? await imagesRes.json() : [];
+        const cancellationJson = cancellationRes.ok ? await cancellationRes.json() : [];
 
         setPropertyDetail(detail);
         setPropertyPolicy(policy);
+        setCancellationFee(Array.isArray(cancellationJson) && cancellationJson.length > 0 ? cancellationJson[0] : null);
         setAddress(fetchedAddress);
         setBasicInfo(basic);
         setPropertyBaseInfo(baseInfo);
@@ -934,37 +938,37 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                       </div>
 
                       {/* Cancellation Policy */}
-                      {propertyPolicy.cancellation_fee && (
+                      {cancellationFee && (
                         <div>
                           <h4 className="font-semibold mb-3">Цуцлалтын бодлого</h4>
                           <div className="pl-4 space-y-2 text-sm">
                             <p className="text-muted-foreground mb-2">
-                              Цуцлах боломжтой цаг: <span className="font-medium text-foreground">{formatTime(propertyPolicy.cancellation_fee.cancel_time)}</span>
+                              Цуцлах боломжтой цаг: <span className="font-medium text-foreground">{formatTime(cancellationFee.cancel_time)}</span>
                             </p>
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <p className="text-muted-foreground">1 өрөөний цуцлалт (өмнө):</p>
-                                <p className="font-medium">{propertyPolicy.cancellation_fee.single_before_time_percentage}%</p>
+                                <p className="font-medium">{cancellationFee.single_before_time_percentage}%</p>
                               </div>
                               <div>
                                 <p className="text-muted-foreground">1 өрөөний цуцлалт (хойш):</p>
-                                <p className="font-medium">{propertyPolicy.cancellation_fee.single_after_time_percentage}%</p>
+                                <p className="font-medium">{cancellationFee.single_after_time_percentage}%</p>
                               </div>
                               <div>
                                 <p className="text-muted-foreground">5 хоногийн өмнө:</p>
-                                <p className="font-medium">{propertyPolicy.cancellation_fee.multi_5days_before_percentage}%</p>
+                                <p className="font-medium">{cancellationFee.multi_5days_before_percentage}%</p>
                               </div>
                               <div>
                                 <p className="text-muted-foreground">3 хоногийн өмнө:</p>
-                                <p className="font-medium">{propertyPolicy.cancellation_fee.multi_3days_before_percentage}%</p>
+                                <p className="font-medium">{cancellationFee.multi_3days_before_percentage}%</p>
                               </div>
                               <div>
                                 <p className="text-muted-foreground">2 хоногийн өмнө:</p>
-                                <p className="font-medium">{propertyPolicy.cancellation_fee.multi_2days_before_percentage}%</p>
+                                <p className="font-medium">{cancellationFee.multi_2days_before_percentage}%</p>
                               </div>
                               <div>
                                 <p className="text-muted-foreground">1 хоногийн өмнө:</p>
-                                <p className="font-medium">{propertyPolicy.cancellation_fee.multi_1day_before_percentage}%</p>
+                                <p className="font-medium">{cancellationFee.multi_1day_before_percentage}%</p>
                               </div>
                             </div>
                           </div>

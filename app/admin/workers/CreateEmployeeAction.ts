@@ -4,7 +4,7 @@ import { getAuthToken } from '@/utils/jwt';
 
 export async function createEmployeeAction(formData: {
   name: string;
-  position: string;
+  position: number;
   contact_number: string;
   email: string;
   password: string;

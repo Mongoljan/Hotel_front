@@ -42,7 +42,6 @@ import {
 } from '@/components/ui/dialog';
 
 import CheckInOutSection from '@/app/auth/register/Hotel/sections/CheckInOutSection';
-import CancellationPolicySection from '@/app/auth/register/Hotel/sections/CancellationPolicySection';
 import BreakfastPolicySection from '@/app/auth/register/Hotel/sections/BreakfastPolicySection';
 import ParkingPolicySection from '@/app/auth/register/Hotel/sections/ParkingPolicySection';
 import ChildPolicySection from '@/app/auth/register/Hotel/sections/ChildPolicySection';
@@ -70,13 +69,9 @@ const DEFAULT_VALUES: PolicyFormFields = {
   check_in_until: '00:00',
   check_out_from: '00:00',
   check_out_until: '00:00',
-  cancel_time: '00:00',
-  single_before_time_percentage: '0',
-  single_after_time_percentage: '0',
-  multi_5days_before_percentage: '0',
-  multi_3days_before_percentage: '0',
-  multi_2days_before_percentage: '0',
-  multi_1day_before_percentage: '0',
+  pet_policy: false,
+  min_guest_age: 18,
+  languages: [],
   breakfast_status: 'no',
   breakfast_start_time: '',
   breakfast_end_time: '',
@@ -290,13 +285,7 @@ export default function InternalRulesPage() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              {editSection === 'time' && (
-                <>
-                  <CheckInOutSection form={form} t={t} />
-                  <Separator />
-                  <CancellationPolicySection form={form} t={t} />
-                </>
-              )}
+              {editSection === 'time' && <CheckInOutSection form={form} t={t} />}
               {editSection === 'breakfast' && <BreakfastPolicySection form={form} t={t} />}
               {editSection === 'parking' && <ParkingPolicySection form={form} t={t} />}
               {editSection === 'children' && <ChildPolicySection form={form} t={t} />}
@@ -332,8 +321,6 @@ export default function InternalRulesPage() {
 // ---- read-only section displays --------------------------------------------
 
 function TimeSection({ policy, onEdit }: { policy: PropertyPolicy; onEdit: () => void }) {
-  const cf = policy.cancellation_fee;
-  const cancelTime = formatTime(cf?.cancel_time);
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -353,30 +340,16 @@ function TimeSection({ policy, onEdit }: { policy: PropertyPolicy; onEdit: () =>
       <Separator />
 
       <div className="space-y-4">
-        <SectionHeader title="Цуцлалтын бодлого" />
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium">1 өрөөний захиалгад суутгах хураамж</p>
-            <div className="space-y-1.5 pl-4 text-sm">
-              <InlineKV
-                label={`Өмнөх өдрийн ${cancelTime} цагаас өмнө`}
-                value={`${cf?.single_before_time_percentage ?? 0}%`}
-              />
-              <InlineKV
-                label={`Өмнөх өдрийн ${cancelTime} цагаас хойш`}
-                value={`${cf?.single_after_time_percentage ?? 0}%`}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium">2+ өрөөний захиалгад суутгах хураамж</p>
-            <div className="space-y-1.5 pl-4 text-sm">
-              <InlineKV label="5 хоногийн өмнө" value={`${cf?.multi_5days_before_percentage ?? 0}%`} />
-              <InlineKV label="3 хоногийн өмнө" value={`${cf?.multi_3days_before_percentage ?? 0}%`} />
-              <InlineKV label="2 хоногийн өмнө" value={`${cf?.multi_2days_before_percentage ?? 0}%`} />
-              <InlineKV label="1 хоногийн өмнө" value={`${cf?.multi_1day_before_percentage ?? 0}%`} />
-            </div>
-          </div>
+        <SectionHeader title="Ерөнхий бодлого" />
+        <div className="grid grid-cols-2 gap-6">
+          <InfoRow label="Тэжээвэр амьтан" value={policy.pet_policy ? 'Тийм' : 'Үгүй'} />
+          <InfoRow label="Зочдын хамгийн бага нас" value={policy.min_guest_age ?? '—'} />
+          <InfoRow
+            label="Хэлнүүд"
+            value={Array.isArray(policy.languages) && policy.languages.length > 0
+              ? policy.languages.join(', ')
+              : '—'}
+          />
         </div>
       </div>
     </div>

@@ -26,6 +26,12 @@ interface PropertyType {
   name_en: string;
 }
 
+interface OwnershipType {
+  id: number;
+  name_mn: string;
+  name_en: string;
+}
+
 type FormFields = z.infer<typeof schemaHotelRegistration2>;
 
 export default function RegisterPage() {
@@ -36,6 +42,7 @@ export default function RegisterPage() {
   const locale = useLocale();
   const router = useRouter();
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
+  const [ownershipTypes, setOwnershipTypes] = useState<OwnershipType[]>([]);
 
   // Restore saved values
   const saved = typeof window !== "undefined" ? localStorage.getItem("hotelFormData") : null;
@@ -62,6 +69,7 @@ export default function RegisterPage() {
   const { data: combinedHook } = useCombinedData();
   useEffect(() => {
     if (combinedHook?.property_types) setPropertyTypes(combinedHook.property_types);
+    if (combinedHook?.ownership_type) setOwnershipTypes(combinedHook.ownership_type);
   }, [combinedHook]);
 
   useEffect(() => {
@@ -160,7 +168,20 @@ export default function RegisterPage() {
                     />
                     {errors.PropertyName && <p className="text-sm text-destructive">{errors.PropertyName.message}</p>}
                   </div>
-                  
+
+                  <div className="space-y-2">
+                    <Label htmlFor="propertyNameEn" className="text-cyrillic">{t("hotel_name_en")}</Label>
+                    <Input
+                      id="propertyNameEn"
+                      type="text"
+                      {...register('PropertyName_en')}
+                      className={errors.PropertyName_en ? "border-destructive" : ""}
+                    />
+                    {errors.PropertyName_en && <p className="text-sm text-destructive">{errors.PropertyName_en.message}</p>}
+                  </div>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="propertyType" className="text-cyrillic">{t("hotel_type")}</Label>
                     <select
@@ -174,6 +195,21 @@ export default function RegisterPage() {
                       ))}
                     </select>
                     {errors.property_type && <p className="text-sm text-destructive">{errors.property_type.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="ownershipType" className="text-cyrillic">{t("ownership_type")}</Label>
+                    <select
+                      id="ownershipType"
+                      {...register('ownership_type')}
+                      className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.ownership_type ? "border-destructive" : ""}`}
+                    >
+                      <option value="">{t("select")}</option>
+                      {ownershipTypes.map((type) => (
+                        <option key={type.id} value={type.id}>{locale === 'en' ? type.name_en : type.name_mn}</option>
+                      ))}
+                    </select>
+                    {errors.ownership_type && <p className="text-sm text-destructive">{errors.ownership_type.message}</p>}
                   </div>
                 </div>
 

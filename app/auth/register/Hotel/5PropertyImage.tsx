@@ -7,14 +7,16 @@ import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Plus, Trash2, Image as ImageIcon, Upload, X, Expand, Star } from 'lucide-react';
 import { schemaHotelSteps5 } from '../../../schema';
 import { z } from 'zod';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
+import { getImageCategories, ImageCategory } from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
@@ -31,9 +33,13 @@ type Props = {
   onBack: () => void;
 };
 
+const defaultImageEntry = { images: '', descriptions: '', category: 3, is_profile: false };
+
 export default function RegisterHotel5({ onNext, onBack }: Props) {
   const t = useTranslations('5PropertyImages');
+  const locale = useLocale();
   const { user } = useAuth();
+  const [imageCategories, setImageCategories] = useState<ImageCategory[]>([]);
   const [initialValues, setInitialValues] = React.useState<FormFields | null>(null);
   const [existingImages, setExistingImages] = React.useState<any[]>([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -45,14 +51,12 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   const defaultValues: FormFields = stored?.step5?.entries
     ? stored.step5
     : {
-        entries: [
-          { images: '', descriptions: '', is_profile: false },
-          { images: '', descriptions: '', is_profile: false },
-          { images: '', descriptions: '', is_profile: false },
-          { images: '', descriptions: '', is_profile: false },
-          { images: '', descriptions: '', is_profile: false },
-        ],
+        entries: Array.from({ length: 5 }, () => ({ ...defaultImageEntry })),
       };
+
+  useEffect(() => {
+    getImageCategories().then(setImageCategories).catch(() => setImageCategories([]));
+  }, []);
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps5),
@@ -81,6 +85,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         let restored = stored.step5.raw.map((item: any) => ({
           images: item.image,
           descriptions: item.description,
+          category: item.category ?? 3,
           is_profile: Boolean(item.is_profile),
         }));
 
@@ -116,6 +121,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
             let restored = data.map((item: any) => ({
               images: item.image,
               descriptions: item.description || '',
+              category: item.category ?? 3,
               is_profile: Boolean(item.is_profile),
             }));
 
@@ -217,7 +223,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           form.setValue(`entries.${targetIdx}.images`, b64, { shouldValidate: true, shouldDirty: true });
         } else {
           // Overflow — append new entries
-          append({ images: b64, descriptions: '', is_profile: false });
+          append({ images: b64, descriptions: '', category: 3, is_profile: false });
         }
       });
     });
@@ -283,8 +289,9 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           newEntries.push({ index: i, entry });
         } else if (existingImage) {
           const isDescriptionChanged = existingImage.description !== entry.descriptions;
+          const isCategoryChanged = existingImage.category !== entry.category;
           const isProfileChanged = Boolean(existingImage.is_profile) !== Boolean(entry.is_profile);
-          if (isDescriptionChanged || isProfileChanged) {
+          if (isDescriptionChanged || isCategoryChanged || isProfileChanged) {
             patchTasks.push({ index: i, entry, existingImage });
           } else {
             keepTasks.push({ index: i, existingImage });
@@ -298,8 +305,8 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         const payload = newEntries.map(({ entry }) => ({
           property: propertyId,
           image: entry.images,
+          category: entry.category,
           description: entry.descriptions,
-          is_profile: Boolean(entry.is_profile),
         }));
 
         const res = await fetch(API_URL, {
@@ -321,7 +328,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               description: entry.descriptions,
-              is_profile: Boolean(entry.is_profile),
+              category: entry.category,
             }),
           });
 
@@ -527,6 +534,33 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
 
                           <FormField
                             control={form.control}
+                            name={`entries.${index}.category`}
+                            render={({ field }) => (
+                              <FormItem className="space-y-0">
+                                <Select
+                                  value={field.value ? String(field.value) : undefined}
+                                  onValueChange={(value) => field.onChange(Number(value))}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger className="h-8 text-xs">
+                                      <SelectValue placeholder={t('category_placeholder')} />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {imageCategories.map((cat) => (
+                                      <SelectItem key={cat.id} value={String(cat.id)}>
+                                        {locale === 'en' ? cat.name_en : cat.name_mn}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
                             name={`entries.${index}.descriptions`}
                             render={({ field }) => (
                               <FormItem className="space-y-0">
@@ -553,7 +587,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => append({ images: '', descriptions: '', is_profile: false })}
+                onClick={() => append({ ...defaultImageEntry })}
                 className="w-full h-9 text-xs mt-3"
               >
                 <Plus className="mr-1.5 h-3.5 w-3.5" />

@@ -308,6 +308,12 @@ export const schemaHotelRegistration2 = z.object({
   PropertyName: z
     .string()
     .min(3, { message: "Буудлын нэрийг оруулна уу?" }),
+  PropertyName_en: z
+    .string()
+    .min(3, { message: "Буудлын англи нэрийг оруулна уу?" }),
+  ownership_type: z
+    .coerce.number()
+    .min(1, { message: "Эзэмшлийн төрлийг сонгоно уу" }),
   location: z
     .string()
     .min(3, { message: "Та хаягаа бичиж оруулна уу?" }),
@@ -429,52 +435,14 @@ export const schemaHotelSteps3 = z.object({
     .min(1, { message: "Гарах цагийн дуусах хугацааг сонгоно уу" })
     .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Цагийн формат буруу байна (ЦЦ:ММ)" }),
 
-  // Cancellation fee with number validation and percentage range (natural numbers only)
-  cancel_time: z.string()
-    .min(1, { message: "Цуцлах боломжтой цагийг сонгоно уу" })
-    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Цагийн формат буруу байна (ЦЦ:ММ)" }),
-  single_before_time_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
-  single_after_time_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
-  multi_5days_before_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
-  multi_3days_before_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
-  multi_2days_before_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
-  multi_1day_before_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  pet_policy: z.boolean(),
+  min_guest_age: z.coerce.number()
+    .int({ message: "Бүхэл тоо байх ёстой" })
+    .min(0, { message: "Зочдын хамгийн бага нас 0-ээс их байх ёстой" })
+    .max(99, { message: "Зочдын хамгийн бага нас 99-ээс бага байх ёстой" }),
+  languages: z
+    .array(z.coerce.number())
+    .min(1, { message: "Хамгийн багадаа нэг хэл сонгоно уу" }),
 
   // Breakfast policy
   breakfast_status: z.enum(['no', 'free', 'paid']),
@@ -605,7 +573,53 @@ export const schemaHotelSteps3 = z.object({
   path: ["extra_bed_price"],
 });
 
-
+export const schemaHotelStepsCancellation = z.object({
+  cancel_time: z.string()
+    .min(1, { message: "Цуцлах боломжтой цагийг сонгоно уу" })
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Цагийн формат буруу байна (ЦЦ:ММ)" }),
+  single_before_time_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  single_after_time_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  multi_5days_before_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  multi_3days_before_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  multi_2days_before_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  multi_1day_before_percentage: z.string()
+    .min(1, { message: "Хувийг оруулна уу" })
+    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 0 && num <= 100;
+    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+});
 
 export const schemaHotelSteps5 = z.object({
   entries: z.array(
@@ -620,6 +634,7 @@ export const schemaHotelSteps5 = z.object({
       descriptions: z
         .string()
         .min(1, { message: 'Description must not be empty.' }),
+      category: z.coerce.number().min(1, { message: 'Зургийн ангилал сонгоно уу' }),
       is_profile: z.boolean().default(false),
     })
   ).min(5, { message: 'At least 5 images are required.' })
@@ -650,7 +665,7 @@ export const schemaRegistrationEmployee2 =z.object({
   contact_person_name: z.string().min(3, { message: "Та өөрийн нэрээ заавал бичиж оруулна уу?" }),
   user_type: z.number().min(1, { message: "User type is required" }),
   // user_type_id: z.string(),
-  position: z.string().min(3, {message:"Та өөрийн албан тушаалаа бичнэ үү?"} ),
+  position: z.coerce.number().min(1, { message: "Та албан тушаалаа сонгоно уу" }),
   contact_number: z.string().min(8, { message: "Та холбогдох утасны дугаараа заавал оруулна уу?" }),
 password: z.string().min(8, {
   message: "Нууц үг нь дор хаяж 8 тэмдэгтээс бүрдэх ёстой бөгөөд нэг том үсэг, нэг жижиг үсэг, нэг тоо, нэг тусгай тэмдэгт агуулсан байх шаардлагатай.",
@@ -818,9 +833,7 @@ export const schemaEmployee = z.object({
   name: z.string()
     .min(2, { message: "Нэр хамгийн багадаа 2 тэмдэгт байх ёстой" })
     .max(100, { message: "Нэр 100 тэмдэгтээс хэтрэхгүй байх ёстой" }),
-  position: z.string()
-    .min(1, { message: "Албан тушаалыг оруулна уу" })
-    .max(100, { message: "Албан тушаал 100 тэмдэгтээс хэтрэхгүй байх ёстой" }),
+  position: z.coerce.number().min(1, { message: "Албан тушаалыг сонгоно уу" }),
   email: z.string()
     .min(1, { message: "И-мэйл хаягийг оруулна уу" })
     .email({ message: "И-мэйл хаяг буруу байна" }),

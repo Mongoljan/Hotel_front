@@ -3,9 +3,10 @@
  * Used by admin/internal-rules and any future consumers.
  */
 import type { z } from 'zod';
-import type { schemaHotelSteps3 } from '@/app/schema';
+import type { schemaHotelSteps3, schemaHotelStepsCancellation } from '@/app/schema';
 
 export type PolicyFormFields = z.infer<typeof schemaHotelSteps3>;
+export type CancellationFormFields = z.infer<typeof schemaHotelStepsCancellation>;
 
 export const EMPTY_DASH = '—';
 
@@ -62,13 +63,11 @@ export function normalizePolicyToForm(policy: any): PolicyFormFields {
     check_in_until: normalizeTime(policy?.check_in_until, '00:00'),
     check_out_from: normalizeTime(policy?.check_out_from, '00:00'),
     check_out_until: normalizeTime(policy?.check_out_until, '00:00'),
-    cancel_time: normalizeTime(policy?.cancellation_fee?.cancel_time, '00:00'),
-    single_before_time_percentage: normalizePercent(policy?.cancellation_fee?.single_before_time_percentage),
-    single_after_time_percentage: normalizePercent(policy?.cancellation_fee?.single_after_time_percentage),
-    multi_5days_before_percentage: normalizePercent(policy?.cancellation_fee?.multi_5days_before_percentage),
-    multi_3days_before_percentage: normalizePercent(policy?.cancellation_fee?.multi_3days_before_percentage),
-    multi_2days_before_percentage: normalizePercent(policy?.cancellation_fee?.multi_2days_before_percentage),
-    multi_1day_before_percentage: normalizePercent(policy?.cancellation_fee?.multi_1day_before_percentage),
+    pet_policy: Boolean(policy?.pet_policy),
+    min_guest_age: policy?.min_guest_age ?? 18,
+    languages: Array.isArray(policy?.languages)
+      ? policy.languages.map((l: number | string) => Number(l))
+      : [],
     breakfast_status: policy?.breakfast_policy?.status || 'no',
     breakfast_start_time: normalizeTime(policy?.breakfast_policy?.start_time),
     breakfast_end_time: normalizeTime(policy?.breakfast_policy?.end_time),
@@ -88,6 +87,18 @@ export function normalizePolicyToForm(policy: any): PolicyFormFields {
   };
 }
 
+export function normalizeCancellationToForm(cancellation: any): CancellationFormFields {
+  return {
+    cancel_time: normalizeTime(cancellation?.cancel_time, '00:00'),
+    single_before_time_percentage: normalizePercent(cancellation?.single_before_time_percentage),
+    single_after_time_percentage: normalizePercent(cancellation?.single_after_time_percentage),
+    multi_5days_before_percentage: normalizePercent(cancellation?.multi_5days_before_percentage),
+    multi_3days_before_percentage: normalizePercent(cancellation?.multi_3days_before_percentage),
+    multi_2days_before_percentage: normalizePercent(cancellation?.multi_2days_before_percentage),
+    multi_1day_before_percentage: normalizePercent(cancellation?.multi_1day_before_percentage),
+  };
+}
+
 /** Build the API payload for PUT/POST to /api/property-policies/. */
 export function buildPolicyPayload(data: PolicyFormFields, propertyId: number | string) {
   const stripSeconds = (time: string) => (time ? time.slice(0, 5) : time);
@@ -97,16 +108,9 @@ export function buildPolicyPayload(data: PolicyFormFields, propertyId: number | 
     check_in_until: stripSeconds(data.check_in_until),
     check_out_from: stripSeconds(data.check_out_from),
     check_out_until: stripSeconds(data.check_out_until),
-    cancellation_fee: {
-      property: propertyId,
-      cancel_time: stripSeconds(data.cancel_time),
-      single_before_time_percentage: data.single_before_time_percentage,
-      single_after_time_percentage: data.single_after_time_percentage,
-      multi_5days_before_percentage: data.multi_5days_before_percentage,
-      multi_3days_before_percentage: data.multi_3days_before_percentage,
-      multi_2days_before_percentage: data.multi_2days_before_percentage,
-      multi_1day_before_percentage: data.multi_1day_before_percentage,
-    },
+    pet_policy: data.pet_policy,
+    min_guest_age: data.min_guest_age,
+    languages: data.languages,
     breakfast_policy: {
       status: data.breakfast_status,
       start_time: data.breakfast_status !== 'no' ? stripSeconds(data.breakfast_start_time || '') : null,
@@ -129,5 +133,32 @@ export function buildPolicyPayload(data: PolicyFormFields, propertyId: number | 
       allow_extra_bed: data.allow_extra_bed || false,
       extra_bed_price: data.allow_extra_bed ? data.extra_bed_price : null,
     },
+  };
+}
+
+/** Format time for /api/cancellation-fees/ — "11:00" → "11:00:00" */
+export function formatCancellationTime(time: string): string {
+  if (!time) return '00:00:00';
+  const hhmm = time.slice(0, 5);
+  return hhmm.length === 5 ? `${hhmm}:00` : time;
+}
+
+/** Format percentage for /api/cancellation-fees/ — "20" → "20.00" */
+export function formatCancellationPercentage(val: string | number): string {
+  const num = parseFloat(String(val).replace(/,/g, ''));
+  if (Number.isNaN(num)) return '0.00';
+  return num.toFixed(2);
+}
+
+export function buildCancellationPayload(data: CancellationFormFields, propertyId: number | string) {
+  return {
+    cancel_time: formatCancellationTime(data.cancel_time),
+    single_before_time_percentage: formatCancellationPercentage(data.single_before_time_percentage),
+    single_after_time_percentage: formatCancellationPercentage(data.single_after_time_percentage),
+    multi_5days_before_percentage: formatCancellationPercentage(data.multi_5days_before_percentage),
+    multi_3days_before_percentage: formatCancellationPercentage(data.multi_3days_before_percentage),
+    multi_2days_before_percentage: formatCancellationPercentage(data.multi_2days_before_percentage),
+    multi_1day_before_percentage: formatCancellationPercentage(data.multi_1day_before_percentage),
+    property: Number(propertyId),
   };
 }

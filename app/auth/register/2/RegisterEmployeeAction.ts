@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function registerEmployeeAction(formData: {
   contact_person_name: string;
-  position: string;
+  position: number;
   contact_number: string;
   email: string;
   password: string;

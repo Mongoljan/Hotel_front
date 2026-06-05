@@ -9,6 +9,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://dev.kacc.mn
 // Cache TTL configurations (in milliseconds)
 const CACHE_TTL = {
   USER_TYPES: 24 * 60 * 60 * 1000, // 24 hours - rarely changes
+  EMPLOYEE_POSITIONS: 24 * 60 * 60 * 1000, // 24 hours - rarely changes
+  IMAGE_CATEGORIES: 24 * 60 * 60 * 1000, // 24 hours - rarely changes
   WORKERS: 5 * 60 * 1000, // 5 minutes
   HOTEL_INFO: 10 * 60 * 1000, // 10 minutes
   ROOMS: 5 * 60 * 1000, // 5 minutes
@@ -17,6 +19,20 @@ const CACHE_TTL = {
 export interface UserType {
   pk: number;
   name: string;
+}
+
+export interface EmployeePosition {
+  id: number;
+  name_en: string;
+  name_mn: string;
+  order: number;
+}
+
+export interface ImageCategory {
+  id: number;
+  name_en: string;
+  name_mn: string;
+  order: number;
 }
 
 export interface Worker {
@@ -51,6 +67,41 @@ export async function getUserTypes(): Promise<UserType[]> {
     return data;
   } catch (error) {
     console.error('Error fetching user types:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch employee positions (Manager, Receptionist, etc.)
+ * Cached for 24 hours as this data rarely changes
+ */
+export async function getEmployeePositions(): Promise<EmployeePosition[]> {
+  try {
+    const data = await fetchWithCache<EmployeePosition[]>(
+      `${API_BASE_URL}/api/employee-positions/`,
+      { method: 'GET' },
+      CACHE_TTL.EMPLOYEE_POSITIONS
+    );
+    return Array.isArray(data) ? data.sort((a, b) => a.order - b.order) : [];
+  } catch (error) {
+    console.error('Error fetching employee positions:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch image categories for property photos
+ */
+export async function getImageCategories(): Promise<ImageCategory[]> {
+  try {
+    const data = await fetchWithCache<ImageCategory[]>(
+      `${API_BASE_URL}/api/image-categories/`,
+      { method: 'GET' },
+      CACHE_TTL.IMAGE_CATEGORIES
+    );
+    return Array.isArray(data) ? data.sort((a, b) => a.order - b.order) : [];
+  } catch (error) {
+    console.error('Error fetching image categories:', error);
     throw error;
   }
 }
