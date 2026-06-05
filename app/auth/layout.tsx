@@ -1,4 +1,3 @@
-import { WavyBackground } from "../../components/ui/wavy-background";
 import "../globals.css";
 import Topbar from "./TopbarAuth";
 import { Inter, PT_Sans } from "next/font/google";
@@ -26,11 +25,11 @@ export default function AuthLayout({
 }>) {
   return (
     <ThemeProvider>
-      <div className={`${inter.variable} ${ptSans.variable} antialiased font-sans min-h-screen`}>
+      <div className={`${inter.variable} ${ptSans.variable} min-h-screen font-sans antialiased`}>
         <Topbar/>
-        <div className="flex-1">
+        <main>
           {children}
-        </div>
+        </main>
       </div>
     </ThemeProvider>
   );

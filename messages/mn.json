@@ -408,12 +408,12 @@
     "signIn":"Нэвтрэх",
      "signUp":"Бүртгүүлэх",
     "email":"И-мэйл хаяг",
-    "email_placeholder":"та@example.com",
+    "email_placeholder":"И-мэйл хаяг",
     "password":"Нууц үг",
-    "savePassword":"Нууц үг мартсан?",
+    "savePassword":"Нууц үгээ мартсан уу?",
     "remember":"Намайг сана",
     "wait":"Түр хүлээнэ үү...",
-    "subtitle":"Буудлын админ самбарт нэвтрэх",
+    "subtitle":"Буудлаар нэвтрэх",
     "superadminLogin":"Супер админ нэвтрэх"
   },
   "SuperAdminLogin": {

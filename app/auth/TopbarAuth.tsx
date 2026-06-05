@@ -1,77 +1,43 @@
-'use client'
+'use client';
+
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";  // Import from next/navigation
-import Cookies from "js-cookie";
+import { useTranslations } from "next-intl";
+import { usePathname } from "@/i18n/navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { useTranslations } from "next-intl";
-import { HiArrowRightOnRectangle } from "react-icons/hi2";  // Import js-cookie
-// import LanguageToggle from "../components/languageToggle";
-interface Topbar{
-  sign_in:string;
-  sign_out:string;
-  sign_up:string;
-}
 
-interface HeaderDictionary {
-  topbar: Topbar;
-  title: string; // Adjust based on the actual structure of your dictionary
-}
-
-export default function Topbar() {
-  const t = useTranslations("Controls");
+export default function TopbarAuth() {
+  const tLogin = useTranslations("AuthLogin");
   const tTop = useTranslations("TopbarAuth");
-  const pathname = usePathname();  // Get current path using usePathname
-  const router = useRouter();      // Get router for navigation
-
-  // Function to change the language in the current route
-  const changeLanguage = (newLang: string) => {
-    const segments = pathname.split('/').filter(Boolean);
-    if (['en', 'mn'].includes(segments[0])) {
-      segments[0] = newLang;  // Replace existing language
-    } else {
-      segments.unshift(newLang);  // Add new language at the start
-    }
-    router.push(`/${segments.join('/')}`);
-  };
-
-  // Logout handler
+  const pathname = usePathname();
+  const isRegisterPage = pathname.startsWith("/auth/register");
+  const authHref = isRegisterPage ? "/auth/login" : "/auth/register";
+  const authLabel = isRegisterPage ? tLogin("signIn") : tLogin("signUp");
 
   return (
-    <div className=" ">
-<div
-  className="h-[50px] backdrop-blur-md font-semibold border-b border-border/60 bg-card/95 px-[50px] text-foreground flex justify-between items-center"
->
-
-
-        <div className="mr-2">
-       {/* <LanguageToggle/> */}
-  <div className="text-foreground text-[24px]">
-   {tTop("title")}
-  </div>
-       </div>
-       <div className="flex gap-6">
-        <div className="flex gap-2 items-center">
-        <Link
-            className="text-foreground ml-[4px] hover:text-primary transition-colors"
-            href={"/auth/login"}
-          >
-            {t("login")}
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between gap-4">
+          <Link href="/" className="flex min-w-0 items-center gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900">
+              <span className="text-base font-bold leading-none">H</span>
+            </div>
+            <span className="truncate text-xl font-bold leading-7 text-gray-900 dark:text-white">
+              {tTop("title")}
+            </span>
           </Link>
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <ThemeSwitcher />
+            <LanguageSwitcher />
+            <Link
+              className="hidden h-10 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md sm:inline-flex"
+              href={authHref}
+            >
+              {authLabel}
+            </Link>
+          </div>
         </div>
-        <div className="flex gap-2 items-center">
-        <Link
-            className="text-foreground ml-[4px] hover:text-primary transition-colors"
-            href={"/auth/register"}
-          >
-                 {t("register")}
-          </Link>
-        </div>
-        <ThemeSwitcher />
-        <LanguageSwitcher/>
-       
       </div>
-      </div>
-    </div>
+    </header>
   );
 }

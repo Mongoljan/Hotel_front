@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Loader2, Globe, Check } from "lucide-react";
+import { Check, Globe, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +15,8 @@ import {
 import { usePathname, useRouter } from "@/i18n/navigation";
 
 const languages = [
-  { code: "mn", name: "Монгол", flag: "🇲🇳" },
-  { code: "en", name: "English", flag: "🇺🇸" },
+  { code: "mn", name: "Mongol" },
+  { code: "en", name: "English" },
 ];
 
 export default function LanguageSwitcher() {
@@ -39,7 +39,7 @@ export default function LanguageSwitcher() {
     });
   };
 
-  const currentLanguage = languages.find(lang => lang.code === locale);
+  const currentLanguage = languages.find((lang) => lang.code === locale);
 
   return (
     <DropdownMenu>
@@ -47,38 +47,35 @@ export default function LanguageSwitcher() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-9 px-2 gap-2 font-medium"
+          className="h-10 gap-1.5 rounded-lg border border-gray-300 bg-white px-3 text-gray-800 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
           aria-label={t("switch")}
         >
-          <div className="flex items-center gap-1">
-            <span aria-hidden="true" className="text-base leading-none">
-              {currentLanguage?.flag ?? "🌐"}
-            </span>
-            <span className="hidden sm:inline text-xs text-muted-foreground">
-              {currentLanguage?.name ?? locale.toUpperCase()}
-            </span>
-          </div>
           {isPending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Globe className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+            <Globe className="h-4 w-4" aria-hidden="true" />
           )}
+          <span className="text-sm font-medium tracking-wide">
+            {(currentLanguage?.code ?? locale).toUpperCase()}
+          </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-44">
         {languages.map((language) => (
           <DropdownMenuItem
             key={language.code}
             onClick={() => switchLanguage(language.code)}
-            className="flex items-center justify-between cursor-pointer"
+            className="flex cursor-pointer items-center justify-between"
           >
-            <div className="flex items-center space-x-2">
-              <span className="text-lg">{language.flag}</span>
-              <span className="text-sm">{language.name}</span>
+            <span className="text-sm">{language.name}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {language.code.toUpperCase()}
+              </span>
+              {locale === language.code && (
+                <Check className="h-4 w-4 text-primary" />
+              )}
             </div>
-            {locale === language.code && (
-              <Check className="h-4 w-4 text-primary" />
-            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

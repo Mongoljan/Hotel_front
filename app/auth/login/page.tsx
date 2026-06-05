@@ -1,7 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import LoginForm from './LoginForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
 
 export default async function LoginPage() {
   const t = await getTranslations('AuthLogin');
@@ -9,44 +8,22 @@ export default async function LoginPage() {
   const year = new Date().getFullYear();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Modern Dashboard-style Layout */}
-      <div className="flex items-center justify-center min-h-screen p-4 md:p-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900">
+      <div className="flex min-h-[calc(100vh-4rem)] items-start justify-center px-4 pb-16 pt-16">
         <div className="w-full max-w-lg space-y-6">
-          {/* Brand Header - Dashboard Style */}
-          {/* <div className="text-center space-y-2">
-            <div className="flex items-center justify-center mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center shadow-lg">
-                  <Building2 className="h-7 w-7 text-primary-foreground" />
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-2xl font-bold tracking-tight">Hotel Admin</span>
-                  <span className="text-sm text-muted-foreground">Management System</span>
-                </div>
-              </div>
-            </div>
-          </div> */}
-
-          {/* Login Card - Dashboard Style */}
-          <Card className="border shadow-sm">
-            <CardHeader className="space-y-1 text-center pb-4">
-              <CardTitle className="text-3xl font-bold tracking-tight text-cyrillic">{t('signIn')}</CardTitle>
-              <CardDescription className="text-cyrillic text-muted-foreground">
-                {t('subtitle')}
-              </CardDescription>
+          <Card className="gap-6 rounded-xl border-gray-200 bg-white p-8 shadow-md dark:border-gray-700 dark:bg-gray-800">
+            <CardHeader className="space-y-1 p-0 text-center">
+              <CardTitle className="text-2xl font-bold leading-8 text-gray-900 dark:text-white">{t('subtitle')}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-0">
               <LoginForm />
             </CardContent>
-          </Card>
-
-          {/* Footer - Dashboard Style */}
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground">
-              {tFooter('copyright', { year })}
+              <div className="text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {tFooter('copyright', { year })}
             </p>
           </div>
+          </Card>
         </div>
       </div>
     </div>
