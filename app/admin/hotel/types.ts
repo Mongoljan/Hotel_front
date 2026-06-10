@@ -111,7 +111,7 @@ export interface BasicInfo {
   part_of_group: boolean;
   group_name?: string;
   sales_room_limitation: boolean;
-  languages: number[];
+  languages?: number[];
 }
 
 export interface PropertyBaseInfo {

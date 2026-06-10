@@ -360,10 +360,6 @@ export const schemaHotelSteps1 = z
       .min(1, { message: "Боломжит өрөөний тоог оруулна уу?" }),
 
     sales_room_limitation: z.coerce.boolean(),
-
-    languages: z
-      .array(z.string())
-      .min(1, { message: "Хамгийн багадаа нэг хэл сонгоно уу" }),
   })
   .refine(
     (data) => {

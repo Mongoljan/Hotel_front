@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,6 @@ export interface LanguageOption {
 }
 
 const SEARCH_THRESHOLD = 12;
-const SUMMARY_VISIBLE_COUNT = 5;
 
 export interface LanguageMultiSelectLabels {
   selected: string;
@@ -49,21 +48,70 @@ function getLanguageLabel(lang: LanguageOption, locale?: string): string {
   return lang.languages_name_mn;
 }
 
-function formatSummary(
-  selectedLanguages: LanguageOption[],
-  locale: string | undefined,
-  placeholder: string
-): string {
-  if (selectedLanguages.length === 0) return placeholder;
+function formatSummaryWithCount(names: string[], visibleCount: number): string {
+  if (names.length === 0) return '';
+  if (visibleCount >= names.length) return names.join(', ');
+  if (visibleCount <= 0) return `+${names.length}`;
 
-  const names = selectedLanguages.map((lang) => getLanguageLabel(lang, locale));
-  if (names.length <= SUMMARY_VISIBLE_COUNT) {
-    return names.join(', ');
+  const visible = names.slice(0, visibleCount).join(', ');
+  const rest = names.length - visibleCount;
+  return `${visible} +${rest}`;
+}
+
+function measureFittingVisibleCount(names: string[], availableWidth: number, font: string): number {
+  if (names.length === 0 || availableWidth <= 0) return names.length;
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return names.length;
+
+  ctx.font = font;
+
+  const fits = (count: number) => {
+    const text = formatSummaryWithCount(names, count);
+    return ctx.measureText(text).width <= availableWidth;
+  };
+
+  if (fits(names.length)) return names.length;
+
+  let low = 0;
+  let high = names.length;
+  let best = 0;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    if (fits(mid)) {
+      best = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
   }
 
-  const visible = names.slice(0, SUMMARY_VISIBLE_COUNT).join(', ');
-  const rest = names.length - SUMMARY_VISIBLE_COUNT;
-  return `${visible} +${rest}`;
+  return best;
+}
+
+function useFittingSummary(names: string[], containerRef: React.RefObject<HTMLElement | null>) {
+  const [visibleCount, setVisibleCount] = useState(names.length);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const style = getComputedStyle(el);
+      const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      setVisibleCount(measureFittingVisibleCount(names, el.clientWidth, font));
+    };
+
+    update();
+
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [names, containerRef]);
+
+  return visibleCount;
 }
 
 export function LanguageMultiSelect({
@@ -78,6 +126,7 @@ export function LanguageMultiSelect({
 }: LanguageMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const summaryRef = useRef<HTMLSpanElement>(null);
 
   const selectedIds = useMemo(() => new Set(value), [value]);
 
@@ -117,7 +166,17 @@ export function LanguageMultiSelect({
     onChange(value.filter((v) => v !== idStr));
   };
 
-  const summary = formatSummary(selectedLanguages, locale, labels.placeholder);
+  const selectedNames = useMemo(
+    () => selectedLanguages.map((lang) => getLanguageLabel(lang, locale)),
+    [selectedLanguages, locale]
+  );
+
+  const visibleCount = useFittingSummary(selectedNames, summaryRef);
+
+  const summary =
+    selectedNames.length === 0
+      ? labels.placeholder
+      : formatSummaryWithCount(selectedNames, visibleCount);
 
   return (
     <>
@@ -134,8 +193,9 @@ export function LanguageMultiSelect({
         )}
       >
         <span
+          ref={summaryRef}
           className={cn(
-            'truncate text-left',
+            'min-w-0 flex-1 truncate text-left',
             selectedLanguages.length === 0 && 'text-muted-foreground'
           )}
         >

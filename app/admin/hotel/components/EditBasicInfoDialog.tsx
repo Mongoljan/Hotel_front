@@ -14,13 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { MonthYearPickerWithValue } from '@/components/ui/date-picker';
 import { OptionButton } from '@/components/ui/option-button';
-import { LanguageMultiSelect } from '@/components/LanguageMultiSelect';
-import { useTranslations, useLocale } from 'next-intl';
-
-interface Language {
-  id: number;
-  languages_name_mn: string;
-}
+import { useTranslations } from 'next-intl';
 
 interface EditBasicInfoData {
   property_name_mn: string;
@@ -32,7 +26,6 @@ interface EditBasicInfoData {
   total_hotel_rooms: string;
   available_rooms: string;
   sales_room_limitation: boolean;
-  languages: number[];
 }
 
 interface EditBasicInfoDialogProps {
@@ -40,7 +33,6 @@ interface EditBasicInfoDialogProps {
   onOpenChange: (open: boolean) => void;
   editBasicInfo: EditBasicInfoData;
   onEditBasicInfoChange: (data: EditBasicInfoData) => void;
-  languages: Language[];
   onSave: () => void;
   isSaving: boolean;
 }
@@ -56,8 +48,7 @@ const basicInfoEqual = (a: EditBasicInfoData, b: EditBasicInfoData): boolean => 
     a.group_name === b.group_name &&
     a.total_hotel_rooms === b.total_hotel_rooms &&
     a.available_rooms === b.available_rooms &&
-    a.sales_room_limitation === b.sales_room_limitation &&
-    JSON.stringify(a.languages) === JSON.stringify(b.languages)
+    a.sales_room_limitation === b.sales_room_limitation
   );
 };
 
@@ -66,12 +57,10 @@ export function EditBasicInfoDialog({
   onOpenChange,
   editBasicInfo,
   onEditBasicInfoChange,
-  languages,
   onSave,
   isSaving,
 }: EditBasicInfoDialogProps) {
   const t = useTranslations('1BasicInfo');
-  const locale = useLocale();
 
   // Track draft state separately
   const [draftBasicInfo, setDraftBasicInfo] = useState<EditBasicInfoData>(editBasicInfo);
@@ -259,28 +248,6 @@ export function EditBasicInfoDialog({
                 <p className="text-sm text-destructive">{validationErrors.available_rooms}</p>
               )}
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label>{t('9')}</Label>
-            <LanguageMultiSelect
-              languages={languages}
-              value={draftBasicInfo.languages.map(String)}
-              onChange={(ids) =>
-                setDraftBasicInfo({
-                  ...draftBasicInfo,
-                  languages: ids.map((id) => Number(id)),
-                })
-              }
-              locale={locale}
-              labels={{
-                selected: t('languages_section_selected'),
-                available: t('languages_section_available'),
-                search: t('languages_search'),
-                placeholder: t('selectLanguagesHint'),
-                done: t('languages_done'),
-                emptySelected: t('languages_empty_selected'),
-              }}
-            />
           </div>
         </div>
         <DialogFooter>

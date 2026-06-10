@@ -160,10 +160,8 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     total_hotel_rooms: '',
     available_rooms: '',
     sales_room_limitation: false,
-    languages: [] as number[],
   });
   const [isBasicInfoSaving, setIsBasicInfoSaving] = useState(false);
-  const [languages, setLanguages] = useState<{ id: number; languages_name_mn: string }[]>([]);
 
   // Location/Address edit state
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false);
@@ -236,8 +234,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         setProvinces(sortedProvinces);
         setSoums(combinedData.soum || []);
         setDistricts(combinedData.district || []);
-        setLanguages(combinedData.languages || []);
-
         if (detail?.Additional_Information && typeof detail.Additional_Information === 'number') {
           const additionalRes = await fetch(`https://dev.kacc.mn/api/additionalInfo/${detail.Additional_Information}/`);
           if (additionalRes.ok) {
@@ -380,7 +376,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       total_hotel_rooms: basicInfo?.total_hotel_rooms?.toString() || '',
       available_rooms: basicInfo?.available_rooms?.toString() || '',
       sales_room_limitation: basicInfo?.sales_room_limitation || false,
-      languages: basicInfo?.languages || [],
     });
     setIsBasicInfoDialogOpen(true);
   };
@@ -404,7 +399,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         total_hotel_rooms: parseInt(editBasicInfo.total_hotel_rooms),
         available_rooms: parseInt(editBasicInfo.available_rooms),
         sales_room_limitation: editBasicInfo.sales_room_limitation,
-        languages: editBasicInfo.languages,
         property: user?.hotel,
       };
 
@@ -715,7 +709,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         onOpenChange={setIsBasicInfoDialogOpen}
         editBasicInfo={editBasicInfo}
         onEditBasicInfoChange={setEditBasicInfo}
-        languages={languages}
         onSave={handleSaveBasicInfo}
         isSaving={isBasicInfoSaving}
       />

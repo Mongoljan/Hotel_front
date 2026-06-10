@@ -15,8 +15,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useCombinedData } from '@/app/hooks/useCombinedData';
+import { LanguageMultiSelect } from '@/components/LanguageMultiSelect';
 
 import CheckInOutSection from './sections/CheckInOutSection';
 import BreakfastPolicySection from './sections/BreakfastPolicySection';
@@ -46,6 +47,7 @@ type Props = {
 
 export default function RegisterHotel4({ onNext, onBack }: Props) {
   const t = useTranslations('4PropertyPolicies');
+  const locale = useLocale();
   const { user } = useAuth();
   const { data: combinedData } = useCombinedData();
   const [initialValues, setInitialValues] = React.useState<FormFields | null>(null);
@@ -104,6 +106,13 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
         const initialData = stored.step4 || existing;
 
         if (initialData) {
+          const step1Languages = Array.isArray(stored.step1?.languages)
+            ? stored.step1.languages.map((l: number | string) => Number(l))
+            : [];
+          const policyLanguages = Array.isArray(initialData.languages)
+            ? initialData.languages.map((l: number | string) => Number(l))
+            : [];
+
           const normalizedValues: FormFields = {
             check_in_from: normalizeTime(initialData.check_in_from) || '',
             check_in_until: normalizeTime(initialData.check_in_until) || '',
@@ -111,9 +120,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
             check_out_until: normalizeTime(initialData.check_out_until) || '',
             pet_policy: Boolean(initialData.pet_policy),
             min_guest_age: initialData.min_guest_age ?? 18,
-            languages: Array.isArray(initialData.languages)
-              ? initialData.languages.map((l: number | string) => Number(l))
-              : [],
+            languages: policyLanguages.length > 0 ? policyLanguages : step1Languages,
             accepted_card_ids: Array.isArray(initialData.accepted_cards)
               ? initialData.accepted_cards.map((c: { id: number | string }) => Number(c.id))
               : Array.isArray(initialData.accepted_card_ids)
@@ -283,25 +290,22 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('languages')}</FormLabel>
-                      <div className="grid grid-cols-2 gap-2">
-                        {languages.map((lang) => {
-                          const checked = field.value?.includes(lang.id);
-                          return (
-                            <label key={lang.id} className="flex items-center gap-2 text-sm">
-                              <Checkbox
-                                checked={checked}
-                                onCheckedChange={(isChecked) => {
-                                  const next = isChecked
-                                    ? [...(field.value || []), lang.id]
-                                    : (field.value || []).filter((id: number) => id !== lang.id);
-                                  field.onChange(next);
-                                }}
-                              />
-                              {lang.languages_name_mn}
-                            </label>
-                          );
-                        })}
-                      </div>
+                      <FormControl>
+                        <LanguageMultiSelect
+                          languages={languages}
+                          value={(field.value || []).map(String)}
+                          onChange={(ids) => field.onChange(ids.map(Number))}
+                          locale={locale}
+                          labels={{
+                            selected: t('languages_section_selected'),
+                            available: t('languages_section_available'),
+                            search: t('languages_search'),
+                            placeholder: t('selectLanguagesHint'),
+                            done: t('languages_done'),
+                            emptySelected: t('languages_empty_selected'),
+                          }}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
