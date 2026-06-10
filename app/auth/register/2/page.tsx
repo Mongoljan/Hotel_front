@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Eye, EyeOff, ArrowLeft, ArrowRight, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PatternFormat } from 'react-number-format';
@@ -16,7 +16,7 @@ import { registerHotelAndEmployeeAction } from '../registerHotelAndEmployeeActio
 import { getEmployeePositions, EmployeePosition } from '@/lib/api';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import RegistrationStepIndicator from '../RegistrationStepIndicator';
 
 type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
 
@@ -40,6 +41,12 @@ export default function RegisterEmployee() {
 
   const saved = typeof window !== 'undefined' ? localStorage.getItem('employeeFormData') : null;
   const parsedDefaults: Partial<FormFields> = saved ? JSON.parse(saved) : {};
+  if (parsedDefaults.contact_number != null) {
+    parsedDefaults.contact_number = String(parsedDefaults.contact_number);
+    if (parsedDefaults.contact_number.startsWith('976')) {
+      parsedDefaults.contact_number = parsedDefaults.contact_number.slice(3);
+    }
+  }
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaRegistrationEmployee2),
@@ -56,7 +63,7 @@ export default function RegisterEmployee() {
     },
   });
 
-  const { handleSubmit, setValue, watch } = form;
+  const { handleSubmit, setValue, watch, setError } = form;
 
   const watchedPassword = watch('password', '');
   const watchedConfirm = watch('confirmPassword', '');
@@ -110,24 +117,26 @@ export default function RegisterEmployee() {
         router.push('/auth/login');
       }, 1500);
     } else {
-      toast.error(result.error || tErr('register.failed'));
+      const errMsg = result.error || tErr('register.failed');
+      const errLower = errMsg.toLowerCase();
+      if (
+        errLower.includes('email') ||
+        errLower.includes('already') ||
+        errMsg.includes('бүртгэлтэй')
+      ) {
+        setError('email', { message: t('email_already_registered') });
+      }
+      toast.error(errMsg);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-4">
-
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-              <UserPlus className="h-6 w-6 text-primary-foreground" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">{t('staff_info')}</CardTitle>
-          {/* <CardDescription>
-            Employee registration information
-          </CardDescription> */}
+    <div className="flex justify-center min-h-screen p-4">
+      <div className="w-full max-w-2xl ">
+      <RegistrationStepIndicator currentStep={2} />
+      <Card className="w-full">
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="text-2xl font-bold text-cyrillic">{t('staff_info')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -137,7 +146,7 @@ export default function RegisterEmployee() {
                 name="contact_person_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('name')}</FormLabel>
+                    <FormLabel>{t('name')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -151,14 +160,14 @@ export default function RegisterEmployee() {
                 name="position"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('title')}</FormLabel>
+                    <FormLabel>{t('title')} <span className="text-destructive">*</span></FormLabel>
                     <Select
                       value={field.value ? String(field.value) : undefined}
                       onValueChange={(value) => field.onChange(Number(value))}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t('title')} />
+                          <SelectValue placeholder={t('select_position')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -179,17 +188,21 @@ export default function RegisterEmployee() {
                 name="contact_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('phone_number')}</FormLabel>
+                    <FormLabel>{t('phone_number')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
-                      <PatternFormat
-                        format="#### ####"
-                        allowEmptyFormatting
-                        mask="_"
-                        value={field.value || ''}
-                        onValueChange={({ value }) => field.onChange(value)}
-                        customInput={Input}
-                        placeholder="9512 9418"
-                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">+976</span>
+                        <PatternFormat
+                          format="#### ####"
+                          allowEmptyFormatting
+                          mask="_"
+                          value={field.value || ''}
+                          onValueChange={({ value }) => field.onChange(value)}
+                          onBlur={field.onBlur}
+                          customInput={Input}
+                          placeholder="9512 9418"
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -201,7 +214,7 @@ export default function RegisterEmployee() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('email')}</FormLabel>
+                    <FormLabel>{t('email')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input type="email" {...field} />
                     </FormControl>
@@ -215,26 +228,27 @@ export default function RegisterEmployee() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('password')}</FormLabel>
+                    <FormLabel>{t('password')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={isPasswordVisible ? 'text' : 'password'}
+                          className="pr-11"
                           {...field}
                         />
-                        <Button
+                        <button
                           type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                           onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                          tabIndex={-1}
+                          aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
                         >
                           {isPasswordVisible ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
                             <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
                           )}
-                        </Button>
+                        </button>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -247,26 +261,27 @@ export default function RegisterEmployee() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('password_again')}</FormLabel>
+                    <FormLabel>{t('password_again')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={isConfirmPasswordVisible ? 'text' : 'password'}
+                          className="pr-11"
                           {...field}
                         />
-                        <Button
+                        <button
                           type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                           onClick={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
+                          tabIndex={-1}
+                          aria-label={isConfirmPasswordVisible ? 'Hide password' : 'Show password'}
                         >
                           {isConfirmPasswordVisible ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
                             <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
                           )}
-                        </Button>
+                        </button>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -369,6 +384,7 @@ export default function RegisterEmployee() {
           </Form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

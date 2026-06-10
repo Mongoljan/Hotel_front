@@ -288,17 +288,12 @@ export const schemaHotelRegistration = z.object({
 export const schemaHotelRegistration2 = z.object({
   register: z
     .string()
+    .min(1, { message: "РД-оо оруулна уу" })
     .refine((val) => {
-      const firstTwo = val.slice(0, 2);
-      const isMongolianLetters = /^[А-ЯӨҮа-яөү]{2}$/.test(firstTwo); // Only Mongolian
-
-      if (isMongolianLetters) {
-        // Must be 2 Mongolian letters + 9 digits = 11 total
-        return /^[А-ЯӨҮа-яөү]{2}\d{8}$/.test(val);
-      } else {
-        // Must be exactly 7 digits
-        return /^\d{7}$/.test(val);
-      }
+      const trimmed = (val || '').trim();
+      if (/^\d{7}$/.test(trimmed)) return true;
+      if (/^[А-ЯӨҮа-яөү]{2}\d{8}$/.test(trimmed)) return true;
+      return false;
     }, {
       message: "РД буруу байна. Эхний 2 үсэг монгол байх ба 10 оронтой, эсвэл 7 оронтой тоо байх ёстой.",
     }),
@@ -316,13 +311,16 @@ export const schemaHotelRegistration2 = z.object({
     .min(1, { message: "Эзэмшлийн төрлийг сонгоно уу" }),
   location: z
     .string()
-    .min(3, { message: "Та хаягаа бичиж оруулна уу?" }),
+    .min(20, { message: "Хаяг хамгийн багадаа 20 тэмдэгт байх ёстой" }),
   property_type: z
     .string()
     .min(1, { message: "Буудлын төрлийг сонгоно уу?" }),
   phone: z
     .string()
-    .min(8, { message: "Гар утасны дугаарыг оруулна уу?" }),
+    .min(1, { message: "Гар утасны дугаарыг оруулна уу?" })
+    .refine((val) => (val || '').replace(/\s/g, '').length >= 8, {
+      message: "Гар утасны дугаарыг оруулна уу?",
+    }),
   mail: z
     .string()
     .email({ message: "И-мэйл хаяг буруу байна" }),
@@ -662,12 +660,16 @@ export const schemaHotelSteps6 = (msg?: string) => z.object({
 });
 
 export const schemaRegistrationEmployee2 =z.object({
-  email: z.string().email({ message: "И-мэйлийн формат стандарт биш байна" }).max(255, { message: "255 -aaс дээш тэмдэгт агуулж болохгүй" }),
-  contact_person_name: z.string().min(3, { message: "Та өөрийн нэрээ заавал бичиж оруулна уу?" }),
+  email: z.string().min(1, { message: "Имэйл хаягаа зөв бичнэ үү" }).email({ message: "Имэйл хаягаа зөв бичнэ үү" }).max(255, { message: "255 -aaс дээш тэмдэгт агуулж болохгүй" }),
+  contact_person_name: z.string().min(1, { message: "Та өөрийн нэрээ оруулна уу" }).min(3, { message: "Та өөрийн нэрээ оруулна уу" }),
   user_type: z.number().min(1, { message: "User type is required" }),
-  // user_type_id: z.string(),
-  position: z.coerce.number().min(1, { message: "Та албан тушаалаа сонгоно уу" }),
-  contact_number: z.string().min(8, { message: "Та холбогдох утасны дугаараа заавал оруулна уу?" }),
+  position: z.coerce.number().min(1, { message: "Албан тушаалаа сонгоно уу" }),
+  contact_number: z
+    .string()
+    .min(1, { message: "Утасны дугаараа оруулна уу" })
+    .refine((val) => (val || '').replace(/\s/g, '').length >= 8, {
+      message: "Утасны дугаараа оруулна уу",
+    }),
 password: z.string().min(8, {
   message: "Нууц үг нь дор хаяж 8 тэмдэгтээс бүрдэх ёстой бөгөөд нэг том үсэг, нэг жижиг үсэг, нэг тоо, нэг тусгай тэмдэгт агуулсан байх шаардлагатай.",
 }).max(100, {

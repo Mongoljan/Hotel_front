@@ -381,6 +381,16 @@
   "propertyDetails": "Үл хөдлөхийн дэлгэрэнгүй"
 },
 
+  "RegistrationSteps": {
+    "hotelInfo": "Буудлын мэдээлэл",
+    "employeeInfo": "Ажилтны мэдээлэл",
+    "basicInfo": "Үндсэн мэдээлэл",
+    "confirmAddress": "Хаяг баталгаажуулах",
+    "googleMap": "Гүүгл газрын зураг",
+    "internalRules": "Дотоод журам",
+    "propertyImage": "Үл хөдлөхийн зураг"
+  },
+
   "AdminPage":{
     "Hi" : "Сайн уу?",
     "Welcome":"Тавтай морил"
@@ -628,21 +638,28 @@
     "hotel_name_en":"Буудлын нэр (англи)",
     "ownership_type":"Эзэмшлийн төрөл",
     "location":"Дэлгэрэнгүй хаяг",
+    "location_hint":"Та хаяг байршлаа кирилл үсгээр дэлгэрэнгүй үнэн зөв бичнэ үү",
+    "location_min_warning":"Хаяг хамгийн багадаа 20 тэмдэгт байх ёстой",
+    "required_hint":"Заавал бөглөнө үү",
     "hotel_type":"Буудлын төрөл",
     "select":"Сонгох",
-    "phone_number":"Байгууллагын утасны дугаар",
-    "email":"И-мэйл хаяг",
-    "back":"буцах",
-    "next":"дараах"
+    "phone_number":"Буудлын холбогдох дугаар",
+    "email":"Буудлын албан имэйл хаяг",
+    "company_lookup_loading":"ААН-н нэрийг хайж байна...",
+    "company_lookup_not_found":"ААН-н нэр олдсонгүй. Гараар оруулна уу",
+    "back":"Буцах",
+    "next":"Үргэлжлүүлэх"
   },
   "RegisterStaff":{
    "staff_info":"Ажилтны мэдээлэл",
-   "name":"Tаны нэр",
+   "name":"Таны нэр",
    "title":"Албан тушаал",
+   "select_position":"Сонгох",
    "user_type":"Хэрэглэгчийн төрөл",
    "phone_number":"Таны утасны дугаар",
    "password":"Нууц үг",
-   "email":"И-мэйл хаяг",
+   "email":"Имэйл хаяг",
+   "email_already_registered":"Энэ имэйл хаяг бүртгэлтэй байна",
    "password_again":"Нууц үг давтах",
    "passwordMinCharsRule":"8 болон түүнээс дээш тэмдэгт байх",
    "passwordComplexityRule":"Үсэг, тоо, тэмдэгт орсон байх",

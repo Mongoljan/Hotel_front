@@ -372,6 +372,16 @@
     "propertyDetails":"Property Details"
   },
 
+  "RegistrationSteps": {
+    "hotelInfo": "Hotel Information",
+    "employeeInfo": "Employee Information",
+    "basicInfo": "Basic Information",
+    "confirmAddress": "Confirm Address",
+    "googleMap": "Google Map",
+    "internalRules": "Internal Rules",
+    "propertyImage": "Property Image"
+  },
+
   "AdminPage":{
     "Hi" : "Hi",
     "Welcome":"Welcome"
@@ -598,19 +608,26 @@
   "hotel_name": "Hotel Name",
   "hotel_name_en": "Hotel Name (English)",
   "ownership_type": "Ownership Type",
-  "location": "Location",
+  "location": "Detailed Address",
+  "location_hint": "Please enter your address accurately in Cyrillic",
+  "location_min_warning": "Address must be at least 20 characters",
+  "required_hint": "Required field",
   "hotel_type": "Hotel Type",
   "select": "Select",
-  "phone_number": "Phone Number",
-  "email": "Email Address",
+  "phone_number": "Hotel Contact Number",
+  "email": "Hotel Official Email",
+  "company_lookup_loading": "Looking up business name...",
+  "company_lookup_not_found": "Business name not found. Please enter manually",
   "back": "Back",
-  "next": "Next"
+  "next": "Continue"
 },
 "RegisterStaff": {
   "staff_info": "Staff Information",
   "name": "Your Name",
   "title": "Position",
+  "select_position": "Select",
   "email": "Email Address",
+  "email_already_registered": "This email address is already registered",
   "user_type": "User Type",
   "phone_number": "Phone Number",
   "password": "Password",
