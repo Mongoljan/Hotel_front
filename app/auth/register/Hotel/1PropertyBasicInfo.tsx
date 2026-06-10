@@ -7,7 +7,7 @@ import { schemaHotelSteps1 } from '../../../schema';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Building2, Star } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 
@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MonthYearPickerWithValue } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { OptionButton } from "@/components/ui/option-button";
+import { LanguageMultiSelect } from '@/components/LanguageMultiSelect';
 
 const API_URL = 'https://dev.kacc.mn/api/property-basic-info/';
 const PROPERTIES_API = 'https://dev.kacc.mn/api/properties';
@@ -82,7 +83,7 @@ function formatStep1FormData(
       (step1Data.property_name_en as string) || registrationNames.property_name_en || '',
     star_rating: step1Data.star_rating?.toString() || '',
     languages: Array.isArray(step1Data.languages)
-      ? step1Data.languages.map((l: unknown) => l.toString())
+      ? step1Data.languages.map((l) => String(l))
       : [],
     total_hotel_rooms: step1Data.total_hotel_rooms?.toString() || '',
     available_rooms: step1Data.available_rooms?.toString() || '',
@@ -113,6 +114,7 @@ type FormFields = z.infer<typeof schemaHotelSteps1>;
 
 export default function RegisterHotel1({ onNext, onBack }: Props) {
   const t = useTranslations('1BasicInfo');
+  const locale = useLocale();
   const { user } = useAuth(); // Get user from auth hook
   const [languages, setLanguages] = useState<LanguageType[]>([]);
   const [ratings, setRatings] = useState<RatingType[]>([]);
@@ -411,45 +413,20 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                   <FormItem>
                     <FormLabel>{t('9')}</FormLabel>
                     <FormControl>
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap gap-2">
-                          {languages.map((lang) => {
-                            const isSelected = field.value?.includes(lang.id.toString());
-                            return (
-                              <div key={lang.id}>
-                                <input
-                                  type="checkbox"
-                                  id={`lang-${lang.id}`}
-                                  checked={isSelected}
-                                  onChange={(e) => {
-                                    const currentValue = field.value || [];
-                                    const langIdStr = lang.id.toString();
-                                    const newValue = e.target.checked
-                                      ? [...currentValue, langIdStr]
-                                      : currentValue.filter((id: string) => id !== langIdStr);
-                                    field.onChange(newValue);
-                                  }}
-                                  className="hidden peer"
-                                />
-                                <label
-                                  htmlFor={`lang-${lang.id}`}
-                                  className="peer-checked:bg-primary peer-checked:text-primary-foreground
-                                             border border-input rounded-md px-3 py-1.5 cursor-pointer
-                                             bg-background text-foreground transition hover:bg-accent text-sm inline-block"
-                                >
-                                  {lang.languages_name_mn}
-                                </label>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {field.value && field.value.length > 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            {t('languages_selected', { count: String(field.value.length) })}
-                          </p>
-                        )}
-                      </div>
+                      <LanguageMultiSelect
+                        languages={languages}
+                        value={field.value || []}
+                        onChange={field.onChange}
+                        locale={locale}
+                        labels={{
+                          selected: t('languages_section_selected'),
+                          available: t('languages_section_available'),
+                          search: t('languages_search'),
+                          placeholder: t('selectLanguagesHint'),
+                          done: t('languages_done'),
+                          emptySelected: t('languages_empty_selected'),
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

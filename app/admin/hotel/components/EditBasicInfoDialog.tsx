@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { MonthYearPickerWithValue } from '@/components/ui/date-picker';
 import { OptionButton } from '@/components/ui/option-button';
+import { LanguageMultiSelect } from '@/components/LanguageMultiSelect';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface Language {
   id: number;
@@ -68,6 +70,9 @@ export function EditBasicInfoDialog({
   onSave,
   isSaving,
 }: EditBasicInfoDialogProps) {
+  const t = useTranslations('1BasicInfo');
+  const locale = useLocale();
+
   // Track draft state separately
   const [draftBasicInfo, setDraftBasicInfo] = useState<EditBasicInfoData>(editBasicInfo);
   const lastSavedRef = useRef<EditBasicInfoData>(editBasicInfo);
@@ -256,27 +261,26 @@ export function EditBasicInfoDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Зочдод үйлчлэх боломжтой хэл</Label>
-            <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded p-2">
-              {languages.map((lang) => (
-                <div key={lang.id} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`lang-${lang.id}`}
-                    checked={draftBasicInfo.languages.includes(lang.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setDraftBasicInfo({ ...draftBasicInfo, languages: [...draftBasicInfo.languages, lang.id] });
-                      } else {
-                        setDraftBasicInfo({ ...draftBasicInfo, languages: draftBasicInfo.languages.filter(id => id !== lang.id) });
-                      }
-                    }}
-                    className="h-4 w-4"
-                  />
-                  <Label htmlFor={`lang-${lang.id}`} className="cursor-pointer text-sm">{lang.languages_name_mn}</Label>
-                </div>
-              ))}
-            </div>
+            <Label>{t('9')}</Label>
+            <LanguageMultiSelect
+              languages={languages}
+              value={draftBasicInfo.languages.map(String)}
+              onChange={(ids) =>
+                setDraftBasicInfo({
+                  ...draftBasicInfo,
+                  languages: ids.map((id) => Number(id)),
+                })
+              }
+              locale={locale}
+              labels={{
+                selected: t('languages_section_selected'),
+                available: t('languages_section_available'),
+                search: t('languages_search'),
+                placeholder: t('selectLanguagesHint'),
+                done: t('languages_done'),
+                emptySelected: t('languages_empty_selected'),
+              }}
+            />
           </div>
         </div>
         <DialogFooter>

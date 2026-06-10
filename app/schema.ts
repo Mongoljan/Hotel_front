@@ -380,7 +380,7 @@ export const schemaHotelSteps1 = z
     if (data.part_of_group && (!data.group_name || data.group_name.trim() === '')) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Бүлгийн нэрийг заавал оруулна уу.",
+        message: "Сүлжээ эсвэл группын нэрээ оруулна уу.",
         path: ["group_name"],
       });
     }
