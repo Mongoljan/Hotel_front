@@ -23,11 +23,11 @@ import { OptionButton } from "@/components/ui/option-button";
 const API_URL = 'https://dev.kacc.mn/api/property-basic-info/';
 const PROPERTIES_API = 'https://dev.kacc.mn/api/properties';
 import { useCombinedData } from '@/app/hooks/useCombinedData';
-
-type RegistrationHotelNames = {
-  property_name_mn: string;
-  property_name_en: string;
-};
+import {
+  loadRegistrationHotelNames,
+  mergeRegistrationHotelNames,
+  type RegistrationHotelNames,
+} from '@/utils/registrationHotelNames';
 
 function mapPropertyRegistrationNames(data: Record<string, unknown>): RegistrationHotelNames {
   const propertyName = String(data.PropertyName || data.property_name_mn || '').trim();
@@ -57,12 +57,16 @@ async function fetchRegistrationHotelNames(
 ): Promise<RegistrationHotelNames> {
   try {
     const res = await fetch(`${PROPERTIES_API}/${hotelId}/`, { cache: 'no-store' });
-    if (!res.ok) return { property_name_mn: '', property_name_en: '' };
+    if (!res.ok) {
+      return loadRegistrationHotelNames(hotelId);
+    }
 
     const data = await res.json();
-    return mapPropertyRegistrationNames(data);
+    const registerNo = String(data.register || '').trim();
+    const storedNames = loadRegistrationHotelNames(hotelId, registerNo);
+    return mergeRegistrationHotelNames(mapPropertyRegistrationNames(data), storedNames);
   } catch {
-    return { property_name_mn: '', property_name_en: '' };
+    return loadRegistrationHotelNames(hotelId);
   }
 }
 
@@ -319,7 +323,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                      
                       {t('4')}
                     </FormLabel>
                     <FormControl>

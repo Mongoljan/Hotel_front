@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import RegistrationStepIndicator from '../RegistrationStepIndicator';
+import { saveRegistrationHotelNames } from '@/utils/registrationHotelNames';
 
 type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
 
@@ -108,6 +109,17 @@ export default function RegisterEmployee() {
     employeeData.contact_number = `976${employeeData.contact_number.replace(/\s/g, '')}`;
     const result = await registerHotelAndEmployeeAction(hotelData, employeeData);
     if (result.success) {
+      if (result.hotelId) {
+        saveRegistrationHotelNames(
+          result.hotelId,
+          {
+            property_name_mn: hotelData.PropertyName || '',
+            property_name_en: hotelData.PropertyName_en || '',
+          },
+          hotelData.register
+        );
+      }
+
       toast.success(tMsg('register_success_redirect'));
 
       setTimeout(() => {
