@@ -14,8 +14,8 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ totalSteps, currentStep }
     t('googleMap'),
     t('internalRules'),
     t('cancellationFees'),
-    t('propertyImage'),
     t('propertyDetails'),
+    t('propertyImage'),
   ];
 
   return (

@@ -1,32 +1,42 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Image as ImageIcon, Upload, X, Expand, Star } from 'lucide-react';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
+  Star,
+  Upload,
+  ChevronLeft as CarouselPrev,
+  ChevronRight as CarouselNext,
+} from 'lucide-react';
 import { schemaHotelSteps5 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 import { getImageCategories, ImageCategory } from '@/lib/api';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 const API_URL = 'https://dev.kacc.mn/api/property-images/';
+const MIN_IMAGES = 5;
+const GRID_IMAGE_SLOTS = 5;
 
 type FormFields = z.infer<typeof schemaHotelSteps5>;
+type ModalMode = 'add' | 'change' | 'featured' | null;
 
 type Props = {
   onNext: () => void;
@@ -42,8 +52,12 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   const [imageCategories, setImageCategories] = useState<ImageCategory[]>([]);
   const [initialValues, setInitialValues] = React.useState<FormFields | null>(null);
   const [existingImages, setExistingImages] = React.useState<any[]>([]);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxImage, setLightboxImage] = useState<{ src: string; index: number }>({ src: '', index: 0 });
+  const [modalMode, setModalMode] = useState<ModalMode>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [draftCategory, setDraftCategory] = useState<number | undefined>(undefined);
+  const [draftImage, setDraftImage] = useState<string>('');
+  const [featuredCarouselIndex, setFeaturedCarouselIndex] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const propertyDataStr = user?.id ? UserStorage.getItem<string>('propertyData', user.id) : null;
   const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
@@ -51,7 +65,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   const defaultValues: FormFields = stored?.step5?.entries
     ? stored.step5
     : {
-        entries: Array.from({ length: 5 }, () => ({ ...defaultImageEntry })),
+        entries: Array.from({ length: MIN_IMAGES }, () => ({ ...defaultImageEntry })),
       };
 
   useEffect(() => {
@@ -65,9 +79,15 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   });
 
   const watchedEntries = form.watch('entries');
+  const filledCount = watchedEntries.filter((e) => e.images).length;
   const hasProfileSelected = watchedEntries.some((e) => e.is_profile && e.images);
+  const hasValidImage = filledCount > 0;
+  const hasMinCount = filledCount >= MIN_IMAGES;
+  const filledIndexes = watchedEntries
+    .map((e, i) => (e.images ? i : -1))
+    .filter((i) => i >= 0);
 
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, append, replace } = useFieldArray({
     control: form.control,
     name: 'entries',
   });
@@ -75,12 +95,25 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   useEffect(() => {
     const fetchExistingImages = async () => {
       if (!user?.id || !user?.hotel) return;
-      
+
       const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
       const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
       const propertyId = stored.propertyId || user.hotel;
 
-      // First check localStorage
+      const restoreFromData = (raw: any[], restored: typeof watchedEntries) => {
+        while (restored.length < MIN_IMAGES) {
+          restored.push({ ...defaultImageEntry });
+        }
+        replace(restored);
+        setInitialValues({ entries: restored });
+        setExistingImages(
+          raw.map((img: any, idx: number) => ({
+            ...img,
+            is_profile: restored[idx]?.is_profile ?? Boolean(img.is_profile),
+          }))
+        );
+      };
+
       if (stored?.step5?.raw) {
         let restored = stored.step5.raw.map((item: any) => ({
           images: item.image,
@@ -88,31 +121,19 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           category: item.category ?? 3,
           is_profile: Boolean(item.is_profile),
         }));
-
-        const storedProfileIndex = restored.findIndex((item: any) => item.is_profile);
-        if (storedProfileIndex === -1 && restored.length > 0) {
+        const profileIdx = restored.findIndex((item: any) => item.is_profile);
+        if (profileIdx === -1 && restored.length > 0) {
+          restored = restored.map((item: any, idx: number) => ({ ...item, is_profile: idx === 0 }));
+        } else if (profileIdx > -1) {
           restored = restored.map((item: any, idx: number) => ({
             ...item,
-            is_profile: idx === 0,
-          }));
-        } else if (storedProfileIndex > -1) {
-          restored = restored.map((item: any, idx: number) => ({
-            ...item,
-            is_profile: idx === storedProfileIndex,
+            is_profile: idx === profileIdx,
           }));
         }
-        replace(restored);
-        setInitialValues({ entries: restored });
-        setExistingImages(
-          stored.step5.raw.map((img: any, idx: number) => ({
-            ...img,
-            is_profile: restored[idx]?.is_profile ?? Boolean(img.is_profile),
-          }))
-        ); // Store existing image data
+        restoreFromData(stored.step5.raw, restored);
         return;
       }
 
-      // If not in localStorage, fetch from API
       try {
         const res = await fetch(`${API_URL}?property=${propertyId}`);
         if (res.ok) {
@@ -124,39 +145,25 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
               category: item.category ?? 3,
               is_profile: Boolean(item.is_profile),
             }));
-
-            const profileIndex = restored.findIndex((item: any) => item.is_profile);
-            if (profileIndex === -1 && restored.length > 0) {
+            const profileIdx = restored.findIndex((item: any) => item.is_profile);
+            if (profileIdx === -1 && restored.length > 0) {
+              restored = restored.map((item: any, idx: number) => ({ ...item, is_profile: idx === 0 }));
+            } else if (profileIdx > -1) {
               restored = restored.map((item: any, idx: number) => ({
                 ...item,
-                is_profile: idx === 0,
-              }));
-            } else if (profileIndex > -1) {
-              restored = restored.map((item: any, idx: number) => ({
-                ...item,
-                is_profile: idx === profileIndex,
+                is_profile: idx === profileIdx,
               }));
             }
-            replace(restored);
-            setInitialValues({ entries: restored });
-            setExistingImages(
-              data.map((img: any, idx: number) => ({
-                ...img,
-                is_profile: restored[idx]?.is_profile ?? Boolean(img.is_profile),
-              }))
-            ); // Store existing image data
-
-            // Save to localStorage
-            const step5Data = {
-              entries: restored,
-              property_photos: data.map((img: any) => img.id),
-              raw: data,
-            };
+            restoreFromData(data, restored);
             UserStorage.setItem(
               'propertyData',
               JSON.stringify({
                 ...stored,
-                step5: step5Data,
+                step5: {
+                  entries: restored,
+                  property_photos: data.map((img: any) => img.id),
+                  raw: data,
+                },
               }),
               user.id
             );
@@ -168,67 +175,155 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
     };
     fetchExistingImages();
   }, [replace, user?.id, user?.hotel]);
-  const openLightbox = (src: string, index: number) => {
-    setLightboxImage({ src, index });
-    setLightboxOpen(true);
+
+  const closeModal = () => {
+    setModalMode(null);
+    setActiveIndex(null);
+    setDraftImage('');
+    setDraftCategory(undefined);
   };
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const selectedFiles = Array.from(event.target.files || []);
-    if (selectedFiles.length === 0) return;
+  const openAddModal = (index: number) => {
+    setModalMode('add');
+    setActiveIndex(index);
+    setDraftImage('');
+    setDraftCategory(undefined);
+  };
 
-    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-    const accepted: File[] = [];
-    for (const file of selectedFiles) {
-      if (!validTypes.includes(file.type)) {
-        toast.error(t('image_format_error'));
-        continue;
-      }
-      if (file.size / 1024 < 100) {
-        toast.error(t('image_size_error'));
-        continue;
-      }
-      accepted.push(file);
+  const openChangeModal = (index: number) => {
+    const entry = watchedEntries[index];
+    setModalMode('change');
+    setActiveIndex(index);
+    setDraftImage(entry?.images || '');
+    setDraftCategory(entry?.category || 3);
+  };
+
+  const openFeaturedModal = () => {
+    if (filledIndexes.length === 0) {
+      toast.error(t('alert_min_images'));
+      return;
     }
+    const currentProfile = watchedEntries.findIndex((e) => e.is_profile && e.images);
+    const startIdx = currentProfile >= 0 ? filledIndexes.indexOf(currentProfile) : 0;
+    const carouselStart = startIdx >= 0 ? startIdx : 0;
+    setFeaturedCarouselIndex(carouselStart);
+    setDraftCategory(watchedEntries[filledIndexes[carouselStart]]?.category || 3);
+    setModalMode('featured');
+  };
 
-    if (accepted.length === 0) {
+  const triggerFilePicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const validateFile = (file: File): boolean => {
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error(t('image_format_error'));
+      return false;
+    }
+    if (file.size / 1024 < 100) {
+      toast.error(t('image_size_error'));
+      return false;
+    }
+    return true;
+  };
+
+  const readFileAsBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!validateFile(file)) {
       event.target.value = '';
       return;
     }
+    const b64 = await readFileAsBase64(file);
+    setDraftImage(b64);
+    event.target.value = '';
+  };
 
-    // Build a queue of indexes to fill: start at the clicked slot, then fill
-    // any subsequent empty slots, then append new entries at the end.
-    const currentEntries = form.getValues('entries') || [];
-    const targetIndexes: number[] = [index];
-    for (let i = 0; i < currentEntries.length && targetIndexes.length < accepted.length; i++) {
-      if (i === index) continue;
-      if (!currentEntries[i]?.images) targetIndexes.push(i);
+  const saveImageModal = () => {
+    if (!draftCategory) {
+      toast.error(t('category_placeholder'));
+      return;
+    }
+    if (!draftImage) {
+      toast.error(t('image_format_error'));
+      return;
+    }
+    if (activeIndex === null) return;
+
+    const isFirstImage = !watchedEntries.some((e) => e.images);
+    const targetIndex = activeIndex;
+
+    if (targetIndex >= watchedEntries.length) {
+      append({
+        images: draftImage,
+        descriptions: '',
+        category: draftCategory,
+        is_profile: isFirstImage,
+      });
+    } else {
+      form.setValue(`entries.${targetIndex}.images`, draftImage, { shouldValidate: true, shouldDirty: true });
+      form.setValue(`entries.${targetIndex}.category`, draftCategory, { shouldValidate: true, shouldDirty: true });
+      if (isFirstImage) {
+        form.setValue(`entries.${targetIndex}.is_profile`, true, { shouldValidate: true });
+      }
     }
 
-    // Read all files in parallel then assign
-    Promise.all(
-      accepted.map(
-        (file) =>
-          new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          })
-      )
-    ).then((base64s) => {
-      base64s.forEach((b64, i) => {
-        const targetIdx = targetIndexes[i];
-        if (targetIdx !== undefined && targetIdx < currentEntries.length) {
-          form.setValue(`entries.${targetIdx}.images`, b64, { shouldValidate: true, shouldDirty: true });
-        } else {
-          // Overflow — append new entries
-          append({ images: b64, descriptions: '', category: 3, is_profile: false });
-        }
+    closeModal();
+  };
+
+  const applyFeaturedImage = () => {
+    if (filledIndexes.length === 0) return;
+    const targetIndex = filledIndexes[featuredCarouselIndex];
+    if (targetIndex === undefined) return;
+
+    fields.forEach((_, idx) => {
+      form.setValue(`entries.${idx}.is_profile`, idx === targetIndex, {
+        shouldValidate: true,
+        shouldDirty: true,
       });
     });
+    if (draftCategory) {
+      form.setValue(`entries.${targetIndex}.category`, draftCategory, { shouldValidate: true });
+    }
+    closeModal();
+  };
 
+  const handleFeaturedUploadNew = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!validateFile(file)) {
+      event.target.value = '';
+      return;
+    }
+    const b64 = await readFileAsBase64(file);
+    const nextEmpty = watchedEntries.findIndex((e) => !e.images);
+    const targetIndex = nextEmpty >= 0 ? nextEmpty : watchedEntries.length;
+
+    if (targetIndex >= watchedEntries.length) {
+      append({
+        images: b64,
+        descriptions: '',
+        category: draftCategory || 3,
+        is_profile: true,
+      });
+    } else {
+      form.setValue(`entries.${targetIndex}.images`, b64, { shouldValidate: true, shouldDirty: true });
+      form.setValue(`entries.${targetIndex}.category`, draftCategory || 3, { shouldValidate: true });
+      fields.forEach((_, idx) => {
+        form.setValue(`entries.${idx}.is_profile`, idx === targetIndex, { shouldValidate: true });
+      });
+    }
     event.target.value = '';
+    closeModal();
   };
 
   const onInvalid = () => {
@@ -251,13 +346,11 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       return;
     }
 
-    // Normalize to ensure only one profile image is sent
     const normalizedEntries = data.entries.map((entry, idx) => ({
       ...entry,
       is_profile: idx === profileIndex,
     }));
 
-    // Check if data has changed
     if (initialValues && JSON.stringify(normalizedEntries) === JSON.stringify(initialValues.entries)) {
       onNext();
       return;
@@ -275,13 +368,13 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
 
       const result: any[] = [];
       const allImageIds: number[] = [];
-
-      // Separate new uploads from existing images
       const newEntries: { index: number; entry: typeof data.entries[0] }[] = [];
       const patchTasks: { index: number; entry: typeof data.entries[0]; existingImage: any }[] = [];
       const keepTasks: { index: number; existingImage: any }[] = [];
+
       for (let i = 0; i < normalizedEntries.length; i++) {
         const entry = normalizedEntries[i];
+        if (!entry.images) continue;
         const existingImage = existingImages[i];
         const isNewImage = entry.images.startsWith('data:');
 
@@ -299,7 +392,6 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         }
       }
 
-      // Batch upload all new images in a single POST request
       let uploadedImages: any[] = [];
       if (newEntries.length > 0) {
         const payload = newEntries.map(({ entry }) => ({
@@ -320,7 +412,6 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         uploadedImages = Array.isArray(json) ? json : [json];
       }
 
-      // Update descriptions in parallel
       const patchResults = await Promise.all(
         patchTasks.map(async ({ index, entry, existingImage }) => {
           const updateRes = await fetch(`${API_URL}${existingImage.id}/`, {
@@ -331,7 +422,6 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
               category: entry.category,
             }),
           });
-
           if (updateRes.ok) {
             return { index, json: await updateRes.json() };
           }
@@ -339,10 +429,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         })
       );
 
-      // Combine all results in original order
       const resultMap = new Map<number, any>();
-
-      // Map uploaded images back to their original indices
       for (let i = 0; i < newEntries.length; i++) {
         const img = uploadedImages[i];
         if (img) {
@@ -350,46 +437,33 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           allImageIds.push(img.id);
         }
       }
-
       for (const { index, json } of patchResults) {
         resultMap.set(index, json);
         allImageIds.push(json.id);
       }
-
       for (const { index, existingImage } of keepTasks) {
         resultMap.set(index, existingImage);
         allImageIds.push(existingImage.id);
       }
-
-      // Build result array in original order
       for (let i = 0; i < normalizedEntries.length; i++) {
-        if (resultMap.has(i)) {
-          result.push(resultMap.get(i));
-        }
+        if (resultMap.has(i)) result.push(resultMap.get(i));
       }
 
       const storedEntries = normalizedEntries.map((entry, idx) => ({
         ...entry,
-        images: result[idx]?.image || entry.images,
+        images: resultMap.get(idx)?.image || entry.images,
       }));
-
-      const step5Data = {
-        entries: storedEntries,
-        property_photos: allImageIds,
-        raw: result,
-      };
 
       UserStorage.setItem(
         'propertyData',
         JSON.stringify({
           ...stored,
-          step5: step5Data,
+          step5: { entries: storedEntries, property_photos: allImageIds, raw: result },
           property_photos: allImageIds,
         }),
         user.id
       );
 
-      toast.success(t('images_saved_success'));
       onNext();
     } catch (error) {
       console.error(error);
@@ -397,219 +471,165 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
     }
   };
 
+  const featuredCarouselImage =
+    filledIndexes.length > 0
+      ? watchedEntries[filledIndexes[featuredCarouselIndex]]?.images
+      : '';
+
+  const modalTitle =
+    modalMode === 'add'
+      ? t('add_image_title')
+      : modalMode === 'change'
+        ? t('change_image_title')
+        : t('featured_image_title');
+
+  const renderImagePreview = (src: string, onClick?: () => void) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative mx-auto flex aspect-square w-full max-w-[280px] items-center justify-center overflow-hidden rounded-xl border-2 border-[#4A7BF7] bg-[#E8F0FE]/30"
+    >
+      {src ? (
+        <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <Upload className="h-10 w-10 text-[#4A7BF7]/60" />
+      )}
+    </button>
+  );
+
   return (
     <div className="flex justify-center px-4">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+        className="hidden"
+        onChange={modalMode === 'featured' ? handleFeaturedUploadNew : handleFileChange}
+      />
+      <input
+        id="featured-file-input"
+        type="file"
+        accept="image/png,image/jpeg,image/jpg,image/webp"
+        className="hidden"
+        onChange={handleFeaturedUploadNew}
+      />
+
       <Card className="w-full max-w-[640px]">
-        <CardHeader className="space-y-1 pb-4">
+        <CardHeader className="space-y-1 pb-2">
           <CardTitle className="text-xl font-semibold text-center flex items-center justify-center gap-2">
             <ImageIcon className="h-5 w-5" />
             {t('title')}
           </CardTitle>
-          <CardDescription className="text-center text-sm text-muted-foreground">
-            <div>{t('description')}</div>
-            <div className="text-xs text-muted-foreground/80 mt-1">
-              {t('hotel_image_suggestions')}
-            </div>
-          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Alert className="mb-3 py-2">
-            <AlertDescription>
-              <div className="flex items-center justify-between text-xs">
-                <div className="space-y-0.5 text-muted-foreground">
-                  <div>{t('alert_min_images')} • {t('alert_min_size')}</div>
-                  <div className="text-[11px]">{t('alert_formats')}</div>
-                </div>
-                <div className="text-sm font-medium text-right space-y-0.5">
-                  <div>
-                    <span className={`${watchedEntries.filter(e => e.images).length >= 5 ? 'text-green-600' : 'text-orange-600'}`}>
-                      {watchedEntries.filter(e => e.images).length}
-                    </span>
-                    <span className="text-muted-foreground">/5</span>
+          <p className="mb-3 text-sm font-semibold text-foreground">{t('upload_heading')}</p>
+
+          <div className="mb-5 rounded-xl bg-[#F4F5FA] px-4 py-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+              {[
+                { met: hasValidImage, label: t('req_min_size') },
+                { met: hasMinCount, label: t('req_min_count') },
+                { met: hasValidImage, label: t('req_format') },
+                { met: hasProfileSelected, label: t('req_profile') },
+              ].map(({ met, label }) => (
+                <div key={label} className="flex items-center gap-2.5">
+                  <div
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors ${
+                      met ? 'bg-primary' : 'bg-muted-foreground/25'
+                    }`}
+                  >
+                    {met && <Check className="h-3 w-3 text-primary-foreground stroke-[3]" />}
                   </div>
-                  <div className={`text-[11px] ${hasProfileSelected ? 'text-green-600' : 'text-orange-600'}`}>
-                    {hasProfileSelected ? '✓ ' + (t('profile_selected') || 'Profile selected') : '⚠ ' + (t('profile_image_required') || 'No profile selected')}
-                  </div>
+                  <span
+                    className={`text-xs leading-snug transition-colors ${
+                      met ? 'text-primary font-medium' : 'text-muted-foreground'
+                    }`}
+                  >
+                    {label}
+                  </span>
                 </div>
-              </div>
-            </AlertDescription>
-          </Alert>
+              ))}
+            </div>
+          </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="">
-
-              <div className="space-y-2.5">
-                {fields.map((field, index) => {
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
+              <div className="grid grid-cols-3 gap-3">
+                {Array.from({ length: GRID_IMAGE_SLOTS }).map((_, index) => {
                   const previewSrc = watchedEntries?.[index]?.images;
                   const isProfile = Boolean(watchedEntries?.[index]?.is_profile);
                   return (
-                    <div
-                      key={field.id}
-                      className={`rounded-md border p-3 ${isProfile ? 'border-yellow-400/70 bg-yellow-50/30' : ''}`}
+                    <button
+                      key={fields[index]?.id ?? `slot-${index}`}
+                      type="button"
+                      onClick={() => (previewSrc ? openChangeModal(index) : openAddModal(index))}
+                      className={`relative aspect-square w-full overflow-hidden rounded-xl border-2 transition-colors ${
+                        previewSrc
+                          ? 'border-border hover:border-primary/50'
+                          : 'border-dashed border-muted-foreground/30 hover:border-primary/40 bg-muted/20'
+                      } ${isProfile ? 'ring-2 ring-[#4A7BF7] ring-offset-2' : ''}`}
                     >
-                      <div className="flex gap-3">
-                        {/* Image preview or placeholder */}
-                        <div className="flex-shrink-0 w-16 h-16">
-                          {previewSrc ? (
+                      {previewSrc ? (
+                        <>
+                          <img src={previewSrc} alt="" className="h-full w-full object-cover" />
+                          {isProfile && (
                             <div
-                              className="relative w-full h-full group cursor-pointer"
-                              onClick={() => openLightbox(previewSrc, index)}
+                              className="absolute top-1.5 right-1.5 rounded-full bg-[#4A7BF7] p-1 shadow"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openFeaturedModal();
+                              }}
                             >
-                              <img
-                                src={previewSrc}
-                                alt={`Preview ${index + 1}`}
-                                className="w-full h-full rounded border object-cover transition-opacity group-hover:opacity-90"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                <div className="bg-black/50 rounded-full p-1">
-                                  <Expand className="h-3 w-3 text-white" />
-                                </div>
-                              </div>
-                              {isProfile && (
-                                <div className="absolute -top-1.5 -right-1.5 rounded-full p-0.5 bg-yellow-400 shadow ring-2 ring-white">
-                                  <Star className="h-3 w-3 fill-white text-white" />
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="w-full h-full rounded border-2 border-dashed border-muted-foreground/25 flex items-center justify-center">
-                              <ImageIcon className="h-7 w-7 text-muted-foreground/40" />
+                              <Star className="h-3 w-3 fill-white text-white" />
                             </div>
                           )}
+                        </>
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center gap-1 text-muted-foreground">
+                          <ImageIcon className="h-6 w-6 opacity-40" />
+                          <span className="text-[10px] font-medium">{index + 1}</span>
                         </div>
-
-                        {/* Controls */}
-                        <div className="flex-1 min-w-0 space-y-2">
-                          <div className="flex gap-2">
-                            <FormField
-                              control={form.control}
-                              name={`entries.${index}.images`}
-                              render={() => (
-                                <FormItem className="flex-1 space-y-0">
-                                  <FormControl>
-                                    <Input
-                                      type="file"
-                                      accept="image/png,image/jpeg,image/jpg,image/webp"
-                                      multiple
-                                      onChange={(e) => handleImageChange(e, index)}
-                                      className="h-8 text-xs file:text-xs cursor-pointer"
-                                    />
-                                  </FormControl>
-                                  <FormMessage className="text-xs" />
-                                </FormItem>
-                              )}
-                            />
-
-                            <Button
-                              type="button"
-                              variant={isProfile ? 'default' : 'outline'}
-                              size="sm"
-                              disabled={!previewSrc}
-                              onClick={() => {
-                                fields.forEach((_, idx) => {
-                                  form.setValue(`entries.${idx}.is_profile`, idx === index, {
-                                    shouldValidate: true,
-                                    shouldDirty: true,
-                                  });
-                                });
-                              }}
-                              className="h-8 px-2 text-xs gap-1"
-                            >
-                              <Star className={`h-3 w-3 ${isProfile ? 'fill-current' : ''}`} />
-                              {t('set_as_profile')}
-                            </Button>
-
-                            {fields.length > 5 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => remove(index)}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                          </div>
-
-                          <FormField
-                            control={form.control}
-                            name={`entries.${index}.category`}
-                            render={({ field }) => (
-                              <FormItem className="space-y-0">
-                                <Select
-                                  value={field.value ? String(field.value) : undefined}
-                                  onValueChange={(value) => field.onChange(Number(value))}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger className="h-8 text-xs">
-                                      <SelectValue placeholder={t('category_placeholder')} />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {imageCategories.map((cat) => (
-                                      <SelectItem key={cat.id} value={String(cat.id)}>
-                                        {locale === 'en' ? cat.name_en : cat.name_mn}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`entries.${index}.descriptions`}
-                            render={({ field }) => (
-                              <FormItem className="space-y-0">
-                                <FormControl>
-                                  <Textarea
-                                    placeholder={t('description_placeholder')}
-                                    rows={2}
-                                    className="text-xs resize-none"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    </div>
+                      )}
+                    </button>
                   );
                 })}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextEmpty = watchedEntries.findIndex((e) => !e.images);
+                    openAddModal(nextEmpty >= 0 ? nextEmpty : watchedEntries.length);
+                  }}
+                  className="relative flex aspect-square w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-[#4A7BF7]/40 bg-[#E8F0FE]/50 text-[#4A7BF7] transition-colors hover:border-[#4A7BF7] hover:bg-[#E8F0FE]"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#4A7BF7]/10">
+                    <Upload className="h-4 w-4" />
+                  </div>
+                  <span className="text-[11px] font-medium leading-tight px-1 text-center">
+                    {t('upload_slot_label')}
+                  </span>
+                </button>
               </div>
 
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => append({ ...defaultImageEntry })}
-                className="w-full h-9 text-xs mt-3"
+                onClick={openFeaturedModal}
+                className="mt-3 w-full text-center text-sm text-[#4A7BF7] hover:underline"
               >
-                <Plus className="mr-1.5 h-3.5 w-3.5" />
-                {t('4')}
-              </Button>
+                {t('select_featured')}
+              </button>
 
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onBack}
-                  className="flex-1 h-9"
-                >
+              <div className="flex gap-3 pt-6">
+                <Button type="button" variant="outline" onClick={onBack} className="flex-1 h-10 rounded-xl">
                   <ChevronLeft className="mr-1.5 h-4 w-4" />
                   {t('5')}
                 </Button>
                 <Button
                   type="submit"
                   disabled={form.formState.isSubmitting}
-                  className="flex-1 h-9"
+                  className="flex-1 h-10 rounded-xl bg-[#4A7BF7] hover:bg-[#3d6ae0]"
                 >
-                  {t('6')}
+                  {t('finish')}
                   <ChevronRight className="ml-1.5 h-4 w-4" />
                 </Button>
               </div>
@@ -618,77 +638,134 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         </CardContent>
       </Card>
 
-      {/* Image Lightbox Modal */}
-      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-4xl w-full max-h-[90vh] p-0 overflow-hidden">
-          {/* Hidden title for accessibility */}
-          <DialogTitle className="sr-only">
-            {t('hotel_image')} {lightboxImage.index + 1}
+      {/* Add / Change image modal */}
+      <Dialog open={modalMode === 'add' || modalMode === 'change'} onOpenChange={(open) => !open && closeModal()}>
+        <DialogContent className="max-w-[400px] rounded-2xl p-6 gap-0">
+          <DialogTitle className="text-base font-semibold text-center pb-4 border-b mb-4">
+            {modalTitle}
           </DialogTitle>
 
-          <div className="p-4 pb-2">
-            <div className="flex items-center justify-between">
-              <span className="text-base font-medium">
-                {t('hotel_image')} {lightboxImage.index + 1}
-                {watchedEntries?.[lightboxImage.index]?.is_profile && (
-                  <span className="ml-2 text-sm text-muted-foreground">
-                    ({t('profile_image_label')})
-                  </span>
-                )}
-              </span>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">
+                {t('image_type_label')} <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={draftCategory ? String(draftCategory) : undefined}
+                onValueChange={(v) => setDraftCategory(Number(v))}
+              >
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue placeholder={t('select_placeholder_short')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {imageCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>
+                      {locale === 'en' ? cat.name_en : cat.name_mn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {renderImagePreview(draftImage, triggerFilePicker)}
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-11 rounded-xl"
+                onClick={triggerFilePicker}
+              >
+                {t('replace_image')}
+              </Button>
+              <Button
+                type="button"
+                className="flex-1 h-11 rounded-xl bg-[#4A7BF7] hover:bg-[#3d6ae0]"
+                onClick={saveImageModal}
+              >
+                {t('save_image')}
+              </Button>
             </div>
           </div>
-          <div className="relative px-4 pb-4">
-            <div className="flex items-center justify-center bg-muted/20 rounded-lg overflow-hidden">
-              <img
-                src={lightboxImage.src}
-                alt={`Image ${lightboxImage.index + 1}`}
-                className="max-w-full max-h-[70vh] object-contain"
-              />
-            </div>
-            {watchedEntries?.[lightboxImage.index]?.descriptions && (
-              <div className="mt-3 p-3 bg-muted/50 rounded-md">
-                <p className="text-sm text-muted-foreground">{t('2')}:</p>
-                <p className="text-sm mt-1">{watchedEntries[lightboxImage.index].descriptions}</p>
-              </div>
-            )}
+        </DialogContent>
+      </Dialog>
 
-            {/* Navigation buttons */}
-            <div className="flex justify-between items-center mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const prevIndex = lightboxImage.index - 1;
-                  const prevImage = watchedEntries?.[prevIndex]?.images;
-                  if (prevIndex >= 0 && prevImage) {
-                    openLightbox(prevImage, prevIndex);
-                  }
-                }}
-                disabled={lightboxImage.index === 0 || !watchedEntries?.[lightboxImage.index - 1]?.images}
+      {/* Featured image modal */}
+      <Dialog open={modalMode === 'featured'} onOpenChange={(open) => !open && closeModal()}>
+        <DialogContent className="max-w-[400px] rounded-2xl p-6 gap-0">
+          <DialogTitle className="text-base font-semibold text-center pb-4 border-b mb-4">
+            {t('featured_image_title')}
+          </DialogTitle>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">
+                {t('image_type_label')} <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={draftCategory ? String(draftCategory) : undefined}
+                onValueChange={(v) => setDraftCategory(Number(v))}
               >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue placeholder={t('select_placeholder_short')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {imageCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>
+                      {locale === 'en' ? cat.name_en : cat.name_mn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="relative flex items-center justify-center">
+              {filledIndexes.length > 1 && (
+                <button
+                  type="button"
+                  className="absolute left-0 z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-white shadow"
+                  onClick={() =>
+                    setFeaturedCarouselIndex((i) => (i - 1 + filledIndexes.length) % filledIndexes.length)
+                  }
+                >
+                  <CarouselPrev className="h-4 w-4" />
+                </button>
+              )}
+
+              <div className="relative flex aspect-square w-full max-w-[280px] items-center justify-center overflow-hidden rounded-xl border-2 border-[#4A7BF7] bg-[#E8F0FE]/30">
+                {featuredCarouselImage ? (
+                  <img src={featuredCarouselImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                ) : (
+                  <Upload className="h-10 w-10 text-[#4A7BF7]/60" />
+                )}
+              </div>
+
+              {filledIndexes.length > 1 && (
+                <button
+                  type="button"
+                  className="absolute right-0 z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-white shadow"
+                  onClick={() => setFeaturedCarouselIndex((i) => (i + 1) % filledIndexes.length)}
+                >
+                  <CarouselNext className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-11 rounded-xl text-xs sm:text-sm"
+                onClick={() => document.getElementById('featured-file-input')?.click()}
+              >
+                {t('upload_new')}
               </Button>
-              <span className="text-sm text-muted-foreground">
-                {watchedEntries.filter(e => e.images).findIndex((_, idx) =>
-                  watchedEntries.findIndex(e => e.images) + idx === lightboxImage.index
-                ) + 1} / {watchedEntries.filter(e => e.images).length}
-              </span>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const nextIndex = lightboxImage.index + 1;
-                  const nextImage = watchedEntries?.[nextIndex]?.images;
-                  if (nextIndex < watchedEntries.length && nextImage) {
-                    openLightbox(nextImage, nextIndex);
-                  }
-                }}
-                disabled={lightboxImage.index >= watchedEntries.length - 1 || !watchedEntries?.[lightboxImage.index + 1]?.images}
+                type="button"
+                className="flex-1 h-11 rounded-xl bg-[#4A7BF7] hover:bg-[#3d6ae0] text-xs sm:text-sm"
+                onClick={applyFeaturedImage}
               >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
+                {t('change_with_existing')}
               </Button>
             </div>
           </div>

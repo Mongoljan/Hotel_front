@@ -167,17 +167,18 @@ export function HotelOnboardingProvider({ children }: { children: React.ReactNod
     }
 
     try {
-      const res = await fetch(`https://dev.kacc.mn/api/property-details/?property=${user.hotel}`, {
-        cache: 'no-store'
-      });
-      if (res.ok) {
-        const details = await res.json();
-        if (Array.isArray(details) && details.length) {
+      const [detailsRes, imagesRes] = await Promise.all([
+        fetch(`https://dev.kacc.mn/api/property-details/?property=${user.hotel}`, { cache: 'no-store' }),
+        fetch(`https://dev.kacc.mn/api/property-images/?property=${user.hotel}`, { cache: 'no-store' }),
+      ]);
+      if (detailsRes.ok && imagesRes.ok) {
+        const [details, images] = await Promise.all([detailsRes.json(), imagesRes.json()]);
+        if (Array.isArray(details) && details.length && Array.isArray(images) && images.length) {
           return 2;
         }
       }
     } catch (err) {
-      console.warn('Failed to fetch property details for proceed calculation', err);
+      console.warn('Failed to fetch onboarding status for proceed calculation', err);
     }
 
     return 0;

@@ -452,7 +452,7 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
                 form.handleSubmit(onSubmit)();
               }}
             >
-              {t('finish')}
+              {t('6')}
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </DialogFooter>

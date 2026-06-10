@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import StepIndicator from './Step';
+import OnboardingSuccessDialog from './OnboardingSuccessDialog';
 import RegisterHotel1 from './1PropertyBasicInfo';
 import RegisterHotel2 from './2Address';
 import RegisterHotel3 from './3GoogleMap';
@@ -29,6 +30,8 @@ interface ProceedProps {
 
 export default function RegisterPage({ proceed, setProceed, setView }: ProceedProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [hotelName, setHotelName] = useState('');
   const { user } = useAuth();
   const totalSteps = 7;
   const router = useRouter();
@@ -45,8 +48,8 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
         { step: 2, url: `${API_CONFIRM_ADDRESS}?property=${hotelId}`, key: 'step2' },
         { step: 4, url: `${API_PROPERTY_POLICIES}?property=${hotelId}`, key: 'step4' },
         { step: 5, url: `${API_CANCELLATION_FEES}?property=${hotelId}`, key: 'step5Cancellation' },
-        { step: 6, url: `${API_PROPERTY_IMAGES}?property=${hotelId}`, key: 'step5' },
-        { step: 7, url: `${API_PROPERTY_DETAILS}?property=${hotelId}`, key: 'step6' },
+        { step: 6, url: `${API_PROPERTY_DETAILS}?property=${hotelId}`, key: 'step6' },
+        { step: 7, url: `${API_PROPERTY_IMAGES}?property=${hotelId}`, key: 'step5' },
       ];
 
       const propertyData: Record<string, any> = {};
@@ -179,24 +182,37 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
       case 5:
         return <RegisterHotel5Cancellation key={currentStep} onNext={() => handleNext(6)} onBack={() => handleBack(5)} />;
       case 6:
-        return <RegisterHotel5 key={currentStep} onNext={() => handleNext(7)} onBack={() => handleBack(6)} />;
-      case 7:
         return (
           <RegisterHotel6
             key={currentStep}
             proceed={proceed}
             setProceed={setProceed}
+            onNext={() => handleNext(7)}
+            onBack={() => handleBack(6)}
+          />
+        );
+      case 7:
+        return (
+          <RegisterHotel5
+            key={currentStep}
             onNext={() => {
-              toast.success('Буудлын мэдээлэл амжилттай хадгалагдлаа! Одоо өрөөнүүдээ нэмнэ үү.');
-              setTimeout(() => {
-                UserStorage.removeItem('currentStep');
-                if (user?.id && user?.hotel) {
-                  UserStorage.setItem('proceed', '2', user.id);
-                  const cacheKey = `hotelCompletion_${user.id}_${user.hotel}`;
-                  localStorage.setItem(cacheKey, 'completed');
+              if (user?.id) {
+                const pd = UserStorage.getItem<string>('propertyData', user.id);
+                if (pd) {
+                  try {
+                    const parsed = JSON.parse(pd);
+                    const name =
+                      parsed?.step1?.property_name_mn ||
+                      parsed?.step1?.property_name_en ||
+                      parsed?.step1?.PropertyName ||
+                      '';
+                    setHotelName(name);
+                  } catch {
+                    setHotelName('');
+                  }
                 }
-                setProceed(2);
-              }, transitionDelay);
+              }
+              setShowSuccessDialog(true);
             }}
             onBack={() => handleBack(7)}
           />
@@ -206,10 +222,26 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
     }
   };
 
+  const handleSuccessConfirm = () => {
+    setShowSuccessDialog(false);
+    UserStorage.removeItem('currentStep');
+    if (user?.id && user?.hotel) {
+      UserStorage.setItem('proceed', '2', user.id);
+      const cacheKey = `hotelCompletion_${user.id}_${user.hotel}`;
+      localStorage.setItem(cacheKey, 'completed');
+    }
+    setProceed(2);
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-4">
       <StepIndicator totalSteps={totalSteps} currentStep={currentStep} />
       {renderStep()}
+      <OnboardingSuccessDialog
+        open={showSuccessDialog}
+        hotelName={hotelName}
+        onConfirm={handleSuccessConfirm}
+      />
     </div>
   );
 }

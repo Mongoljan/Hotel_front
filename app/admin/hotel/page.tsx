@@ -124,14 +124,13 @@ export default function RegisterHotel() {
         const hid = user.hotel;
 
         if (hid) {
-          const res = await fetch(
-            `https://dev.kacc.mn/api/property-details/?property=${hid}`,
-            { cache: 'no-store' }
-          );
+          const [detailsRes, imagesRes] = await Promise.all([
+            fetch(`https://dev.kacc.mn/api/property-details/?property=${hid}`, { cache: 'no-store' }),
+            fetch(`https://dev.kacc.mn/api/property-images/?property=${hid}`, { cache: 'no-store' }),
+          ]);
 
-          if (!res.ok) {
-            console.error('❌ Property details fetch failed:', res.status);
-            // If we had cache, trust it and keep proceed=2. Otherwise show proceed=0
+          if (!detailsRes.ok || !imagesRes.ok) {
+            console.error('❌ Onboarding status fetch failed:', detailsRes.status, imagesRes.status);
             if (cachedStatus !== 'completed') {
               setProceed(0);
             }
@@ -139,27 +138,37 @@ export default function RegisterHotel() {
           }
 
           let details;
+          let images;
           try {
-            details = await res.json();
+            details = await detailsRes.json();
+            images = await imagesRes.json();
           } catch (parseError) {
-            console.error('❌ Failed to parse property details JSON:', parseError);
-            // If we had cache, trust it and keep proceed=2. Otherwise show proceed=0
+            console.error('❌ Failed to parse onboarding status JSON:', parseError);
             if (cachedStatus !== 'completed') {
               setProceed(0);
             }
             return;
           }
-          if (Array.isArray(details) && details.length > 0) {
-            // Six steps completed - show SixStepInfo
-            localStorage.setItem(cacheKey, 'completed'); // Cache it
+
+          const hasDetails = Array.isArray(details) && details.length > 0;
+          const hasImages = Array.isArray(images) && images.length > 0;
+
+          if (hasDetails && hasImages) {
+            localStorage.setItem(cacheKey, 'completed');
             setProceed(2);
             return;
-          } else {
-            // Only clear cache and set proceed=0 if we didn't already have cache
-            if (cachedStatus !== 'completed') {
-              localStorage.removeItem(cacheKey); // Clear invalid cache
-            } else {
+          }
+
+          if (hasDetails && !hasImages) {
+            if (cachedStatus === 'completed') {
+              localStorage.removeItem(cacheKey);
             }
+            setProceed(1);
+            return;
+          }
+
+          if (cachedStatus !== 'completed') {
+            localStorage.removeItem(cacheKey);
           }
         }
 
