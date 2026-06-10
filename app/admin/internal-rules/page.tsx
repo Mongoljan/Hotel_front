@@ -3,9 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { z } from 'zod';
+import { useForm } from 'react-hook-form';
 import {
   IconPencil,
   IconLoader2,
@@ -17,7 +15,6 @@ import {
 
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
-import { schemaHotelSteps3 } from '@/app/schema';
 import type { PropertyPolicy } from '@/app/admin/hotel/types';
 import {
   formatTime,
@@ -26,6 +23,10 @@ import {
   formatBreakfastType,
   normalizePolicyToForm,
   buildPolicyPayload,
+  getInternalRulesSectionSchema,
+  pickSectionFormValues,
+  mergePolicySectionUpdate,
+  getFirstZodErrorMessage,
   type PolicyFormFields,
 } from '@/lib/policyFormatters';
 
@@ -45,6 +46,8 @@ import CheckInOutSection from '@/app/auth/register/Hotel/sections/CheckInOutSect
 import BreakfastPolicySection from '@/app/auth/register/Hotel/sections/BreakfastPolicySection';
 import ParkingPolicySection from '@/app/auth/register/Hotel/sections/ParkingPolicySection';
 import ChildPolicySection from '@/app/auth/register/Hotel/sections/ChildPolicySection';
+import AcceptedCardsSection, { type AcceptedCardType } from '@/app/auth/register/Hotel/sections/AcceptedCardsSection';
+import { useCombinedData } from '@/app/hooks/useCombinedData';
 
 const API_URL = 'https://dev.kacc.mn/api/property-policies/';
 
@@ -72,6 +75,7 @@ const DEFAULT_VALUES: PolicyFormFields = {
   pet_policy: false,
   min_guest_age: 18,
   languages: [],
+  accepted_card_ids: [],
   breakfast_status: 'no',
   breakfast_start_time: '',
   breakfast_end_time: '',
@@ -120,7 +124,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="space-y-0.5">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium">{value ?? '—'}</p>
+      <div className="text-sm font-medium">{value ?? '—'}</div>
     </div>
   );
 }
@@ -130,15 +134,14 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 export default function InternalRulesPage() {
   const t = useTranslations('4PropertyPolicies');
   const { user } = useAuth();
+  const { data: combinedData } = useCombinedData();
+  const acceptedCards: AcceptedCardType[] = combinedData?.acceptedCardType ?? [];
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [editSection, setEditSection] = useState<SectionKey | null>(null);
   const [activeMenuItem, setActiveMenuItem] = useState<SectionKey>('time');
 
   const form = useForm<PolicyFormFields>({
-    resolver: zodResolver(schemaHotelSteps3),
-    mode: 'onSubmit',
-    reValidateMode: 'onSubmit',
     defaultValues: DEFAULT_VALUES,
   });
 
@@ -178,10 +181,30 @@ export default function InternalRulesPage() {
     [propertyPolicy, form]
   );
 
-  const onSubmit: SubmitHandler<PolicyFormFields> = async (data) => {
-    if (!user?.hotel || !propertyPolicy) return;
+  const onSaveSection = async () => {
+    if (!user?.hotel || !propertyPolicy || !editSection) return;
+
+    form.clearErrors();
+    const values = form.getValues();
+    const sectionSchema = getInternalRulesSectionSchema(editSection);
+    const sectionInput = pickSectionFormValues(editSection, values);
+    const parsed = sectionSchema.safeParse(sectionInput);
+
+    if (!parsed.success) {
+      parsed.error.issues.forEach((issue) => {
+        const field = issue.path[0];
+        if (typeof field === 'string') {
+          form.setError(field as keyof PolicyFormFields, { message: issue.message });
+        }
+      });
+      toast.error(getFirstZodErrorMessage(parsed.error));
+      return;
+    }
+
+    const merged = mergePolicySectionUpdate(propertyPolicy, editSection, parsed.data);
+
     try {
-      const payload = buildPolicyPayload(data, user.hotel);
+      const payload = buildPolicyPayload(merged, user.hotel);
       const response = await fetch(`${API_URL}${propertyPolicy.id}/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -284,8 +307,21 @@ export default function InternalRulesPage() {
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              {editSection === 'time' && <CheckInOutSection form={form} t={t} />}
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                void onSaveSection();
+              }}
+              className="space-y-5"
+            >
+              {editSection === 'time' && (
+                <>
+                  <CheckInOutSection form={form} t={t} />
+                  {acceptedCards.length > 0 && (
+                    <AcceptedCardsSection form={form} t={t} cards={acceptedCards} />
+                  )}
+                </>
+              )}
               {editSection === 'breakfast' && <BreakfastPolicySection form={form} t={t} />}
               {editSection === 'parking' && <ParkingPolicySection form={form} t={t} />}
               {editSection === 'children' && <ChildPolicySection form={form} t={t} />}
@@ -349,6 +385,28 @@ function TimeSection({ policy, onEdit }: { policy: PropertyPolicy; onEdit: () =>
             value={Array.isArray(policy.languages) && policy.languages.length > 0
               ? policy.languages.join(', ')
               : '—'}
+          />
+          <InfoRow
+            label="Зөвшөөрөх төлбөрийн хэрэгсэл"
+            value={
+              Array.isArray(policy.accepted_cards) && policy.accepted_cards.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {[...policy.accepted_cards]
+                    .sort((a, b) => a.order - b.order)
+                    .map((card) => (
+                      <span
+                        key={card.id}
+                        className="inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-medium"
+                      >
+                        {card.icon ? (
+                          <img src={card.icon} alt={card.name} className="h-4 w-auto object-contain" />
+                        ) : null}
+                        {card.name}
+                      </span>
+                    ))}
+                </div>
+              ) : '—'
+            }
           />
         </div>
       </div>

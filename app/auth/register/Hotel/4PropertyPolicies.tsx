@@ -22,6 +22,7 @@ import CheckInOutSection from './sections/CheckInOutSection';
 import BreakfastPolicySection from './sections/BreakfastPolicySection';
 import ParkingPolicySection from './sections/ParkingPolicySection';
 import ChildPolicySection from './sections/ChildPolicySection';
+import AcceptedCardsSection, { type AcceptedCardType } from './sections/AcceptedCardsSection';
 
 const API_URL = 'https://dev.kacc.mn/api/property-policies/';
 
@@ -49,9 +50,11 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
   const { data: combinedData } = useCombinedData();
   const [initialValues, setInitialValues] = React.useState<FormFields | null>(null);
   const [languages, setLanguages] = useState<{ id: number; languages_name_mn: string }[]>([]);
+  const [acceptedCards, setAcceptedCards] = useState<AcceptedCardType[]>([]);
 
   useEffect(() => {
     if (combinedData?.languages) setLanguages(combinedData.languages);
+    if (combinedData?.acceptedCardType) setAcceptedCards(combinedData.acceptedCardType);
   }, [combinedData]);
 
   const form = useForm<FormFields>({
@@ -66,6 +69,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       pet_policy: false,
       min_guest_age: 18,
       languages: [],
+      accepted_card_ids: [],
       breakfast_status: 'no',
       breakfast_start_time: '',
       breakfast_end_time: '',
@@ -110,6 +114,11 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
             languages: Array.isArray(initialData.languages)
               ? initialData.languages.map((l: number | string) => Number(l))
               : [],
+            accepted_card_ids: Array.isArray(initialData.accepted_cards)
+              ? initialData.accepted_cards.map((c: { id: number | string }) => Number(c.id))
+              : Array.isArray(initialData.accepted_card_ids)
+                ? initialData.accepted_card_ids.map((id: number | string) => Number(id))
+                : [],
             breakfast_status: initialData.breakfast_policy?.status || 'no',
             breakfast_start_time: normalizeTime(initialData.breakfast_policy?.start_time) || '',
             breakfast_end_time: normalizeTime(initialData.breakfast_policy?.end_time) || '',
@@ -172,6 +181,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       pet_policy: data.pet_policy,
       min_guest_age: data.min_guest_age,
       languages: data.languages,
+      accepted_card_ids: data.accepted_card_ids ?? [],
       breakfast_policy: {
         status: data.breakfast_status,
         start_time: data.breakfast_status !== 'no' ? stripSeconds(data.breakfast_start_time || '') : null,
@@ -296,6 +306,9 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
                     </FormItem>
                   )}
                 />
+                {acceptedCards.length > 0 && (
+                  <AcceptedCardsSection form={form} t={t} cards={acceptedCards} />
+                )}
               </div>
 
               <Separator />

@@ -443,6 +443,7 @@ export const schemaHotelSteps3 = z.object({
   languages: z
     .array(z.coerce.number())
     .min(1, { message: "Хамгийн багадаа нэг хэл сонгоно уу" }),
+  accepted_card_ids: z.array(z.coerce.number()).default([]),
 
   // Breakfast policy
   breakfast_status: z.enum(['no', 'free', 'paid']),

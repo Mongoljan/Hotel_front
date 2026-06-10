@@ -57,6 +57,7 @@
     "pet_policy": "Pet friendly",
     "min_guest_age": "Minimum guest age",
     "languages": "Languages",
+    "accepted_cards": "Accepted payment methods",
     "1":"Cancel Time",
     "2":"Before Time",
     "3":"After Fee",

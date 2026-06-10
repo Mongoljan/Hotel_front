@@ -44,6 +44,13 @@ export interface PropertyPolicy {
   pet_policy?: boolean;
   min_guest_age?: number;
   languages?: number[];
+  accepted_card_ids?: number[];
+  accepted_cards?: Array<{
+    id: number;
+    name: string;
+    icon: string;
+    order: number;
+  }>;
   cancellation_fee?: {
     id?: number;
     property: number;

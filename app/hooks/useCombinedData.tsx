@@ -12,6 +12,7 @@ interface CombinedData {
   soum: { id: number; name: string }[];
   district: { id: number; name: string }[];
   languages: { id: number; languages_name_mn: string; languages_name_en: string }[];
+  acceptedCardType: { id: number; name: string; icon: string; order: number }[];
 }
 
 // ✅ In-memory singleton cache
