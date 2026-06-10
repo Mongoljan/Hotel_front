@@ -21,7 +21,86 @@ import { cn } from "@/lib/utils";
 import { OptionButton } from "@/components/ui/option-button";
 
 const API_URL = 'https://dev.kacc.mn/api/property-basic-info/';
+const PROPERTIES_API = 'https://dev.kacc.mn/api/properties';
 import { useCombinedData } from '@/app/hooks/useCombinedData';
+
+type RegistrationHotelNames = {
+  property_name_mn: string;
+  property_name_en: string;
+};
+
+function mapPropertyRegistrationNames(data: Record<string, unknown>): RegistrationHotelNames {
+  const propertyName = String(data.PropertyName || data.property_name_mn || '').trim();
+  const propertyNameEn = String(
+    data.PropertyName_en || data.PropertyNameEn || data.property_name_en || ''
+  ).trim();
+
+  if (propertyNameEn) {
+    return { property_name_mn: propertyName, property_name_en: propertyNameEn };
+  }
+
+  const hasCyrillic = /[А-Яа-яӨөҮүЁё]/.test(propertyName);
+  const isLatinOnly = /^[A-Za-z0-9\s.,'-]+$/.test(propertyName);
+
+  if (hasCyrillic) {
+    return { property_name_mn: propertyName, property_name_en: '' };
+  }
+  if (isLatinOnly) {
+    return { property_name_mn: '', property_name_en: propertyName };
+  }
+
+  return { property_name_mn: propertyName, property_name_en: '' };
+}
+
+async function fetchRegistrationHotelNames(
+  hotelId: number | string
+): Promise<RegistrationHotelNames> {
+  try {
+    const res = await fetch(`${PROPERTIES_API}/${hotelId}/`, { cache: 'no-store' });
+    if (!res.ok) return { property_name_mn: '', property_name_en: '' };
+
+    const data = await res.json();
+    return mapPropertyRegistrationNames(data);
+  } catch {
+    return { property_name_mn: '', property_name_en: '' };
+  }
+}
+
+function formatStep1FormData(
+  step1Data: Record<string, unknown>,
+  registrationNames: RegistrationHotelNames
+): FormFields {
+  return {
+    ...step1Data,
+    property_name_mn:
+      (step1Data.property_name_mn as string) || registrationNames.property_name_mn || '',
+    property_name_en:
+      (step1Data.property_name_en as string) || registrationNames.property_name_en || '',
+    star_rating: step1Data.star_rating?.toString() || '',
+    languages: Array.isArray(step1Data.languages)
+      ? step1Data.languages.map((l: unknown) => l.toString())
+      : [],
+    total_hotel_rooms: step1Data.total_hotel_rooms?.toString() || '',
+    available_rooms: step1Data.available_rooms?.toString() || '',
+    part_of_group: Boolean(step1Data.part_of_group),
+    group_name: (step1Data.group_name as string) || '',
+    start_date: (step1Data.start_date as string) || '',
+    sales_room_limitation: Boolean(step1Data.sales_room_limitation),
+  } as FormFields;
+}
+
+const EMPTY_STEP1_DEFAULTS: FormFields = {
+  property_name_mn: '',
+  property_name_en: '',
+  start_date: '',
+  star_rating: '',
+  part_of_group: false,
+  group_name: '',
+  total_hotel_rooms: '',
+  available_rooms: '',
+  sales_room_limitation: false,
+  languages: [],
+};
 
 interface LanguageType { id: number; languages_name_mn: string }
 interface RatingType { id: number; rating: string }
@@ -51,51 +130,41 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         return;
       }
 
+      const registrationNames = await fetchRegistrationHotelNames(user.hotel);
+
       const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
       if (propertyDataStr) {
         const stored = JSON.parse(propertyDataStr);
         if (stored.step1) {
-          // Ensure data types are correct for form
-          const formattedData = {
-            ...stored.step1,
-            star_rating: stored.step1.star_rating?.toString() || '',
-            languages: Array.isArray(stored.step1.languages) 
-              ? stored.step1.languages.map((l: any) => l.toString())
-              : [],
-            total_hotel_rooms: stored.step1.total_hotel_rooms?.toString() || '',
-            available_rooms: stored.step1.available_rooms?.toString() || '',
-          };
-          setDefaultValues(formattedData);
+          setDefaultValues(formatStep1FormData(stored.step1, registrationNames));
           return;
         }
       }
 
       try {
-        const res = await fetch(`${API_URL}?property=${user.hotel}`);
+        const res = await fetch(`${API_URL}?property=${user.hotel}`, { cache: 'no-store' });
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          const step1Data = data[0];
-          // Ensure data types are correct for form
-          const formattedData = {
-            ...step1Data,
-            star_rating: step1Data.star_rating?.toString() || '',
-            languages: Array.isArray(step1Data.languages) 
-              ? step1Data.languages.map((l: any) => l.toString())
-              : [],
-            total_hotel_rooms: step1Data.total_hotel_rooms?.toString() || '',
-            available_rooms: step1Data.available_rooms?.toString() || '',
-          };
+          const formattedData = formatStep1FormData(data[0], registrationNames);
           UserStorage.setItem('propertyData', JSON.stringify({
             step1: formattedData,
             propertyId: user.hotel,
           }), user.id);
           setDefaultValues(formattedData);
         } else {
-          setDefaultValues({} as FormFields);
+          setDefaultValues({
+            ...EMPTY_STEP1_DEFAULTS,
+            property_name_mn: registrationNames.property_name_mn,
+            property_name_en: registrationNames.property_name_en,
+          });
         }
       } catch (error) {
         console.error('Error fetching step1 data:', error);
-        setDefaultValues({} as FormFields);
+        setDefaultValues({
+          ...EMPTY_STEP1_DEFAULTS,
+          property_name_mn: registrationNames.property_name_mn,
+          property_name_en: registrationNames.property_name_en,
+        });
       }
     };
 
@@ -105,18 +174,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
   const form = useForm<FormFields>({
     resolver: zodResolver(schemaHotelSteps1),
     mode: 'onChange',
-    defaultValues: defaultValues || {
-      property_name_mn: '',
-      property_name_en: '',
-      start_date: '',
-      star_rating: '',
-      part_of_group: false,
-      group_name: '',
-      total_hotel_rooms: '',
-      available_rooms: '',
-      sales_room_limitation: false,
-      languages: []
-    }
+    defaultValues: defaultValues || EMPTY_STEP1_DEFAULTS
   });
 
   const { handleSubmit, watch, reset } = form;

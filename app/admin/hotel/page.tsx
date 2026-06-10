@@ -71,7 +71,6 @@ export default function RegisterHotel() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const [proceed, setProceed] = useState<number | null>(null);
   const [hotelApproved, setHotelApproved] = useState(false);
-  const [stepStatus, setStepStatus] = useState(2);
   const [view, setView] = useState<'proceed' | 'register'>('proceed');
   
   // Check if user is staff (Manager=3 or Reception=4)
@@ -257,7 +256,6 @@ export default function RegisterHotel() {
         if (res.ok) {
           const data: Hotel = await res.json();
           setHotelApproved(data.is_approved);
-          setStepStatus(data.is_approved ? 3 : 2);
           setPropertyBaseInfo(data as any);
         }
       } catch (e) {
@@ -315,153 +313,22 @@ export default function RegisterHotel() {
  
 
   const steps = [
-    'Хүсэлт илгээсэн',
-    'Хүлээгдэж байгаа',
-    'Баталгаажсан',
-    'Дэлгэрэнгүй мэдээлэл оруулах',
+    'Компанийн мэдээлэл',
+    'Буудлын үндсэн бүртгэл',
+  ];
+
+  // Two-step registration: step 1 done after signup; step 2 until full hotel onboarding
+  const registrationStepStatuses: ('completed' | 'active' | 'pending')[] = [
+    'completed',
+    proceed === 2 ? 'completed' : hotelApproved ? 'active' : 'pending',
   ];
 
   return (
     <div className="space-y-3">
-      {/* Hero Card - COMMENTED OUT FOR NOW */}
-      {/* <div className="p-1">
-      {proceed === 2 && (
-        <Card className="border-2 overflow-hidden">
-          <CardContent className="p-0">
-            <div className="grid md:grid-cols-[400px_1fr] gap-0">
-              <div className="relative bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-                {isLoadingData ? (
-                  <div className="flex items-center justify-center h-[300px] md:h-[400px]">
-                    <div className="text-center">
-                      <div className="h-8 w-8 mx-auto border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      <p className="text-sm text-muted-foreground mt-3">{t('loading')}</p>
-                    </div>
-                  </div>
-                ) : propertyImages.length > 0 ? (
-                  <div className="relative h-[300px] md:h-[400px]">
-                    <Image
-                      src={propertyImages[0].image}
-                      alt={propertyImages[0].description || hotelDisplayData.hotelName}
-                      fill
-                      className="object-cover"
-                      priority
-                    />
-                    <div className="absolute top-4 left-4">
-                      <Badge variant="secondary" className="bg-white/90 backdrop-blur">
-                        <IconPhoto className="mr-1.5 h-3.5 w-3.5" />
-                        {propertyImages.length} {t('images')}
-                      </Badge>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-[300px] md:h-[400px]">
-                    <IconPhoto className="h-16 w-16 text-muted-foreground/40" />
-                    <p className="text-sm text-muted-foreground mt-3">{t('no_images')}</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-6 md:p-8 flex flex-col justify-between">
-                <div className="space-y-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h1 className="text-2xl font-semibold">
-                        {hotelDisplayData.hotelName}
-                      </h1>
-                      {basicInfo?.property_name_en && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {basicInfo.property_name_en}
-                        </p>
-                      )}
-                    </div>
-                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 shrink-0">
-                      <IconCheck className="mr-1 h-3.5 w-3.5" />
-                      {t('verified')}
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <IconBuildingBank className="h-4 w-4" />
-                    <span>{hotelDisplayData.propertyType}</span>
-                  </div>
-
-                  {isLoadingData ? (
-                    <div className="grid grid-cols-2 gap-4">
-                      {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={i} className="space-y-2">
-                          <div className="h-4 w-20 bg-muted rounded animate-pulse" />
-                          <div className="h-5 w-16 bg-muted rounded animate-pulse" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">{t('total_rooms')}</p>
-                        <div className="flex items-baseline gap-2">
-                          <IconBed className="h-4 w-4 text-primary" />
-                          <p className="text-base font-semibold">{hotelDisplayData.totalRooms}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">{t('start_date')}</p>
-                        <div className="flex items-baseline gap-2">
-                          <IconCalendar className="h-4 w-4 text-primary" />
-                          <p className="text-base font-semibold">{hotelDisplayData.startDate}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">{t('children')}</p>
-                        <div className="flex items-baseline gap-2">
-                          <IconMoodKid className="h-4 w-4 text-primary" />
-                          <p className="text-base font-semibold">{hotelDisplayData.childrenAllowed}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">{t('pets')}</p>
-                        <div className="flex items-baseline gap-2">
-                          <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <p className="text-base font-semibold">{hotelDisplayData.petsAllowed}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">{t('breakfast')}</p>
-                        <div className="flex items-baseline gap-2">
-                          <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                          </svg>
-                          <p className="text-base font-semibold">{hotelDisplayData.breakfast}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">{t('star_rating')}</p>
-                        <div className="flex items-baseline gap-2">
-                          <svg className="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                          </svg>
-                          <p className="text-base font-semibold">{hotelDisplayData.starRating}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      </div> */}
 
       {view === 'proceed' && proceed !== 2 && (
         <div className="w-full">
-          <StepIndicator steps={steps} currentStep={stepStatus} />
+          <StepIndicator steps={steps} stepStatuses={registrationStepStatuses} />
         </div>
       )}
 

@@ -289,13 +289,8 @@ export const schemaHotelRegistration2 = z.object({
   register: z
     .string()
     .min(1, { message: "РД-оо оруулна уу" })
-    .refine((val) => {
-      const trimmed = (val || '').trim();
-      if (/^\d{7}$/.test(trimmed)) return true;
-      if (/^[А-ЯӨҮа-яөү]{2}\d{8}$/.test(trimmed)) return true;
-      return false;
-    }, {
-      message: "РД буруу байна. Эхний 2 үсэг монгол байх ба 10 оронтой, эсвэл 7 оронтой тоо байх ёстой.",
+    .refine((val) => /^\d{7}$/.test((val || '').trim()), {
+      message: "РД буруу байна. 7 оронтой тоо байх ёстой.",
     }),
   CompanyName: z
     .string()

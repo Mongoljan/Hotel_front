@@ -206,6 +206,10 @@
     "deselect_all": "Deselect all"
   },
   "HotelPage": {
+    "registration_request_title": "Property registration request",
+    "step_completed": "Completed",
+    "step_in_progress": "In progress",
+    "step_pending": "Not completed",
     "loading": "Loading...",
     "images": "images",
     "no_images": "No images available",
@@ -618,6 +622,10 @@
   "email": "Hotel Official Email",
   "company_lookup_loading": "Looking up business name...",
   "company_lookup_not_found": "Business name not found. Please enter manually",
+  "company_lookup_success": "Business name found",
+  "company_lookup_search": "Search",
+  "company_lookup_retry": "Search again",
+  "company_lookup_slow": "Lookup may take a moment. You can type the name manually and continue.",
   "back": "Back",
   "next": "Continue"
 },

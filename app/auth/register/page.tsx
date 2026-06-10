@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { schemaHotelRegistration2 } from '../../schema';
@@ -36,9 +36,7 @@ interface OwnershipType {
 type FormFields = z.infer<typeof schemaHotelRegistration2>;
 
 function isValidRegNo(val: string): boolean {
-  const trimmed = (val || '').trim();
-  if (/^\d{7}$/.test(trimmed)) return true;
-  return /^[А-ЯӨҮа-яөү]{2}\d{8}$/.test(trimmed);
+  return /^\d{7}$/.test((val || '').trim());
 }
 
 export default function RegisterPage() {
@@ -50,6 +48,11 @@ export default function RegisterPage() {
   const [ownershipTypes, setOwnershipTypes] = useState<OwnershipType[]>([]);
   const [companyLookupLoading, setCompanyLookupLoading] = useState(false);
   const [companyLookupFailed, setCompanyLookupFailed] = useState(false);
+  const [companyLookupSucceeded, setCompanyLookupSucceeded] = useState(false);
+  const [companyLookupSlow, setCompanyLookupSlow] = useState(false);
+  const lookupAbortRef = useRef<AbortController | null>(null);
+  const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lookupSlowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const saved = typeof window !== "undefined" ? localStorage.getItem("hotelFormData") : null;
   const parsedDefaults: Partial<FormFields> = saved ? JSON.parse(saved) : {};
@@ -87,8 +90,6 @@ export default function RegisterPage() {
     },
   });
 
-  const regNo = watch('register') || '';
-
   const { data: combinedHook } = useCombinedData();
   useEffect(() => {
     if (combinedHook?.property_types) setPropertyTypes(combinedHook.property_types);
@@ -103,38 +104,76 @@ export default function RegisterPage() {
 
   useEffect(() => {
     const subscription = watch((_, { name }) => {
-      if (name) {
+      if (!name) return;
+      if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+      saveDebounceRef.current = setTimeout(() => {
         localStorage.setItem('hotelFormData', JSON.stringify(getValues()));
-      }
+      }, 350);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+    };
   }, [watch, getValues]);
+
+  const applyCompanyLookupResult = useCallback((name: string) => {
+    setValue('CompanyName', name, { shouldValidate: true });
+
+    const currentPropertyName = getValues('PropertyName')?.trim();
+    if (!currentPropertyName) {
+      setValue('PropertyName', name, { shouldValidate: true });
+    }
+  }, [getValues, setValue]);
+
+  const clearLookupSlowTimer = useCallback(() => {
+    if (lookupSlowTimerRef.current) {
+      clearTimeout(lookupSlowTimerRef.current);
+      lookupSlowTimerRef.current = null;
+    }
+    setCompanyLookupSlow(false);
+  }, []);
 
   const fetchCompanyName = useCallback(async (regno: string) => {
     if (!isValidRegNo(regno)) return;
 
+    lookupAbortRef.current?.abort();
+    const controller = new AbortController();
+    lookupAbortRef.current = controller;
+
     setCompanyLookupLoading(true);
     setCompanyLookupFailed(false);
+    setCompanyLookupSucceeded(false);
+    clearLookupSlowTimer();
+    lookupSlowTimerRef.current = setTimeout(() => setCompanyLookupSlow(true), 2000);
+
     try {
-      const result = await lookupEbarimt(regno);
+      const result = await lookupEbarimt(regno, { signal: controller.signal });
+      if (controller.signal.aborted) return;
+
       if (result.found && result.name) {
-        setValue('CompanyName', result.name, { shouldValidate: true });
+        applyCompanyLookupResult(result.name);
+        setCompanyLookupSucceeded(true);
       } else {
         setCompanyLookupFailed(true);
-        setValue('CompanyName', '');
       }
     } catch {
-      setCompanyLookupFailed(true);
+      if (!controller.signal.aborted) {
+        setCompanyLookupFailed(true);
+      }
     } finally {
-      setCompanyLookupLoading(false);
+      if (!controller.signal.aborted) {
+        setCompanyLookupLoading(false);
+        clearLookupSlowTimer();
+      }
     }
-  }, [setValue]);
+  }, [applyCompanyLookupResult, clearLookupSlowTimer]);
 
   useEffect(() => {
-    if (regNo && isValidRegNo(regNo) && !getValues('CompanyName')) {
-      fetchCompanyName(regNo);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      lookupAbortRef.current?.abort();
+      clearLookupSlowTimer();
+    };
+  }, [clearLookupSlowTimer]);
 
   const onSubmit: SubmitHandler<FormFields> = (data) => {
     const phoneRaw = data.phone.replace(/\s/g, '');
@@ -168,18 +207,23 @@ export default function RegisterPage() {
                         <Input
                           id="register"
                           type="text"
+                          inputMode="numeric"
+                          maxLength={7}
                           value={field.value || ''}
                           onChange={(e) => {
-                            const value = e.target.value;
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 7);
                             field.onChange(value);
                             setCompanyLookupFailed(false);
-                            if (isValidRegNo(value)) {
+                            setCompanyLookupSucceeded(false);
+                            setCompanyLookupSlow(false);
+                          }}
+                          onBlur={(e) => {
+                            field.onBlur();
+                            const value = e.target.value.trim();
+                            if (isValidRegNo(value) && !getValues('CompanyName')?.trim()) {
                               fetchCompanyName(value);
-                            } else {
-                              setValue('CompanyName', '', { shouldValidate: true });
                             }
                           }}
-                          onBlur={field.onBlur}
                           className={errors.register ? "border-destructive" : ""}
                         />
                       )}
@@ -193,12 +237,21 @@ export default function RegisterPage() {
                     <Input
                       id="companyName"
                       type="text"
-                      readOnly={companyLookupLoading}
-                      {...register('CompanyName')}
+                      {...register('CompanyName', {
+                        onChange: () => {
+                          setCompanyLookupFailed(false);
+                          setCompanyLookupSucceeded(false);
+                        },
+                      })}
                       className={errors.CompanyName ? "border-destructive" : ""}
                     />
                     {companyLookupLoading && (
-                      <div className="text-xs text-muted-foreground">{t("company_lookup_loading")}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {companyLookupSlow ? t("company_lookup_slow") : t("company_lookup_loading")}
+                      </div>
+                    )}
+                    {companyLookupSucceeded && !companyLookupLoading && (
+                      <div className="text-xs text-green-600">{t("company_lookup_success")}</div>
                     )}
                     {companyLookupFailed && !companyLookupLoading && (
                       <div className="text-xs text-amber-600">{t("company_lookup_not_found")}</div>
