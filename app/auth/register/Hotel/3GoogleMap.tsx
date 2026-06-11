@@ -148,12 +148,10 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
       <Card className="w-full max-w-[640px]">
         <CardHeader className="space-y-1 pb-4">
           <CardTitle className="text-xl font-semibold text-center flex items-center justify-center gap-2">
-            <MapPin className="h-5 w-5" />
+           
             {t("title")}
           </CardTitle>
-          <CardDescription className="text-center">
-            {t("description")}
-          </CardDescription>
+          
         </CardHeader>
         <CardContent>
           <div className="space-y-5">
@@ -217,7 +215,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
             )}
 
             {/* Current Location Display */}
-            <div className="bg-muted/40 border border-border p-2.5 rounded-lg">
+            {/* <div className="bg-muted/40 border border-border p-2.5 rounded-lg">
               <h4 className="text-xs font-medium mb-1.5 flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 text-primary" />
                 {t("selected_location")}
@@ -228,7 +226,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
                 <span className="text-muted-foreground">{t("longitude")}:</span>
                 <span className="font-medium">{location.lng.toFixed(6)}</span>
               </div>
-            </div>
+            </div> */}
 
             <div className="flex gap-3 pt-3">
               <Button

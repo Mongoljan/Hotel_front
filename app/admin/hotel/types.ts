@@ -42,7 +42,7 @@ export interface PropertyPolicy {
   check_out_from: string;
   check_out_until: string;
   pet_policy?: boolean;
-  min_guest_age?: number;
+  min_guest_age?: number | null;
   languages?: number[];
   accepted_card_ids?: number[];
   accepted_cards?: Array<{

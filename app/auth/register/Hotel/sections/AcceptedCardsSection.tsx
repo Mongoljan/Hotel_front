@@ -4,8 +4,9 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { schemaHotelSteps3 } from '../../../../schema';
-import { FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
+import { PolicySectionTitle } from './PolicyFormRow';
 
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
@@ -30,8 +31,8 @@ export default function AcceptedCardsSection({ form, t, cards }: Props) {
       control={form.control}
       name="accepted_card_ids"
       render={({ field }) => (
-        <FormItem>
-          <FormLabel>{t('accepted_cards')}</FormLabel>
+        <FormItem className="space-y-3">
+          <PolicySectionTitle>{t('accepted_cards')}</PolicySectionTitle>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {sortedCards.map((card) => {
               const checked = field.value?.includes(card.id);

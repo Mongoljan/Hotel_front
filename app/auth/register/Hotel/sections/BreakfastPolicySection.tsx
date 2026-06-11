@@ -10,6 +10,7 @@ import { OptionButton } from "@/components/ui/option-button";
 import { NumericFormat } from 'react-number-format';
 import { z } from 'zod';
 import { schemaHotelSteps3 } from '../../../../schema';
+import PolicyFormRow, { PolicySectionTitle, POLICY_TIME_SELECT_CLASS, POLICY_INPUT_CLASS } from './PolicyFormRow';
 
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
@@ -29,10 +30,6 @@ export default function BreakfastPolicySection({ form, t }: Props) {
 
   React.useEffect(() => {
     if (breakfastStatus !== 'no') {
-      const startTime = form.getValues('breakfast_start_time');
-      const endTime = form.getValues('breakfast_end_time');
-      if (!startTime) form.setValue('breakfast_start_time', '', { shouldValidate: false });
-      if (!endTime) form.setValue('breakfast_end_time', '', { shouldValidate: false });
       form.clearErrors(['breakfast_start_time', 'breakfast_end_time']);
     }
   }, [breakfastStatus, form]);
@@ -41,7 +38,7 @@ export default function BreakfastPolicySection({ form, t }: Props) {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Coffee className="h-4 w-4" />
-        <h3 className="text-sm font-semibold">{t('breakfast')}</h3>
+        <PolicySectionTitle>{t('breakfast')}</PolicySectionTitle>
       </div>
 
       <FormField
@@ -49,9 +46,9 @@ export default function BreakfastPolicySection({ form, t }: Props) {
         name="breakfast_status"
         render={({ field }) => (
           <FormItem>
-            {/* <FormLabel className="font-normal">{t('10')}</FormLabel> */}
+            <FormLabel className="text-sm font-normal">{t('status_label')}</FormLabel>
             <FormControl>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {(['no', 'free', 'paid'] as const).map((value) => (
                   <OptionButton
                     key={value}
@@ -69,93 +66,90 @@ export default function BreakfastPolicySection({ form, t }: Props) {
       />
 
       {breakfastStatus !== 'no' && (
-        <div className="space-y-3 p-3 border border-dashed rounded-lg">
-          <div className="flex items-center gap-4">
-            <FormLabel className="min-w-[150px] text-sm font-normal">{t('breakfast_time')}</FormLabel>
-          <div className="ml-2">
-            <FormField 
-              control={form.control}
-              name="breakfast_start_time"
-              render={({ field }) => (
-                <FormItem>
-                  <Select onValueChange={field.onChange} value={field.value || undefined}>
-                    <FormControl>
-                      <SelectTrigger className="w-[110px]">
-                        <SelectValue placeholder="ЦЦ:ММ" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {timeOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <div className="space-y-3 rounded-lg border border-dashed p-3">
+          <PolicyFormRow label={t('breakfast_time')}>
+            <div className="flex items-center gap-2">
+              <FormField
+                control={form.control}
+                name="breakfast_start_time"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                      <FormControl>
+                        <SelectTrigger className={POLICY_TIME_SELECT_CLASS}>
+                          <SelectValue placeholder="ЦЦ:ММ" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {timeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <span className="text-sm text-muted-foreground">–</span>
+              <FormField
+                control={form.control}
+                name="breakfast_end_time"
+                render={({ field }) => (
+                  <FormItem className="space-y-0">
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                      <FormControl>
+                        <SelectTrigger className={POLICY_TIME_SELECT_CLASS}>
+                          <SelectValue placeholder="ЦЦ:ММ" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {timeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            <span>-</span>
-            <FormField
-              control={form.control}
-              name="breakfast_end_time"
-              render={({ field }) => (
-                <FormItem>
-                  <Select onValueChange={field.onChange} value={field.value || undefined}>
-                    <FormControl>
-                      <SelectTrigger className="w-[110px]">
-                        <SelectValue placeholder="ЦЦ:ММ" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {timeOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          </PolicyFormRow>
 
           <FormField
             control={form.control}
             name="breakfast_type"
             render={({ field }) => (
-              <FormItem className="flex items-center gap-4 ">
-                <FormLabel className="text-sm font-normal">{t('breakfast_type_label')}</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder={t('select_placeholder')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="buffet">{t('buffet')}</SelectItem>
-                    <SelectItem value="room">{t('in_room')}</SelectItem>
-                    <SelectItem value="plate">{t('plate')}</SelectItem>
-                  </SelectContent>
-                </Select>
+              <FormItem>
+                <PolicyFormRow label={t('breakfast_type_label')}>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-[200px] h-9">
+                        <SelectValue placeholder={t('select_placeholder')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="buffet">{t('buffet')}</SelectItem>
+                      <SelectItem value="room">{t('in_room')}</SelectItem>
+                      <SelectItem value="plate">{t('plate')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </PolicyFormRow>
                 <FormMessage />
               </FormItem>
             )}
           />
 
           {breakfastStatus === 'paid' && (
-          
             <FormField
               control={form.control}
               name="breakfast_price"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center gap-4">
-                    <FormLabel className="min-w-[150px] font-normal">{t('price_label')}</FormLabel>
-                     <div className="ml-2">
+                  <PolicyFormRow label={t('price_label')}>
                     <FormControl>
                       <NumericFormat
                         thousandSeparator=","
@@ -163,16 +157,14 @@ export default function BreakfastPolicySection({ form, t }: Props) {
                         value={field.value || ''}
                         onValueChange={(values) => field.onChange(values.value || null)}
                         customInput={Input}
-                        className="w-40"
+                        className={POLICY_INPUT_CLASS}
                       />
                     </FormControl>
-                    </div>
-                  </div>
+                  </PolicyFormRow>
                   <FormMessage />
                 </FormItem>
               )}
             />
-      
           )}
         </div>
       )}

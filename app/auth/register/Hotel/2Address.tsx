@@ -227,7 +227,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t('province_placeholder')} />
+                          <SelectValue placeholder={t('province_placeholder')} className="text-gray-400" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -257,7 +257,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t('soum_placeholder')} />
+                          <SelectValue placeholder={t('soum_placeholder')} className="text-gray-400" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

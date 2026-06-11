@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { Car } from 'lucide-react';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +9,7 @@ import { OptionButton } from "@/components/ui/option-button";
 import { NumericFormat } from 'react-number-format';
 import { z } from 'zod';
 import { schemaHotelSteps3 } from '../../../../schema';
+import { PolicySectionTitle, POLICY_INPUT_CLASS } from './PolicyFormRow';
 
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
@@ -21,14 +21,14 @@ type Props = {
 function ParkingSubSection({
   form,
   t,
-  label,
+  title,
   parkingFieldName,
   feeTypeFieldName,
   priceFieldName,
 }: {
   form: UseFormReturn<FormFields>;
   t: (key: string) => string;
-  label: string;
+  title: string;
   parkingFieldName: 'outdoor_parking' | 'indoor_parking';
   feeTypeFieldName: 'outdoor_fee_type' | 'indoor_fee_type';
   priceFieldName: 'outdoor_price' | 'indoor_price';
@@ -37,7 +37,6 @@ function ParkingSubSection({
   const feeTypeValue = form.watch(feeTypeFieldName);
   const priceValue = form.watch(priceFieldName);
 
-  // Keep parking paid validation state in sync with non-native controls.
   React.useEffect(() => {
     if (parkingValue === 'paid') {
       form.clearErrors([priceFieldName, feeTypeFieldName]);
@@ -49,22 +48,23 @@ function ParkingSubSection({
       return;
     }
 
-    // For "no" and "free", paid-only fields should not keep old errors/values.
-    form.setValue(feeTypeFieldName, null as any, { shouldValidate: true });
-    form.setValue(priceFieldName, null as any, { shouldValidate: true });
+    form.setValue(feeTypeFieldName, null as FormFields[typeof feeTypeFieldName], { shouldValidate: true });
+    form.setValue(priceFieldName, null as FormFields[typeof priceFieldName], { shouldValidate: true });
     form.clearErrors([priceFieldName, feeTypeFieldName]);
   }, [parkingValue, feeTypeValue, priceValue, form, priceFieldName, feeTypeFieldName]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      <PolicySectionTitle>{title}</PolicySectionTitle>
+
       <FormField
         control={form.control}
         name={parkingFieldName}
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-slate-600 " >{label}</FormLabel>
+            <FormLabel className="text-sm font-normal">{t('status_label')}</FormLabel>
             <FormControl>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 {(['no', 'free', 'paid'] as const).map((value) => (
                   <OptionButton
                     key={value}
@@ -82,16 +82,16 @@ function ParkingSubSection({
       />
 
       {parkingValue === 'paid' && (
-        <div className="flex gap-3 p-3 border border-dashed rounded-lg">
+        <div className="space-y-3 rounded-lg border border-dashed p-3">
           <FormField
             control={form.control}
             name={feeTypeFieldName}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-muted-foreground">{t('payment_unit')}</FormLabel>
+                <FormLabel className="text-sm font-normal">{t('payment_unit')}</FormLabel>
                 <Select
                   onValueChange={(value) => {
-                    form.setValue(feeTypeFieldName, value as any, {
+                    form.setValue(feeTypeFieldName, value as FormFields[typeof feeTypeFieldName], {
                       shouldDirty: true,
                       shouldTouch: true,
                       shouldValidate: true,
@@ -100,7 +100,7 @@ function ParkingSubSection({
                   value={field.value || undefined}
                 >
                   <FormControl>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className={POLICY_INPUT_CLASS}>
                       <SelectValue placeholder={t('select_placeholder')} />
                     </SelectTrigger>
                   </FormControl>
@@ -118,7 +118,7 @@ function ParkingSubSection({
             name={priceFieldName}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-muted-foreground">{t('price_label')}</FormLabel>
+                <FormLabel className="text-sm font-normal">{t('price_label')}</FormLabel>
                 <FormControl>
                   <NumericFormat
                     thousandSeparator=","
@@ -132,7 +132,7 @@ function ParkingSubSection({
                       });
                     }}
                     customInput={Input}
-                    className="w-32"
+                    className={POLICY_INPUT_CLASS}
                   />
                 </FormControl>
                 <FormMessage />
@@ -147,16 +147,11 @@ function ParkingSubSection({
 
 export default function ParkingPolicySection({ form, t }: Props) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Car className="h-4 w-4" />
-        <h3 className="text-sm font-semibold">{t('parking_info')}</h3>
-      </div>
-
+    <div className="space-y-5">
       <ParkingSubSection
         form={form}
         t={t}
-        label={t('outdoor_parking_label')}
+        title={t('outdoor_parking_label')}
         parkingFieldName="outdoor_parking"
         feeTypeFieldName="outdoor_fee_type"
         priceFieldName="outdoor_price"
@@ -165,7 +160,7 @@ export default function ParkingPolicySection({ form, t }: Props) {
       <ParkingSubSection
         form={form}
         t={t}
-        label={t('indoor_parking_label')}
+        title={t('indoor_parking_label')}
         parkingFieldName="indoor_parking"
         feeTypeFieldName="indoor_fee_type"
         priceFieldName="indoor_price"

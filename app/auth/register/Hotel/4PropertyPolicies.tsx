@@ -11,18 +11,19 @@ import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { useTranslations, useLocale } from 'next-intl';
 import { useCombinedData } from '@/app/hooks/useCombinedData';
-import { LanguageMultiSelect } from '@/components/LanguageMultiSelect';
+import { resolveMinGuestAgeMode } from '@/lib/policyFormatters';
 
 import CheckInOutSection from './sections/CheckInOutSection';
 import BreakfastPolicySection from './sections/BreakfastPolicySection';
 import ParkingPolicySection from './sections/ParkingPolicySection';
 import ChildPolicySection from './sections/ChildPolicySection';
+import LanguagesPolicySection from './sections/LanguagesPolicySection';
+import MinGuestAgeSection from './sections/MinGuestAgeSection';
+import PetPolicySection from './sections/PetPolicySection';
 import AcceptedCardsSection, { type AcceptedCardType } from './sections/AcceptedCardsSection';
 
 const API_URL = 'https://dev.kacc.mn/api/property-policies/';
@@ -69,6 +70,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       check_out_from: '12:00',
       check_out_until: '12:00',
       pet_policy: false,
+      min_guest_age_mode: '18',
       min_guest_age: 18,
       languages: [],
       accepted_card_ids: [],
@@ -112,14 +114,18 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
           const policyLanguages = Array.isArray(initialData.languages)
             ? initialData.languages.map((l: number | string) => Number(l))
             : [];
+          const minGuestAge = initialData.min_guest_age ?? null;
+          const checkInFrom = normalizeTime(initialData.check_in_from) || '';
+          const checkOutFrom = normalizeTime(initialData.check_out_from) || '';
 
           const normalizedValues: FormFields = {
-            check_in_from: normalizeTime(initialData.check_in_from) || '',
-            check_in_until: normalizeTime(initialData.check_in_until) || '',
-            check_out_from: normalizeTime(initialData.check_out_from) || '',
-            check_out_until: normalizeTime(initialData.check_out_until) || '',
+            check_in_from: checkInFrom,
+            check_in_until: normalizeTime(initialData.check_in_until) || checkInFrom,
+            check_out_from: checkOutFrom,
+            check_out_until: normalizeTime(initialData.check_out_until) || checkOutFrom,
             pet_policy: Boolean(initialData.pet_policy),
-            min_guest_age: initialData.min_guest_age ?? 18,
+            min_guest_age_mode: resolveMinGuestAgeMode(minGuestAge),
+            min_guest_age: minGuestAge,
             languages: policyLanguages.length > 0 ? policyLanguages : step1Languages,
             accepted_card_ids: Array.isArray(initialData.accepted_cards)
               ? initialData.accepted_cards.map((c: { id: number | string }) => Number(c.id))
@@ -178,15 +184,16 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
     }
 
     const stripSeconds = (time: string) => (time ? time.slice(0, 5) : time);
+    const minGuestAge = data.min_guest_age_mode === 'none' ? null : data.min_guest_age ?? null;
 
     const formattedData = {
       property: propertyId,
       check_in_from: stripSeconds(data.check_in_from),
-      check_in_until: stripSeconds(data.check_in_until),
+      check_in_until: stripSeconds(data.check_in_until || data.check_in_from),
       check_out_from: stripSeconds(data.check_out_from),
-      check_out_until: stripSeconds(data.check_out_until),
+      check_out_until: stripSeconds(data.check_out_until || data.check_out_from),
       pet_policy: data.pet_policy,
-      min_guest_age: data.min_guest_age,
+      min_guest_age: minGuestAge,
       languages: data.languages,
       accepted_card_ids: data.accepted_card_ids ?? [],
       breakfast_policy: {
@@ -257,66 +264,6 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
 
               <Separator />
 
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold">{t('general_policy')}</h3>
-                <FormField
-                  control={form.control}
-                  name="pet_policy"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-3">
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormLabel className="!mt-0 font-normal">{t('pet_policy')}</FormLabel>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="min_guest_age"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('min_guest_age')}</FormLabel>
-                      <FormControl>
-                        <Input type="number" min={0} max={99} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="languages"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('languages')}</FormLabel>
-                      <FormControl>
-                        <LanguageMultiSelect
-                          languages={languages}
-                          value={(field.value || []).map(String)}
-                          onChange={(ids) => field.onChange(ids.map(Number))}
-                          locale={locale}
-                          labels={{
-                            selected: t('languages_section_selected'),
-                            available: t('languages_section_available'),
-                            search: t('languages_search'),
-                            placeholder: t('selectLanguagesHint'),
-                            done: t('languages_done'),
-                            emptySelected: t('languages_empty_selected'),
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {acceptedCards.length > 0 && (
-                  <AcceptedCardsSection form={form} t={t} cards={acceptedCards} />
-                )}
-              </div>
-
-              <Separator />
-
               <BreakfastPolicySection form={form} t={t} />
 
               <Separator />
@@ -326,6 +273,25 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
               <Separator />
 
               <ChildPolicySection form={form} t={t} />
+
+              <Separator />
+
+              <LanguagesPolicySection form={form} t={t} languages={languages} locale={locale} />
+
+              <Separator />
+
+              <MinGuestAgeSection form={form} t={t} />
+
+              <Separator />
+
+              <PetPolicySection form={form} t={t} />
+
+              {acceptedCards.length > 0 && (
+                <>
+                  <Separator />
+                  <AcceptedCardsSection form={form} t={t} cards={acceptedCards} />
+                </>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={onBack} className="flex-1">

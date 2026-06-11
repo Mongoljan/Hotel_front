@@ -7,6 +7,7 @@ import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { z } from 'zod';
 import { schemaHotelSteps3 } from '../../../../schema';
+import PolicyFormRow, { PolicySectionTitle, POLICY_TIME_SELECT_CLASS } from './PolicyFormRow';
 
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
@@ -21,7 +22,7 @@ const timeOptions = Array.from({ length: 96 }, (_, i) => {
   return { value: `${hour}:${minute}`, label: `${hour}:${minute}` };
 });
 
-type TimeName = 'check_in_from' | 'check_in_until' | 'check_out_from' | 'check_out_until';
+type TimeName = 'check_in_from' | 'check_out_from';
 
 function TimeSelect({ form, name }: { form: UseFormReturn<FormFields>; name: TimeName }) {
   return (
@@ -30,9 +31,19 @@ function TimeSelect({ form, name }: { form: UseFormReturn<FormFields>; name: Tim
       name={name}
       render={({ field }) => (
         <FormItem className="space-y-0">
-          <Select onValueChange={field.onChange} value={field.value || undefined}>
+          <Select
+            onValueChange={(value) => {
+              field.onChange(value);
+              if (name === 'check_in_from') {
+                form.setValue('check_in_until', value, { shouldValidate: true });
+              } else {
+                form.setValue('check_out_until', value, { shouldValidate: true });
+              }
+            }}
+            value={field.value || undefined}
+          >
             <FormControl>
-              <SelectTrigger className="w-full h-9">
+              <SelectTrigger className={POLICY_TIME_SELECT_CLASS}>
                 <SelectValue placeholder="ЦЦ:ММ" />
               </SelectTrigger>
             </FormControl>
@@ -44,7 +55,7 @@ function TimeSelect({ form, name }: { form: UseFormReturn<FormFields>; name: Tim
               ))}
             </SelectContent>
           </Select>
-          <FormMessage className="text-xs" />
+          <FormMessage className="text-sm" />
         </FormItem>
       )}
     />
@@ -53,29 +64,20 @@ function TimeSelect({ form, name }: { form: UseFormReturn<FormFields>; name: Tim
 
 export default function CheckInOutSection({ form, t }: Props) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Clock className="h-4 w-4" />
-        <h3 className="text-sm font-semibold">{t('set_time_title')}</h3>
+        <PolicySectionTitle>{t('set_time_title')}</PolicySectionTitle>
       </div>
-      <p className="text-sm text-muted-foreground">
-        {t('set_time_description')}
-      </p>
+      <p className="text-sm text-muted-foreground">{t('set_time_description')}</p>
 
-      {/* Shared grid aligns both rows so the dash separators sit directly under each other */}
-      <div className="p-3 border border-dashed rounded-lg">
-        <div className="grid grid-cols-[minmax(120px,160px)_minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-2">
-          <span className="text-sm font-medium">{t('6')}</span>
-          <TimeSelect form={form} name="check_in_from" />
-          <span className="text-muted-foreground text-center px-1 select-none">–</span>
-          <TimeSelect form={form} name="check_in_until" />
+      <PolicyFormRow label={t('check_in_time')}>
+        <TimeSelect form={form} name="check_in_from" />
+      </PolicyFormRow>
 
-          <span className="text-sm font-medium">{t('8')}</span>
-          <TimeSelect form={form} name="check_out_from" />
-          <span className="text-muted-foreground text-center px-1 select-none">–</span>
-          <TimeSelect form={form} name="check_out_until" />
-        </div>
-      </div>
+      <PolicyFormRow label={t('check_out_time')}>
+        <TimeSelect form={form} name="check_out_from" />
+      </PolicyFormRow>
     </div>
   );
 }

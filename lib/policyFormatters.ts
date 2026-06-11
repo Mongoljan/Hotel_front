@@ -56,15 +56,23 @@ export const formatBreakfastType = (type: string | null | undefined): string => 
   }
 };
 
+export function resolveMinGuestAgeMode(age: number | null | undefined): 'none' | '18' | 'custom' {
+  if (age === null || age === undefined) return 'none';
+  if (age === 18) return '18';
+  return 'custom';
+}
+
 /** Normalize a PropertyPolicy API response into form-friendly field values. */
 export function normalizePolicyToForm(policy: any): PolicyFormFields {
+  const minGuestAge = policy?.min_guest_age ?? null;
   return {
     check_in_from: normalizeTime(policy?.check_in_from, '00:00'),
     check_in_until: normalizeTime(policy?.check_in_until, '00:00'),
     check_out_from: normalizeTime(policy?.check_out_from, '00:00'),
     check_out_until: normalizeTime(policy?.check_out_until, '00:00'),
     pet_policy: Boolean(policy?.pet_policy),
-    min_guest_age: policy?.min_guest_age ?? 18,
+    min_guest_age_mode: resolveMinGuestAgeMode(minGuestAge),
+    min_guest_age: minGuestAge,
     languages: Array.isArray(policy?.languages)
       ? policy.languages.map((l: number | string) => Number(l))
       : [],
@@ -114,7 +122,7 @@ export function buildPolicyPayload(data: PolicyFormFields, propertyId: number | 
     check_out_from: stripSeconds(data.check_out_from),
     check_out_until: stripSeconds(data.check_out_until),
     pet_policy: data.pet_policy,
-    min_guest_age: data.min_guest_age,
+    min_guest_age: data.min_guest_age_mode === 'none' ? null : data.min_guest_age ?? null,
     languages: data.languages,
     accepted_card_ids: data.accepted_card_ids ?? [],
     breakfast_policy: {
@@ -156,7 +164,7 @@ export function formatCancellationPercentage(val: string | number): string {
   return num.toFixed(2);
 }
 
-export type InternalRulesSectionKey = 'time' | 'breakfast' | 'parking' | 'children';
+export type InternalRulesSectionKey = 'time' | 'breakfast' | 'parking' | 'children' | 'general';
 
 const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
@@ -174,7 +182,26 @@ export const schemaInternalRulesTime = z.object({
   check_out_until: z.string()
     .min(1, { message: 'Гарах цагийн дуусах хугацааг сонгоно уу' })
     .regex(timeRegex, { message: 'Цагийн формат буруу байна (ЦЦ:ММ)' }),
+});
+
+export const schemaInternalRulesGeneral = z.object({
+  languages: z
+    .array(z.coerce.number())
+    .min(1, { message: 'Хамгийн багадаа нэг хэл сонгоно уу' }),
+  min_guest_age_mode: z.enum(['none', '18', 'custom']),
+  min_guest_age: z.union([
+    z.null(),
+    z.coerce.number()
+      .int({ message: 'Бүхэл тоо байх ёстой' })
+      .min(0, { message: 'Зочдын хамгийн бага нас 0-ээс их байх ёстой' })
+      .max(99, { message: 'Зочдын хамгийн бага нас 99-ээс бага байх ёстой' }),
+  ]).optional(),
+  pet_policy: z.boolean(),
   accepted_card_ids: z.array(z.coerce.number()).default([]),
+}).superRefine((data, ctx) => {
+  if (data.min_guest_age_mode === 'custom' && (data.min_guest_age === null || data.min_guest_age === undefined)) {
+    ctx.addIssue({ code: 'custom', message: 'Зочдын насны шаардлагыг оруулна уу', path: ['min_guest_age'] });
+  }
 });
 
 export const schemaInternalRulesBreakfast = z.object({
@@ -199,7 +226,7 @@ export const schemaInternalRulesBreakfast = z.object({
     const priceStr = (data.breakfast_price ?? '').replace(/,/g, '');
     const price = parseFloat(priceStr);
     if (!priceStr || Number.isNaN(price) || price <= 0) {
-      ctx.addIssue({ code: 'custom', message: 'Өглөөний цайны үнийг оруулна уу', path: ['breakfast_price'] });
+      ctx.addIssue({ code: 'custom', message: 'Үнэ оруулах шаардлагатай', path: ['breakfast_price'] });
     }
   }
 });
@@ -271,6 +298,8 @@ export function getInternalRulesSectionSchema(section: InternalRulesSectionKey) 
       return schemaInternalRulesParking;
     case 'children':
       return schemaInternalRulesChildren;
+    case 'general':
+      return schemaInternalRulesGeneral;
     default:
       return schemaInternalRulesTime;
   }
@@ -287,6 +316,13 @@ export function pickSectionFormValues(
         check_in_until: values.check_in_until,
         check_out_from: values.check_out_from,
         check_out_until: values.check_out_until,
+      };
+    case 'general':
+      return {
+        languages: values.languages,
+        min_guest_age_mode: values.min_guest_age_mode,
+        min_guest_age: values.min_guest_age,
+        pet_policy: values.pet_policy,
         accepted_card_ids: values.accepted_card_ids ?? [],
       };
     case 'breakfast':

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import {
@@ -11,6 +11,7 @@ import {
   IconCoffee,
   IconCar,
   IconMoodKid,
+  IconLanguage,
 } from '@tabler/icons-react';
 
 import { useAuth } from '@/hooks/useAuth';
@@ -46,25 +47,28 @@ import CheckInOutSection from '@/app/auth/register/Hotel/sections/CheckInOutSect
 import BreakfastPolicySection from '@/app/auth/register/Hotel/sections/BreakfastPolicySection';
 import ParkingPolicySection from '@/app/auth/register/Hotel/sections/ParkingPolicySection';
 import ChildPolicySection from '@/app/auth/register/Hotel/sections/ChildPolicySection';
-import AcceptedCardsSection, { type AcceptedCardType } from '@/app/auth/register/Hotel/sections/AcceptedCardsSection';
+import GeneralPolicySection from '@/app/auth/register/Hotel/sections/GeneralPolicySection';
 import { useCombinedData } from '@/app/hooks/useCombinedData';
+import type { AcceptedCardType } from '@/app/auth/register/Hotel/sections/AcceptedCardsSection';
 
 const API_URL = 'https://dev.kacc.mn/api/property-policies/';
 
-type SectionKey = 'time' | 'breakfast' | 'parking' | 'children';
+type SectionKey = 'time' | 'breakfast' | 'parking' | 'children' | 'general';
 
 const SECTION_TITLES: Record<SectionKey, string> = {
-  time: 'Цаг, цуцлалтын бодлого',
+  time: 'Орох / Гарах цаг',
   breakfast: 'Өглөөний цай',
   parking: 'Зогсоол',
   children: 'Хүүхэд болон нэмэлт ор',
+  general: 'Ерөнхий тохиргоо',
 };
 
 const MENU: { key: SectionKey; label: string }[] = [
-  { key: 'time', label: 'Цаг ба цуцлалтын бодлого' },
+  { key: 'time', label: 'Орох / Гарах цаг' },
   { key: 'breakfast', label: 'Өглөөний цай' },
   { key: 'parking', label: 'Зогсоол' },
   { key: 'children', label: 'Хүүхэд, нэмэлт ор' },
+  { key: 'general', label: 'Хэл, нас, амьтан, карт' },
 ];
 
 const DEFAULT_VALUES: PolicyFormFields = {
@@ -73,6 +77,7 @@ const DEFAULT_VALUES: PolicyFormFields = {
   check_out_from: '00:00',
   check_out_until: '00:00',
   pet_policy: false,
+  min_guest_age_mode: '18',
   min_guest_age: 18,
   languages: [],
   accepted_card_ids: [],
@@ -133,9 +138,11 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 
 export default function InternalRulesPage() {
   const t = useTranslations('4PropertyPolicies');
+  const locale = useLocale();
   const { user } = useAuth();
   const { data: combinedData } = useCombinedData();
   const acceptedCards: AcceptedCardType[] = combinedData?.acceptedCardType ?? [];
+  const languages = combinedData?.languages ?? [];
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [editSection, setEditSection] = useState<SectionKey | null>(null);
@@ -295,6 +302,9 @@ export default function InternalRulesPage() {
             {activeMenuItem === 'children' && (
               <ChildrenSection policy={propertyPolicy} onEdit={() => openEditDialog('children')} />
             )}
+            {activeMenuItem === 'general' && (
+              <GeneralSection policy={propertyPolicy} onEdit={() => openEditDialog('general')} />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -314,17 +324,19 @@ export default function InternalRulesPage() {
               }}
               className="space-y-5"
             >
-              {editSection === 'time' && (
-                <>
-                  <CheckInOutSection form={form} t={t} />
-                  {acceptedCards.length > 0 && (
-                    <AcceptedCardsSection form={form} t={t} cards={acceptedCards} />
-                  )}
-                </>
-              )}
+              {editSection === 'time' && <CheckInOutSection form={form} t={t} />}
               {editSection === 'breakfast' && <BreakfastPolicySection form={form} t={t} />}
               {editSection === 'parking' && <ParkingPolicySection form={form} t={t} />}
               {editSection === 'children' && <ChildPolicySection form={form} t={t} />}
+              {editSection === 'general' && (
+                <GeneralPolicySection
+                  form={form}
+                  t={t}
+                  languages={languages}
+                  locale={locale}
+                  acceptedCards={acceptedCards}
+                />
+              )}
 
               <DialogFooter className="gap-2 pt-2">
                 <Button
@@ -356,59 +368,76 @@ export default function InternalRulesPage() {
 
 // ---- read-only section displays --------------------------------------------
 
+function formatMinGuestAge(age: number | null | undefined): string {
+  if (age === null || age === undefined) return 'Насны шаардлага байхгүй';
+  return `${age}+`;
+}
+
 function TimeSection({ policy, onEdit }: { policy: PropertyPolicy; onEdit: () => void }) {
+  return (
+    <div className="space-y-4">
+      <SectionHeader icon={<IconClock className="h-4 w-4" />} title="Орох / Гарах цаг" onEdit={onEdit} />
+      <div className="grid grid-cols-2 gap-6">
+        <InfoRow label="Орох цаг" value={formatTime(policy.check_in_from)} />
+        <InfoRow label="Гарах цаг" value={formatTime(policy.check_out_from)} />
+      </div>
+    </div>
+  );
+}
+
+function GeneralSection({ policy, onEdit }: { policy: PropertyPolicy; onEdit: () => void }) {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <SectionHeader icon={<IconClock className="h-4 w-4" />} title="Орох / Гарах цаг" onEdit={onEdit} />
-        <div className="grid grid-cols-2 gap-6">
-          <InfoRow
-            label="Орох цаг"
-            value={`${formatTime(policy.check_in_from)} – ${formatTime(policy.check_in_until)}`}
-          />
-          <InfoRow
-            label="Гарах цаг"
-            value={`${formatTime(policy.check_out_from)} – ${formatTime(policy.check_out_until)}`}
-          />
-        </div>
+        <SectionHeader icon={<IconLanguage className="h-4 w-4" />} title="Зочдод үйлчилгээ үзүүлэх хэлүүд" onEdit={onEdit} />
+        <InfoRow
+          label="Хэлнүүд"
+          value={Array.isArray(policy.languages) && policy.languages.length > 0
+            ? policy.languages.join(', ')
+            : '—'}
+        />
       </div>
 
       <Separator />
 
       <div className="space-y-4">
-        <SectionHeader title="Ерөнхий бодлого" />
-        <div className="grid grid-cols-2 gap-6">
-          <InfoRow label="Тэжээвэр амьтан" value={policy.pet_policy ? 'Тийм' : 'Үгүй'} />
-          <InfoRow label="Зочдын хамгийн бага нас" value={policy.min_guest_age ?? '—'} />
-          <InfoRow
-            label="Хэлнүүд"
-            value={Array.isArray(policy.languages) && policy.languages.length > 0
-              ? policy.languages.join(', ')
-              : '—'}
-          />
-          <InfoRow
-            label="Зөвшөөрөх төлбөрийн хэрэгсэл"
-            value={
-              Array.isArray(policy.accepted_cards) && policy.accepted_cards.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {[...policy.accepted_cards]
-                    .sort((a, b) => a.order - b.order)
-                    .map((card) => (
-                      <span
-                        key={card.id}
-                        className="inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-medium"
-                      >
-                        {card.icon ? (
-                          <img src={card.icon} alt={card.name} className="h-4 w-auto object-contain" />
-                        ) : null}
-                        {card.name}
-                      </span>
-                    ))}
-                </div>
-              ) : '—'
-            }
-          />
-        </div>
+        <SectionHeader title="Бүртгэл хийх зочны насны шаардлага" />
+        <InfoRow label="Насны шаардлага" value={formatMinGuestAge(policy.min_guest_age)} />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-4">
+        <SectionHeader title="Тэжээвэр амьтан" />
+        <InfoRow label="Тэжээвэр амьтан зөвшөөрөх эсэх" value={policy.pet_policy ? 'Тийм' : 'Үгүй'} />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-4">
+        <SectionHeader title="Зөвшөөрөгдөх төлбөрийн хэрэгслүүд" />
+        <InfoRow
+          label="Төлбөрийн хэрэгсэл"
+          value={
+            Array.isArray(policy.accepted_cards) && policy.accepted_cards.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {[...policy.accepted_cards]
+                  .sort((a, b) => a.order - b.order)
+                  .map((card) => (
+                    <span
+                      key={card.id}
+                      className="inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-medium"
+                    >
+                      {card.icon ? (
+                        <img src={card.icon} alt={card.name} className="h-4 w-auto object-contain" />
+                      ) : null}
+                      {card.name}
+                    </span>
+                  ))}
+              </div>
+            ) : '—'
+          }
+        />
       </div>
     </div>
   );
