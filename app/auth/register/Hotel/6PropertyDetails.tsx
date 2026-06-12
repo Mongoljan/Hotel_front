@@ -75,16 +75,22 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
     const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
     const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
     if (stored.step6) {
+      // Filter saved facility IDs to only include those that still exist
+      // in the current data lists (handles stale localStorage after DB reset)
+      const validIds = (items: { id: number }[], saved: { id: number; is_highlight: boolean }[]) => {
+        const valid = new Set(items.map((i) => i.id));
+        return saved.filter((s) => valid.has(s.id));
+      };
       const values: FormFields = {
-        general_facilities: stored.step6.general_facilities || [],
-        additional_facilities: stored.step6.additional_facilities || [],
-        activities: stored.step6.activities || [],
-        accessibility_features: stored.step6.accessibility_features || [],
+        general_facilities: validIds(dataLists.facilities, stored.step6.general_facilities || []),
+        additional_facilities: validIds(dataLists.additionalFacilities, stored.step6.additional_facilities || []),
+        activities: validIds(dataLists.activities, stored.step6.activities || []),
+        accessibility_features: validIds(dataLists.accessibility_features, stored.step6.accessibility_features || []),
       };
       form.reset(values);
       setInitialValues(values);
     }
-  }, [form, user?.id]);
+  }, [form, user?.id, dataLists]);
 
   const getStepId = (step: any) => {
     if (Array.isArray(step)) return step[0]?.id;
@@ -171,7 +177,11 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
         });
       }
 
-      if (!response.ok) throw new Error('Property detail submission failed.');
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => 'Unable to read error body');
+        console.error('Property details API error:', response.status, errorBody);
+        throw new Error(`Property detail submission failed (${response.status}): ${errorBody}`);
+      }
 
       stored.step6 = { ...data, google_map: googleMapUrl };
       UserStorage.setItem('propertyData', JSON.stringify(stored), user.id);

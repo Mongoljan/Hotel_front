@@ -74,13 +74,15 @@ export async function POST(request: NextRequest) {
       id: data.id.toString(),
       email: data.email,
       name: data.name,
-      backendToken: data.token, // Store backend token securely
+      backendToken: data.token,
       hotel: hotelId.toString(),
       position: normalizePosition(data.position),
       contact_number: data.contact_number,
       approved: data.approved,
       hotelApproved: isApproved,
-      user_type: data.user_type || 5 // Default to User (5) if not provided
+      user_type: data.user_type || 5,
+      hotel_name: data.hotel_name || '',
+      hotel_name_en: data.hotel_name_en || ''
     }
 
     // Set secure httpOnly cookies
@@ -106,7 +108,9 @@ export async function POST(request: NextRequest) {
         contact_number: userPayload.contact_number,
         approved: userPayload.approved,
         hotelApproved: userPayload.hotelApproved,
-        user_type: userPayload.user_type
+        user_type: userPayload.user_type,
+        hotel_name: userPayload.hotel_name,
+        hotel_name_en: userPayload.hotel_name_en
       },
       session: {
         expiresAt: sessionExpiresAt,

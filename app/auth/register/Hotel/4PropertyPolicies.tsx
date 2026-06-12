@@ -15,7 +15,6 @@ import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { useTranslations, useLocale } from 'next-intl';
 import { useCombinedData } from '@/app/hooks/useCombinedData';
-import { resolveMinGuestAgeMode } from '@/lib/policyFormatters';
 
 import CheckInOutSection from './sections/CheckInOutSection';
 import BreakfastPolicySection from './sections/BreakfastPolicySection';
@@ -70,8 +69,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       check_out_from: '12:00',
       check_out_until: '12:00',
       pet_policy: false,
-      min_guest_age_mode: '18',
-      min_guest_age: 18,
+      min_guest_age: false,
       languages: [],
       accepted_card_ids: [],
       breakfast_status: 'no',
@@ -114,7 +112,6 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
           const policyLanguages = Array.isArray(initialData.languages)
             ? initialData.languages.map((l: number | string) => Number(l))
             : [];
-          const minGuestAge = initialData.min_guest_age ?? null;
           const checkInFrom = normalizeTime(initialData.check_in_from) || '';
           const checkOutFrom = normalizeTime(initialData.check_out_from) || '';
 
@@ -124,8 +121,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
             check_out_from: checkOutFrom,
             check_out_until: normalizeTime(initialData.check_out_until) || checkOutFrom,
             pet_policy: Boolean(initialData.pet_policy),
-            min_guest_age_mode: resolveMinGuestAgeMode(minGuestAge),
-            min_guest_age: minGuestAge,
+            min_guest_age: Boolean(initialData.min_guest_age),
             languages: policyLanguages.length > 0 ? policyLanguages : step1Languages,
             accepted_card_ids: Array.isArray(initialData.accepted_cards)
               ? initialData.accepted_cards.map((c: { id: number | string }) => Number(c.id))
@@ -184,7 +180,6 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
     }
 
     const stripSeconds = (time: string) => (time ? time.slice(0, 5) : time);
-    const minGuestAge = data.min_guest_age_mode === 'none' ? null : data.min_guest_age ?? null;
 
     const formattedData = {
       property: propertyId,
@@ -193,7 +188,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       check_out_from: stripSeconds(data.check_out_from),
       check_out_until: stripSeconds(data.check_out_until || data.check_out_from),
       pet_policy: data.pet_policy,
-      min_guest_age: minGuestAge,
+      min_guest_age: data.min_guest_age,
       languages: data.languages,
       accepted_card_ids: data.accepted_card_ids ?? [],
       breakfast_policy: {

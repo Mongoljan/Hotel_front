@@ -79,6 +79,7 @@
   "pet_policy": "Тэжээвэр амьтан оруулах боломжтой",
   "min_guest_age": "Зочдын хамгийн бага нас",
   "min_guest_age_title": "Бүртгэл хийх зочны насны шаардлага",
+  "min_guest_age_label": "Насны шаардлагатай эсэх",
   "min_guest_age_none": "Насны шаардлага байхгүй",
   "min_guest_age_custom": "Өөр нас заах",
   "min_guest_age_custom_input": "Нас",

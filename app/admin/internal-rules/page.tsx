@@ -77,8 +77,7 @@ const DEFAULT_VALUES: PolicyFormFields = {
   check_out_from: '00:00',
   check_out_until: '00:00',
   pet_policy: false,
-  min_guest_age_mode: '18',
-  min_guest_age: 18,
+  min_guest_age: false,
   languages: [],
   accepted_card_ids: [],
   breakfast_status: 'no',
@@ -368,9 +367,8 @@ export default function InternalRulesPage() {
 
 // ---- read-only section displays --------------------------------------------
 
-function formatMinGuestAge(age: number | null | undefined): string {
-  if (age === null || age === undefined) return 'Насны шаардлага байхгүй';
-  return `${age}+`;
+function formatMinGuestAge(age: boolean | null | undefined): string {
+  return age ? 'Насны шаардлагатай (18+)' : 'Насны шаардлага байхгүй';
 }
 
 function TimeSection({ policy, onEdit }: { policy: PropertyPolicy; onEdit: () => void }) {
