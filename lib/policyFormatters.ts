@@ -56,23 +56,15 @@ export const formatBreakfastType = (type: string | null | undefined): string => 
   }
 };
 
-export function resolveMinGuestAgeMode(age: number | null | undefined): 'none' | '18' | 'custom' {
-  if (age === null || age === undefined || age === 0) return 'none';
-  if (age === 1) return '18';
-  return 'custom';
-}
-
 /** Normalize a PropertyPolicy API response into form-friendly field values. */
 export function normalizePolicyToForm(policy: any): PolicyFormFields {
-  const minGuestAge = policy?.min_guest_age ?? null;
   return {
     check_in_from: normalizeTime(policy?.check_in_from, '00:00'),
     check_in_until: normalizeTime(policy?.check_in_until, '00:00'),
     check_out_from: normalizeTime(policy?.check_out_from, '00:00'),
     check_out_until: normalizeTime(policy?.check_out_until, '00:00'),
     pet_policy: Boolean(policy?.pet_policy),
-    min_guest_age_mode: resolveMinGuestAgeMode(minGuestAge),
-    min_guest_age: minGuestAge,
+    min_guest_age: Boolean(policy?.min_guest_age),
     languages: Array.isArray(policy?.languages)
       ? policy.languages.map((l: number | string) => Number(l))
       : [],
@@ -122,7 +114,7 @@ export function buildPolicyPayload(data: PolicyFormFields, propertyId: number | 
     check_out_from: stripSeconds(data.check_out_from),
     check_out_until: stripSeconds(data.check_out_until),
     pet_policy: data.pet_policy,
-    min_guest_age: data.min_guest_age ?? 0,
+    min_guest_age: data.min_guest_age,
     languages: data.languages,
     accepted_card_ids: data.accepted_card_ids ?? [],
     breakfast_policy: {
@@ -188,20 +180,9 @@ export const schemaInternalRulesGeneral = z.object({
   languages: z
     .array(z.coerce.number())
     .min(1, { message: 'Хамгийн багадаа нэг хэл сонгоно уу' }),
-  min_guest_age_mode: z.enum(['none', '18', 'custom']),
-  min_guest_age: z.union([
-    z.null(),
-    z.coerce.number()
-      .int({ message: 'Бүхэл тоо байх ёстой' })
-      .min(0, { message: 'Зочдын хамгийн бага нас 0-ээс их байх ёстой' })
-      .max(99, { message: 'Зочдын хамгийн бага нас 99-ээс бага байх ёстой' }),
-  ]).optional(),
+  min_guest_age: z.boolean(),
   pet_policy: z.boolean(),
   accepted_card_ids: z.array(z.coerce.number()).default([]),
-}).superRefine((data, ctx) => {
-  if (data.min_guest_age_mode === 'custom' && (data.min_guest_age === null || data.min_guest_age === undefined)) {
-    ctx.addIssue({ code: 'custom', message: 'Зочдын насны шаардлагыг оруулна уу', path: ['min_guest_age'] });
-  }
 });
 
 export const schemaInternalRulesBreakfast = z.object({
@@ -320,7 +301,6 @@ export function pickSectionFormValues(
     case 'general':
       return {
         languages: values.languages,
-        min_guest_age_mode: values.min_guest_age_mode,
         min_guest_age: values.min_guest_age,
         pet_policy: values.pet_policy,
         accepted_card_ids: values.accepted_card_ids ?? [],

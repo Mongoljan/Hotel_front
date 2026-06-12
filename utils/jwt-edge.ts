@@ -15,6 +15,8 @@ export interface UserPayload {
   approved: boolean
   hotelApproved: boolean
   user_type?: number
+  hotel_name?: string
+  hotel_name_en?: string
 }
 
 export interface JWTPayload extends UserPayload {

@@ -57,6 +57,7 @@
     "pet_policy": "Pet friendly",
     "min_guest_age": "Minimum guest age",
     "min_guest_age_title": "Guest age requirement for booking",
+    "min_guest_age_label": "Age requirement",
     "min_guest_age_none": "No age requirement",
     "min_guest_age_custom": "Specify another age",
     "min_guest_age_custom_input": "Age",

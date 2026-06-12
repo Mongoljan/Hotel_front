@@ -5,7 +5,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { UserCheck } from 'lucide-react';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { OptionButton } from '@/components/ui/option-button';
+import { YesNoToggle } from '@/components/ui/yes-no-toggle';
 import { schemaHotelSteps3 } from '../../../../schema';
 import PolicyFormRow, { PolicySectionTitle } from './PolicyFormRow';
 
@@ -17,18 +17,6 @@ type Props = {
 };
 
 export default function MinGuestAgeSection({ form, t }: Props) {
-  const mode = form.watch('min_guest_age_mode');
-
-  const setMode = (next: FormFields['min_guest_age_mode']) => {
-    form.setValue('min_guest_age_mode', next, { shouldDirty: true, shouldValidate: true });
-    if (next === 'none') {
-      form.setValue('min_guest_age', 0, { shouldDirty: true, shouldValidate: true });
-    } else if (next === '18') {
-      form.setValue('min_guest_age', 1, { shouldDirty: true, shouldValidate: true });
-      form.clearErrors('min_guest_age');
-    }
-  };
-
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
@@ -37,21 +25,14 @@ export default function MinGuestAgeSection({ form, t }: Props) {
       </div>
       <FormField
         control={form.control}
-        name="min_guest_age_mode"
-        render={() => (
+        name="min_guest_age"
+        render={({ field }) => (
           <FormItem>
-
+            <PolicyFormRow label={t('min_guest_age_label')} alignRight>
               <FormControl>
-                <div className="flex flex-wrap gap-2">
-                  <OptionButton selected={mode === 'none'} onClick={() => setMode('none')}>
-                    {t('min_guest_age_none')}
-                  </OptionButton>
-                  <OptionButton selected={mode === '18'} onClick={() => setMode('18')}>
-                    Насанд хүрсэн байх
-                  </OptionButton>
-                </div>
+                <YesNoToggle checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
-
+            </PolicyFormRow>
             <FormMessage />
           </FormItem>
         )}

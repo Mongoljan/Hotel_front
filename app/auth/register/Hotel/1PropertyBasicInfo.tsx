@@ -124,6 +124,10 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         return;
       }
 
+      // Get the full user info from localStorage which includes hotel_name_en
+      const userInfoStr = UserStorage.getItem<string>('userInfo', user.id);
+      const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
+
       const registrationNames = await fetchRegistrationHotelNames(user.hotel);
 
       const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
@@ -148,16 +152,16 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         } else {
           setDefaultValues({
             ...EMPTY_STEP1_DEFAULTS,
-            property_name_mn: registrationNames.property_name_mn,
-            property_name_en: registrationNames.property_name_en,
+            property_name_mn: registrationNames.property_name_mn || userInfo.hotel_name || '',
+            property_name_en: registrationNames.property_name_en || userInfo.hotel_name_en || '',
           });
         }
       } catch (error) {
         console.error('Error fetching step1 data:', error);
         setDefaultValues({
           ...EMPTY_STEP1_DEFAULTS,
-          property_name_mn: registrationNames.property_name_mn,
-          property_name_en: registrationNames.property_name_en,
+          property_name_mn: registrationNames.property_name_mn || userInfo.hotel_name || '',
+          property_name_en: registrationNames.property_name_en || userInfo.hotel_name_en || '',
         });
       }
     };

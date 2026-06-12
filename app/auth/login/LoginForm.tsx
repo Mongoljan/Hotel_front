@@ -47,7 +47,7 @@ export default function LoginForm() {
     } else {
       toast.success(tMsg('login_success'));
       setTimeout(() => {
-        router.push('/');
+        router.push('/admin/hotel');
       }, 1000);
     }
   };

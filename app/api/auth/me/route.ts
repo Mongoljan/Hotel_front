@@ -31,7 +31,9 @@ export async function GET() {
         contact_number: payload.contact_number,
         approved: payload.approved,
         hotelApproved: payload.hotelApproved,
-        user_type: payload.user_type
+        user_type: payload.user_type,
+        hotel_name: payload.hotel_name || '',
+        hotel_name_en: payload.hotel_name_en || ''
       },
       session: {
         expiresAt,

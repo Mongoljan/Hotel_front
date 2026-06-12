@@ -424,14 +424,7 @@ export const schemaHotelSteps3 = z.object({
     .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Цагийн формат буруу байна (ЦЦ:ММ)" }),
 
   pet_policy: z.boolean(),
-  min_guest_age_mode: z.enum(['none', '18', 'custom']),
-  min_guest_age: z.union([
-    z.null(),
-    z.coerce.number()
-      .int({ message: "Бүхэл тоо байх ёстой" })
-      .min(0, { message: "Зочдын хамгийн бага нас 0-ээс их байх ёстой" })
-      .max(99, { message: "Зочдын хамгийн бага нас 99-ээс бага байх ёстой" }),
-  ]).optional(),
+  min_guest_age: z.boolean(),
   languages: z
     .array(z.coerce.number())
     .min(1, { message: "Хамгийн багадаа нэг хэл сонгоно уу" }),
@@ -509,20 +502,6 @@ export const schemaHotelSteps3 = z.object({
 }, {
   message: "Үнэ оруулах шаардлагатай",
   path: ["breakfast_price"],
-}).refine((data) => {
-  if (data.min_guest_age_mode === 'none') {
-    return data.min_guest_age === null || data.min_guest_age === undefined;
-  }
-  if (data.min_guest_age_mode === '18') {
-    return data.min_guest_age === 18;
-  }
-  if (data.min_guest_age_mode === 'custom') {
-    return data.min_guest_age !== null && data.min_guest_age !== undefined;
-  }
-  return true;
-}, {
-  message: "Зочдын насны шаардлагыг оруулна уу",
-  path: ["min_guest_age"],
 }).refine((data) => {
   // Validate outdoor parking price when outdoor parking is 'paid'
   if (data.outdoor_parking === 'paid') {
@@ -699,7 +678,6 @@ confirmPassword: z.string().min(8, {
   message: "Нууц үг таарахгүй байна.",
   path: ["confirmPassword"],
 });
-
 
 
 
