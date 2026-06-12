@@ -61,8 +61,8 @@ export default function LoginForm() {
         </Alert>
       )}
 
-      <div>
-        <Label htmlFor="email" className="mb-1.5 block text-sm font-medium leading-5 text-gray-900 dark:text-gray-100">
+      <div className="space-y-1.5">
+        <Label htmlFor="email" className="text-cyrillic">
           {t('email')}
         </Label>
         <Input
@@ -82,8 +82,8 @@ export default function LoginForm() {
         )}
       </div>
 
-      <div>
-        <Label htmlFor="password" className="mb-1.5 block text-sm font-medium leading-5 text-gray-900 dark:text-gray-100">
+      <div className="space-y-1.5">
+        <Label htmlFor="password" className="text-cyrillic">
           {t('password')}
         </Label>
         <div className="relative">

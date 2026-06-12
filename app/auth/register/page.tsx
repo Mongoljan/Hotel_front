@@ -39,6 +39,12 @@ function isValidRegNo(val: string): boolean {
   return /^\d{7}$/.test((val || '').trim());
 }
 
+const registerInputClass =
+  "h-auto rounded-lg font-medium border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-none outline-none transition placeholder:font-normal placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500";
+
+const registerInputErrorClass =
+  "border-destructive focus-visible:ring-destructive";
+
 export default function RegisterPage() {
   const t = useTranslations('AuthRegister');
   const tMsg = useTranslations('AuthMessages');
@@ -47,7 +53,6 @@ export default function RegisterPage() {
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [ownershipTypes, setOwnershipTypes] = useState<OwnershipType[]>([]);
   const [companyLookupLoading, setCompanyLookupLoading] = useState(false);
-  const [companyLookupFailed, setCompanyLookupFailed] = useState(false);
   const [companyLookupSucceeded, setCompanyLookupSucceeded] = useState(false);
   const [companyLookupSlow, setCompanyLookupSlow] = useState(false);
   const lookupAbortRef = useRef<AbortController | null>(null);
@@ -70,6 +75,8 @@ export default function RegisterPage() {
     handleSubmit,
     setValue,
     getValues,
+    setError,
+    clearErrors,
     watch,
     control,
     formState: { errors, isSubmitting },
@@ -91,6 +98,9 @@ export default function RegisterPage() {
   });
 
   const { data: combinedHook } = useCombinedData();
+  const propertyTypeValue = watch('property_type');
+  const ownershipTypeValue = watch('ownership_type');
+
   useEffect(() => {
     if (combinedHook?.property_types) setPropertyTypes(combinedHook.property_types);
     if (combinedHook?.ownership_type) setOwnershipTypes(combinedHook.ownership_type);
@@ -100,7 +110,7 @@ export default function RegisterPage() {
     if (propertyTypes.length > 0 && parsedDefaults.property_type) {
       setValue('property_type', parsedDefaults.property_type);
     }
-  }, [propertyTypes, setValue]);
+  }, [parsedDefaults.property_type, propertyTypes, setValue]);
 
   useEffect(() => {
     const subscription = watch((_, { name }) => {
@@ -141,8 +151,8 @@ export default function RegisterPage() {
     lookupAbortRef.current = controller;
 
     setCompanyLookupLoading(true);
-    setCompanyLookupFailed(false);
     setCompanyLookupSucceeded(false);
+    clearErrors('register');
     clearLookupSlowTimer();
     lookupSlowTimerRef.current = setTimeout(() => setCompanyLookupSlow(true), 2000);
 
@@ -154,11 +164,17 @@ export default function RegisterPage() {
         applyCompanyLookupResult(result.name);
         setCompanyLookupSucceeded(true);
       } else {
-        setCompanyLookupFailed(true);
+        setError('register', {
+          type: 'manual',
+          message: t('company_lookup_not_found'),
+        });
       }
     } catch {
       if (!controller.signal.aborted) {
-        setCompanyLookupFailed(true);
+        setError('register', {
+          type: 'manual',
+          message: t('company_lookup_not_found'),
+        });
       }
     } finally {
       if (!controller.signal.aborted) {
@@ -166,7 +182,7 @@ export default function RegisterPage() {
         clearLookupSlowTimer();
       }
     }
-  }, [applyCompanyLookupResult, clearLookupSlowTimer]);
+  }, [applyCompanyLookupResult, clearErrors, clearLookupSlowTimer, setError, t]);
 
   useEffect(() => {
     return () => {
@@ -196,9 +212,9 @@ export default function RegisterPage() {
               <CardTitle className="text-2xl font-bold tracking-tight text-cyrillic">{t("hotel_info")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="register" className="text-cyrillic">{t("company_Reg")} <span className="text-destructive">*</span></Label>
                     <Controller
                       name="register"
@@ -213,9 +229,17 @@ export default function RegisterPage() {
                           onChange={(e) => {
                             const value = e.target.value.replace(/\D/g, '').slice(0, 7);
                             field.onChange(value);
-                            setCompanyLookupFailed(false);
                             setCompanyLookupSucceeded(false);
+                            clearErrors('register');
                             setCompanyLookupSlow(false);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key !== 'Enter') return;
+                            e.preventDefault();
+                            const value = (e.currentTarget.value || '').trim();
+                            if (isValidRegNo(value)) {
+                              fetchCompanyName(value);
+                            }
                           }}
                           onBlur={(e) => {
                             field.onBlur();
@@ -224,27 +248,13 @@ export default function RegisterPage() {
                               fetchCompanyName(value);
                             }
                           }}
-                          className={errors.register ? "border-destructive" : ""}
+                          placeholder="1234567"
+                          className={`${registerInputClass} ${errors.register ? registerInputErrorClass : ""}`}
                         />
                       )}
                     />
-                 
+                  
                     {errors.register && <p className="text-xs text-destructive">{errors.register.message}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName" className="text-cyrillic">{t("company_name")} <span className="text-destructive">*</span></Label>
-                    <Input
-                      id="companyName"
-                      type="text"
-                      {...register('CompanyName', {
-                        onChange: () => {
-                          setCompanyLookupFailed(false);
-                          setCompanyLookupSucceeded(false);
-                        },
-                      })}
-                      className={errors.CompanyName ? "border-destructive" : ""}
-                    />
                     {companyLookupLoading && (
                       <div className="text-xs text-muted-foreground">
                         {companyLookupSlow ? t("company_lookup_slow") : t("company_lookup_loading")}
@@ -253,47 +263,65 @@ export default function RegisterPage() {
                     {companyLookupSucceeded && !companyLookupLoading && (
                       <div className="text-xs text-green-600">{t("company_lookup_success")}</div>
                     )}
-                    {companyLookupFailed && !companyLookupLoading && (
-                      <div className="text-xs text-amber-600">{t("company_lookup_not_found")}</div>
-                    )}
-                   
-                    {errors.CompanyName && <p className="text-xs text-destructive">{errors.CompanyName.message}</p>}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="companyName" className="text-cyrillic">{t("company_name")}</Label>
+                    <Input
+                      id="companyName"
+                      type="text"
+                      readOnly
+                      {...register('CompanyName')}
+                      className={`${registerInputClass} cursor-not-allowed bg-gray-50 text-gray-500 dark:bg-gray-700/70 dark:text-gray-200`}
+                    />
                   </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="space-y-1.5 ">
                     <Label htmlFor="propertyName" className="text-cyrillic">{t("hotel_name")} (монгол) <span className="text-destructive">*</span></Label>
                     <Input
                       id="propertyName"
                       type="text"
-                      {...register('PropertyName')}
-                      className={errors.PropertyName ? "border-destructive" : ""}
+                      {...register('PropertyName', {
+                          onChange: (e) => {
+                            const englishPattern = /[^a-zA-Z\s-]/g;
+                            e.target.value = e.target.value.replace(englishPattern, '');
+                          }
+                        })}
+                      placeholder="Кирилл үсгээр оруулна уу"
+                      className={`${registerInputClass} ${errors.PropertyName ? registerInputErrorClass : ""}`}
                     />
             
                     {errors.PropertyName && <p className="text-xs text-destructive">{errors.PropertyName.message}</p>}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="propertyNameEn" className="text-cyrillic">{t("hotel_name_en")} <span className="text-destructive">*</span></Label>
                     <Input
                       id="propertyNameEn"
                       type="text"
-                      {...register('PropertyName_en')}
-                      className={errors.PropertyName_en ? "border-destructive" : ""}
+                      {...register('PropertyName', {
+                          onChange: (e) => {
+                            const cyrillicPattern = /[^а-яА-ЯёЁөӨүҮ\s-]/g;
+                            e.target.value = e.target.value.replace(cyrillicPattern, '');
+                          }
+                        })}
+                      placeholder="Латин үсгээр оруулна уу"
+                      className={`${registerInputClass} ${errors.PropertyName_en ? registerInputErrorClass : ""}`}
                     />
                  
                     {errors.PropertyName_en && <p className="text-xs text-destructive">{errors.PropertyName_en.message}</p>}
                   </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="propertyType" className="text-cyrillic">{t("hotel_type")} <span className="text-destructive">*</span></Label>
                     <select
                       id="propertyType"
                       {...register('property_type')}
-                      className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.property_type ? "border-destructive" : ""}`}
+                      className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:placeholder:text-gray-500 ${propertyTypeValue ? "text-gray-900 dark:text-gray-100" : "text-gray-400"} ${errors.property_type ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     >
                       <option value="">{t("select")}</option>
                       {propertyTypes.map((type) => (
@@ -304,12 +332,12 @@ export default function RegisterPage() {
                     {errors.property_type && <p className="text-sm text-destructive">{errors.property_type.message}</p>}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="ownershipType" className="text-cyrillic">{t("ownership_type")} <span className="text-destructive">*</span></Label>
                     <select
                       id="ownershipType"
                       {...register('ownership_type')}
-                      className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.ownership_type ? "border-destructive" : ""}`}
+                      className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:placeholder:text-gray-500 ${ownershipTypeValue ? "text-gray-900 dark:text-gray-100" : "text-gray-400"} ${errors.ownership_type ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     >
                       <option value="">{t("select")}</option>
                       {ownershipTypes.map((type) => (
@@ -321,18 +349,19 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="location" className="text-cyrillic">{t("location")} <span className="text-destructive">*</span></Label>
-                  <textarea
-                    id="location"
-                    rows={3}
-                    {...register('location')}
-                    className={`flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none ${errors.location ? "border-destructive" : ""}`}
-                  />
+                    <textarea
+                      id="location"
+                      rows={3}
+                      {...register('location')}
+                      placeholder="Хотелийн байршил оруулна уу"
+                      className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 ${errors.location ? "border-destructive" : ""}`}
+                    />
                   {errors.location && <p className="text-xs text-destructive">{errors.location.message}</p>}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="phone" className="text-cyrillic">{t("phone_number")} <span className="text-destructive">*</span></Label>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">+976</span>
@@ -349,7 +378,7 @@ export default function RegisterPage() {
                             field.onChange(value);
                           }}
                           onBlur={field.onBlur}
-                          className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.phone ? "border-destructive" : ""}`}
+                          className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 ${errors.phone ? "border-destructive" : ""}`}
                           placeholder="9512 9418"
                         />
                       )}
@@ -359,13 +388,14 @@ export default function RegisterPage() {
                   {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="email" className="text-cyrillic">{t("email")} <span className="text-destructive">*</span></Label>
                   <Input
                     id="email"
                     type="email"
                     {...register('mail')}
-                    className={errors.mail ? "border-destructive" : ""}
+                    placeholder="name@example.com"
+                    className={`${registerInputClass} ${errors.mail ? registerInputErrorClass : ""}`}
                   />
                   {errors.mail && <p className="text-xs text-destructive">{errors.mail.message}</p>}
                 </div>
