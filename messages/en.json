@@ -72,7 +72,7 @@
     "languages_section_selected": "Selected",
     "languages_section_available": "Available",
     "languages_search": "Search languages...",
-    "languages_done": "Done",
+    "languages_done": "Save",
     "languages_empty_selected": "No languages selected",
     "accepted_cards": "Accepted payment methods",
     "1":"Cancel Time",
@@ -134,7 +134,7 @@
     "payment_unit": "Payment unit",
     "hourly": "Hourly",
     "daily": "Daily",
-    "children_extra_bed": "Children and Extra Bed",
+    "children_extra_bed": "Children",
     "yes": "Yes",
     "no_label": "No",
     "max_child_age": "Maximum child age",
@@ -146,6 +146,7 @@
 
   "5PropertyImages":{
     "title":"Hotel Images",
+    "please_fix_errors": "Please fix the errors before continuing",
     "upload_heading":"Please upload 5 featured photos of your hotel.",
     "req_min_size":"Each image must be at least 100KB",
     "req_format":"JPG/PNG (max 5 MB)",

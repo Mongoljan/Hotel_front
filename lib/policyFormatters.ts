@@ -57,8 +57,8 @@ export const formatBreakfastType = (type: string | null | undefined): string => 
 };
 
 export function resolveMinGuestAgeMode(age: number | null | undefined): 'none' | '18' | 'custom' {
-  if (age === null || age === undefined) return 'none';
-  if (age === 18) return '18';
+  if (age === null || age === undefined || age === 0) return 'none';
+  if (age === 1) return '18';
   return 'custom';
 }
 
@@ -122,7 +122,7 @@ export function buildPolicyPayload(data: PolicyFormFields, propertyId: number | 
     check_out_from: stripSeconds(data.check_out_from),
     check_out_until: stripSeconds(data.check_out_until),
     pet_policy: data.pet_policy,
-    min_guest_age: data.min_guest_age_mode === 'none' ? null : data.min_guest_age ?? null,
+    min_guest_age: data.min_guest_age ?? 0,
     languages: data.languages,
     accepted_card_ids: data.accepted_card_ids ?? [],
     breakfast_policy: {

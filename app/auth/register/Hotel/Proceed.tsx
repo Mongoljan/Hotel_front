@@ -191,53 +191,49 @@ const Proceed: React.FC<ProceedProps> = ({
   const isApproved = hotelApproved !== undefined ? hotelApproved : hotelData.is_approved;
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <h2 className="text-xl font-semibold mb-2">{t('title')}</h2>
-        <Badge 
-          variant={isApproved ? "default" : "secondary"} 
-          className={isApproved ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}
-        >
-          {isApproved ? (
-            <>
-              <CheckCircle className="w-4 h-4 mr-2" />
-              {t('4')}
-            </>
-          ) : (
-            <>
-              <Clock className="w-4 h-4 mr-2" />
-              {t('pendingApproval')}
-            </>
-          )}
-        </Badge>
-      </div>
-
-      {/* Simple Info Grid */}
+    <div className="max-w-2xl mx-auto">
       <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-600">{t('1')}:</span>
-              <p className="font-medium">{hotelData.CompanyName}</p>
+        <CardContent className="px-6 py-5 space-y-5">
+          {/* Title */}
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Компанийн мэдээлэл</h2>
+          </div>
+
+          {/* Simple Info Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-gray-500">{t('1')}</span>
+              <p className="font-medium text-foreground">{hotelData.CompanyName}</p>
             </div>
-            <div>
-              <span className="text-gray-600">{t('2')}:</span>
-              <p className="font-medium">{hotelData.phone}</p>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-gray-500">{t('2')}</span>
+              <p className="font-medium text-foreground">{hotelData.phone}</p>
             </div>
-            <div>
-              <span className="text-gray-600">{t('3')}:</span>
-              <p className="font-medium">{hotelData.mail}</p>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-gray-500">{t('3')}</span>
+              <p className="font-medium text-foreground">{hotelData.mail}</p>
             </div>
-            <div>
-              <span className="text-gray-600">{t('4')}:</span>
-              <p className="font-medium">{isApproved ? 'Yes' : 'No'}</p>
+            <div className="flex flex-col gap-0.5 justify-center">
+              <span className="text-gray-500">{t('4')}</span>
+              <p className="font-medium">
+                {isApproved ? (
+                  <span className="inline-flex items-center gap-1.5 text-green-700">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    Зөвшөөрсөн
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-amber-700">
+                    <Clock className="w-4 h-4 text-amber-600" />
+                    Хүлээгдэж байна
+                  </span>
+                )}
+              </p>
             </div>
           </div>
 
           {/* Status Message inside card */}
           {!isApproved && (
-            <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="pt-4 border-t border-gray-200">
               <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
                 <Clock className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-amber-800">
@@ -246,17 +242,17 @@ const Proceed: React.FC<ProceedProps> = ({
               </div>
             </div>
           )}
+
+          {/* Continue Button - only show for Owner, not staff */}
+          {isApproved && !isStaffUser && (
+            <div className="flex justify-center pt-4">
+              <Button onClick={handleContinue} className="px-8">
+                {t('5')}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Continue Button - only show for Owner, not staff */}
-      {isApproved && !isStaffUser && (
-        <div className="flex justify-center">
-          <Button onClick={handleContinue} className="px-8">
-            {t('5')}
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

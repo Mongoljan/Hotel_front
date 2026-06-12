@@ -2,14 +2,15 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { Baby, BedDouble } from 'lucide-react';
+import { Baby, BedDouble, Info } from 'lucide-react';
 import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { YesNoToggle } from "@/components/ui/yes-no-toggle";
 import { NumericFormat } from 'react-number-format';
 import { z } from 'zod';
 import { schemaHotelSteps3 } from '../../../../schema';
 import PolicyFormRow, { PolicySectionTitle, PolicySubsectionTitle, POLICY_INPUT_CLASS } from './PolicyFormRow';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
@@ -42,16 +43,15 @@ export default function ChildPolicySection({ form, t }: Props) {
       </div>
 
       <div className="space-y-3">
-        <PolicySubsectionTitle>{t('children_policy_subtitle')}</PolicySubsectionTitle>
 
         <FormField
           control={form.control}
           name="allow_children"
           render={({ field }) => (
             <FormItem>
-              <PolicyFormRow label={t('11')}>
+              <PolicyFormRow label={t('11')} alignRight>
                 <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  <YesNoToggle checked={field.value === true} onCheckedChange={(checked: boolean) => field.onChange(checked)} />
                 </FormControl>
               </PolicyFormRow>
               <FormMessage />
@@ -60,17 +60,31 @@ export default function ChildPolicySection({ form, t }: Props) {
         />
 
         {allowChildren && (
-          <div className="space-y-3 rounded-lg border border-dashed p-3">
+          <div className="space-y-3 rounded-lg bg-gray-75 p-3 py-4">
             <FormField
               control={form.control}
               name="max_child_age"
               render={({ field }) => (
                 <FormItem>
                   <PolicyFormRow
-                    label={t('max_child_age')}
-                    helper={t('max_child_age_helper')}
+                    label={
+                      <span className="flex items-center gap-1">
+                        {t('max_child_age')}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-3.5 w-3.5 text-muted-foreground " />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-[250px]">{t('max_child_age_helper')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </span>
+                    }
+                    alignRight
                   >
-                    <FormControl>
+                    <FormControl className="bg-white">
                       <Input
                         type="number"
                         placeholder="17"
@@ -93,11 +107,12 @@ export default function ChildPolicySection({ form, t }: Props) {
               name="child_bed_available"
               render={({ field }) => (
                 <FormItem>
-                  <PolicyFormRow label={t('child_bed_available')}>
+                  <PolicyFormRow label={t('child_bed_available')} alignRight>
                     <FormControl>
-                      <Switch
+                      <YesNoToggle
+                      className="bg-white"
                         checked={field.value === 'yes'}
-                        onCheckedChange={(checked) => field.onChange(checked ? 'yes' : 'no')}
+                        onCheckedChange={(checked: boolean) => field.onChange(checked ? 'yes' : 'no')}
                       />
                     </FormControl>
                   </PolicyFormRow>
@@ -112,7 +127,7 @@ export default function ChildPolicySection({ form, t }: Props) {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <BedDouble className="h-4 w-4" />
-          <PolicySubsectionTitle>{t('extra_bed_subtitle')}</PolicySubsectionTitle>
+          <PolicySubsectionTitle > <div className="text-[16px]">{t('extra_bed_subtitle')}</div></PolicySubsectionTitle>
         </div>
 
         <FormField
@@ -120,9 +135,9 @@ export default function ChildPolicySection({ form, t }: Props) {
           name="allow_extra_bed"
           render={({ field }) => (
             <FormItem>
-              <PolicyFormRow label={t('extra_bed_available')}>
+              <PolicyFormRow label={t('extra_bed_available')} alignRight>
                 <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  <YesNoToggle checked={field.value === true} onCheckedChange={(checked: boolean) => field.onChange(checked)} />
                 </FormControl>
               </PolicyFormRow>
               <FormMessage />
@@ -131,14 +146,16 @@ export default function ChildPolicySection({ form, t }: Props) {
         />
 
         {allowExtraBed && (
-          <div className="rounded-lg border border-dashed p-3">
+          <div className="rounded-lg bg-gray-75 p-3">
             <FormField
+           
               control={form.control}
               name="extra_bed_price"
               render={({ field }) => (
                 <FormItem>
-                  <PolicyFormRow label={t('extra_bed_price')}>
-                    <FormControl>
+                  <PolicyFormRow label={t('extra_bed_price')} alignRight>
+                    
+                    <FormControl  className="bg-white " >
                       <NumericFormat
                         thousandSeparator=","
                         placeholder="0"

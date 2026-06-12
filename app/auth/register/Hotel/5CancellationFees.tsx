@@ -154,7 +154,7 @@ export default function RegisterHotel5Cancellation({ onNext, onBack }: Props) {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <CancellationPolicySection form={form} t={t} />
               <Separator />
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-10">
                 <Button type="button" variant="outline" onClick={onBack} className="flex-1">
                   <ChevronLeft className="mr-2 h-4 w-4" />
                   {t('13')}

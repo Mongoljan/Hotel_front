@@ -228,7 +228,7 @@ export default function RegisterHotel3({ onNext, onBack }: Props) {
               </div>
             </div> */}
 
-            <div className="flex gap-3 pt-3">
+            <div className="flex gap-3 pt-10">
               <Button
                 type="button"
                 variant="outline"

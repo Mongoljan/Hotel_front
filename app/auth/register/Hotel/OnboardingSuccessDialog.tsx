@@ -25,7 +25,7 @@ export default function OnboardingSuccessDialog({ open, hotelName, onConfirm }: 
         preventOutsideClose
         hideCloseButton
       >
-        <DialogTitle className="sr-only">{t('onboarding_welcome_title')}</DialogTitle>
+        <DialogTitle className="sr-only text-primary text-2xl">{t('onboarding_welcome_title')}</DialogTitle>
 
         <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F0FE]">
           <Sparkles className="h-8 w-8 text-[#4A7BF7]" />

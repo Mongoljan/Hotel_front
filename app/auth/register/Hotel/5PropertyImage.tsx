@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   Star,
   Upload,
+  X,
   ChevronLeft as CarouselPrev,
   ChevronRight as CarouselNext,
 } from 'lucide-react';
@@ -198,17 +199,15 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
     setDraftCategory(entry?.category || 3);
   };
 
-  const openFeaturedModal = () => {
-    if (filledIndexes.length === 0) {
-      toast.error(t('alert_min_images'));
-      return;
-    }
-    const currentProfile = watchedEntries.findIndex((e) => e.is_profile && e.images);
-    const startIdx = currentProfile >= 0 ? filledIndexes.indexOf(currentProfile) : 0;
-    const carouselStart = startIdx >= 0 ? startIdx : 0;
-    setFeaturedCarouselIndex(carouselStart);
-    setDraftCategory(watchedEntries[filledIndexes[carouselStart]]?.category || 3);
-    setModalMode('featured');
+  const removeImage = (index: number) => {
+    form.setValue(`entries.${index}.images`, '', { shouldValidate: true, shouldDirty: true });
+    form.setValue(`entries.${index}.is_profile`, false, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const setAsProfile = (index: number) => {
+    watchedEntries.forEach((_, i) => {
+      form.setValue(`entries.${i}.is_profile`, i === index, { shouldValidate: true, shouldDirty: true });
+    });
   };
 
   const triggerFilePicker = () => {
@@ -245,6 +244,9 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
     }
     const b64 = await readFileAsBase64(file);
     setDraftImage(b64);
+    const nextEmpty = watchedEntries.findIndex((e) => !e.images);
+    setActiveIndex(nextEmpty >= 0 ? nextEmpty : watchedEntries.length);
+    setModalMode('add');
     event.target.value = '';
   };
 
@@ -327,10 +329,24 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   };
 
   const onInvalid = () => {
-    if (!watchedEntries.some((e) => e.is_profile && e.images)) {
+    const entriesErrors = form.formState.errors.entries;
+    let msg: string | undefined;
+    if (entriesErrors) {
+      if (typeof entriesErrors.message === 'string') {
+        msg = entriesErrors.message;
+      } else if (Array.isArray(entriesErrors)) {
+        const first = entriesErrors.find(Boolean);
+        msg = first?.root?.message || first?.message;
+      } else if (entriesErrors.root?.message) {
+        msg = entriesErrors.root.message;
+      }
+    }
+    if (msg) {
+      toast.error(msg);
+    } else if (!watchedEntries.some((e) => e.is_profile && e.images)) {
       toast.error(t('profile_image_required'));
     } else {
-      toast.error(t('please_fix_errors') || 'Please fix the errors before continuing');
+      toast.error(t('please_fix_errors'));
     }
   };
 
@@ -487,7 +503,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
     <button
       type="button"
       onClick={onClick}
-      className="relative mx-auto flex aspect-square w-full max-w-[280px] items-center justify-center overflow-hidden rounded-xl border-2 border-[#4A7BF7] bg-[#E8F0FE]/30"
+      className="relative mx-auto flex aspect-square w-full  items-center justify-center overflow-hidden rounded-xl border-2 border-[#4A7BF7] bg-[#E8F0FE]/30"
     >
       {src ? (
         <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -517,7 +533,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
       <Card className="w-full max-w-[640px]">
         <CardHeader className="space-y-1 pb-2">
           <CardTitle className="text-xl font-semibold text-center flex items-center justify-center gap-2">
-            <ImageIcon className="h-5 w-5" />
+      
             {t('title')}
           </CardTitle>
         </CardHeader>
@@ -555,51 +571,9 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
               <div className="grid grid-cols-3 gap-3">
-                {Array.from({ length: GRID_IMAGE_SLOTS }).map((_, index) => {
-                  const previewSrc = watchedEntries?.[index]?.images;
-                  const isProfile = Boolean(watchedEntries?.[index]?.is_profile);
-                  return (
-                    <button
-                      key={fields[index]?.id ?? `slot-${index}`}
-                      type="button"
-                      onClick={() => (previewSrc ? openChangeModal(index) : openAddModal(index))}
-                      className={`relative aspect-square w-full overflow-hidden rounded-xl border-2 transition-colors ${
-                        previewSrc
-                          ? 'border-border hover:border-primary/50'
-                          : 'border-dashed border-muted-foreground/30 hover:border-primary/40 bg-muted/20'
-                      } ${isProfile ? 'ring-2 ring-[#4A7BF7] ring-offset-2' : ''}`}
-                    >
-                      {previewSrc ? (
-                        <>
-                          <img src={previewSrc} alt="" className="h-full w-full object-cover" />
-                          {isProfile && (
-                            <div
-                              className="absolute top-1.5 right-1.5 rounded-full bg-[#4A7BF7] p-1 shadow"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openFeaturedModal();
-                              }}
-                            >
-                              <Star className="h-3 w-3 fill-white text-white" />
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="flex h-full flex-col items-center justify-center gap-1 text-muted-foreground">
-                          <ImageIcon className="h-6 w-6 opacity-40" />
-                          <span className="text-[10px] font-medium">{index + 1}</span>
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-
                 <button
                   type="button"
-                  onClick={() => {
-                    const nextEmpty = watchedEntries.findIndex((e) => !e.images);
-                    openAddModal(nextEmpty >= 0 ? nextEmpty : watchedEntries.length);
-                  }}
+                  onClick={triggerFilePicker}
                   className="relative flex aspect-square w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-[#4A7BF7]/40 bg-[#E8F0FE]/50 text-[#4A7BF7] transition-colors hover:border-[#4A7BF7] hover:bg-[#E8F0FE]"
                 >
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#4A7BF7]/10">
@@ -609,15 +583,58 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                     {t('upload_slot_label')}
                   </span>
                 </button>
-              </div>
 
-              <button
-                type="button"
-                onClick={openFeaturedModal}
-                className="mt-3 w-full text-center text-sm text-[#4A7BF7] hover:underline"
-              >
-                {t('select_featured')}
-              </button>
+                {watchedEntries.map((entry, index) => {
+                  if (!entry.images) return null;
+                  const isProfile = Boolean(entry.is_profile);
+                  return (
+                    <div
+                      key={index}
+                      className={`relative aspect-square w-full overflow-hidden rounded-xl border-2 transition-colors border-border hover:border-primary/50 group ${
+                        isProfile ? 'ring-2 ring-[#4A7BF7] ring-offset-2' : ''
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => openChangeModal(index)}
+                        className="w-full h-full"
+                      >
+                        <img src={entry.images} alt="" className="h-full w-full object-cover" />
+                      </button>
+
+                      {/* Star profile button - left side */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAsProfile(index);
+                        }}
+                        className={`absolute top-1.5 left-1.5 rounded-full p-1.5 shadow transition-all hover:scale-110 ${
+                          isProfile
+                            ? 'bg-[#4A7BF7] text-white'
+                            : 'bg-white/80 text-muted-foreground hover:bg-white'
+                        }`}
+                        title="Профайл болгох"
+                      >
+                        <Star className={`h-3.5 w-3.5 ${isProfile ? 'fill-white' : ''}`} />
+                      </button>
+
+                      {/* X delete button - top right, on hover */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeImage(index);
+                        }}
+                        className="absolute top-1.5 right-1.5 rounded-full bg-black/50 text-white p-1 shadow opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                        title="Устгах"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
 
               <div className="flex gap-3 pt-6">
                 <Button type="button" variant="outline" onClick={onBack} className="flex-1 h-10 rounded-xl">
@@ -653,9 +670,10 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
               <Select
                 value={draftCategory ? String(draftCategory) : undefined}
                 onValueChange={(v) => setDraftCategory(Number(v))}
+               
               >
                 <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue placeholder={t('select_placeholder_short')} />
+                  <SelectValue placeholder={<span className="text-muted-foreground">{t('select_placeholder_short')}</span>} />
                 </SelectTrigger>
                 <SelectContent>
                   {imageCategories.map((cat) => (
@@ -690,87 +708,6 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
         </DialogContent>
       </Dialog>
 
-      {/* Featured image modal */}
-      <Dialog open={modalMode === 'featured'} onOpenChange={(open) => !open && closeModal()}>
-        <DialogContent className="max-w-[400px] rounded-2xl p-6 gap-0">
-          <DialogTitle className="text-base font-semibold text-center pb-4 border-b mb-4">
-            {t('featured_image_title')}
-          </DialogTitle>
-
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">
-                {t('image_type_label')} <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={draftCategory ? String(draftCategory) : undefined}
-                onValueChange={(v) => setDraftCategory(Number(v))}
-              >
-                <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue placeholder={t('select_placeholder_short')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {imageCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={String(cat.id)}>
-                      {locale === 'en' ? cat.name_en : cat.name_mn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="relative flex items-center justify-center">
-              {filledIndexes.length > 1 && (
-                <button
-                  type="button"
-                  className="absolute left-0 z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-white shadow"
-                  onClick={() =>
-                    setFeaturedCarouselIndex((i) => (i - 1 + filledIndexes.length) % filledIndexes.length)
-                  }
-                >
-                  <CarouselPrev className="h-4 w-4" />
-                </button>
-              )}
-
-              <div className="relative flex aspect-square w-full max-w-[280px] items-center justify-center overflow-hidden rounded-xl border-2 border-[#4A7BF7] bg-[#E8F0FE]/30">
-                {featuredCarouselImage ? (
-                  <img src={featuredCarouselImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                ) : (
-                  <Upload className="h-10 w-10 text-[#4A7BF7]/60" />
-                )}
-              </div>
-
-              {filledIndexes.length > 1 && (
-                <button
-                  type="button"
-                  className="absolute right-0 z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-white shadow"
-                  onClick={() => setFeaturedCarouselIndex((i) => (i + 1) % filledIndexes.length)}
-                >
-                  <CarouselNext className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 h-11 rounded-xl text-xs sm:text-sm"
-                onClick={() => document.getElementById('featured-file-input')?.click()}
-              >
-                {t('upload_new')}
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 h-11 rounded-xl bg-[#4A7BF7] hover:bg-[#3d6ae0] text-xs sm:text-sm"
-                onClick={applyFeaturedImage}
-              >
-                {t('change_with_existing')}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

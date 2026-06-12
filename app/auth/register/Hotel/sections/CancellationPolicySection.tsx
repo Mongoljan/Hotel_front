@@ -47,7 +47,7 @@ export default function CancellationPolicySection({ form, t }: Props) {
               <Select onValueChange={field.onChange} value={field.value || undefined}>
                 <FormControl>
                   <SelectTrigger className="w-[110px]">
-                    <SelectValue placeholder="ЦЦ:ММ" />
+                    <SelectValue placeholder={<span className="text-muted-foreground">ЦЦ:ММ</span>} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>

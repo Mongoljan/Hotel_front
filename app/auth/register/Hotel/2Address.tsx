@@ -211,7 +211,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
 
   return (
     <div className="flex justify-center px-4">
-      <Card className="w-full max-w-[640px]">
+      <Card className="w-full max-w-[560px]">
         <CardHeader className="space-y-1 pb-4">
           <CardTitle className="text-xl font-semibold text-center">{t("title")}</CardTitle>
         </CardHeader>
@@ -227,7 +227,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t('province_placeholder')} className="text-gray-400" />
+                          <SelectValue placeholder={<span className="text-muted-foreground">{t('province_placeholder')}</span>} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -257,7 +257,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t('soum_placeholder')} className="text-gray-400" />
+                          <SelectValue placeholder={<span className="text-muted-foreground">{t('soum_placeholder')}</span>} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -359,7 +359,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                 )}
               />
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-10">
                 <Button
                   type="button"
                   variant="outline"

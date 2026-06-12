@@ -79,9 +79,9 @@ export default function StepIndicator({
 
             const badgeClass = cn(
               'mt-1.5 text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full',
-              isCompleted && 'bg-green-100 text-green-800',
-              isActive && 'bg-amber-100 text-amber-800',
-              !isCompleted && !isActive && 'bg-gray-100 text-gray-500'
+              isCompleted && 'bg-green-100 text-green-800 font-medium ',
+              isActive && 'bg-amber-100 text-amber-800 font-bold',
+              !isCompleted && !isActive && 'bg-gray-100 text-gray-500 font-semibold'
             );
 
             return (
@@ -94,7 +94,7 @@ export default function StepIndicator({
                       stepNum
                     )}
                   </div>
-                  <span className="mt-2 text-xs text-center leading-tight px-1">{label}</span>
+                  <span className={cn("mt-2 text-xs text-center leading-tight px-1", isActive && "font-semibold")}>{label}</span>
                   <span className={badgeClass}>{statusLabel(status)}</span>
                 </div>
                 {idx < steps.length - 1 && <div className={lineClass} />}

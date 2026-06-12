@@ -179,8 +179,8 @@ export default function RegisterEmployee() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t('select_position')} />
-                        </SelectTrigger>
+                        <SelectValue placeholder={<span className="text-muted-foreground">{t('select_position')}</span>} />
+                      </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {positions.map((pos) => (

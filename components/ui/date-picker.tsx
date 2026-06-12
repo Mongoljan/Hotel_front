@@ -187,7 +187,6 @@ export function MonthYearPickerWithValue({
   disabled = false,
   className,
 }: MonthYearPickerWithValueProps) {
-  const [isOpen, setIsOpen] = React.useState(false)
   const locale = useLocale()
 
   const parsed = parseMonthYearValue(value)
@@ -198,82 +197,44 @@ export function MonthYearPickerWithValue({
   const monthsMn = ['1-р сар', '2-р сар', '3-р сар', '4-р сар', '5-р сар', '6-р сар', '7-р сар', '8-р сар', '9-р сар', '10-р сар', '11-р сар', '12-р сар']
   const months = locale === 'mn' ? monthsMn : monthsEn
 
-  const [selectedYear, setSelectedYear] = React.useState<number>(
-    parsed?.year ?? currentYear
-  )
-  const [selectedMonth, setSelectedMonth] = React.useState<number>(
-    parsed?.month ?? new Date().getMonth()
-  )
-
-  React.useEffect(() => {
-    if (!isOpen) return
-    const next = parseMonthYearValue(value)
-    setSelectedYear(next?.year ?? currentYear)
-    setSelectedMonth(next?.month ?? new Date().getMonth())
-  }, [isOpen, value, currentYear])
-
-  const displayLabel = parsed
-    ? locale === 'mn'
-      ? `${parsed.year} оны ${monthsMn[parsed.month]}`
-      : `${monthsEn[parsed.month]} ${parsed.year}`
-    : null
-
-  const applySelection = () => {
-    onChange?.(formatMonthYearValue(selectedYear, selectedMonth))
-    setIsOpen(false)
-  }
-
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen} modal={true}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          className={cn(
-            "w-full justify-start text-left font-normal h-10",
-            !displayLabel && "text-muted-foreground",
-            className
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {displayLabel ?? <span>{placeholder}</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-3" align="start" sideOffset={4} style={{ zIndex: 9999 }}>
-        <div className="flex gap-2">
-          <Select
-            value={selectedYear.toString()}
-            onValueChange={(v) => setSelectedYear(parseInt(v, 10))}
-          >
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
-            </SelectTrigger>
-            <SelectContent className="max-h-[300px]" position="popper" style={{ zIndex: 10001 }}>
-              {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={selectedMonth.toString()}
-            onValueChange={(v) => setSelectedMonth(parseInt(v, 10))}
-          >
-            <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
-            </SelectTrigger>
-            <SelectContent position="popper" style={{ zIndex: 10001 }}>
-              {months.map((month, index) => (
-                <SelectItem key={index} value={index.toString()}>{month}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button type="button" className="w-full mt-3" onClick={applySelection}>
-          {locale === 'mn' ? 'Сонгох' : 'Select'}
-        </Button>
-      </PopoverContent>
-    </Popover>
+    <div className={cn("flex ", className)}>
+      <Select
+        value={parsed?.year?.toString() ?? ''}
+        
+        onValueChange={(v) => {
+          const newYear = parseInt(v, 10)
+          const month = parsed?.month ?? new Date().getMonth()
+          onChange?.(formatMonthYearValue(newYear, month))
+        }}
+      >
+        <SelectTrigger className="w-[130px] rounded-r-none border-r-0" disabled={disabled}>
+          <SelectValue placeholder={locale === 'mn' ? 'Он' : 'Year'} />
+        </SelectTrigger>
+        <SelectContent side="bottom" className="max-h-[300px]">
+          {years.map((year) => (
+            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select
+        value={parsed?.month?.toString() ?? ''}
+        onValueChange={(v) => {
+          const newMonth = parseInt(v, 10)
+          const year = parsed?.year ?? currentYear
+          onChange?.(formatMonthYearValue(year, newMonth))
+        }}
+      >
+        <SelectTrigger className="w-[140px] rounded-l-none" disabled={disabled}>
+          <SelectValue placeholder={locale === 'mn' ? 'Сар' : 'Month'} />
+        </SelectTrigger>
+        <SelectContent side="bottom">
+          {months.map((month, index) => (
+            <SelectItem key={index} value={index.toString()}>{month}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   )
 }
 

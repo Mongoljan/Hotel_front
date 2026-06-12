@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { Globe } from 'lucide-react';
 import { z } from 'zod';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { LanguageMultiSelect, type LanguageOption } from '@/components/LanguageMultiSelect';
@@ -20,13 +21,16 @@ type Props = {
 export default function LanguagesPolicySection({ form, t, languages, locale }: Props) {
   return (
     <div className="space-y-3">
-      <PolicySectionTitle>{t('languages')}</PolicySectionTitle>
+      <div className="flex items-center gap-2">
+        <Globe className="h-4 w-4" />
+        <PolicySectionTitle>{t('languages')}</PolicySectionTitle>
+      </div>
       <FormField
         control={form.control}
         name="languages"
         render={({ field }) => (
           <FormItem>
-            <PolicyFormRow label={t('selectLanguagesHint')}>
+            <PolicyFormRow label={t('selectLanguagesHint')} alignRight>
               <FormControl>
                 <LanguageMultiSelect
                   languages={languages}

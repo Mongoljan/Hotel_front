@@ -344,8 +344,7 @@ export const schemaHotelSteps1 = z
 
     star_rating: z
       .string()
-      .min(1, { message: "Одны зэрэглэл хамгийн багадаа 1 байх ёстой" })
-      .max(5, { message: "Одны зэрэглэл хамгийн ихдээ 5 байх ёстой" }),
+      .min(1, { message: "Одны зэрэглэл сонгоно уу" }),
 
     part_of_group: z.coerce.boolean(),
 
@@ -641,7 +640,8 @@ export const schemaHotelSteps5 = z.object({
         ),
       descriptions: z
         .string()
-        .min(1, { message: 'Description must not be empty.' }),
+        .optional()
+        .default(''),
       category: z.coerce.number().min(1, { message: 'Зургийн ангилал сонгоно уу' }),
       is_profile: z.boolean().default(false),
     })

@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MonthYearPickerWithValue } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
-import { OptionButton } from "@/components/ui/option-button";
+import { YesNoToggle } from "@/components/ui/yes-no-toggle";
 const API_URL = 'https://dev.kacc.mn/api/property-basic-info/';
 const PROPERTIES_API = 'https://dev.kacc.mn/api/properties';
 import { useCombinedData } from '@/app/hooks/useCombinedData';
@@ -107,18 +107,16 @@ type FormFields = z.infer<typeof schemaHotelSteps1>;
 
 export default function RegisterHotel1({ onNext, onBack }: Props) {
   const t = useTranslations('1BasicInfo');
-  const { user } = useAuth(); // Get user from auth hook
+  const { user } = useAuth();
   const [ratings, setRatings] = useState<RatingType[]>([]);
   const [defaultValues, setDefaultValues] = useState<FormFields | null>(null);
 
-  // Use cached hook — avoids duplicate network fetch on every registration step mount
   const { data: combinedHook } = useCombinedData();
   useEffect(() => {
     if (!combinedHook) return;
     setRatings(combinedHook.ratings || []);
   }, [combinedHook]);
 
-  // Load default values from cache or API (separate from reference data)
   useEffect(() => {
     const initDefaults = async () => {
       if (!user?.hotel || !user?.id) {
@@ -181,19 +179,15 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
     }
   }, [defaultValues, reset]);
 
-
   const onSubmit: SubmitHandler<FormFields> = async (data) => {
     if (!user?.id || !user?.hotel) {
       toast.error(t('user_info_missing'));
       return;
     }
 
-    // Check if data has changed
     if (defaultValues) {
       const hasChanged = JSON.stringify(data) !== JSON.stringify(defaultValues);
-      
       if (!hasChanged) {
-        // No changes, just go to next step
         onNext();
         return;
       }
@@ -201,13 +195,13 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
     const propertyDataStr = UserStorage.getItem<string>('propertyData', user.id);
     const stored = propertyDataStr ? JSON.parse(propertyDataStr) : {};
-    const existingPropertyId = stored.step1?.id; // Get the ID from the stored step1 data
+    const existingPropertyId = stored.step1?.id;
 
     try {
       const cleanedData = {
         ...data,
         group_name: data.part_of_group ? data.group_name : '',
-        sales_room_limitation: false, // Default value since field is removed
+        sales_room_limitation: false,
         property: user.hotel,
       };
 
@@ -223,7 +217,6 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       if (!response.ok) throw new Error('Failed to save property basic info');
       const result = await response.json();
 
-      // Store the complete result from API which includes the id field
       UserStorage.setItem('propertyData', JSON.stringify({
         ...stored,
         step1: result,
@@ -242,7 +235,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
 
   return (
     <div className="flex justify-center px-4">
-      <Card className="w-full max-w-[640px]">
+      <Card className="w-full max-w-[560px]">
         <CardHeader className="space-y-1 pb-4">
           <CardTitle className="text-xl font-semibold text-center">{t('title')}</CardTitle>
         </CardHeader>
@@ -315,7 +308,6 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      
                       {t('4')}
                     </FormLabel>
                     <FormControl>
@@ -326,7 +318,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                           ratings.map(r => {
                             const starCount = parseInt(r.rating) || 0;
                             const isNA = r.rating.toUpperCase() === 'N/A' || !starCount;
-                            const savedValue = isNA ? r.id.toString() : starCount.toString();
+                            const savedValue = r.id.toString();
                             const isSelected = field.value === savedValue;
 
                             return (
@@ -348,7 +340,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                                     <Star
                                       className={cn(
                                         "h-4 w-4",
-                                        isSelected ? "text-amber-300 fill-amber-300" : "text-amber-500 fill-amber-500"
+                                        isSelected ? "text-amber-300 fill-amber-300" : "text-gray-300 fill-gray-300"
                                       )}
                                     />
                                     <span className="text-sm">{starCount}</span>
@@ -365,47 +357,14 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="part_of_group"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('5')}?</FormLabel>
-                    <FormControl>
-                      <div className="flex gap-2">
-                        <OptionButton selected={field.value === true} onClick={() => field.onChange(true)}>{t('yes')}</OptionButton>
-                        <OptionButton selected={field.value === false} onClick={() => field.onChange(false)}>{t('no')}</OptionButton>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="group_name"
-                render={({ field }) => (
-                  <FormItem className={watch('part_of_group') ? '' : 'hidden'}>
-                    <FormLabel>{t('groupName')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex gap-4 ">
-                <div className="flex-1 ">
+              <div className="flex gap-4">
+                <div className="flex-1">
                   <FormField
                     control={form.control}
                     name="total_hotel_rooms"
                     render={({ field }) => (
                       <FormItem>
-                        <div className="h-6"></div>
-                        <FormLabel >{t('6')}</FormLabel>
-
+                        <FormLabel>{t('6')}</FormLabel>
                         <FormControl>
                           <Input type="number" min={1} placeholder="1" {...field} />
                         </FormControl>
@@ -432,7 +391,41 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-6">
+              <FormField
+                control={form.control}
+                name="part_of_group"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="flex items-center justify-between">
+                        <FormLabel className="mb-0">{t('5')}</FormLabel>
+                        <YesNoToggle
+                          checked={field.value === true}
+                          onCheckedChange={(checked) => field.onChange(checked)}
+                          labels={{ yes: t('yes'), no: t('no') }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="group_name"
+                render={({ field }) => (
+                  <FormItem className={watch('part_of_group') ? '' : 'hidden'}>
+                    <FormLabel>{t('groupName')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-4 pt-10">
                 <Button
                   type="button"
                   variant="outline"

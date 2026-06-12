@@ -4,26 +4,19 @@ import React, { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Star, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { schemaHotelSteps6 } from '../../../schema';
 import { z } from 'zod';
 import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 
 import { useCombinedData } from '@/app/hooks/useCombinedData';
 const API_PROPERTY_DETAILS = 'https://dev.kacc.mn/api/property-details/';
-const MAX_HIGHLIGHTS = 12;
 
 type FormFields = z.infer<ReturnType<typeof schemaHotelSteps6>>;
 type FacilityItem = { id: number; name_en: string; name_mn: string };
@@ -52,7 +45,6 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
   }>({ facilities: [], additionalFacilities: [], activities: [], accessibility_features: [] });
 
   const [expandedGroup, setExpandedGroup] = useState<string | null>('general_facilities');
-  const [highlightModalOpen, setHighlightModalOpen] = useState(false);
   const [initialValues, setInitialValues] = useState<FormFields | null>(null);
 
   const form = useForm<FormFields>({
@@ -66,11 +58,9 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
     },
   });
 
-  // Use cached hook — avoids raw fetch on every step mount
   const { data: combinedHook } = useCombinedData();
   useEffect(() => {
     if (!combinedHook) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const d = combinedHook as any;
     setDataLists({
       facilities: d.facilities || [],
@@ -118,35 +108,6 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
     );
   };
 
-  const toggleHighlight = (fieldName: GroupKey, itemId: number) => {
-    const allValues = form.getValues();
-    const fields: GroupKey[] = [
-      'general_facilities',
-      'additional_facilities',
-      'activities',
-      'accessibility_features',
-    ];
-    const totalHighlights = fields.reduce(
-      (sum, f) => sum + ((allValues[f] as SelectedItem[]) || []).filter((i) => i.is_highlight).length,
-      0
-    );
-
-    const current = (form.getValues(fieldName) as SelectedItem[]) || [];
-    const item = current.find((i) => i.id === itemId);
-    if (!item) return;
-
-    if (!item.is_highlight && totalHighlights >= MAX_HIGHLIGHTS) {
-      toast.error(t('highlights_max_reached'));
-      return;
-    }
-
-    form.setValue(
-      fieldName,
-      current.map((i) => (i.id === itemId ? { ...i, is_highlight: !i.is_highlight } : i)),
-      { shouldValidate: false }
-    );
-  };
-
   const toggleSelectAll = (fieldName: GroupKey, items: FacilityItem[]) => {
     const current = (form.getValues(fieldName) as SelectedItem[]) || [];
     const allSelected = items.every((item) => current.some((s) => s.id === item.id));
@@ -155,12 +116,6 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
       allSelected ? [] : items.map((item) => ({ id: item.id, is_highlight: false })),
       { shouldValidate: true }
     );
-  };
-
-  const handleNextClick = async () => {
-    const valid = await form.trigger('general_facilities');
-    if (!valid) return;
-    setHighlightModalOpen(true);
   };
 
   const onSubmit = async (data: FormFields) => {
@@ -237,17 +192,6 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
     { key: 'accessibility_features', title: t('accessibility_title'), items: dataLists.accessibility_features },
   ];
 
-  // Collect all selected items for the highlights modal
-  const allSelectedItems: { fieldName: GroupKey; item: FacilityItem; isHighlighted: boolean }[] = [];
-  groups.forEach(({ key, items }) => {
-    ((formValues[key] as SelectedItem[]) || []).forEach((sel) => {
-      const item = items.find((i) => i.id === sel.id);
-      if (item) allSelectedItems.push({ fieldName: key, item, isHighlighted: sel.is_highlight });
-    });
-  });
-
-  const totalHighlights = allSelectedItems.filter((i) => i.isHighlighted).length;
-
   const renderGroup = ({ key, title, items }: GroupConfig) => {
     const selected = (formValues[key] as SelectedItem[]) || [];
     const selectedIds = new Set(selected.map((s) => s.id));
@@ -257,14 +201,20 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
     const allSelected = items.length > 0 && items.every((item) => selectedIds.has(item.id));
 
     return (
-      <div key={key} className="border rounded-lg overflow-hidden">
+      <div key={key} className={cn(
+        "border rounded-lg overflow-hidden",
+        key === 'general_facilities' && form.formState.errors.general_facilities && "border-destructive"
+      )}>
         <button
           type="button"
           onClick={() => toggleGroup(key)}
           className="w-full flex items-center justify-between px-4 py-3 bg-muted/40 hover:bg-muted/60 transition-colors text-left"
         >
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm">{title}</span>
+            <span className="font-semibold text-sm">
+              {title}
+              {key === 'general_facilities' && <span className="text-destructive ml-0.5">*</span>}
+            </span>
             {selected.length > 0 && (
               <Badge variant="secondary" className="text-xs">
                 {selected.length}/{items.length}
@@ -272,13 +222,15 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span
-              role="button"
-              onClick={(e) => { e.stopPropagation(); toggleSelectAll(key, items); }}
-              className="text-xs text-primary hover:underline px-1"
-            >
-              {allSelected ? t('deselect_all') : t('select_all')}
-            </span>
+            {isExpanded ? (
+              <span
+                role="button"
+                onClick={(e) => { e.stopPropagation(); toggleSelectAll(key, items); }}
+                className="text-xs text-primary hover:underline px-1"
+              >
+                {allSelected ? t('deselect_all') : t('select_all')}
+              </span>
+            ) : null}
             {isExpanded ? (
               <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
             ) : (
@@ -289,11 +241,10 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
 
         {isExpanded && (
           <div className="p-4 space-y-4">
-            {/* Selected section */}
             {selectedItems.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-medium text-primary uppercase tracking-wide">
-                  {t('selected_label')} ({selectedItems.length})
+                  Сонгосон({selectedItems.length})
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {selectedItems.map((item) => {
@@ -314,16 +265,14 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
               </div>
             )}
 
-            {/* Divider between sections */}
             {selectedItems.length > 0 && unselectedItems.length > 0 && (
               <div className="border-t" />
             )}
 
-            {/* Unselected section */}
             {unselectedItems.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {t('available_label')} ({unselectedItems.length})
+                  Санал болгох({unselectedItems.length})
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {unselectedItems.map((item) => {
@@ -368,12 +317,12 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
               </p>
             )}
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-10">
               <Button type="button" variant="outline" onClick={onBack} className="flex-1">
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 {t('5')}
               </Button>
-              <Button type="button" onClick={handleNextClick} className="flex-1">
+              <Button type="button" onClick={() => form.handleSubmit(onSubmit)()} className="flex-1">
                 {t('6')}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
@@ -381,83 +330,6 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
           </form>
         </CardContent>
       </Card>
-
-      {/* Highlights modal */}
-      <Dialog open={highlightModalOpen} onOpenChange={setHighlightModalOpen}>
-        <DialogContent className="max-w-[560px] max-h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{t('highlights_title')}</DialogTitle>
-            <p className="text-sm text-muted-foreground">{t('highlights_description')}</p>
-          </DialogHeader>
-
-          <div className="flex items-center justify-between py-2 border-b">
-            <span className="text-sm font-medium">
-              {totalHighlights}/{MAX_HIGHLIGHTS} {t('highlights_selected')}
-            </span>
-            {totalHighlights >= MAX_HIGHLIGHTS && (
-              <span className="text-xs text-orange-500 font-medium">
-                {t('highlights_max_reached')}
-              </span>
-            )}
-          </div>
-
-          <div className="flex-1 overflow-y-auto py-3">
-            {allSelectedItems.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-10">
-                {t('highlights_no_items')}
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {allSelectedItems.map(({ fieldName, item, isHighlighted }) => {
-                  const label = locale === 'mn' ? item.name_mn : item.name_en;
-                  const canToggle = isHighlighted || totalHighlights < MAX_HIGHLIGHTS;
-                  return (
-                    <button
-                      key={`${fieldName}-${item.id}`}
-                      type="button"
-                      onClick={() => toggleHighlight(fieldName, item.id)}
-                      disabled={!canToggle}
-                      className={`flex items-center gap-2 p-3 rounded-lg border text-left transition-all
-                        ${
-                          isHighlighted
-                            ? 'border-yellow-400 bg-yellow-50 text-yellow-900'
-                            : canToggle
-                            ? 'border-muted hover:border-yellow-300 hover:bg-yellow-50/40'
-                            : 'border-muted opacity-40 cursor-not-allowed'
-                        }`}
-                    >
-                      <Star
-                        className={`h-4 w-4 shrink-0 transition-colors ${
-                          isHighlighted
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : 'text-muted-foreground'
-                        }`}
-                      />
-                      <span className="text-sm leading-tight">{label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="gap-2 pt-2 border-t">
-            <Button variant="outline" onClick={() => setHighlightModalOpen(false)}>
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              {t('5')}
-            </Button>
-            <Button
-              onClick={() => {
-                setHighlightModalOpen(false);
-                form.handleSubmit(onSubmit)();
-              }}
-            >
-              {t('6')}
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

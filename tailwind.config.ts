@@ -30,6 +30,7 @@ const config: Config = {
 				},
 			gray: {
 				50: '#f8fafc',
+				75: '#f4f6f8',
 				100: '#f1f5f9',
 				200: '#e2e8f0',
 				300: '#cbd5e1',
@@ -106,7 +107,7 @@ const config: Config = {
   			},
 			  muted: {
 					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))'
+					foreground: '#94a3b8'
 				},
 				accent: {
 					DEFAULT: 'hsl(var(--accent))',

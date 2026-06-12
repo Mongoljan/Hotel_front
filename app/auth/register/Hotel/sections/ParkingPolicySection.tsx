@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { LuCircleParking } from "react-icons/lu";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -55,14 +56,16 @@ function ParkingSubSection({
 
   return (
     <div className="space-y-3">
-      <PolicySectionTitle>{title}</PolicySectionTitle>
+      <div className="flex items-center gap-2">
+        <LuCircleParking className="h-4 w-4" />
+        <PolicySectionTitle>{title}</PolicySectionTitle>
+      </div>
 
       <FormField
         control={form.control}
         name={parkingFieldName}
         render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-sm font-normal">{t('status_label')}</FormLabel>
+          <FormItem> 
             <FormControl>
               <div className="flex flex-wrap gap-2">
                 {(['no', 'free', 'paid'] as const).map((value) => (
@@ -82,7 +85,7 @@ function ParkingSubSection({
       />
 
       {parkingValue === 'paid' && (
-        <div className="space-y-3 rounded-lg border border-dashed p-3">
+        <div className="flex gap-x-3 rounded-lg bg-gray-75 p-3">
           <FormField
             control={form.control}
             name={feeTypeFieldName}
@@ -100,8 +103,8 @@ function ParkingSubSection({
                   value={field.value || undefined}
                 >
                   <FormControl>
-                    <SelectTrigger className={POLICY_INPUT_CLASS}>
-                      <SelectValue placeholder={t('select_placeholder')} />
+                    <SelectTrigger className={`${POLICY_INPUT_CLASS} bg-white`}>
+                      <SelectValue placeholder={<span className="text-muted-foreground">{t('select_placeholder')}</span>} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -132,7 +135,7 @@ function ParkingSubSection({
                       });
                     }}
                     customInput={Input}
-                    className={POLICY_INPUT_CLASS}
+                    className={`${POLICY_INPUT_CLASS} bg-white`}
                   />
                 </FormControl>
                 <FormMessage />

@@ -22,7 +22,7 @@ const timeOptions = Array.from({ length: 96 }, (_, i) => {
   return { value: `${hour}:${minute}`, label: `${hour}:${minute}` };
 });
 
-type TimeName = 'check_in_from' | 'check_out_from';
+type TimeName = 'check_in_from' | 'check_in_until' | 'check_out_from' | 'check_out_until';
 
 function TimeSelect({ form, name }: { form: UseFormReturn<FormFields>; name: TimeName }) {
   return (
@@ -32,19 +32,12 @@ function TimeSelect({ form, name }: { form: UseFormReturn<FormFields>; name: Tim
       render={({ field }) => (
         <FormItem className="space-y-0">
           <Select
-            onValueChange={(value) => {
-              field.onChange(value);
-              if (name === 'check_in_from') {
-                form.setValue('check_in_until', value, { shouldValidate: true });
-              } else {
-                form.setValue('check_out_until', value, { shouldValidate: true });
-              }
-            }}
+            onValueChange={field.onChange}
             value={field.value || undefined}
           >
             <FormControl>
               <SelectTrigger className={POLICY_TIME_SELECT_CLASS}>
-                <SelectValue placeholder="ЦЦ:ММ" />
+                <SelectValue placeholder={<span className="text-muted-foreground">ЦЦ:ММ</span>} />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
@@ -62,6 +55,19 @@ function TimeSelect({ form, name }: { form: UseFormReturn<FormFields>; name: Tim
   );
 }
 
+function TimeRangeRow({ form, label, fromName, untilName }: { form: UseFormReturn<FormFields>; label: string; fromName: TimeName; untilName: TimeName }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm font-medium">{label}</span>
+      <div className="flex items-center">
+        <TimeSelect form={form} name={fromName} />
+        <span className="mx-2 text-muted-foreground">—</span>
+        <TimeSelect form={form} name={untilName} />
+      </div>
+    </div>
+  );
+}
+
 export default function CheckInOutSection({ form, t }: Props) {
   return (
     <div className="space-y-3">
@@ -71,13 +77,19 @@ export default function CheckInOutSection({ form, t }: Props) {
       </div>
       <p className="text-sm text-muted-foreground">{t('set_time_description')}</p>
 
-      <PolicyFormRow label={t('check_in_time')}>
-        <TimeSelect form={form} name="check_in_from" />
-      </PolicyFormRow>
+      <TimeRangeRow
+        form={form}
+        label={t('check_in_time')}
+        fromName="check_in_from"
+        untilName="check_in_until"
+      />
 
-      <PolicyFormRow label={t('check_out_time')}>
-        <TimeSelect form={form} name="check_out_from" />
-      </PolicyFormRow>
+      <TimeRangeRow
+        form={form}
+        label={t('check_out_time')}
+        fromName="check_out_from"
+        untilName="check_out_until"
+      />
     </div>
   );
 }

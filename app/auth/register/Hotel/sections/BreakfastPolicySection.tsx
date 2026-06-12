@@ -46,7 +46,6 @@ export default function BreakfastPolicySection({ form, t }: Props) {
         name="breakfast_status"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-sm font-normal">{t('status_label')}</FormLabel>
             <FormControl>
               <div className="flex flex-wrap gap-2">
                 {(['no', 'free', 'paid'] as const).map((value) => (
@@ -66,7 +65,7 @@ export default function BreakfastPolicySection({ form, t }: Props) {
       />
 
       {breakfastStatus !== 'no' && (
-        <div className="space-y-3 rounded-lg border border-dashed p-3">
+        <div className="space-y-3 rounded-lg bg-gray-75 p-3 py-4">
           <PolicyFormRow label={t('breakfast_time')}>
             <div className="flex items-center gap-2">
               <FormField
@@ -76,8 +75,8 @@ export default function BreakfastPolicySection({ form, t }: Props) {
                   <FormItem className="space-y-0">
                     <Select onValueChange={field.onChange} value={field.value || undefined}>
                       <FormControl>
-                        <SelectTrigger className={POLICY_TIME_SELECT_CLASS}>
-                          <SelectValue placeholder="ЦЦ:ММ" />
+                        <SelectTrigger className={`${POLICY_TIME_SELECT_CLASS} bg-white`}>
+                          <SelectValue placeholder={<span className="text-muted-foreground">ЦЦ:ММ</span>} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -100,8 +99,8 @@ export default function BreakfastPolicySection({ form, t }: Props) {
                   <FormItem className="space-y-0">
                     <Select onValueChange={field.onChange} value={field.value || undefined}>
                       <FormControl>
-                        <SelectTrigger className={POLICY_TIME_SELECT_CLASS}>
-                          <SelectValue placeholder="ЦЦ:ММ" />
+                        <SelectTrigger className={`${POLICY_TIME_SELECT_CLASS} bg-white`}>
+                          <SelectValue placeholder={<span className="text-muted-foreground">ЦЦ:ММ</span>} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -127,8 +126,8 @@ export default function BreakfastPolicySection({ form, t }: Props) {
                 <PolicyFormRow label={t('breakfast_type_label')}>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="w-[200px] h-9">
-                        <SelectValue placeholder={t('select_placeholder')} />
+                      <SelectTrigger className="w-[200px] h-9 bg-white">
+                        <SelectValue placeholder={<span className="text-muted-foreground">{t('select_placeholder')}</span>} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -157,7 +156,7 @@ export default function BreakfastPolicySection({ form, t }: Props) {
                         value={field.value || ''}
                         onValueChange={(values) => field.onChange(values.value || null)}
                         customInput={Input}
-                        className={POLICY_INPUT_CLASS}
+                        className={`${POLICY_INPUT_CLASS} bg-white`}
                       />
                     </FormControl>
                   </PolicyFormRow>
