@@ -297,10 +297,16 @@ export const schemaHotelRegistration2 = z.object({
     .min(7, { message: "ААН-н нэрийг оруулна уу?" }),
   PropertyName: z
     .string()
-    .min(3, { message: "Буудлын нэрийг оруулна уу?" }),
+    .min(3, { message: "Буудлын нэрийг оруулна уу? (кирил)" })
+    .regex(/^[А-Яа-яӨөҮүЁё0-9\s.,'-]+$/, {
+      message: "Зөвхөн кирилл үсэг ашиглана уу. Латин үсэг оруулсан байна.",
+    }),
   PropertyName_en: z
     .string()
-    .min(3, { message: "Буудлын англи нэрийг оруулна уу?" }),
+    .min(3, { message: "Буудлын англи нэрийг оруулна уу? (латин)" })
+    .regex(/^[A-Za-z0-9\s.,'-]+$/, {
+      message: "Зөвхөн латин үсэг ашиглана уу. Кирилл үсэг оруулсан байна.",
+    }),
   ownership_type: z
     .coerce.number()
     .min(1, { message: "Эзэмшлийн төрлийг сонгоно уу" }),

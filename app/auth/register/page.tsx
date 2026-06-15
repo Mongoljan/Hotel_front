@@ -284,11 +284,10 @@ export default function RegisterPage() {
                       id="propertyName"
                       type="text"
                       {...register('PropertyName', {
-                          onChange: (e) => {
-                            const englishPattern = /[^a-zA-Z\s-]/g;
-                            e.target.value = e.target.value.replace(englishPattern, '');
-                          }
-                        })}
+                        onChange: (e) => {
+                          e.target.value = e.target.value.replace(/[^А-Яа-яӨөҮүЁё0-9\s.,'-]/g, '');
+                        },
+                      })}
                       placeholder="Кирилл үсгээр оруулна уу"
                       className={`${registerInputClass} ${errors.PropertyName ? registerInputErrorClass : ""}`}
                     />
@@ -301,12 +300,11 @@ export default function RegisterPage() {
                     <Input
                       id="propertyNameEn"
                       type="text"
-                      {...register('PropertyName', {
-                          onChange: (e) => {
-                            const cyrillicPattern = /[^а-яА-ЯёЁөӨүҮ\s-]/g;
-                            e.target.value = e.target.value.replace(cyrillicPattern, '');
-                          }
-                        })}
+                      {...register('PropertyName_en', {
+                        onChange: (e) => {
+                          e.target.value = e.target.value.replace(/[^A-Za-z0-9\s.,'-]/g, '');
+                        },
+                      })}
                       placeholder="Латин үсгээр оруулна уу"
                       className={`${registerInputClass} ${errors.PropertyName_en ? registerInputErrorClass : ""}`}
                     />
