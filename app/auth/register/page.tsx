@@ -266,14 +266,15 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="companyName" className="text-cyrillic">{t("company_name")}</Label>
+                    <Label htmlFor="companyName" className="text-cyrillic">{t("company_name")} <span className="text-destructive">*</span></Label>
                     <Input
                       id="companyName"
                       type="text"
-                      readOnly
                       {...register('CompanyName')}
-                      className={`${registerInputClass} cursor-not-allowed bg-gray-50 text-gray-500 dark:bg-gray-700/70 dark:text-gray-200`}
+                      placeholder="ААН-н нэрийг оруулна уу"
+                      className={`${registerInputClass} ${errors.CompanyName ? registerInputErrorClass : ""}`}
                     />
+                    {errors.CompanyName && <p className="text-xs text-destructive">{errors.CompanyName.message}</p>}
                   </div>
                 </div>
 
@@ -352,22 +353,33 @@ export default function RegisterPage() {
                     <textarea
                       id="location"
                       rows={3}
-                      {...register('location')}
-                      placeholder="Хотелийн байршил оруулна уу"
-                      className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 ${errors.location ? "border-destructive" : ""}`}
+                      {...register('location', {
+                        onChange: (e) => {
+                          e.target.value = e.target.value.replace(/[^А-Яа-яӨөҮүЁё0-9\s.,'-]/g, '');
+                        },
+                      })}
+                      placeholder={t("location_hint")}
+                      className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 ${errors.location ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
                   {errors.location && <p className="text-xs text-destructive">{errors.location.message}</p>}
                 </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="phone" className="text-cyrillic">{t("phone_number")} <span className="text-destructive">*</span></Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">+976</span>
+                  <div
+                    className={`flex items-center rounded-lg border bg-white shadow-none outline-none transition focus-within:ring-2 dark:border-gray-600 dark:bg-gray-700 ${
+                      errors.phone
+                        ? 'border-destructive focus-within:ring-destructive'
+                        : 'border-gray-300 focus-within:border-transparent focus-within:ring-primary'
+                    }`}
+                  >
+                    <span className="shrink-0 pl-4 text-sm font-medium text-gray-900 dark:text-gray-100 select-none">+976</span>
                     <Controller
                       name="phone"
                       control={control}
                       render={({ field }) => (
                         <PatternFormat
+                          id="phone"
                           format="#### ####"
                           allowEmptyFormatting
                           mask="_"
@@ -376,7 +388,7 @@ export default function RegisterPage() {
                             field.onChange(value);
                           }}
                           onBlur={field.onBlur}
-                          className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 ${errors.phone ? "border-destructive" : ""}`}
+                          className="min-w-0 flex-1 border-0 bg-transparent px-2 py-2.5 text-sm font-medium text-gray-900 shadow-none outline-none placeholder:font-normal placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 dark:bg-transparent dark:text-gray-100 dark:placeholder:text-gray-500"
                           placeholder="9512 9418"
                         />
                       )}

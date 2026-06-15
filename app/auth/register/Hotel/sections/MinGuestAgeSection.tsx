@@ -4,10 +4,10 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { UserCheck } from 'lucide-react';
-import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { YesNoToggle } from '@/components/ui/yes-no-toggle';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { OptionButton } from '@/components/ui/option-button';
 import { schemaHotelSteps3 } from '../../../../schema';
-import PolicyFormRow, { PolicySectionTitle } from './PolicyFormRow';
+import { PolicySectionTitle } from './PolicyFormRow';
 
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
@@ -27,12 +27,26 @@ export default function MinGuestAgeSection({ form, t }: Props) {
         control={form.control}
         name="min_guest_age"
         render={({ field }) => (
-          <FormItem>
-            <PolicyFormRow label={t('min_guest_age_label')} alignRight>
-              <FormControl>
-                <YesNoToggle checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-            </PolicyFormRow>
+          <FormItem className="space-y-2">
+            <FormLabel className="text-sm font-normal">{t('min_guest_age_label')}</FormLabel>
+            <FormControl>
+              <div className="flex flex-wrap gap-2">
+                <OptionButton
+                  className="w-[250px]"
+                  selected={field.value === false}
+                  onClick={() => field.onChange(false)}
+                >
+                  {t('min_guest_age_none')}
+                </OptionButton>
+                <OptionButton
+                className="w-[250px] "
+                  selected={field.value === true}
+                  onClick={() => field.onChange(true)}
+                >
+                  {t('min_guest_age_18_plus')}
+                </OptionButton>
+              </div>
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}

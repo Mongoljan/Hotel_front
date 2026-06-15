@@ -9,3 +9,4 @@ export { ImageLightbox } from './ImageLightbox';
 export { EditBasicInfoDialog } from './EditBasicInfoDialog';
 export { EditLocationDialog } from './EditLocationDialog';
 export { EditImagesDialog } from './EditImagesDialog';
+export { SocialLinksSection } from './SocialLinksSection';

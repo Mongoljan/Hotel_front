@@ -1,21 +1,39 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { Check, ChevronRight, ImageIcon, Star, Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { IconPhoto } from '@tabler/icons-react';
+import { OptionButton } from '@/components/ui/option-button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { toast } from 'sonner';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
+import { getImageCategories, type ImageCategory } from '@/lib/api';
 import type { PropertyPhoto } from '../types';
+
+const API_URL = 'https://dev.kacc.mn/api/property-images/';
+const MIN_IMAGES = 5;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const VALID_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+const GALLERY_PANEL_WIDTH = 600;
+const UPLOAD_PANEL_WIDTH = 440;
+const PANEL_TRANSITION_MS = 450;
+const PANEL_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
 
 interface EditImagesDialogProps {
   open: boolean;
@@ -25,6 +43,31 @@ interface EditImagesDialogProps {
   hotelId: string | number | undefined;
 }
 
+type SubPanelMode = 'add' | 'edit' | null;
+
+function RequirementRow({ met, label }: { met: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div
+        className={cn(
+          'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
+          met ? 'bg-primary' : 'bg-muted-foreground/25'
+        )}
+      >
+        {met && <Check className="h-3 w-3 text-primary-foreground stroke-[3]" />}
+      </div>
+      <span
+        className={cn(
+          'text-xs leading-snug',
+          met ? 'text-primary font-medium' : 'text-muted-foreground'
+        )}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export function EditImagesDialog({
   open,
   onOpenChange,
@@ -32,195 +75,500 @@ export function EditImagesDialog({
   onImagesChange,
   hotelId,
 }: EditImagesDialogProps) {
-  const [uploadDescription, setUploadDescription] = useState('');
+  const t = useTranslations('SixStepInfo');
+  const locale = useLocale();
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [imageCategories, setImageCategories] = useState<ImageCategory[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<number | 'all'>('all');
+  const [subPanelMode, setSubPanelMode] = useState<SubPanelMode>(null);
+  const [editingImage, setEditingImage] = useState<PropertyPhoto | null>(null);
+  const [draftCategory, setDraftCategory] = useState<number | undefined>();
+  const [draftPreview, setDraftPreview] = useState('');
+  const [draftFile, setDraftFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const subPanelFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      getImageCategories().then(setImageCategories).catch(() => setImageCategories([]));
+    }
+  }, [open]);
+
+  const hasMinCount = propertyImages.length >= MIN_IMAGES;
+  const hasProfileSelected = propertyImages.some((img) => img.is_profile);
+
+  const draftMeetsFormat = useMemo(() => {
+    if (draftFile) {
+      return VALID_IMAGE_TYPES.includes(draftFile.type) && draftFile.size <= MAX_FILE_BYTES;
+    }
+    return subPanelMode === 'edit' && Boolean(draftPreview);
+  }, [draftFile, draftPreview, subPanelMode]);
+
+  const draftMeetsMinSize = useMemo(() => {
+    if (draftFile) return draftFile.size / 1024 >= 100;
+    return subPanelMode === 'edit' && Boolean(draftPreview);
+  }, [draftFile, draftPreview, subPanelMode]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    propertyImages.forEach((img) => {
+      if (img.category) {
+        counts[img.category] = (counts[img.category] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [propertyImages]);
+
+  const filteredImages = useMemo(() => {
+    if (categoryFilter === 'all') return propertyImages;
+    return propertyImages.filter((img) => img.category === categoryFilter);
+  }, [categoryFilter, propertyImages]);
+
+  const reloadImages = useCallback(async () => {
+    if (!hotelId) return;
+    const imagesRes = await fetch(`${API_URL}?property=${hotelId}`);
+    if (imagesRes.ok) {
+      onImagesChange(await imagesRes.json());
+    }
+  }, [hotelId, onImagesChange]);
+
+  const closeSubPanel = () => {
+    setSubPanelMode(null);
+    setEditingImage(null);
+    setDraftCategory(undefined);
+    setDraftPreview('');
+    setDraftFile(null);
+  };
+
+  const handleSheetOpenChange = (isOpen: boolean) => {
+    if (!isOpen) closeSubPanel();
+    onOpenChange(isOpen);
+  };
+
+  const validateFile = (file: File): boolean => {
+    if (!VALID_IMAGE_TYPES.includes(file.type)) {
+      toast.error(t('imageFormatError'));
+      return false;
+    }
+    if (file.size / 1024 < 100) {
+      toast.error(t('imageSizeError'));
+      return false;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      toast.error(t('imageMaxSizeError'));
+      return false;
+    }
+    return true;
+  };
+
+  const readFilePreview = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const openAddPanel = () => {
+    setSubPanelMode('add');
+    setEditingImage(null);
+    setDraftCategory(undefined);
+    setDraftPreview('');
+    setDraftFile(null);
+  };
+
+  const openEditPanel = (img: PropertyPhoto) => {
+    setSubPanelMode('edit');
+    setEditingImage(img);
+    setDraftCategory(img.category ?? undefined);
+    setDraftPreview(img.image);
+    setDraftFile(null);
+  };
+
+  const handleFileSelected = async (file: File) => {
+    if (!validateFile(file)) return;
+    setDraftFile(file);
+    setDraftPreview(await readFilePreview(file));
+    if (subPanelMode === null) setSubPanelMode('add');
+  };
+
+  const handleSubPanelFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!hotelId) {
-      toast.error('Зочид буудлын ID олдсонгүй. Та дахин оролдоно уу.');
-      e.target.value = '';
-      return;
-    }
-
-    const fileSizeKB = file.size / 1024;
-    if (fileSizeKB < 100) {
-      toast.error('Зургийн хэмжээ хамгийн багадаа 100KB байх ёстой');
-      e.target.value = '';
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('property', String(hotelId));
-      formData.append('image', file);
-      formData.append('description', uploadDescription || '');
-      formData.append('is_profile', 'false');
-
-      const res = await fetch('https://dev.kacc.mn/api/property-images/', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        const msg = errJson?.image?.[0] || 'Зураг оруулахад алдаа гарлаа';
-        throw new Error(msg);
-      }
-
-      toast.success('Зураг амжилттай нэмэгдлээ');
-      // Reload images
-      const imagesRes = await fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`);
-      if (imagesRes.ok) {
-        const images = await imagesRes.json();
-        onImagesChange(images);
-      }
-      setUploadDescription('');
-      e.target.value = '';
-    } catch (err: any) {
-      toast.error(err.message || 'Алдаа гарлаа');
-    }
+    await handleFileSelected(file);
+    e.target.value = '';
   };
 
   const handleSetProfile = async (imageId: number) => {
     try {
-      // Optimistically mark selected as profile, others false
-      const tasks = propertyImages.map((img) => {
-        const shouldBeProfile = img.id === imageId;
-        if (Boolean(img.is_profile) === shouldBeProfile) return null;
-        return fetch(`https://dev.kacc.mn/api/property-images/${img.id}/`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ is_profile: shouldBeProfile }),
-        });
-      }).filter(Boolean) as Promise<Response>[];
+      const tasks = propertyImages
+        .map((img) => {
+          const shouldBeProfile = img.id === imageId;
+          if (Boolean(img.is_profile) === shouldBeProfile) return null;
+          return fetch(`${API_URL}${img.id}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_profile: shouldBeProfile }),
+          });
+        })
+        .filter(Boolean) as Promise<Response>[];
 
       if (tasks.length > 0) {
         const responses = await Promise.all(tasks);
-        const failed = responses.find((res) => !res.ok);
-        if (failed) throw new Error('Профайл зураг солиход алдаа гарлаа');
+        if (responses.some((res) => !res.ok)) throw new Error(t('profileError'));
       }
 
-      // Reload images to reflect new profile ordering
-      const imagesRes = await fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`);
-      if (imagesRes.ok) {
-        const images = await imagesRes.json();
-        onImagesChange(images);
-        toast.success('Профайл зураг шинэчлэгдлээ');
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Алдаа гарлаа');
+      await reloadImages();
+      toast.success(t('profileUpdated'));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t('genericError'));
     }
   };
 
   const handleDeleteImage = async (imageId: number) => {
-    if (!confirm('Энэ зургийг устгах уу?')) return;
+    if (propertyImages.length <= MIN_IMAGES) {
+      toast.error(t('cannotDeleteMin'));
+      return;
+    }
 
     try {
-      const res = await fetch(`https://dev.kacc.mn/api/property-images/${imageId}/`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(`${API_URL}${imageId}/`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(t('deleteError'));
 
-      if (!res.ok) throw new Error('Зураг устгахад алдаа гарлаа');
-
-      toast.success('Зураг амжилттай устгагдлаа');
-      onImagesChange(propertyImages.filter(i => i.id !== imageId));
-    } catch (err: any) {
-      toast.error(err.message || 'Алдаа гарлаа');
+      toast.success(t('deleteSuccess'));
+      onImagesChange(propertyImages.filter((i) => i.id !== imageId));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t('genericError'));
     }
   };
 
+  const uploadImage = async (file: File, category: number, isProfile: boolean) => {
+    if (!hotelId) throw new Error(t('hotelIdMissing'));
+
+    const formData = new FormData();
+    formData.append('property', String(hotelId));
+    formData.append('image', file);
+    formData.append('category', String(category));
+    formData.append('description', '');
+    formData.append('is_profile', isProfile ? 'true' : 'false');
+
+    const res = await fetch(API_URL, { method: 'POST', body: formData });
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => null);
+      throw new Error(errJson?.image?.[0] || t('uploadError'));
+    }
+    return res.json();
+  };
+
+  const handleSaveSubPanel = async () => {
+    if (!draftCategory) {
+      toast.error(t('categoryRequired'));
+      return;
+    }
+    if (subPanelMode === 'add' && !draftFile) {
+      toast.error(t('imageFormatError'));
+      return;
+    }
+    if (subPanelMode === 'edit' && !draftPreview) {
+      toast.error(t('imageFormatError'));
+      return;
+    }
+    if (!hotelId) {
+      toast.error(t('hotelIdMissing'));
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      if (subPanelMode === 'add' && draftFile) {
+        const shouldBeProfile = !hasProfileSelected && propertyImages.length === 0;
+        await uploadImage(draftFile, draftCategory, shouldBeProfile);
+        toast.success(t('uploadSuccess'));
+      } else if (subPanelMode === 'edit' && editingImage) {
+        if (draftFile) {
+          const wasProfile = Boolean(editingImage.is_profile);
+          await uploadImage(draftFile, draftCategory, wasProfile);
+          await fetch(`${API_URL}${editingImage.id}/`, { method: 'DELETE' });
+          toast.success(t('updateSuccess'));
+        } else if (draftCategory !== editingImage.category) {
+          const res = await fetch(`${API_URL}${editingImage.id}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category: draftCategory }),
+          });
+          if (!res.ok) throw new Error(t('uploadError'));
+          toast.success(t('updateSuccess'));
+        }
+      }
+
+      await reloadImages();
+      closeSubPanel();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t('genericError'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const subPanelTitle =
+    subPanelMode === 'add' ? t('addImageTitle') : t('editImagePanelTitle');
+  const isExtendedOpen = subPanelMode !== null;
+
+  const extendedDraftRequirements = [
+    { met: draftMeetsFormat, label: t('reqFormat') },
+    { met: draftMeetsMinSize, label: t('reqMinSize') },
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" preventOutsideClose hideCloseButton>
-        <DialogHeader>
-          <DialogTitle>Зургууд засах</DialogTitle>
-          <DialogDescription>
-            Буудлын зургийг оруулах, устгах боломжтой
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          {/* Upload new image */}
-          <div className="border-2 border-dashed rounded-lg p-6 space-y-3">
-            <Label htmlFor="imageUpload" className="cursor-pointer">
-              <div className="flex flex-col items-center gap-2">
-                <IconPhoto className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium">Зураг оруулах</p>
-                <p className="text-xs text-muted-foreground">Хамгийн багадаа 100KB</p>
-              </div>
-            </Label>
-            <input
-              id="imageUpload"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageUpload}
-            />
-            <div className="space-y-1">
-              <Label htmlFor="imageDescription" className="text-sm">Тайлбар (сонголттой)</Label>
-              <Input
-                id="imageDescription"
-                placeholder="Зурагны тайлбар"
-                value={uploadDescription}
-                onChange={(e) => setUploadDescription(e.target.value)}
-              />
+    <Sheet open={open} onOpenChange={handleSheetOpenChange}>
+      <SheetContent
+        side="right"
+        fallbackTitle={t('editImagesTitle')}
+        className={cn(
+          'relative h-full p-0 border-l shadow-xl overflow-visible',
+          '[&>button]:hidden'
+        )}
+        style={{
+          width: GALLERY_PANEL_WIDTH,
+          maxWidth: GALLERY_PANEL_WIDTH,
+        }}
+      >
+        {/* Extended panel — slides out to the left; gallery width/position never changes */}
+        <div
+          className={cn(
+            'absolute top-0 z-30 flex flex-col border-r bg-background shadow-2xl',
+            'transition-transform ease-[cubic-bezier(0.32,0.72,0,1)]',
+            isExtendedOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+          )}
+          style={{
+            width: UPLOAD_PANEL_WIDTH,
+            height: '100%',
+            right: '100%',
+            transitionDuration: `${PANEL_TRANSITION_MS}ms`,
+          }}
+        >
+          <input
+            ref={subPanelFileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            className="hidden"
+            onChange={handleSubPanelFileChange}
+          />
+
+          <SheetHeader className="flex-row items-center justify-between space-y-0 border-b px-4 py-4">
+            <SheetTitle className="text-base font-semibold">{subPanelTitle}</SheetTitle>
+            <button
+              type="button"
+              onClick={closeSubPanel}
+              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label={t('goBack')}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+            <div className="rounded-xl bg-[#F4F5FA] px-4 py-3.5 space-y-3">
+              {extendedDraftRequirements.map(({ met, label }) => (
+                <RequirementRow key={label} met={met} label={label} />
+              ))}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">
+                {t('imageTypeLabel')} <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={draftCategory ? String(draftCategory) : undefined}
+                onValueChange={(v) => setDraftCategory(Number(v))}
+              >
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue placeholder={<span className="text-muted-foreground">{t('selectPlaceholder')}</span>} />
+                </SelectTrigger>
+                <SelectContent>
+                  {imageCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>
+                      {locale === 'en' ? cat.name_en : cat.name_mn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => subPanelFileInputRef.current?.click()}
+              className="relative mx-auto flex aspect-square w-full max-w-[300px] items-center justify-center overflow-hidden rounded-xl border-2 border-[#4A7BF7] bg-[#E8F0FE]/30"
+            >
+              {draftPreview ? (
+                <img src={draftPreview} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              ) : (
+                <Upload className="h-10 w-10 text-[#4A7BF7]/60" />
+              )}
+            </button>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-11 rounded-xl"
+                onClick={() => subPanelFileInputRef.current?.click()}
+                disabled={isSaving}
+              >
+                {t('replaceImage')}
+              </Button>
+              <Button
+                type="button"
+                className="flex-1 h-11 rounded-xl bg-[#4A7BF7] hover:bg-[#3d6ae0]"
+                onClick={handleSaveSubPanel}
+                disabled={isSaving}
+              >
+                {t('saveImage')}
+              </Button>
             </div>
           </div>
+        </div>
 
-          {/* Existing images */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {propertyImages.map((img, idx) => (
-              <div key={img.id} className="relative aspect-video rounded-lg overflow-hidden border group">
-                <Image
-                  src={img.image}
-                  alt={img.description || `Image ${idx + 1}`}
-                  fill
-                  className="object-cover"
-                />
-                {img.description && (
-                  <div className="absolute inset-x-0 bottom-0 px-3 py-2 bg-gradient-to-t from-black/65 via-black/35 to-transparent backdrop-blur-sm">
-                    <p className="text-white text-xs leading-relaxed line-clamp-2 drop-shadow-sm">
-                      {img.description}
-                    </p>
-                  </div>
-                )}
-                {img.is_profile && (
-                  <span className="absolute top-2 left-2 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full shadow">
-                    Профайл
-                  </span>
-                )}
-                <div className="absolute bottom-2 left-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant={img.is_profile ? 'secondary' : 'outline'}
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleSetProfile(img.id)}
-                  >
-                    {img.is_profile ? 'Профайл' : 'Профайл болгох'}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="h-9 w-9"
-                    onClick={() => handleDeleteImage(img.id)}
-                  >
-                    ×
-                  </Button>
+        {/* Gallery — fixed panel; only dim overlay animates when extended opens */}
+        <div className="relative flex h-full w-full flex-col overflow-hidden bg-background">
+          <div
+            className={cn(
+              'pointer-events-none absolute inset-0 z-20 transition-opacity',
+              isExtendedOpen ? 'opacity-100' : 'opacity-0'
+            )}
+            style={{
+              transitionDuration: `${PANEL_TRANSITION_MS}ms`,
+              transitionTimingFunction: PANEL_EASING,
+              backgroundColor: isExtendedOpen ? 'rgba(255,255,255,0.55)' : 'transparent',
+            }}
+            aria-hidden
+          />
+          <div
+            className={cn(
+              'relative flex h-full min-h-0 flex-col',
+              isExtendedOpen && 'pointer-events-none'
+            )}
+          >
+          <SheetHeader className="flex-row items-center justify-between space-y-0 border-b px-5 py-4">
+            <SheetTitle className="text-base font-semibold">{t('editImagesTitle')}</SheetTitle>
+            <button
+              type="button"
+              onClick={() => handleSheetOpenChange(false)}
+              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label={t('close')}
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+              <button
+                type="button"
+                onClick={openAddPanel}
+                className="flex aspect-square w-full max-w-[140px] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#4A7BF7]/40 bg-[#E8F0FE]/40 text-[#4A7BF7] transition-colors hover:border-[#4A7BF7] hover:bg-[#E8F0FE]"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#4A7BF7]/10">
+                  <ImageIcon className="h-5 w-5" />
                 </div>
+                <span className="text-xs font-medium leading-tight px-2 text-center">
+                  {t('addNewImage')}
+                </span>
+              </button>
+
+              <div className="flex-1 rounded-xl bg-[#F4F5FA] px-4 py-3.5 space-y-3">
+                <RequirementRow met={hasMinCount} label={t('reqMinCount')} />
+                <RequirementRow met={hasProfileSelected} label={t('reqProfile')} />
+                <p className="text-xs text-muted-foreground leading-snug">{t('reqFormat')}</p>
+                <p className="text-xs text-muted-foreground leading-snug">{t('reqMinSize')}</p>
               </div>
-            ))}
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
+              <OptionButton
+                selected={categoryFilter === 'all'}
+                onClick={() => setCategoryFilter('all')}
+                className="shrink-0 rounded-full px-4 py-1.5 text-xs"
+              >
+                {t('filterAll')} ({propertyImages.length})
+              </OptionButton>
+              {imageCategories.map((cat) => (
+                <OptionButton
+                  key={cat.id}
+                  selected={categoryFilter === cat.id}
+                  onClick={() => setCategoryFilter(cat.id)}
+                  className="shrink-0 rounded-full px-4 py-1.5 text-xs"
+                >
+                  {locale === 'en' ? cat.name_en : cat.name_mn} ({categoryCounts[cat.id] || 0})
+                </OptionButton>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              {filteredImages.map((img) => {
+                const isProfile = Boolean(img.is_profile);
+                return (
+                  <div
+                    key={img.id}
+                    className={cn(
+                      'group relative aspect-square overflow-hidden rounded-xl border transition-colors',
+                      isProfile ? 'ring-2 ring-[#4A7BF7] ring-offset-2 border-[#4A7BF7]/30' : 'border-border'
+                    )}
+                  >
+                    <button type="button" onClick={() => openEditPanel(img)} className="absolute inset-0 z-0">
+                      <Image
+                        src={img.image}
+                        alt={img.description || 'Hotel image'}
+                        fill
+                        className="object-cover"
+                        sizes="160px"
+                      />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isProfile) handleSetProfile(img.id);
+                      }}
+                      className={cn(
+                        'group/star absolute top-1.5 left-1.5 z-10 rounded-full p-1.5 shadow transition-all',
+                        isProfile
+                          ? 'bg-[#F5B800] text-white'
+                          : 'bg-white/90 text-muted-foreground hover:bg-white'
+                      )}
+                      aria-label={!isProfile ? t('setAsProfile') : undefined}
+                    >
+                      <Star className={cn('h-3.5 w-3.5', isProfile && 'fill-white')} />
+                      {!isProfile && (
+                        <span
+                          className="pointer-events-none absolute left-full top-1/2 z-30 ml-1.5 -translate-y-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-0.5 text-[10px] font-medium text-white opacity-0 transition-opacity group-hover/star:opacity-100"
+                        >
+                          {t('setAsProfile')}
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteImage(img.id);
+                      }}
+                      className="absolute top-1.5 right-1.5 z-20 rounded-full bg-black/55 p-1 text-white opacity-0 shadow transition-opacity group-hover:opacity-100 hover:bg-black/75"
+                      aria-label={t('deleteImage')}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
-            Хаах
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

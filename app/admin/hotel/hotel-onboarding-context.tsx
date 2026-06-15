@@ -154,6 +154,11 @@ export function HotelOnboardingProvider({ children }: { children: React.ReactNod
   const computeProceedFromData = React.useCallback(async () => {
     if (!user?.hotel || !user?.id || typeof window === 'undefined') return 0;
 
+    const cacheKey = `hotelCompletion_${user.id}_${user.hotel}`;
+    if (localStorage.getItem(cacheKey) === 'completed') {
+      return 2;
+    }
+
     const storedPropertyData = UserStorage.getItem<string>('propertyData', user.id);
     if (storedPropertyData && typeof storedPropertyData === 'string') {
       try {
@@ -174,6 +179,7 @@ export function HotelOnboardingProvider({ children }: { children: React.ReactNod
       if (detailsRes.ok && imagesRes.ok) {
         const [details, images] = await Promise.all([detailsRes.json(), imagesRes.json()]);
         if (Array.isArray(details) && details.length && Array.isArray(images) && images.length) {
+          localStorage.setItem(cacheKey, 'completed');
           return 2;
         }
       }

@@ -6,31 +6,46 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { BreadcrumbHeader } from '@/components/breadcrumb-header';
 import { useAuth } from '@/hooks/useAuth';
 
+const HOTEL_REGISTRATION_COMPLETE_EVENT = 'hotel-registration-complete';
+
 interface SidebarLayoutProps {
   children: React.ReactNode;
 }
 
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   const { user } = useAuth();
-  
-  // Check if hotel registration (6 steps) is completed
+
   const [hotelRegistrationCompleted, setHotelRegistrationCompleted] = React.useState(false);
-  
+
   React.useEffect(() => {
     const checkHotelCompletion = async () => {
-      if (!user?.hotel) {
+      if (!user?.hotel || !user?.id) {
         setHotelRegistrationCompleted(false);
         return;
       }
 
+      const cacheKey = `hotelCompletion_${user.id}_${user.hotel}`;
+      if (localStorage.getItem(cacheKey) === 'completed') {
+        setHotelRegistrationCompleted(true);
+        return;
+      }
+
       try {
-        // Check if property details exist (indicates 6-step completion)
-        const res = await fetch(
-          `https://dev.kacc.mn/api/property-details/?property=${user.hotel}`,
-          { cache: 'no-store' }
-        );
-        const details = await res.json();
-        const isCompleted = Array.isArray(details) && details.length > 0;
+        const [detailsRes, imagesRes] = await Promise.all([
+          fetch(`https://dev.kacc.mn/api/property-details/?property=${user.hotel}`, { cache: 'no-store' }),
+          fetch(`https://dev.kacc.mn/api/property-images/?property=${user.hotel}`, { cache: 'no-store' }),
+        ]);
+
+        const details = detailsRes.ok ? await detailsRes.json() : [];
+        const images = imagesRes.ok ? await imagesRes.json() : [];
+        const hasDetails = Array.isArray(details) && details.length > 0;
+        const hasImages = Array.isArray(images) && images.length > 0;
+        const isCompleted = hasDetails && hasImages;
+
+        if (isCompleted) {
+          localStorage.setItem(cacheKey, 'completed');
+        }
+
         setHotelRegistrationCompleted(isCompleted);
       } catch (err) {
         console.error('Error checking hotel completion:', err);
@@ -39,9 +54,24 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     };
 
     checkHotelCompletion();
-  }, [user?.hotel]);
 
-  
+    const onStorage = (event: StorageEvent) => {
+      if (event.key?.startsWith('hotelCompletion_')) {
+        checkHotelCompletion();
+      }
+    };
+
+    const onRegistrationComplete = () => checkHotelCompletion();
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(HOTEL_REGISTRATION_COMPLETE_EVENT, onRegistrationComplete);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(HOTEL_REGISTRATION_COMPLETE_EVENT, onRegistrationComplete);
+    };
+  }, [user?.hotel, user?.id]);
+
   return (
     <SidebarProvider>
       <AppSidebar 

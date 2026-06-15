@@ -1,25 +1,26 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { OptionButton } from '@/components/ui/option-button';
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { IconSparkles, IconPencil } from '@tabler/icons-react';
-import { Star, ChevronDown, ChevronUp, X } from 'lucide-react';
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { IconPencil } from '@tabler/icons-react';
+import { Check, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 import { useCombinedData } from '@/app/hooks/useCombinedData';
+import { cn } from '@/lib/utils';
 
 const API_DETAILS = 'https://dev.kacc.mn/api/property-details/';
-const MAX_HIGHLIGHTS = 12;
 
 interface FacilityItem {
   id: number;
@@ -37,12 +38,6 @@ interface CombinedLists {
   additionalFacilities: FacilityItem[];
   activities: FacilityItem[];
   accessibility_features: FacilityItem[];
-}
-
-interface GroupConfig {
-  key: keyof Draft;
-  title: string;
-  items: FacilityItem[];
 }
 
 interface Draft {
@@ -69,6 +64,7 @@ export default function ServicesTab({
   propertyDetailId,
   onUpdate,
 }: ServicesTabProps) {
+  const t = useTranslations('SixStepInfo');
   // Use cached hook instead of raw fetch — fires one network request per session max
   const { data: combinedHook } = useCombinedData();
   const [lists, setLists] = useState<CombinedLists>({
@@ -86,8 +82,9 @@ export default function ServicesTab({
     activities: [],
     accessibility_features: [],
   });
-  const [expandedGroup, setExpandedGroup] = useState<string | null>('general_facilities');
-  const [displayExpanded, setDisplayExpanded] = useState<string | null>('general_facilities');
+  const [displayExpanded, setDisplayExpanded] = useState<string | null>('general');
+  const [editSheetTab, setEditSheetTab] = useState<keyof Draft>('general_facilities');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Populate lists from cached hook data (no raw fetch needed)
   useEffect(() => {
@@ -134,12 +131,9 @@ export default function ServicesTab({
       activities: normalize(activities),
       accessibility_features: normalize(accessibilityFeatures),
     });
-    setExpandedGroup('general_facilities');
+    setEditSheetTab('general_facilities');
+    setSearchQuery('');
     setIsEditOpen(true);
-  };
-
-  const toggleGroup = (key: string) => {
-    setExpandedGroup((prev) => (prev === key ? null : key));
   };
 
   const toggleItem = (key: keyof Draft, itemId: number) => {
@@ -151,40 +145,6 @@ export default function ServicesTab({
         [key]: exists
           ? current.filter((i) => i.id !== itemId)
           : [...current, { id: itemId, is_highlight: false }],
-      };
-    });
-  };
-
-  const toggleSelectAll = (key: keyof Draft, items: FacilityItem[]) => {
-    setDraft((prev) => {
-      const current = prev[key];
-      const allSelected = items.every((item) => current.some((s) => s.id === item.id));
-      return {
-        ...prev,
-        [key]: allSelected
-          ? []
-          : items.map((item) => ({ id: item.id, is_highlight: false })),
-      };
-    });
-  };
-
-  const toggleHighlight = (key: keyof Draft, itemId: number) => {
-    const totalHighlights =
-      Object.values(draft).flat().filter((i) => i.is_highlight).length;
-
-    setDraft((prev) => {
-      const current = prev[key];
-      const item = current.find((i) => i.id === itemId);
-      if (!item) return prev;
-      if (!item.is_highlight && totalHighlights >= MAX_HIGHLIGHTS) {
-        toast.error(`Хамгийн ихдээ ${MAX_HIGHLIGHTS} онцлох зүйл сонгоно уу`);
-        return prev;
-      }
-      return {
-        ...prev,
-        [key]: current.map((i) =>
-          i.id === itemId ? { ...i, is_highlight: !i.is_highlight } : i
-        ),
       };
     });
   };
@@ -228,20 +188,24 @@ export default function ServicesTab({
 
   const displayGroups = [
     {
-      title: 'Ерөнхий байгууламжууд',
+      key: 'general',
+      title: t('generalAmenities'),
       items: resolveItems(generalFacilities, lists.facilities),
     },
     {
-      title: 'Нэмэлт байгууламжууд',
+      key: 'additional',
+      title: t('additionalAmenities'),
       items: resolveItems(additionalFacilities, lists.additionalFacilities),
     },
     {
-      title: 'Үйл ажиллагаанууд',
+      key: 'activities',
+      title: t('generalServices'),
       items: resolveItems(activities, lists.activities),
     },
     {
-      title: 'Хүртээмжийн тохиромжийн онцлог',
-      items: resolveItems(accessibilityFeatures, lists.accessibility_features),
+      key: 'paid',
+      title: t('paidServices'),
+      items: [] as (SelectedItem & FacilityItem)[],
     },
   ];
 
@@ -251,161 +215,21 @@ export default function ServicesTab({
     activities.length +
     accessibilityFeatures.length;
 
-  // ── Edit dialog groups ───────────────────────────────────────────
+  // ── Edit sheet ───────────────────────────────────────────────────
 
-  const totalDraftHighlights = Object.values(draft).flat().filter((i) => i.is_highlight).length;
-
-  const editGroups: GroupConfig[] = [
-    { key: 'general_facilities', title: 'Ерөнхий байгууламжууд', items: lists.facilities },
-    { key: 'additional_facilities', title: 'Нэмэлт байгууламжууд', items: lists.additionalFacilities },
-    { key: 'activities', title: 'Үйл ажиллагаанууд', items: lists.activities },
-    { key: 'accessibility_features', title: 'Хүртээмжийн тохиромжийн онцлог', items: lists.accessibility_features },
+  const editSheetTabs: { key: keyof Draft; label: string; items: FacilityItem[] }[] = [
+    { key: 'general_facilities', label: t('generalAmenities'), items: lists.facilities },
+    { key: 'additional_facilities', label: t('additionalAmenities'), items: lists.additionalFacilities },
+    { key: 'activities', label: t('generalServices'), items: lists.activities },
   ];
 
-  const renderEditGroup = ({ key, title, items }: GroupConfig) => {
-    const selected = draft[key];
-    const selectedIds = new Set(selected.map((s) => s.id));
-    const selectedItems = items.filter((i) => selectedIds.has(i.id));
-    const highlightedSelectedItems = selectedItems.filter(
-      (i) => selected.find((s) => s.id === i.id)?.is_highlight
-    );
-    const regularSelectedItems = selectedItems.filter(
-      (i) => !selected.find((s) => s.id === i.id)?.is_highlight
-    );
-    const unselectedItems = items.filter((i) => !selectedIds.has(i.id));
-    const isExpanded = expandedGroup === key;
-    const allSelected = items.length > 0 && items.every((i) => selectedIds.has(i.id));
-
-    const renderChip = (item: FacilityItem, isHighlighted: boolean) => {
-      const canHighlight = isHighlighted || totalDraftHighlights < MAX_HIGHLIGHTS;
-      return (
-        <div
-          key={item.id}
-          className={`group inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-            isHighlighted
-              ? 'bg-yellow-100 text-yellow-900 ring-1 ring-yellow-300'
-              : 'bg-primary/15 text-primary hover:bg-primary/25'
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => toggleHighlight(key, item.id)}
-            disabled={!canHighlight}
-            title={isHighlighted ? 'Онцлохоос хасах' : 'Онцлох болгох'}
-            className={`shrink-0 ${!canHighlight ? 'opacity-30 cursor-not-allowed' : ''}`}
-          >
-            <Star
-              className={`h-3 w-3 transition-colors ${
-                isHighlighted
-                  ? 'fill-yellow-500 text-yellow-500'
-                  : 'text-current opacity-50 hover:opacity-100'
-              }`}
-            />
-          </button>
-          <span>{item.name_mn}</span>
-          <button
-            type="button"
-            onClick={() => toggleItem(key, item.id)}
-            aria-label="Хасах"
-            className="shrink-0 opacity-60 hover:opacity-100"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      );
-    };
-
-    return (
-      <div key={key} className="border rounded-lg overflow-hidden">
-        <button
-          type="button"
-          onClick={() => toggleGroup(key)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-muted/40 hover:bg-muted/60 transition-colors text-left"
-        >
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm">{title}</span>
-            {selected.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {selected.length}/{items.length}
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              role="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleSelectAll(key, items);
-              }}
-              className="text-xs text-primary hover:underline px-1"
-            >
-              {allSelected ? 'Бүгдийг цуцлах' : 'Бүгдийг сонгох'}
-            </span>
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-            )}
-          </div>
-        </button>
-
-        {isExpanded && (
-          <div className="p-4 space-y-4">
-            {/* Highlighted section */}
-            {highlightedSelectedItems.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-yellow-700 uppercase tracking-wide flex items-center gap-1">
-                  <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                  Онцолсон ({highlightedSelectedItems.length})
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {highlightedSelectedItems.map((item) => renderChip(item, true))}
-                </div>
-              </div>
-            )}
-
-            {/* Regular selected section */}
-            {regularSelectedItems.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-primary uppercase tracking-wide">
-                  Сонгогдсон ({regularSelectedItems.length})
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {regularSelectedItems.map((item) => renderChip(item, false))}
-                </div>
-              </div>
-            )}
-
-            {/* Divider between sections */}
-            {selectedItems.length > 0 && unselectedItems.length > 0 && (
-              <div className="border-t" />
-            )}
-
-            {/* Unselected section */}
-            {unselectedItems.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Боломжтой ({unselectedItems.length})
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {unselectedItems.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => toggleItem(key, item.id)}
-                      className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-3 py-1 text-xs hover:bg-muted/80 hover:text-foreground transition-colors"
-                    >
-                      {item.name_mn}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const activeEditItems = editSheetTabs.find((tab) => tab.key === editSheetTab)?.items ?? [];
+  const filteredEditItems = activeEditItems.filter((item) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return item.name_mn.toLowerCase().includes(q) || item.name_en.toLowerCase().includes(q);
+  });
+  const activeSelectedIds = new Set(draft[editSheetTab].map((s) => s.id));
 
   // ── Render ───────────────────────────────────────────────────────
 
@@ -420,139 +244,150 @@ export default function ServicesTab({
   }
 
   return (
-    <div className="relative">
-      <Button
-        variant="outline"
-        size="icon"
-        className="absolute top-3 right-3 h-8 w-8 z-10"
-        onClick={openEdit}
-      >
-        <IconPencil className="h-4 w-4" />
-      </Button>
+    <div className="relative ">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-sm">{t('servicesSectionTitle')}</h3>
+        <Button variant="outline" size="icon" className="h-8 w-8" onClick={openEdit}>
+          <IconPencil className="h-4 w-4" />
+        </Button>
+      </div>
 
       {totalSelected === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            Үйлчилгээний мэдээлэл хараахан нэмэгдээгүй байна
-          </CardContent>
-        </Card>
+        <p className="text-sm text-muted-foreground text-center py-6">{t('servicesEmpty')}</p>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <IconSparkles className="h-5 w-5 text-primary" />
-              Үйлчилгээ &amp; байгууламж
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 px-3 pb-3">
-            {displayGroups.map(({ title, items }) => {
-              const key = title;
-              const isExpanded = displayExpanded === key;
-              const highlightCount = items.filter((i) => i.is_highlight).length;
-              return (
-                <div key={key} className="border rounded-lg overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => toggleDisplayGroup(key)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-muted/40 hover:bg-muted/60 transition-colors text-left"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">{title}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {items.length}
-                      </Badge>
-                      {highlightCount > 0 && (
-                        <Badge variant="outline" className="text-xs gap-1 border-yellow-300 text-yellow-700">
-                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                          {highlightCount}
-                        </Badge>
-                      )}
-                    </div>
-                    {isExpanded ? (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-                    )}
-                  </button>
+        <div className="space-y-2">
+          {displayGroups.map(({ key, title, items }) => {
+            const isExpanded = displayExpanded === key;
+            return (
+              <div key={key} className="border rounded-lg overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => toggleDisplayGroup(key)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+                >
+                  <span className="font-medium text-sm">
+                    {title} ({items.length})
+                  </span>
+                  {isExpanded ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                  )}
+                </button>
 
-                  {isExpanded && (
-                    <div className="p-3">
-                      {items.length === 0 ? (
-                        <p className="text-xs text-muted-foreground text-center py-3">
-                          Сонгогдоогүй байна
-                        </p>
-                      ) : (
-                      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                {isExpanded && (
+                  <div className="px-4 pb-4 pt-2">
+                    {items.length === 0 ? (
+                      <p className="text-xs text-muted-foreground py-2">{t('servicesNoneSelected')}</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
                         {items.map((item) => (
-                          <div
+                          <span
                             key={item.id}
-                            className={`flex items-center gap-3 rounded-lg border p-3 shadow-sm transition-colors hover:bg-accent ${
-                              item.is_highlight
-                                ? 'border-yellow-300 bg-yellow-50/60'
-                                : 'border-border bg-card'
-                            }`}
+                            className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs text-foreground"
                           >
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 shrink-0">
-                              {item.is_highlight ? (
-                                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                              ) : (
-                                <Star className="h-3.5 w-3.5 text-muted-foreground/30" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{item.name_mn}</p>
-                              <p className="text-xs text-muted-foreground truncate">{item.name_en}</p>
-                            </div>
-                          </div>
+                            {item.name_mn}
+                          </span>
                         ))}
                       </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
 
-      {/* Edit dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col" preventOutsideClose hideCloseButton>
-          <DialogHeader>
-            <DialogTitle>Үйлчилгээ засах</DialogTitle>
-            <DialogDescription>
-              Сонгосон зүйлсийн хажуу дахь ⭐ товчоор онцлох зүйлсийг тэмдэглэнэ үү (хамгийн ихдээ {MAX_HIGHLIGHTS})
-            </DialogDescription>
-          </DialogHeader>
+      <Sheet open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <SheetContent
+          side="right"
+          fallbackTitle={t('servicesSheetTitle')}
+          className="flex h-full flex-col gap-0 p-0 sm:max-w-none"
+          style={{ width: 520, maxWidth: 520 }}
+        >
+          <SheetHeader className="border-b px-5 py-4 space-y-0">
+            <SheetTitle className="text-base font-semibold">{t('servicesSheetTitle')}</SheetTitle>
+          </SheetHeader>
 
-          <div className="flex items-center gap-2 py-1 px-1 text-sm">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-medium">{totalDraftHighlights}/{MAX_HIGHLIGHTS}</span>
-            <span className="text-muted-foreground">онцлох сонгогдсон</span>
-            {totalDraftHighlights >= MAX_HIGHLIGHTS && (
-              <span className="text-orange-500 text-xs ml-1">— дээд хязгаарт хүрлээ</span>
-            )}
+          <div className="px-5 pt-4 pb-2 flex gap-2 overflow-x-auto">
+            {editSheetTabs.map((tab) => (
+              <OptionButton
+                key={tab.key}
+                selected={editSheetTab === tab.key}
+                onClick={() => {
+                  setEditSheetTab(tab.key);
+                  setSearchQuery('');
+                }}
+                className="shrink-0 rounded-full px-3 py-1.5 text-xs"
+              >
+                {tab.label} ({draft[tab.key].length})
+              </OptionButton>
+            ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-            {editGroups.map(renderEditGroup)}
+          <div className="px-5 pb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('searchPlaceholder')}
+                className="pl-9"
+              />
+            </div>
           </div>
 
-          <DialogFooter className="pt-3 border-t gap-2">
+          <div className="flex-1 overflow-y-auto px-5 pb-4">
+            <div className="grid grid-cols-2 gap-2">
+              {filteredEditItems.map((item) => {
+                const selected = activeSelectedIds.has(item.id);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => toggleItem(editSheetTab, item.id)}
+                    className={cn(
+                      'flex items-start gap-2 rounded-xl border p-3 text-left transition-colors',
+                      selected
+                        ? 'border-[#4A7BF7] bg-[#E8F0FE]/60'
+                        : 'border-border bg-background hover:bg-muted/40'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
+                        selected ? 'border-[#4A7BF7] bg-[#4A7BF7] text-white' : 'border-muted-foreground/30'
+                      )}
+                    >
+                      {selected && <Check className="h-3 w-3 stroke-[3]" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={cn('text-sm font-medium leading-tight', selected ? 'text-[#4A7BF7]' : '')}>
+                        {item.name_mn}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{item.name_en}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <SheetFooter className="border-t px-5 py-4 flex-row gap-3 sm:justify-end">
+            <Button variant="outline" className="flex-1" onClick={() => setIsEditOpen(false)} disabled={isSaving}>
+              {t('close')}
+            </Button>
             <Button
-              variant="outline"
-              onClick={() => setIsEditOpen(false)}
+              className="flex-1 bg-[#84CC16] hover:bg-[#73b512] text-white"
+              onClick={handleSave}
               disabled={isSaving}
             >
-              Болих
+              {isSaving ? t('saving') : t('save')}
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? 'Хадгалж байна...' : 'Хадгалах'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

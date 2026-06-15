@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import RegistrationStepIndicator from '../RegistrationStepIndicator';
 import { saveRegistrationHotelNames } from '@/utils/registrationHotelNames';
+import { cn } from '@/lib/utils';
 
 type FormFields = z.infer<typeof schemaRegistrationEmployee2>;
 
@@ -198,12 +199,17 @@ export default function RegisterEmployee() {
               <FormField
                 control={form.control}
                 name="contact_number"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem>
                     <FormLabel>{t('phone_number')} <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">+976</span>
+                      <div
+                        className={cn(
+                          'flex items-center rounded-md border border-input bg-transparent shadow-sm transition-colors focus-within:ring-1 focus-within:ring-ring',
+                          fieldState.error && 'border-destructive focus-within:ring-destructive/30'
+                        )}
+                      >
+                        <span className="shrink-0 pl-3 text-sm text-foreground select-none">+976</span>
                         <PatternFormat
                           format="#### ####"
                           allowEmptyFormatting
@@ -212,6 +218,7 @@ export default function RegisterEmployee() {
                           onValueChange={({ value }) => field.onChange(value)}
                           onBlur={field.onBlur}
                           customInput={Input}
+                          className="border-0 shadow-none focus-visible:ring-0 pl-1 pr-3"
                           placeholder="9512 9418"
                         />
                       </div>

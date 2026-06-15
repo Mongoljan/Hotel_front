@@ -118,7 +118,7 @@ export default function RegisterHotel() {
         // Continue to verify with API in background, but don't change proceed if cache exists
       }
 
-      // User is approved - now check if 6-step registration is complete
+      // User is approved - now check if 7-step registration is complete (details + images)
       try {
         const hid = user.hotel;
 
@@ -154,6 +154,7 @@ export default function RegisterHotel() {
 
           if (hasDetails && hasImages) {
             localStorage.setItem(cacheKey, 'completed');
+            window.dispatchEvent(new Event('hotel-registration-complete'));
             setProceed(2);
             return;
           }

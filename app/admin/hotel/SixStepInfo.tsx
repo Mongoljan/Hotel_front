@@ -2,40 +2,26 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   IconPhoto,
   IconPencil,
   IconFileInfo,
-  IconCalendar,
-  IconBed,
-  IconMoodKid,
-  IconCar,
-  IconInfoCircle,
+  IconMapPin,
+  IconSparkles,
+  IconMessageQuestion,
 } from '@tabler/icons-react';
+import { Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { GoogleMap, useJsApiLoader, Marker, Libraries } from '@react-google-maps/api';
 
 import ServicesTab from './ServicesTab';
+import { useCombinedData } from '@/app/hooks/useCombinedData';
 import { useAuth } from '@/hooks/useAuth';
 import UserStorage from '@/utils/storage';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DatePickerWithValue } from '@/components/ui/date-picker';
 
 // Import types
 import type {
@@ -49,7 +35,6 @@ import type {
   Province,
   Soum,
   District,
-  PropertyType,
 } from './types';
 
 // Import extracted components
@@ -58,11 +43,11 @@ import {
   HotelHeader,
   AboutVideoSection,
   EditAboutVideoDialog,
-  EditMapDialog,
+  EditImagesDialog,
   ImageLightbox,
   EditBasicInfoDialog,
   EditLocationDialog,
-  EditImagesDialog,
+  SocialLinksSection,
 } from './components';
 
 interface ProceedProps {
@@ -72,12 +57,14 @@ interface ProceedProps {
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 const GOOGLE_MAPS_LIBRARIES: Libraries = ['places'];
+const PROPERTY_COMMISSIONS_API = 'https://dev.kacc.mn/api/property-commissions/';
 
-const mapContainerStyle = {
-  width: '100%',
-  height: '400px',
-  borderRadius: '8px',
-};
+interface PropertyCommission {
+  id: number;
+  is_active: boolean;
+  property_obj: number;
+  status?: string;
+}
 
 // Helper function to extract coordinates from Google Maps URL
 const extractCoordinates = (url: string | null | undefined): { lat: number; lng: number } | null => {
@@ -106,24 +93,25 @@ const extractCoordinates = (url: string | null | undefined): { lat: number; lng:
 
 export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const t = useTranslations('SixStepInfo');
-  const router = useRouter();
   const { user } = useAuth();
 
   const [propertyDetail, setPropertyDetail] = useState<PropertyDetail | null>(null);
   const [propertyImages, setPropertyImages] = useState<PropertyPhoto[]>([]);
-  const [activeTab, setActiveTab] = useState<'basic' | 'location' | 'map' | 'policy' | 'services'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'location' | 'services' | 'faq'>('basic');
   const [isLoading, setIsLoading] = useState(true);
   const [propertyPolicy, setPropertyPolicy] = useState<PropertyPolicy | null>(null);
   const [cancellationFee, setCancellationFee] = useState<PropertyPolicy['cancellation_fee'] | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
   const [propertyBaseInfo, setPropertyBaseInfo] = useState<PropertyBaseInfo | null>(null);
-  const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInformation | null>(null);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [soums, setSoums] = useState<Soum[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
+  const [contractIsActive, setContractIsActive] = useState<boolean | null>(null);
 
+  const { data: combinedHook } = useCombinedData();
+  const ratings = combinedHook?.ratings || [];
   const { isLoaded: isMapLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -143,11 +131,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [editYoutubeUrl, setEditYoutubeUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Google Map edit state
-  const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
-  const [editGoogleMap, setEditGoogleMap] = useState('');
-  const [isMapSaving, setIsMapSaving] = useState(false);
-
   // Basic Info edit state
   const [isBasicInfoDialogOpen, setIsBasicInfoDialogOpen] = useState(false);
   const [editBasicInfo, setEditBasicInfo] = useState({
@@ -160,6 +143,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     total_hotel_rooms: '',
     available_rooms: '',
     sales_room_limitation: false,
+    total_floor_number: '',
   });
   const [isBasicInfoSaving, setIsBasicInfoSaving] = useState(false);
 
@@ -168,13 +152,20 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const [editLocation, setEditLocation] = useState({
     province_city: '',
     soum: '',
+    district: '',
     total_floor_number: '',
+    detailed_address: '',
+    google_map: '',
   });
   const [isLocationSaving, setIsLocationSaving] = useState(false);
   const [filteredSoums, setFilteredSoums] = useState<{ id: number; name: string; code: number }[]>([]);
 
   // Images edit state
   const [isImagesDialogOpen, setIsImagesDialogOpen] = useState(false);
+
+  const openImagesSheet = () => {
+    setIsImagesDialogOpen(true);
+  };
 
   // Image lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -189,7 +180,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
       try {
         setIsLoading(true);
-        const [detailRes, policyRes, addressRes, basicInfoRes, combinedDataRes, baseRes, imagesRes, cancellationRes] = await Promise.all([
+        const [detailRes, policyRes, addressRes, basicInfoRes, combinedDataRes, baseRes, imagesRes, cancellationRes, commissionsRes] = await Promise.all([
           fetch(`https://dev.kacc.mn/api/property-details/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/property-policies/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/confirm-address/?property=${hotelId}`),
@@ -198,6 +189,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           fetch(`https://dev.kacc.mn/api/properties/${hotelId}/`),
           fetch(`https://dev.kacc.mn/api/property-images/?property=${hotelId}`),
           fetch(`https://dev.kacc.mn/api/cancellation-fees/?property=${hotelId}`),
+          fetch(PROPERTY_COMMISSIONS_API),
         ]);
 
         if (!detailRes.ok || !policyRes.ok || !addressRes.ok || !basicInfoRes.ok || !baseRes.ok) {
@@ -221,8 +213,19 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         setAddress(fetchedAddress);
         setBasicInfo(basic);
         setPropertyBaseInfo(baseInfo);
-        setPropertyTypes(combinedData.property_types || []);
         setPropertyImages(orderImagesByProfile(imageJson));
+
+        if (commissionsRes.ok) {
+          const commissions: PropertyCommission[] = await commissionsRes.json();
+          const propertyId = Number(hotelId);
+          const propertyCommissions = Array.isArray(commissions)
+            ? commissions.filter((c) => c.property_obj === propertyId)
+            : [];
+          const hasActiveContract = propertyCommissions.some((c) => c.is_active);
+          setContractIsActive(hasActiveContract);
+        } else {
+          setContractIsActive(false);
+        }
         
         // Sort provinces to show Улаанбаатар first
         const sortedProvinces = [...(combinedData.province || [])].sort((a, b) => {
@@ -244,6 +247,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       } catch (error) {
         console.error(error);
         setProceed(0);
+        setContractIsActive(false);
       } finally {
         setIsLoading(false);
       }
@@ -253,13 +257,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   }, [orderImagesByProfile, setProceed, user?.hotel]);
 
 
-  const getPropertyTypeName = useCallback(
-    (id?: number | null) => {
-      if (!id) return '—';
-      return propertyTypes.find((pt) => pt.id === id)?.name_mn ?? t('loading');
-    },
-    [propertyTypes, t]
-  );
 
   const getProvinceName = useCallback(
     (id?: number | null) => {
@@ -276,11 +273,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     },
     [soums, districts]
   );
-
-  const formatTime = useCallback((time?: string | null) => {
-    if (!time) return '—';
-    return time.slice(0, 5);
-  }, []);
 
   const handleEditAboutVideo = () => {
     setEditAbout(additionalInfo?.About || '');
@@ -332,50 +324,25 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     }
   };
 
-  const handleEditGoogleMap = () => {
-    setEditGoogleMap(propertyDetail?.google_map || '');
-    setIsMapDialogOpen(true);
-  };
 
-  const handleSaveGoogleMap = async () => {
-    if (!propertyDetail?.id) {
-      toast.error('Зочид буудлын мэдээлэл олдсонгүй');
-      return;
-    }
-
-    try {
-      setIsMapSaving(true);
-
-      const res = await fetch(`https://dev.kacc.mn/api/property-details/${propertyDetail.id}/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ google_map: editGoogleMap }),
-      });
-
-      if (!res.ok) throw new Error('Google Map хадгалах үед алдаа гарлаа');
-
-      const data = await res.json();
-      setPropertyDetail(data);
-      toast.success('Google Map амжилттай хадгалагдлаа');
-      setIsMapDialogOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || 'Алдаа гарлаа');
-    } finally {
-      setIsMapSaving(false);
-    }
-  };
 
   const handleEditBasicInfo = () => {
+    const ratingId = basicInfo?.star_rating
+      ? ratings.find((r) => parseInt(r.rating) === basicInfo.star_rating)?.id?.toString() ||
+        String(basicInfo.star_rating)
+      : '';
+
     setEditBasicInfo({
       property_name_mn: basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || '',
       property_name_en: basicInfo?.property_name_en || '',
       start_date: basicInfo?.start_date || '',
-      star_rating: basicInfo?.star_rating?.toString() || '',
+      star_rating: ratingId,
       part_of_group: basicInfo?.part_of_group || false,
       group_name: basicInfo?.group_name || '',
       total_hotel_rooms: basicInfo?.total_hotel_rooms?.toString() || '',
       available_rooms: basicInfo?.available_rooms?.toString() || '',
       sales_room_limitation: basicInfo?.sales_room_limitation || false,
+      total_floor_number: address?.total_floor_number?.toString() || '',
     });
     setIsBasicInfoDialogOpen(true);
   };
@@ -412,6 +379,26 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
       const data = await res.json();
       setBasicInfo(data);
+
+      if (address?.id && editBasicInfo.total_floor_number) {
+        const floorRes = await fetch(`https://dev.kacc.mn/api/confirm-address/${address.id}/`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            province_city: address.province_city,
+            soum: address.soum || address.district,
+            district: address.district || 1,
+            zipCode: address.zipCode || '00000',
+            total_floor_number: parseInt(editBasicInfo.total_floor_number) || address.total_floor_number,
+            property: user?.hotel,
+          }),
+        });
+        if (floorRes.ok) {
+          const addressData = await floorRes.json();
+          setAddress(addressData);
+        }
+      }
+
       toast.success('Үндсэн мэдээлэл амжилттай хадгалагдлаа');
       setIsBasicInfoDialogOpen(false);
     } catch (err: any) {
@@ -425,11 +412,13 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     const provinceId = (address?.province_city || '').toString();
     setEditLocation({
       province_city: provinceId,
-      soum: (address?.soum || address?.district || '').toString(),
+      soum: (address?.soum || '').toString(),
+      district: String(address?.district || ''),
       total_floor_number: (address?.total_floor_number || '').toString(),
+      detailed_address: propertyBaseInfo?.location || '',
+      google_map: propertyDetail?.google_map || '',
     });
 
-    // Filter soums based on selected province
     if (provinceId) {
       const filtered = soums.filter((s) => s.code === Number(provinceId)).concat(
         districts.filter((d) => d.code === Number(provinceId))
@@ -449,24 +438,50 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     try {
       setIsLocationSaving(true);
 
-      const payload = {
+      const addressPayload = {
         province_city: parseInt(editLocation.province_city),
         soum: parseInt(editLocation.soum),
-        zipCode: '00000', // Default dummy zip code
+        district: parseInt(editLocation.district) || 1,
+        zipCode: address.zipCode || '00000',
         total_floor_number: parseInt(editLocation.total_floor_number) || 1,
         property: user?.hotel,
       };
 
-      const res = await fetch(`https://dev.kacc.mn/api/confirm-address/${address.id}/`, {
+      const addressRes = await fetch(`https://dev.kacc.mn/api/confirm-address/${address.id}/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(addressPayload),
       });
 
-      if (!res.ok) throw new Error('Байршил хадгалах үед алдаа гарлаа');
+      if (!addressRes.ok) throw new Error('Байршил хадгалах үед алдаа гарлаа');
 
-      const data = await res.json();
-      setAddress(data);
+      const addressData = await addressRes.json();
+      setAddress(addressData);
+
+      if (propertyBaseInfo?.pk) {
+        const propertyRes = await fetch(`https://dev.kacc.mn/api/properties/${propertyBaseInfo.pk}/`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ location: editLocation.detailed_address }),
+        });
+        if (propertyRes.ok) {
+          const propData = await propertyRes.json();
+          setPropertyBaseInfo(propData);
+        }
+      }
+
+      if (propertyDetail?.id) {
+        const detailRes = await fetch(`https://dev.kacc.mn/api/property-details/${propertyDetail.id}/`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ google_map: editLocation.google_map }),
+        });
+        if (detailRes.ok) {
+          const detailData = await detailRes.json();
+          setPropertyDetail(detailData);
+        }
+      }
+
       toast.success('Байршил амжилттай хадгалагдлаа');
       setIsLocationDialogOpen(false);
     } catch (err: any) {
@@ -476,65 +491,15 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     }
   };
 
-  const detailItems = useMemo(
-    () => [
-      {
-        label: 'Үл хөдлөх хөрөнгийн төрөл',
-        value: getPropertyTypeName(propertyBaseInfo?.property_type),
-        icon: IconFileInfo,
-      },
-      {
-        label: 'Үйл ажиллагаа эхэлсэн огноо',
-        value: basicInfo?.start_date ?? '—',
-        icon: IconCalendar,
-      },
-      {
-        label: 'Буудлын нийт өрөөний тоо',
-        value: basicInfo?.total_hotel_rooms ?? '—',
-        icon: IconBed,
-      },
-      {
-        label: 'Хүүхэд үйлчлүүлэх боломжтой эсэх',
-        value: propertyPolicy?.child_policy?.allow_children ?? null,
-        icon: IconMoodKid,
-        type: 'boolean' as const,
-      },
-      {
-        label: 'Зогсоолын нөхцөл',
-        value: (() => {
-          const outdoor = propertyPolicy?.parking_policy?.outdoor_parking;
-          const indoor = propertyPolicy?.parking_policy?.indoor_parking;
-          if (!outdoor && !indoor) return '—';
-          const parts = [];
-          if (outdoor === 'free') parts.push('Гадна (үнэгүй)');
-          else if (outdoor === 'paid') parts.push('Гадна (төлбөртэй)');
-          if (indoor === 'free') parts.push('Дотор (үнэгүй)');
-          else if (indoor === 'paid') parts.push('Дотор (төлбөртэй)');
-          return parts.length > 0 ? parts.join(', ') : 'Байхгүй';
-        })(),
-        icon: IconCar,
-      },
-    ],
-    [basicInfo, getPropertyTypeName, propertyPolicy?.parking_policy, propertyPolicy?.child_policy?.allow_children, propertyBaseInfo?.property_type]
-  );
-
-  const policyItems = useMemo(
-    () => [
-      {
-        label: 'Check-in',
-        value: `${formatTime(propertyPolicy?.check_in_from)} - ${formatTime(propertyPolicy?.check_in_until)}`,
-      },
-      {
-        label: 'Check-out',
-        value: `${formatTime(propertyPolicy?.check_out_from)} - ${formatTime(propertyPolicy?.check_out_until)}`,
-      },
-      {
-        label: 'Өрөөнүүд үйлчилгээнд',
-        value: basicInfo?.available_rooms ?? '—',
-      },
-    ],
-    [basicInfo?.available_rooms, formatTime, propertyPolicy?.check_in_from, propertyPolicy?.check_in_until, propertyPolicy?.check_out_from, propertyPolicy?.check_out_until]
-  );
+  const starCount = useMemo(() => {
+    if (!basicInfo?.star_rating) return 0;
+    const byId = ratings.find((r) => r.id === basicInfo.star_rating);
+    if (byId) {
+      const n = parseInt(byId.rating);
+      return Number.isNaN(n) ? 0 : n;
+    }
+    return basicInfo.star_rating <= 5 ? basicInfo.star_rating : 0;
+  }, [basicInfo?.star_rating, ratings]);
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -545,7 +510,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       <Card className="border border-dashed border-border bg-muted/30">
         <CardHeader className="items-start gap-2">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <IconInfoCircle className="h-4 w-4 text-muted-foreground" />
+            <IconFileInfo className="h-4 w-4 text-muted-foreground" />
             {t('8')}
           </CardTitle>
           <CardDescription>
@@ -556,16 +521,24 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     );
   }
 
-  const rightGalleryImages = propertyImages.slice(1, 7);
-  const rightGallerySlots = rightGalleryImages.length > 4 ? 6 : 4;
-  const showGalleryMoreCount = propertyImages.length > 7;
-  const galleryExtraCount = propertyImages.length - 7;
-  const galleryHeightClass = rightGallerySlots === 6 ? 'h-[520px]' : 'h-[400px]';
+  const PREVIEW_IMAGE_COUNT = 5;
+  const rightGallerySlots = 4;
+  const showGalleryMoreCount = propertyImages.length > PREVIEW_IMAGE_COUNT;
+  const galleryExtraCount = propertyImages.length - PREVIEW_IMAGE_COUNT;
+  const galleryHeightClass = 'h-[400px]';
+
+  const stepTabTriggerClass =
+    'flex items-center gap-2 rounded-none border-0 border-b-2 border-transparent bg-transparent px-2 py-2.5 text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none';
 
   return (
     <div className="w-full max-w-full space-y-4">
       {/* Hotel Name Header */}
-      <HotelHeader basicInfo={basicInfo} propertyBaseInfo={propertyBaseInfo} />
+      <HotelHeader
+        basicInfo={basicInfo}
+        propertyBaseInfo={propertyBaseInfo}
+        starCount={starCount}
+        contractIsActive={contractIsActive}
+      />
 
       {/* Main Layout: Left content + Right sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-4">
@@ -580,7 +553,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                 variant="outline"
                 size="icon"
                 className="h-8 w-8 bg-white/90 backdrop-blur"
-                onClick={() => setIsImagesDialogOpen(true)}
+                onClick={() => openImagesSheet()}
               >
                 <IconPencil className="h-4 w-4" />
               </Button>
@@ -590,10 +563,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
               <div
                 className="relative rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => {
-                  if (propertyImages[0]) {
-                    setLightboxImage(propertyImages[0].image);
-                    setLightboxOpen(true);
-                  }
+                  openImagesSheet();
                 }}
               >
                 {propertyImages[0] ? (
@@ -619,12 +589,12 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
               </div>
 
               {/* Right: adaptive thumbnail grid (4 or 6 slots) */}
-              <div className={`grid grid-cols-2 gap-3 ${rightGallerySlots === 6 ? 'grid-rows-3' : 'grid-rows-2'}`}>
+              <div className="grid grid-cols-2 gap-3 grid-rows-2">
                 {Array.from({ length: rightGallerySlots }).map((_, slotIndex) => {
                   const imageIndex = slotIndex + 1;
                   const image = propertyImages[imageIndex];
-                  const isLastVisibleSlot = slotIndex === rightGallerySlots - 1;
-                  const shouldShowMoreOverlay = Boolean(image) && isLastVisibleSlot && showGalleryMoreCount;
+                  const isLastPreviewSlot = imageIndex === PREVIEW_IMAGE_COUNT - 1;
+                  const shouldShowMoreOverlay = Boolean(image) && isLastPreviewSlot && showGalleryMoreCount;
 
                   return (
                     <div
@@ -632,8 +602,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                       className="relative rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => {
                         if (image) {
-                          setLightboxImage(image.image);
-                          setLightboxOpen(true);
+                          openImagesSheet();
                         }
                       }}
                     >
@@ -671,416 +640,143 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
           {/* Tabbed Information - inside left column */}
           <div className="border rounded-lg p-4 mt-4">
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="basic">1. Үндсэн мэдээлэл</TabsTrigger>
-                <TabsTrigger value="location">2. Байршил</TabsTrigger>
-                <TabsTrigger value="map">3. Google map</TabsTrigger>
-                <TabsTrigger value="policy">4. Дотоод журам</TabsTrigger>
-                <TabsTrigger value="services">5. Ерөнхий үйлчилгээ</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-0 rounded-none bg-transparent p-0 border-b border-border">
+                <TabsTrigger value="basic" className={stepTabTriggerClass}>
+                  <IconFileInfo className="h-4 w-4" />
+                  <span className="text-xs sm:text-sm">{t('tabBasic')}</span>
+                </TabsTrigger>
+                <TabsTrigger value="location" className={stepTabTriggerClass}>
+                  <IconMapPin className="h-4 w-4" />
+                  <span className="text-xs sm:text-sm">{t('tabLocation')}</span>
+                </TabsTrigger>
+                <TabsTrigger value="services" className={stepTabTriggerClass}>
+                  <IconSparkles className="h-4 w-4" />
+                  <span className="text-xs sm:text-sm">{t('tabServices')}</span>
+                </TabsTrigger>
+                <TabsTrigger value="faq" className={stepTabTriggerClass}>
+                  <IconMessageQuestion className="h-4 w-4" />
+                  <span className="text-xs sm:text-sm">{t('tabFaq')}</span>
+                </TabsTrigger>
               </TabsList>
 
-              {/* TabsContent will continue from here */}
-      {/* Edit Dialog for About & Video */}
-      <EditAboutVideoDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        about={editAbout}
-        youtubeUrl={editYoutubeUrl}
-        onAboutChange={setEditAbout}
-        onYoutubeUrlChange={setEditYoutubeUrl}
-        onSave={handleSaveAboutVideo}
-        isSaving={isSaving}
-      />
-
-      {/* Edit Dialog for Google Map */}
-      <EditMapDialog
-        open={isMapDialogOpen}
-        onOpenChange={setIsMapDialogOpen}
-        isMapLoaded={isMapLoaded}
-        googleMap={editGoogleMap}
-        onGoogleMapChange={setEditGoogleMap}
-        onSave={handleSaveGoogleMap}
-        isSaving={isMapSaving}
-      />
-
-      {/* Edit Dialog for Basic Info */}
-      <EditBasicInfoDialog
-        open={isBasicInfoDialogOpen}
-        onOpenChange={setIsBasicInfoDialogOpen}
-        editBasicInfo={editBasicInfo}
-        onEditBasicInfoChange={setEditBasicInfo}
-        onSave={handleSaveBasicInfo}
-        isSaving={isBasicInfoSaving}
-      />
-
-      {/* Edit Dialog for Location */}
-      <EditLocationDialog
-        open={isLocationDialogOpen}
-        onOpenChange={setIsLocationDialogOpen}
-        editLocation={editLocation}
-        onEditLocationChange={setEditLocation}
-        provinces={provinces}
-        filteredSoums={filteredSoums}
-        onProvinceChange={(value) => {
-          setEditLocation({ ...editLocation, province_city: value, soum: '' });
-          const filtered = soums.filter((s) => s.code === Number(value)).concat(
-            districts.filter((d) => d.code === Number(value))
-          );
-          setFilteredSoums(filtered);
-        }}
-        onSave={handleSaveLocation}
-        isSaving={isLocationSaving}
-      />
-
-      {/* Edit Dialog for Images */}
-      <EditImagesDialog
-        open={isImagesDialogOpen}
-        onOpenChange={setIsImagesDialogOpen}
-        propertyImages={propertyImages}
-        onImagesChange={(images) => setPropertyImages(orderImagesByProfile(images))}
-        hotelId={user?.hotel}
-      />
-
-              {/* Үндсэн мэдээлэл Tab */}
               <TabsContent value="basic" className="mt-4">
-                <div className="relative border rounded-lg p-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute top-3 right-3 h-8 w-8"
-                    onClick={handleEditBasicInfo}
-                  >
-                    <IconPencil className="h-4 w-4" />
-                  </Button>
-                  <div>
-                    <div className="space-y-4">
-                      {/* Grid layout for better spacing */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm text-muted-foreground">Буудлын нэр (монголоор):</p>
-                          <p className="font-medium">{basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || '—'}</p>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm text-muted-foreground">Буудлын нэр (англиар):</p>
-                          <p className="font-medium">{basicInfo?.property_name_en || '—'}</p>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm text-muted-foreground">Үйл ажиллагаа эхэлсэн огноо:</p>
-                          <p className="font-medium">{basicInfo?.start_date || '—'}</p>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm text-muted-foreground">Буудлын зэрэглэл:</p>
-                          <p className="font-medium">
-                            {basicInfo?.star_rating ? (
-                              <span className="flex items-center gap-1">
-                                {Array.from({ length: basicInfo.star_rating > 5 ? basicInfo.star_rating - 2 : basicInfo.star_rating }).map((_, i) => (
-                                  <span key={i}>⭐</span>
-                                ))}
-                              </span>
-                            ) : '—'}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm text-muted-foreground">Танай буудал сүлжээ буудал эсэх:</p>
-                          <p className="font-medium">
-                            {basicInfo?.part_of_group
-                              ? `Тийм${basicInfo.group_name ? ` /${basicInfo.group_name}/` : ''}`
-                              : 'Үгүй'}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm text-muted-foreground">Зочдод үйлчлэх болонжтой хэл:</p>
-                          <p className="font-medium">{propertyDetail?.parking_situation || 'Монгол, Англи, Япон'}</p>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm text-muted-foreground">Нийт өрөөний тоо:</p>
-                          <p className="font-medium">{basicInfo?.total_hotel_rooms || '—'}</p>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm text-muted-foreground">Манай сайтаар зарах өрөөний тоо:</p>
-                          <p className="font-medium">{basicInfo?.available_rooms || '—'}</p>
-                        </div>
+                <div className="relative ">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-sm">{t('basicInfoSectionTitle')}</h3>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleEditBasicInfo}>
+                      <IconPencil className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="rounded-lg bg-muted/40 px-4 py-3">
+                      <p className="text-xs text-muted-foreground mb-1">{t('hotelNameMnLabel')}</p>
+                      <p className="text-sm font-medium">{basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || '—'}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/40 px-4 py-3">
+                      <p className="text-xs text-muted-foreground mb-1">{t('hotelNameEnLabel')}</p>
+                      <p className="text-sm font-medium">{basicInfo?.property_name_en || '—'}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/40 px-4 py-3">
+                      <p className="text-xs text-muted-foreground mb-1">{t('starRatingLabel')}</p>
+                      <div className="flex items-center gap-0.5">
+                        {starCount > 0 ? (
+                          Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${i < starCount ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'}`}
+                            />
+                          ))
+                        ) : (
+                          <span className="text-sm font-medium">—</span>
+                        )}
                       </div>
+                    </div>
+                    <div className="rounded-lg bg-muted/40 px-4 py-3">
+                      <p className="text-xs text-muted-foreground mb-1">{t('openingDateLabel')}</p>
+                      <p className="text-sm font-medium">{basicInfo?.start_date || '—'}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/40 px-4 py-3">
+                      <p className="text-xs text-muted-foreground mb-1">{t('totalFloorsLabel')}</p>
+                      <p className="text-sm font-medium">{address?.total_floor_number || '—'}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/40 px-4 py-3">
+                      <p className="text-xs text-muted-foreground mb-1">{t('totalRoomsLabel')}</p>
+                      <p className="text-sm font-medium">{basicInfo?.total_hotel_rooms || '—'}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/40 px-4 py-3 sm:col-span-2">
+                      <p className="text-xs text-muted-foreground mb-1">{t('chainHotelLabel')}</p>
+                      <p className="text-sm font-medium">
+                        {basicInfo?.part_of_group
+                          ? `${t('yes')}${basicInfo.group_name ? ` (${basicInfo.group_name})` : ''}`
+                          : t('no')}
+                      </p>
                     </div>
                   </div>
                 </div>
               </TabsContent>
 
-              {/* Байршил Tab */}
               <TabsContent value="location" className="mt-4">
-                <div className="relative border rounded-lg p-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute top-3 right-3 h-8 w-8"
-                    onClick={handleEditLocation}
-                  >
-                    <IconPencil className="h-4 w-4" />
-                  </Button>
-                  <div className="space-y-4">
-                    {propertyBaseInfo?.location && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Байршил</p>
-                        <p className="font-medium">{propertyBaseInfo.location}</p>
-                      </div>
-                    )}
-                    {address && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Хот/Аймаг</p>
-                          <p className="font-medium">{getProvinceName(address.province_city)}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Дүүрэг/Сум</p>
-                          <p className="font-medium">{getSoumName(address.soum || address.district)}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Давхрын тоо</p>
-                          <p className="font-medium">{address.total_floor_number || '—'}</p>
-                        </div>
-                      </div>
-                    )}
+                <div className="relative ">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-sm">{t('locationSectionTitle')}</h3>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleEditLocation}>
+                      <IconPencil className="h-4 w-4" />
+                    </Button>
                   </div>
-                </div>
-              </TabsContent>
-
-              {/* Google Map Tab */}
-              <TabsContent value="map" className="mt-4">
-                <div className="relative border rounded-lg p-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute top-3 right-3 h-8 w-8 z-20"
-                    onClick={handleEditGoogleMap}
-                  >
-                    <IconPencil className="h-4 w-4" />
-                  </Button>
-                  <div>
-                    {(() => {
-                      const coordinates = extractCoordinates(propertyDetail?.google_map);
-                      // Removed noisy console logs
-
-                      if (coordinates) {
-                        return (
-                          <div>
-                            {isMapLoaded ? (
-                              <GoogleMap
-                                mapContainerStyle={mapContainerStyle}
-                                center={coordinates}
-                                zoom={15}
-                                options={{
-                                  streetViewControl: false,
-                                  mapTypeControl: true,
-                                  fullscreenControl: true,
-                                }}
-                              >
-                                <Marker position={coordinates} />
-                              </GoogleMap>
-                            ) : (
-                              <div className="w-full h-[400px] bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                                <p className="text-sm text-gray-500">Loading Google Maps...</p>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      } else {
-                        return (
-                          <div className="w-full h-[400px] bg-muted flex items-center justify-center rounded-md">
-                            <p className="text-muted-foreground">Google Map байхгүй</p>
-                            {propertyDetail?.google_map && (
-                              <p className="text-xs text-muted-foreground mt-2">URL: {propertyDetail.google_map}</p>
-                            )}
-                          </div>
-                        );
-                      }
-                    })()}
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* Дотоод журам Tab */}
-              <TabsContent value="policy" className="mt-4">
-                <div className="relative border rounded-lg p-4 space-y-6">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute top-3 right-3 h-8 w-8"
-                    onClick={() => router.push('/admin/internal-rules')}
-                  >
-                    <IconPencil className="h-4 w-4" />
-                  </Button>
-                  {propertyPolicy ? (
-                    <>
-                      {/* Check-in / Check-out Times */}
-                      <div>
-                        <h4 className="font-semibold mb-3">Бүртгэх болон гарах цаг</h4>
-                        <div className="grid grid-cols-2 gap-4 pl-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Бүртгэх цаг:</p>
-                            <p className="font-medium">
-                              {formatTime(propertyPolicy.check_in_from)} - {formatTime(propertyPolicy.check_in_until)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Гарах цаг:</p>
-                            <p className="font-medium">
-                              {formatTime(propertyPolicy.check_out_from)} - {formatTime(propertyPolicy.check_out_until)}
-                            </p>
-                          </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_180px] gap-4">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="rounded-lg bg-muted/40 px-4 py-3">
+                          <p className="text-xs text-muted-foreground mb-1">{t('cityProvinceLabel')}</p>
+                          <p className="text-sm font-medium">{getProvinceName(address?.province_city)}</p>
+                        </div>
+                        <div className="rounded-lg bg-muted/40 px-4 py-3">
+                          <p className="text-xs text-muted-foreground mb-1">{t('districtSumLabel')}</p>
+                          <p className="text-sm font-medium">{getSoumName(address?.soum)}</p>
+                        </div>
+                        <div className="rounded-lg bg-muted/40 px-4 py-3">
+                          <p className="text-xs text-muted-foreground mb-1">{t('bagKhorooLabel')}</p>
+                          <p className="text-sm font-medium">{address?.district ? `${address.district}` : '—'}</p>
                         </div>
                       </div>
-
-                      {/* Cancellation Policy */}
-                      {cancellationFee && (
-                        <div>
-                          <h4 className="font-semibold mb-3">Цуцлалтын бодлого</h4>
-                          <div className="pl-4 space-y-2 text-sm">
-                            <p className="text-muted-foreground mb-2">
-                              Цуцлах боломжтой цаг: <span className="font-medium text-foreground">{formatTime(cancellationFee.cancel_time)}</span>
-                            </p>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-muted-foreground">1 өрөөний цуцлалт (өмнө):</p>
-                                <p className="font-medium">{cancellationFee.single_before_time_percentage}%</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">1 өрөөний цуцлалт (хойш):</p>
-                                <p className="font-medium">{cancellationFee.single_after_time_percentage}%</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">5 хоногийн өмнө:</p>
-                                <p className="font-medium">{cancellationFee.multi_5days_before_percentage}%</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">3 хоногийн өмнө:</p>
-                                <p className="font-medium">{cancellationFee.multi_3days_before_percentage}%</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">2 хоногийн өмнө:</p>
-                                <p className="font-medium">{cancellationFee.multi_2days_before_percentage}%</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">1 хоногийн өмнө:</p>
-                                <p className="font-medium">{cancellationFee.multi_1day_before_percentage}%</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Breakfast Policy */}
-                      <div>
-                        <h4 className="font-semibold mb-3">Өглөөний цай</h4>
-                        <div className="pl-4 space-y-2 text-sm">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-muted-foreground">Төлөв:</p>
-                              <p className="font-medium">
-                                {propertyPolicy.breakfast_policy?.status === 'no' ? 'Байхгүй' : 
-                                 propertyPolicy.breakfast_policy?.status === 'free' ? 'Үнэгүй' : 
-                                 propertyPolicy.breakfast_policy?.status === 'paid' ? 'Төлбөртэй' : '—'}
-                              </p>
-                            </div>
-                            {propertyPolicy.breakfast_policy?.status !== 'no' && propertyPolicy.breakfast_policy && (
-                              <>
-                                <div>
-                                  <p className="text-muted-foreground">Цаг:</p>
-                                  <p className="font-medium">
-                                    {formatTime(propertyPolicy.breakfast_policy.start_time)} - {formatTime(propertyPolicy.breakfast_policy.end_time)}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-muted-foreground">Төрөл:</p>
-                                  <p className="font-medium">
-                                    {propertyPolicy.breakfast_policy.breakfast_type === 'buffet' ? 'Buffet' :
-                                     propertyPolicy.breakfast_policy.breakfast_type === 'room' ? 'Өрөөнд' :
-                                     propertyPolicy.breakfast_policy.breakfast_type === 'plate' ? 'Тавгаар' : '—'}
-                                  </p>
-                                </div>
-                                {propertyPolicy.breakfast_policy.status === 'paid' && propertyPolicy.breakfast_policy.price && (
-                                  <div>
-                                    <p className="text-muted-foreground">Үнэ:</p>
-                                    <p className="font-medium">{propertyPolicy.breakfast_policy.price}₮</p>
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
+                      <div className="rounded-lg bg-muted/40 px-4 py-3">
+                        <p className="text-xs text-muted-foreground mb-2">{t('detailedAddressLabel')}</p>
+                        <p className="text-sm leading-relaxed">{propertyBaseInfo?.location || '—'}</p>
                       </div>
-
-                      {/* Parking Policy */}
-                      <div>
-                        <h4 className="font-semibold mb-3">Зогсоол</h4>
-                        <div className="pl-4 space-y-2 text-sm">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-muted-foreground">Гадна зогсоол:</p>
-                              <p className="font-medium">
-                                {propertyPolicy.parking_policy?.outdoor_parking === 'no' ? 'Байхгүй' :
-                                 propertyPolicy.parking_policy?.outdoor_parking === 'free' ? 'Үнэгүй' :
-                                 propertyPolicy.parking_policy?.outdoor_parking === 'paid' ? 
-                                   `Төлбөртэй ${propertyPolicy.parking_policy.outdoor_price ? `(${propertyPolicy.parking_policy.outdoor_price}₮/${propertyPolicy.parking_policy.outdoor_fee_type === 'hour' ? 'цаг' : 'хоног'})` : ''}` : '—'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Дотор зогсоол:</p>
-                              <p className="font-medium">
-                                {propertyPolicy.parking_policy?.indoor_parking === 'no' ? 'Байхгүй' :
-                                 propertyPolicy.parking_policy?.indoor_parking === 'free' ? 'Үнэгүй' :
-                                 propertyPolicy.parking_policy?.indoor_parking === 'paid' ? 
-                                   `Төлбөртэй ${propertyPolicy.parking_policy.indoor_price ? `(${propertyPolicy.parking_policy.indoor_price}₮/${propertyPolicy.parking_policy.indoor_fee_type === 'hour' ? 'цаг' : 'хоног'})` : ''}` : '—'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Child Policy */}
-                      <div>
-                        <h4 className="font-semibold mb-3">Хүүхэд болон нэмэлт ор</h4>
-                        <div className="pl-4 space-y-2 text-sm">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-muted-foreground">Хүүхэд үйлчлүүлэх боломжтой:</p>
-                              <p className="font-medium">{propertyPolicy.child_policy?.allow_children ? 'Тийм' : 'Үгүй'}</p>
-                            </div>
-                            {propertyPolicy.child_policy?.allow_children && (
-                              <>
-                                <div>
-                                  <p className="text-muted-foreground">Хүүхдийн дээд нас:</p>
-                                  <p className="font-medium">{propertyPolicy.child_policy.max_child_age || '—'}</p>
-                                </div>
-                                <div>
-                                  <p className="text-muted-foreground">Хүүхдийн ор байгаа эсэх:</p>
-                                  <p className="font-medium">
-                                    {propertyPolicy.child_policy.child_bed_available === 'yes' ? 'Тийм' :
-                                     propertyPolicy.child_policy.child_bed_available === 'no' ? 'Үгүй' : '—'}
-                                  </p>
-                                </div>
-                              </>
-                            )}
-                            <div>
-                              <p className="text-muted-foreground">Нэмэлт ор:</p>
-                              <p className="font-medium">
-                                {propertyPolicy.child_policy?.allow_extra_bed ? 
-                                  `Тийм ${propertyPolicy.child_policy.extra_bed_price ? `(${propertyPolicy.child_policy.extra_bed_price}₮)` : ''}` : 
-                                  'Үгүй'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Дотоод журмын мэдээлэл байхгүй байна
                     </div>
-                  )}
+                    <div className="h-[160px] rounded-lg overflow-hidden border bg-muted/30">
+                      {(() => {
+                        const coordinates = extractCoordinates(propertyDetail?.google_map);
+                        if (coordinates && isMapLoaded) {
+                          return (
+                            <GoogleMap
+                              mapContainerStyle={{ width: '100%', height: '100%' }}
+                              center={coordinates}
+                              zoom={14}
+                              options={{ streetViewControl: false, mapTypeControl: false, fullscreenControl: false }}
+                            >
+                              <Marker position={coordinates} />
+                            </GoogleMap>
+                          );
+                        }
+                        return (
+                          <div className="h-full flex items-center justify-center text-xs text-muted-foreground px-3 text-center">
+                            {t('mapLoading')}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
 
-              {/* Ерөнхий үйлчилгээ Tab */}
+              <TabsContent value="faq" className="mt-4">
+                <div className=" text-center">
+                  <IconMessageQuestion className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
+                  <p className="text-sm text-muted-foreground">{t('faqApiNeeded')}</p>
+                </div>
+              </TabsContent>
+
               <TabsContent value="services" className="mt-4">
                 <ServicesTab
                   generalFacilities={propertyDetail?.general_facilities || []}
@@ -1107,15 +803,63 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         </div>
         </div>
 
-        {/* Right Column: Бидний тухай + Видео */}
-        <AboutVideoSection
-          additionalInfo={additionalInfo}
-          onEdit={handleEditAboutVideo}
-        />
+        <div className="space-y-4">
+          <SocialLinksSection />
+          <AboutVideoSection
+            additionalInfo={additionalInfo}
+            onEdit={handleEditAboutVideo}
+          />
+        </div>
       </div>
 
-        {/* Image Lightbox Modal */}
-        <ImageLightbox
+      <EditAboutVideoDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        about={editAbout}
+        youtubeUrl={editYoutubeUrl}
+        onAboutChange={setEditAbout}
+        onYoutubeUrlChange={setEditYoutubeUrl}
+        onSave={handleSaveAboutVideo}
+        isSaving={isSaving}
+      />
+
+      <EditBasicInfoDialog
+        open={isBasicInfoDialogOpen}
+        onOpenChange={setIsBasicInfoDialogOpen}
+        editBasicInfo={editBasicInfo}
+        onEditBasicInfoChange={setEditBasicInfo}
+        onSave={handleSaveBasicInfo}
+        isSaving={isBasicInfoSaving}
+      />
+
+      <EditLocationDialog
+        open={isLocationDialogOpen}
+        onOpenChange={setIsLocationDialogOpen}
+        editLocation={editLocation}
+        onEditLocationChange={setEditLocation}
+        provinces={provinces}
+        filteredSoums={filteredSoums}
+        isMapLoaded={isMapLoaded}
+        onProvinceChange={(value) => {
+          setEditLocation({ ...editLocation, province_city: value, soum: '' });
+          const filtered = soums.filter((s) => s.code === Number(value)).concat(
+            districts.filter((d) => d.code === Number(value))
+          );
+          setFilteredSoums(filtered);
+        }}
+        onSave={handleSaveLocation}
+        isSaving={isLocationSaving}
+      />
+
+      <EditImagesDialog
+        open={isImagesDialogOpen}
+        onOpenChange={setIsImagesDialogOpen}
+        propertyImages={propertyImages}
+        onImagesChange={(images) => setPropertyImages(orderImagesByProfile(images))}
+        hotelId={user?.hotel}
+      />
+
+      <ImageLightbox
           open={lightboxOpen}
           onOpenChange={setLightboxOpen}
           images={propertyImages}

@@ -294,7 +294,7 @@ export const schemaHotelRegistration2 = z.object({
     }),
   CompanyName: z
     .string()
-    .min(7, { message: "ААН-н нэрийг оруулна уу?" }),
+    .min(1, { message: "ААН-н нэрийг оруулна уу?" }),
   PropertyName: z
     .string()
     .min(3, { message: "Буудлын нэрийг оруулна уу? (кирил)" })
@@ -312,7 +312,10 @@ export const schemaHotelRegistration2 = z.object({
     .min(1, { message: "Эзэмшлийн төрлийг сонгоно уу" }),
   location: z
     .string()
-    .min(20, { message: "Хаяг хамгийн багадаа 20 тэмдэгт байх ёстой" }),
+    .min(20, { message: "Дэлгэрэнгүй хаягыг оруулна уу? (кирил)" })
+    .regex(/^[А-Яа-яӨөҮүЁё0-9\s.,'-]+$/, {
+      message: "Зөвхөн кирилл үсэг ашиглана уу. Латин үсэг оруулсан байна.",
+    }),
   property_type: z
     .string()
     .min(1, { message: "Буудлын төрлийг сонгоно уу?" }),

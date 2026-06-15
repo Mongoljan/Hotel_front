@@ -105,6 +105,7 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
         UserStorage.setItem('proceed', '2', userId);
         const cacheKey = `hotelCompletion_${userId}_${hotelId}`;
         localStorage.setItem(cacheKey, 'completed');
+        window.dispatchEvent(new Event('hotel-registration-complete'));
         setProceed(2);
         return;
       }
@@ -229,6 +230,7 @@ export default function RegisterPage({ proceed, setProceed, setView }: ProceedPr
       UserStorage.setItem('proceed', '2', user.id);
       const cacheKey = `hotelCompletion_${user.id}_${user.hotel}`;
       localStorage.setItem(cacheKey, 'completed');
+      window.dispatchEvent(new Event('hotel-registration-complete'));
     }
     setProceed(2);
   };
