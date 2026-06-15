@@ -528,7 +528,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const galleryHeightClass = 'h-[400px]';
 
   const stepTabTriggerClass =
-    'flex items-center gap-2 rounded-none border-0 border-b-2 border-transparent bg-transparent px-2 py-2.5 text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none';
+    'flex items-center gap-2 rounded-none border-0 border-b-2 border-transparent bg-transparent px-2 py-2.5 text-sm text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none';
 
   return (
     <div className="w-full max-w-full space-y-4">
@@ -544,21 +544,21 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-4">
         {/* Left Column: Image Gallery */}
         <div>
-          <div className="relative border rounded-lg overflow-hidden">
-            <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
-              <span className="text-base font-semibold bg-white/90 backdrop-blur px-2 py-1 rounded">
-                Зурагнууд
-              </span>
+          <div className="border rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold text-foreground">
+                {t('gallerySectionTitle', { count: propertyImages.length })}
+              </h2>
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 bg-white/90 backdrop-blur"
+                className="h-8 w-8 shrink-0"
                 onClick={() => openImagesSheet()}
               >
                 <IconPencil className="h-4 w-4" />
               </Button>
             </div>
-            <div className={`grid grid-cols-2 gap-3 p-3 ${galleryHeightClass}`}>
+            <div className={`grid grid-cols-2 gap-3 ${galleryHeightClass}`}>
               {/* Left: Hero image */}
               <div
                 className="relative rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
@@ -577,7 +577,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                       priority
                     />
                     {propertyImages[0].is_profile && (
-                      <span className="absolute top-3 right-3 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full shadow">
+                      <span className="absolute top-3 left-3 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full shadow">
                         Профайл зураг
                       </span>
                     )}
@@ -637,7 +637,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                 })}
               </div>
             </div>
-        </div>
+          </div>
 
           {/* Tabbed Information - inside left column */}
           <div className="border rounded-lg p-4 mt-4">
@@ -645,41 +645,41 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
               <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-0 rounded-none bg-transparent p-0 border-b border-border">
                 <TabsTrigger value="basic" className={stepTabTriggerClass}>
                   <IconFileInfo className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm">{t('tabBasic')}</span>
+                  <span>{t('tabBasic')}</span>
                 </TabsTrigger>
                 <TabsTrigger value="location" className={stepTabTriggerClass}>
                   <IconMapPin className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm">{t('tabLocation')}</span>
+                  <span>{t('tabLocation')}</span>
                 </TabsTrigger>
                 <TabsTrigger value="services" className={stepTabTriggerClass}>
                   <IconSparkles className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm">{t('tabServices')}</span>
+                  <span>{t('tabServices')}</span>
                 </TabsTrigger>
                 <TabsTrigger value="faq" className={stepTabTriggerClass}>
                   <IconMessageQuestion className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm">{t('tabFaq')}</span>
+                  <span>{t('tabFaq')}</span>
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic" className="mt-4">
                 <div className="relative ">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-sm">{t('basicInfoSectionTitle')}</h3>
+                    <h3 className="font-semibold text-base">{t('basicInfoSectionTitle')}</h3>
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleEditBasicInfo}>
                       <IconPencil className="h-4 w-4" />
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
-                      <p className="text-xs text-muted-foreground mb-1">{t('hotelNameMnLabel')}</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('hotelNameMnLabel')}</p>
                       <p className="text-sm font-medium">{basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
-                      <p className="text-xs text-muted-foreground mb-1">{t('hotelNameEnLabel')}</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('hotelNameEnLabel')}</p>
                       <p className="text-sm font-medium">{basicInfo?.property_name_en || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
-                      <p className="text-xs text-muted-foreground mb-1">{t('starRatingLabel')}</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('starRatingLabel')}</p>
                       <div className="flex items-center gap-0.5">
                         {starCount > 0 ? (
                           Array.from({ length: 5 }).map((_, i) => (
@@ -694,19 +694,19 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                       </div>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
-                      <p className="text-xs text-muted-foreground mb-1">{t('openingDateLabel')}</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('openingDateLabel')}</p>
                       <p className="text-sm font-medium">{basicInfo?.start_date || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
-                      <p className="text-xs text-muted-foreground mb-1">{t('totalFloorsLabel')}</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('totalFloorsLabel')}</p>
                       <p className="text-sm font-medium">{address?.total_floor_number || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
-                      <p className="text-xs text-muted-foreground mb-1">{t('totalRoomsLabel')}</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('totalRoomsLabel')}</p>
                       <p className="text-sm font-medium">{basicInfo?.total_hotel_rooms || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3 sm:col-span-2">
-                      <p className="text-xs text-muted-foreground mb-1">{t('chainHotelLabel')}</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('chainHotelLabel')}</p>
                       <p className="text-sm font-medium">
                         {basicInfo?.part_of_group
                           ? `${t('yes')}${basicInfo.group_name ? ` (${basicInfo.group_name})` : ''}`
@@ -720,33 +720,33 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
               <TabsContent value="location" className="mt-4">
                 <div className="relative ">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-sm">{t('locationSectionTitle')}</h3>
+                    <h3 className="font-semibold text-base">{t('locationSectionTitle')}</h3>
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleEditLocation}>
                       <IconPencil className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_180px] gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="rounded-lg bg-muted/40 px-4 py-3">
-                          <p className="text-xs text-muted-foreground mb-1">{t('cityProvinceLabel')}</p>
+                          <p className="text-sm text-muted-foreground mb-1">{t('cityProvinceLabel')}</p>
                           <p className="text-sm font-medium">{getProvinceName(address?.province_city)}</p>
                         </div>
                         <div className="rounded-lg bg-muted/40 px-4 py-3">
-                          <p className="text-xs text-muted-foreground mb-1">{t('districtSumLabel')}</p>
+                          <p className="text-sm text-muted-foreground mb-1">{t('districtSumLabel')}</p>
                           <p className="text-sm font-medium">{getSoumName(address?.soum)}</p>
                         </div>
                         <div className="rounded-lg bg-muted/40 px-4 py-3">
-                          <p className="text-xs text-muted-foreground mb-1">{t('bagKhorooLabel')}</p>
+                          <p className="text-sm text-muted-foreground mb-1">{t('bagKhorooLabel')}</p>
                           <p className="text-sm font-medium">{address?.district ? `${address.district}` : '—'}</p>
                         </div>
                       </div>
                       <div className="rounded-lg bg-muted/40 px-4 py-3">
-                        <p className="text-xs text-muted-foreground mb-2">{t('detailedAddressLabel')}</p>
+                        <p className="text-sm text-muted-foreground mb-2">{t('detailedAddressLabel')}</p>
                         <p className="text-sm leading-relaxed">{propertyBaseInfo?.location || '—'}</p>
                       </div>
                     </div>
-                    <div className="h-[160px] rounded-lg overflow-hidden border bg-muted/30">
+                    <div className="h-[280px] lg:h-[320px] rounded-lg overflow-hidden border bg-muted/30">
                       {(() => {
                         const coordinates = extractCoordinates(propertyDetail?.google_map);
                         if (coordinates && isMapLoaded) {
@@ -762,7 +762,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                           );
                         }
                         return (
-                          <div className="h-full flex items-center justify-center text-xs text-muted-foreground px-3 text-center">
+                          <div className="h-full flex items-center justify-center text-sm text-muted-foreground px-3 text-center">
                             {t('mapLoading')}
                           </div>
                         );

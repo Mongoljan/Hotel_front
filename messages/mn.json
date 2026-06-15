@@ -332,6 +332,7 @@
   "9": "Зочид буудлын нэр (MN)",
   "hotelImage": "Зочид буудлын зураг",
   "editImagesTitle": "Буудлын зураг",
+  "gallerySectionTitle": "Зурагнууд ({count})",
   "addNewImage": "Шинэ зураг нэмэх",
   "reqMinCount": "Хамгийн багадаа 5 зураг байх",
   "reqProfile": "1 зургийг профайлаар сонгох",

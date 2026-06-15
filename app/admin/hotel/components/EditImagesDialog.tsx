@@ -337,6 +337,15 @@ export function EditImagesDialog({
           maxWidth: sheetWidth,
           transition: `width ${PANEL_TRANSITION_MS}ms ${PANEL_EASING}, max-width ${PANEL_TRANSITION_MS}ms ${PANEL_EASING}`,
         }}
+        onPointerDownOutside={(event) => {
+          const target = event.target as HTMLElement;
+          if (
+            target.closest('[data-radix-select-content]') ||
+            target.closest('[data-radix-select-viewport]')
+          ) {
+            event.preventDefault();
+          }
+        }}
       >
         <div className="flex h-full min-h-0 w-full">
           {/* Extended panel — left column; sheet grows to reveal it */}
@@ -382,13 +391,17 @@ export function EditImagesDialog({
                   {t('imageTypeLabel')} <span className="text-destructive">*</span>
                 </Label>
                 <Select
-                  value={draftCategory ? String(draftCategory) : undefined}
+                  value={draftCategory !== undefined ? String(draftCategory) : undefined}
                   onValueChange={(v) => setDraftCategory(Number(v))}
                 >
                   <SelectTrigger className="h-11 rounded-xl">
-                    <SelectValue placeholder={<span className="text-muted-foreground">{t('selectPlaceholder')}</span>} />
+                    <SelectValue placeholder={t('selectPlaceholder')} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent
+                    className="z-[100]"
+                    position="popper"
+                    onPointerDownOutside={(e) => e.preventDefault()}
+                  >
                     {imageCategories.map((cat) => (
                       <SelectItem key={cat.id} value={String(cat.id)}>
                         {locale === 'en' ? cat.name_en : cat.name_mn}

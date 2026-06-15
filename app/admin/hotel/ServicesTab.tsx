@@ -246,7 +246,7 @@ export default function ServicesTab({
   return (
     <div className="relative ">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-sm">{t('servicesSectionTitle')}</h3>
+        <h3 className="font-semibold text-base">{t('servicesSectionTitle')}</h3>
         <Button variant="outline" size="icon" className="h-8 w-8" onClick={openEdit}>
           <IconPencil className="h-4 w-4" />
         </Button>

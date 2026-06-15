@@ -329,6 +329,7 @@
    "9":"Hotel Name (MN)",
    "hotelImage":"Hotel image",
    "editImagesTitle": "Hotel images",
+   "gallerySectionTitle": "Images ({count})",
    "addNewImage": "Add new image",
    "reqMinCount": "At least 5 photos required",
    "reqProfile": "Select 1 photo as profile",
