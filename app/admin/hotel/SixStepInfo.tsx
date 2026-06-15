@@ -577,8 +577,8 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                       priority
                     />
                     {propertyImages[0].is_profile && (
-                      <span className="absolute top-3 left-3 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full shadow">
-                        Профайл зураг
+                      <span className="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-[#F5B800] text-white shadow">
+                        <Star className="h-4 w-4 fill-white text-white" />
                       </span>
                     )}
                   </>
@@ -672,11 +672,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground mb-1">{t('hotelNameMnLabel')}</p>
-                      <p className="text-sm font-medium">{basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || '—'}</p>
+                      <p className="text-base font-medium">{basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground mb-1">{t('hotelNameEnLabel')}</p>
-                      <p className="text-sm font-medium">{basicInfo?.property_name_en || '—'}</p>
+                      <p className="text-base font-medium">{basicInfo?.property_name_en || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground mb-1">{t('starRatingLabel')}</p>
@@ -689,25 +689,25 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                             />
                           ))
                         ) : (
-                          <span className="text-sm font-medium">—</span>
+                          <span className="text-base font-medium">—</span>
                         )}
                       </div>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground mb-1">{t('openingDateLabel')}</p>
-                      <p className="text-sm font-medium">{basicInfo?.start_date || '—'}</p>
+                      <p className="text-base font-medium">{basicInfo?.start_date || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground mb-1">{t('totalFloorsLabel')}</p>
-                      <p className="text-sm font-medium">{address?.total_floor_number || '—'}</p>
+                      <p className="text-base font-medium">{address?.total_floor_number || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground mb-1">{t('totalRoomsLabel')}</p>
-                      <p className="text-sm font-medium">{basicInfo?.total_hotel_rooms || '—'}</p>
+                      <p className="text-base font-medium">{basicInfo?.total_hotel_rooms || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3 sm:col-span-2">
                       <p className="text-sm text-muted-foreground mb-1">{t('chainHotelLabel')}</p>
-                      <p className="text-sm font-medium">
+                      <p className="text-base font-medium">
                         {basicInfo?.part_of_group
                           ? `${t('yes')}${basicInfo.group_name ? ` (${basicInfo.group_name})` : ''}`
                           : t('no')}
@@ -730,20 +730,20 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="rounded-lg bg-muted/40 px-4 py-3">
                           <p className="text-sm text-muted-foreground mb-1">{t('cityProvinceLabel')}</p>
-                          <p className="text-sm font-medium">{getProvinceName(address?.province_city)}</p>
+                          <p className="text-base font-medium">{getProvinceName(address?.province_city)}</p>
                         </div>
                         <div className="rounded-lg bg-muted/40 px-4 py-3">
                           <p className="text-sm text-muted-foreground mb-1">{t('districtSumLabel')}</p>
-                          <p className="text-sm font-medium">{getSoumName(address?.soum)}</p>
+                          <p className="text-base font-medium">{getSoumName(address?.soum)}</p>
                         </div>
                         <div className="rounded-lg bg-muted/40 px-4 py-3">
                           <p className="text-sm text-muted-foreground mb-1">{t('bagKhorooLabel')}</p>
-                          <p className="text-sm font-medium">{address?.district ? `${address.district}` : '—'}</p>
+                          <p className="text-base font-medium">{address?.district ? `${address.district}` : '—'}</p>
                         </div>
                       </div>
                       <div className="rounded-lg bg-muted/40 px-4 py-3">
                         <p className="text-sm text-muted-foreground mb-2">{t('detailedAddressLabel')}</p>
-                        <p className="text-sm leading-relaxed">{propertyBaseInfo?.location || '—'}</p>
+                        <p className="text-base leading-relaxed">{propertyBaseInfo?.location || '—'}</p>
                       </div>
                     </div>
                     <div className="h-[280px] lg:h-[320px] rounded-lg overflow-hidden border bg-muted/30">
