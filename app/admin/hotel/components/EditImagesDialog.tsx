@@ -514,7 +514,7 @@ export function EditImagesDialog({
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <OptionButton
                 selected={categoryFilter === 'all'}
                 onClick={() => setCategoryFilter('all')}
