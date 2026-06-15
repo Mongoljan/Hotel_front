@@ -572,6 +572,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                       src={propertyImages[0].image}
                       alt={propertyImages[0].description || 'Hotel image'}
                       fill
+                      sizes="(max-width: 1024px) 50vw, 400px"
                       className="object-cover"
                       priority
                     />
@@ -612,6 +613,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                             src={image.image}
                             alt={image.description || `Hotel image ${imageIndex + 1}`}
                             fill
+                            sizes="(max-width: 1024px) 25vw, 200px"
                             className="object-cover"
                           />
                           {image.is_profile && (

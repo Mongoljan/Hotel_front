@@ -8,6 +8,7 @@ import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { PropertyPhoto } from '../types';
@@ -107,6 +108,7 @@ export function ImageLightbox({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-7xl w-[95vw] h-[95vh] p-2">
         <DialogTitle className="sr-only">Hotel Image Gallery</DialogTitle>
+        <DialogDescription className="sr-only">Full screen hotel image viewer</DialogDescription>
         <div className="relative w-full h-full flex flex-col items-center justify-center gap-4">
           {/* Main Image */}
           <div className="relative w-full flex-1 flex items-center justify-center">
