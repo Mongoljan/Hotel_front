@@ -314,6 +314,9 @@ export function EditImagesDialog({
   const subPanelTitle =
     subPanelMode === 'add' ? t('addImageTitle') : t('editImagePanelTitle');
   const isExtendedOpen = subPanelMode !== null;
+  const sheetWidth = isExtendedOpen
+    ? GALLERY_PANEL_WIDTH + UPLOAD_PANEL_WIDTH
+    : GALLERY_PANEL_WIDTH;
 
   const extendedDraftRequirements = [
     { met: draftMeetsFormat, label: t('reqFormat') },
@@ -330,111 +333,110 @@ export function EditImagesDialog({
           '[&>button]:hidden'
         )}
         style={{
-          width: GALLERY_PANEL_WIDTH,
-          maxWidth: GALLERY_PANEL_WIDTH,
+          width: sheetWidth,
+          maxWidth: sheetWidth,
+          transition: `width ${PANEL_TRANSITION_MS}ms ${PANEL_EASING}, max-width ${PANEL_TRANSITION_MS}ms ${PANEL_EASING}`,
         }}
       >
-        <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-background">
-        {/* Extended panel — slides out to the left; gallery width/position never changes */}
-        <div
-          className={cn(
-            'absolute top-0 z-30 flex flex-col border-r bg-background shadow-2xl',
-            'transition-transform ease-[cubic-bezier(0.32,0.72,0,1)]',
-            isExtendedOpen
-              ? 'translate-x-0 opacity-100'
-              : '-translate-x-full pointer-events-none opacity-0'
-          )}
-          style={{
-            width: UPLOAD_PANEL_WIDTH,
-            height: '100%',
-            right: '100%',
-            transitionDuration: `${PANEL_TRANSITION_MS}ms`,
-          }}
-        >
-          <input
-            ref={subPanelFileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/jpg,image/webp"
-            className="hidden"
-            onChange={handleSubPanelFileChange}
-          />
+        <div className="flex h-full min-h-0 w-full">
+          {/* Extended panel — left column; sheet grows to reveal it */}
+          <div
+            className={cn(
+              'flex shrink-0 flex-col border-r bg-background overflow-hidden',
+              'transition-[width,opacity] ease-[cubic-bezier(0.32,0.72,0,1)]',
+              isExtendedOpen
+                ? 'w-[440px] opacity-100'
+                : 'w-0 opacity-0 pointer-events-none border-r-0'
+            )}
+            style={{ transitionDuration: `${PANEL_TRANSITION_MS}ms` }}
+          >
+            <input
+              ref={subPanelFileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              className="hidden"
+              onChange={handleSubPanelFileChange}
+            />
 
-          <SheetHeader className="flex-row items-center justify-between space-y-0 border-b px-4 py-4">
-            <SheetTitle className="text-base font-semibold">{subPanelTitle}</SheetTitle>
-            <button
-              type="button"
-              onClick={closeSubPanel}
-              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label={t('goBack')}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </SheetHeader>
-
-          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
-            <div className="rounded-xl bg-[#F4F5FA] px-4 py-3.5 space-y-3">
-              {extendedDraftRequirements.map(({ met, label }) => (
-                <RequirementRow key={label} met={met} label={label} />
-              ))}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">
-                {t('imageTypeLabel')} <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={draftCategory ? String(draftCategory) : undefined}
-                onValueChange={(v) => setDraftCategory(Number(v))}
-              >
-                <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue placeholder={<span className="text-muted-foreground">{t('selectPlaceholder')}</span>} />
-                </SelectTrigger>
-                <SelectContent>
-                  {imageCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={String(cat.id)}>
-                      {locale === 'en' ? cat.name_en : cat.name_mn}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => subPanelFileInputRef.current?.click()}
-              className="relative mx-auto flex aspect-square w-full max-w-[300px] items-center justify-center overflow-hidden rounded-xl border-2 border-[#4A7BF7] bg-[#E8F0FE]/30"
-            >
-              {draftPreview ? (
-                <img src={draftPreview} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              ) : (
-                <Upload className="h-10 w-10 text-[#4A7BF7]/60" />
-              )}
-            </button>
-
-            <div className="flex gap-3 pt-2">
-              <Button
+            <SheetHeader className="flex-row items-center justify-between space-y-0 border-b px-4 py-4 shrink-0">
+              <SheetTitle className="text-base font-semibold">{subPanelTitle}</SheetTitle>
+              <button
                 type="button"
-                variant="outline"
-                className="flex-1 h-11 rounded-xl"
+                onClick={closeSubPanel}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label={t('goBack')}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </SheetHeader>
+
+            <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 space-y-4">
+              <div className="rounded-xl bg-[#F4F5FA] px-4 py-3.5 space-y-3">
+                {extendedDraftRequirements.map(({ met, label }) => (
+                  <RequirementRow key={label} met={met} label={label} />
+                ))}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">
+                  {t('imageTypeLabel')} <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={draftCategory ? String(draftCategory) : undefined}
+                  onValueChange={(v) => setDraftCategory(Number(v))}
+                >
+                  <SelectTrigger className="h-11 rounded-xl">
+                    <SelectValue placeholder={<span className="text-muted-foreground">{t('selectPlaceholder')}</span>} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {imageCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={String(cat.id)}>
+                        {locale === 'en' ? cat.name_en : cat.name_mn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <button
+                type="button"
                 onClick={() => subPanelFileInputRef.current?.click()}
-                disabled={isSaving}
+                className="relative mx-auto flex aspect-square w-full max-w-[300px] items-center justify-center overflow-hidden rounded-xl border-2 border-[#4A7BF7] bg-[#E8F0FE]/30"
               >
-                {t('replaceImage')}
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 h-11 rounded-xl bg-[#4A7BF7] hover:bg-[#3d6ae0]"
-                onClick={handleSaveSubPanel}
-                disabled={isSaving}
-              >
-                {t('saveImage')}
-              </Button>
+                {draftPreview ? (
+                  <img src={draftPreview} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                ) : (
+                  <Upload className="h-10 w-10 text-[#4A7BF7]/60" />
+                )}
+              </button>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 h-11 rounded-xl"
+                  onClick={() => subPanelFileInputRef.current?.click()}
+                  disabled={isSaving}
+                >
+                  {t('replaceImage')}
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1 h-11 rounded-xl bg-[#4A7BF7] hover:bg-[#3d6ae0]"
+                  onClick={handleSaveSubPanel}
+                  disabled={isSaving}
+                >
+                  {t('saveImage')}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Gallery — fixed panel; only dim overlay animates when extended opens */}
-        <div className="relative flex h-full w-full flex-col overflow-hidden bg-background">
+          {/* Gallery — fixed 600px column */}
+          <div
+            className="relative flex h-full w-[600px] shrink-0 flex-col overflow-hidden bg-background"
+            style={{ width: GALLERY_PANEL_WIDTH, maxWidth: GALLERY_PANEL_WIDTH }}
+          >
           <div
             className={cn(
               'pointer-events-none absolute inset-0 z-20 transition-opacity',
