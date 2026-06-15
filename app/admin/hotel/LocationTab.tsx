@@ -38,7 +38,7 @@ export default function LocationTab({ address, propertyBaseInfo, propertyDetail 
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-cyrillic">
             <IconMapPin className="h-5 w-5 text-primary" />
-            Хаяг, байршил дэлгэрэнгүй
+            Хаяг, байршил
           </CardTitle>
           <CardDescription>Зочид буудлын дэлгэрэнгүй хаяг мэдээлэл</CardDescription>
         </CardHeader>

@@ -42,13 +42,15 @@ import {
   LoadingSkeleton,
   HotelHeader,
   AboutVideoSection,
-  EditAboutVideoDialog,
+  EditAboutDialog,
+  EditVideoDialog,
   EditImagesDialog,
   ImageLightbox,
   EditBasicInfoDialog,
   EditLocationDialog,
   SocialLinksSection,
 } from './components';
+import { ApiNeededLabel } from '@/components/ApiNeededLabel';
 
 interface ProceedProps {
   proceed: number;
@@ -125,11 +127,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     return [profile, ...rest];
   }, []);
 
-  // Edit dialog state for About & Video
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editAbout, setEditAbout] = useState('');
-  const [editYoutubeUrl, setEditYoutubeUrl] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+  // About & Video dialog state
+  const [isAboutDialogOpen, setIsAboutDialogOpen] = useState(false);
+  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+  const [isAboutSaving, setIsAboutSaving] = useState(false);
+  const [isVideoSaving, setIsVideoSaving] = useState(false);
 
   // Basic Info edit state
   const [isBasicInfoDialogOpen, setIsBasicInfoDialogOpen] = useState(false);
@@ -274,53 +276,91 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     [soums, districts]
   );
 
-  const handleEditAboutVideo = () => {
-    setEditAbout(additionalInfo?.About || '');
-    setEditYoutubeUrl(additionalInfo?.YoutubeUrl || '');
-    setIsEditDialogOpen(true);
-  };
-
-  const handleSaveAboutVideo = async () => {
+  const saveAdditionalInfo = async (about: string, youtubeUrl: string) => {
     if (!propertyDetail?.property || !propertyDetail?.id) {
       toast.error('Зочид буудлын мэдээлэл олдсонгүй');
-      return;
+      return false;
     }
 
+    const res = await fetch('https://dev.kacc.mn/api/additionalInfo/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        About: about,
+        YoutubeUrl: youtubeUrl,
+        property: propertyDetail.property,
+      }),
+    });
+
+    if (!res.ok) throw new Error('Хадгалах үед алдаа гарлаа');
+
+    const data = await res.json();
+
+    const patch = await fetch(`https://dev.kacc.mn/api/property-details/${propertyDetail.id}/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Additional_Information: data.id }),
+    });
+
+    if (!patch.ok) throw new Error('Additional Info-г холбох үед алдаа гарлаа');
+
+    setAdditionalInfo(data);
+    return true;
+  };
+
+  const handleEditAbout = () => {
+    setIsAboutDialogOpen(true);
+  };
+
+  const handleAddVideo = () => {
+    setIsVideoDialogOpen(true);
+  };
+
+  const handleSaveAbout = async (about: string) => {
     try {
-      setIsSaving(true);
-
-      // Create or update additional info
-      const res = await fetch('https://dev.kacc.mn/api/additionalInfo/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          About: editAbout,
-          YoutubeUrl: editYoutubeUrl,
-          property: propertyDetail.property,
-        }),
-      });
-
-      if (!res.ok) throw new Error('Хадгалах үед алдаа гарлаа');
-
-      const data = await res.json();
-
-      // Update property detail with additional info ID
-      const patch = await fetch(`https://dev.kacc.mn/api/property-details/${propertyDetail.id}/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Additional_Information: data.id }),
-      });
-
-      if (!patch.ok) throw new Error('Additional Info-г холбох үед алдаа гарлаа');
-
-      // Update local state
-      setAdditionalInfo(data);
-      toast.success('Амжилттай хадгалагдлаа');
-      setIsEditDialogOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || 'Алдаа гарлаа');
+      setIsAboutSaving(true);
+      const ok = await saveAdditionalInfo(about, additionalInfo?.YoutubeUrl || '');
+      if (ok) {
+        toast.success('Амжилттай хадгалагдлаа');
+        setIsAboutDialogOpen(false);
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Алдаа гарлаа');
     } finally {
-      setIsSaving(false);
+      setIsAboutSaving(false);
+    }
+  };
+
+  const handleSaveVideo = async (youtubeUrl: string) => {
+    try {
+      setIsVideoSaving(true);
+      const ok = await saveAdditionalInfo(additionalInfo?.About || '', youtubeUrl);
+      if (ok) {
+        toast.success('Амжилттай хадгалагдлаа');
+        setIsVideoDialogOpen(false);
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Алдаа гарлаа');
+    } finally {
+      setIsVideoSaving(false);
+    }
+  };
+
+  const handleEditVideo = () => {
+    setIsVideoDialogOpen(true);
+  };
+
+  const handleDeleteVideo = async () => {
+    try {
+      setIsVideoSaving(true);
+      const ok = await saveAdditionalInfo(additionalInfo?.About || '', '');
+      if (ok) {
+        toast.success('Видео амжилттай устгагдлаа');
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Алдаа гарлаа');
+    } finally {
+      setIsVideoSaving(false);
     }
   };
 
@@ -507,7 +547,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
   if (!propertyDetail) {
     return (
-      <Card className="border border-dashed border-border bg-muted/30">
+      <Card className="border border-dashed border-border bg-card">
         <CardHeader className="items-start gap-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <IconFileInfo className="h-4 w-4 text-muted-foreground" />
@@ -528,10 +568,10 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const galleryHeightClass = 'h-[400px]';
 
   const stepTabTriggerClass =
-    'flex items-center gap-2 rounded-none border-0 border-b-2 border-transparent bg-transparent px-2 py-2.5 text-sm text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none';
+    'relative flex items-center gap-2 rounded-t-lg rounded-b-none border-0 border-b-[3px] border-transparent px-3 py-2.5 text-sm text-muted-foreground shadow-none transition-colors hover:bg-muted/30 hover:text-foreground data-[state=active]:z-10 data-[state=active]:-mb-px data-[state=active]:border-primary data-[state=active]:bg-muted/50 data-[state=active]:text-primary data-[state=active]:shadow-none';
 
   return (
-    <div className="w-full max-w-full space-y-4">
+    <div className="w-full min-w-0 max-w-full space-y-4">
       {/* Hotel Name Header */}
       <HotelHeader
         basicInfo={basicInfo}
@@ -540,11 +580,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         contractIsActive={contractIsActive}
       />
 
-      {/* Main Layout: Left content + Right sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-4">
-        {/* Left Column: Image Gallery */}
-        <div>
-          <div className="border rounded-lg p-4">
+      {/* Main Layout: gallery + tabs (left) and sidebar widgets (right) */}
+      <div className="grid w-full min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_350px]">
+        {/* Left Column: Image Gallery + Tabs */}
+        <div className="min-w-0 w-full">
+          <div className="w-full border rounded-lg bg-card p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base font-semibold text-foreground">
                 {t('gallerySectionTitle', { count: propertyImages.length })}
@@ -639,10 +679,10 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
             </div>
           </div>
 
-          {/* Tabbed Information - inside left column */}
-          <div className="border rounded-lg p-4 mt-4">
+          {/* Tabbed Information */}
+          <div className="mt-4 w-full border rounded-lg bg-card p-4">
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-0 rounded-none bg-transparent p-0 border-b border-border">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto items-end gap-0 rounded-none bg-transparent p-0 border-b border-border">
                 <TabsTrigger value="basic" className={stepTabTriggerClass}>
                   <IconFileInfo className="h-4 w-4" />
                   <span>{t('tabBasic')}</span>
@@ -726,8 +766,8 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex flex-col gap-3 lg:h-[320px]">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
                         <div className="rounded-lg bg-muted/40 px-4 py-3">
                           <p className="text-sm text-muted-foreground mb-1">{t('cityProvinceLabel')}</p>
                           <p className="text-base font-medium">{getProvinceName(address?.province_city)}</p>
@@ -741,9 +781,9 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                           <p className="text-base font-medium">{address?.district ? `${address.district}` : '—'}</p>
                         </div>
                       </div>
-                      <div className="rounded-lg bg-muted/40 px-4 py-3">
-                        <p className="text-sm text-muted-foreground mb-2">{t('detailedAddressLabel')}</p>
-                        <p className="text-base leading-relaxed">{propertyBaseInfo?.location || '—'}</p>
+                      <div className="rounded-lg bg-muted/40 px-4 py-3 flex flex-col flex-1 min-h-0">
+                        <p className="text-sm text-muted-foreground mb-2 shrink-0">{t('detailedAddressLabel')}</p>
+                        <p className="text-base leading-relaxed flex-1">{propertyBaseInfo?.location || '—'}</p>
                       </div>
                     </div>
                     <div className="h-[280px] lg:h-[320px] rounded-lg overflow-hidden border bg-muted/30">
@@ -773,8 +813,11 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
               </TabsContent>
 
               <TabsContent value="faq" className="mt-4">
-                <div className=" text-center">
+                <div className="text-center py-6">
                   <IconMessageQuestion className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <ApiNeededLabel />
+                  </div>
                   <p className="text-sm text-muted-foreground">{t('faqApiNeeded')}</p>
                 </div>
               </TabsContent>
@@ -805,24 +848,33 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="min-w-0 w-full space-y-4">
           <SocialLinksSection />
           <AboutVideoSection
             additionalInfo={additionalInfo}
-            onEdit={handleEditAboutVideo}
+            onEditAbout={handleEditAbout}
+            onAddVideo={handleAddVideo}
+            onEditVideo={handleEditVideo}
+            onDeleteVideo={handleDeleteVideo}
+            isVideoActionLoading={isVideoSaving}
           />
         </div>
       </div>
 
-      <EditAboutVideoDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        about={editAbout}
-        youtubeUrl={editYoutubeUrl}
-        onAboutChange={setEditAbout}
-        onYoutubeUrlChange={setEditYoutubeUrl}
-        onSave={handleSaveAboutVideo}
-        isSaving={isSaving}
+      <EditAboutDialog
+        open={isAboutDialogOpen}
+        onOpenChange={setIsAboutDialogOpen}
+        about={additionalInfo?.About || ''}
+        onSave={handleSaveAbout}
+        isSaving={isAboutSaving}
+      />
+
+      <EditVideoDialog
+        open={isVideoDialogOpen}
+        onOpenChange={setIsVideoDialogOpen}
+        youtubeUrl={additionalInfo?.YoutubeUrl || ''}
+        onSave={handleSaveVideo}
+        isSaving={isVideoSaving}
       />
 
       <EditBasicInfoDialog

@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Check, ChevronRight, ImageIcon, Star, Upload, X } from 'lucide-react';
+import { Check, ChevronRight, ImageIcon, Info, Star, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -64,6 +64,17 @@ function RequirementRow({ met, label }: { met: boolean; label: string }) {
       >
         {label}
       </span>
+    </div>
+  );
+}
+
+function InfoRequirementRow({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted-foreground/25">
+        <Info className="h-3 w-3 text-muted-foreground" />
+      </div>
+      <span className="text-xs leading-snug text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -480,7 +491,7 @@ export function EditImagesDialog({
             </button>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-5 space-y-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
               <button
                 type="button"
@@ -498,16 +509,16 @@ export function EditImagesDialog({
               <div className="flex-1 rounded-xl bg-[#F4F5FA] px-4 py-3.5 space-y-3">
                 <RequirementRow met={hasMinCount} label={t('reqMinCount')} />
                 <RequirementRow met={hasProfileSelected} label={t('reqProfile')} />
-                <p className="text-xs text-muted-foreground leading-snug">{t('reqFormat')}</p>
-                <p className="text-xs text-muted-foreground leading-snug">{t('reqMinSize')}</p>
+                <InfoRequirementRow label={t('reqFormat')} />
+                <InfoRequirementRow label={t('reqMinSize')} />
               </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
+            <div className="flex flex-wrap items-center gap-1.5">
               <OptionButton
                 selected={categoryFilter === 'all'}
                 onClick={() => setCategoryFilter('all')}
-                className="shrink-0 rounded-full px-4 py-1.5 text-xs"
+                className="shrink-0 rounded-full px-3 py-1 text-xs whitespace-nowrap"
               >
                 {t('filterAll')} ({propertyImages.length})
               </OptionButton>
@@ -516,7 +527,7 @@ export function EditImagesDialog({
                   key={cat.id}
                   selected={categoryFilter === cat.id}
                   onClick={() => setCategoryFilter(cat.id)}
-                  className="shrink-0 rounded-full px-4 py-1.5 text-xs"
+                  className="shrink-0 rounded-full px-3 py-1 text-xs whitespace-nowrap"
                 >
                   {locale === 'en' ? cat.name_en : cat.name_mn} ({categoryCounts[cat.id] || 0})
                 </OptionButton>

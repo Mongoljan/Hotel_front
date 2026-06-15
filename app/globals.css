@@ -14,7 +14,7 @@
     /* ─────────────────────────────────────────────────────────────────────────
        CORE COLORS - Neutral palette (stays consistent across themes)
        ─────────────────────────────────────────────────────────────────────── */
-    --background: 0 0% 100%;
+    --background: 210 20% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -80,7 +80,7 @@
     /* ─────────────────────────────────────────────────────────────────────────
        SIDEBAR
        ─────────────────────────────────────────────────────────────────────── */
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222 47% 11%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
@@ -193,6 +193,11 @@
   }
   
   .card-flat {
+    @apply bg-card border border-border rounded-lg;
+  }
+
+  /* Bordered content panels sit on gray page background */
+  .surface-panel {
     @apply bg-card border border-border rounded-lg;
   }
   

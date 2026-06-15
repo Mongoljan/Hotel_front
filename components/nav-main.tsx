@@ -66,7 +66,7 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
           <CollapsibleTrigger asChild>
             <SidebarMenuButton tooltip={item.i18nKey ? tNav(item.i18nKey) : item.title}>
               <Icon size={16} />
-              <span className="text-cyrillic truncate group-data-[collapsible=icon]:hidden">{item.i18nKey ? tNav(item.i18nKey) : item.title}</span>
+              <span className="text-cyrillic text-[14px] truncate group-data-[collapsible=icon]:hidden">{item.i18nKey ? tNav(item.i18nKey) : item.title}</span>
               <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </CollapsibleTrigger>
@@ -91,7 +91,7 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
                         aria-disabled={!isSubImplemented}
                       >
                         <SubIcon size={14} />
-                        <span className="text-cyrillic truncate">{subItem.i18nKey ? tNav(subItem.i18nKey) : subItem.title}</span>
+                        <span className="text-cyrillic text-[14px] truncate">{subItem.i18nKey ? tNav(subItem.i18nKey) : subItem.title}</span>
                         {!isSubImplemented && (
                           <TooltipProvider>
                             <Tooltip>
@@ -133,7 +133,7 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
           aria-disabled={!isImplemented}
         >
           <Icon size={16} />
-          <span className="text-cyrillic truncate flex-1 group-data-[collapsible=icon]:hidden">{item.i18nKey ? tNav(item.i18nKey) : item.title}</span>
+          <span className="text-cyrillic text-[14px] truncate flex-1 group-data-[collapsible=icon]:hidden">{item.i18nKey ? tNav(item.i18nKey) : item.title}</span>
           {!isImplemented && <ComingSoonIndicator />}
           {item.badge && item.badge > 0 && (
             <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-primary text-primary-foreground group-data-[collapsible=icon]:hidden">
@@ -168,7 +168,7 @@ export function NavMain({ items, sections, dashboardNav }: NavMainProps) {
               >
                 <Link href={dashboardNav.url}>
                   <dashboardNav.icon size={16} />
-                  <span className="text-cyrillic truncate group-data-[collapsible=icon]:hidden">{dashboardNav.i18nKey ? tNav(dashboardNav.i18nKey) : dashboardNav.title}</span>
+                  <span className="text-cyrillic text-[14px] truncate group-data-[collapsible=icon]:hidden">{dashboardNav.i18nKey ? tNav(dashboardNav.i18nKey) : dashboardNav.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

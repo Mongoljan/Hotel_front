@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   Breadcrumb,
@@ -13,10 +14,12 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import UserProfileToggle from '@/components/UserProfileToggle';
+import { NewBookingSheet } from '@/components/NewBookingSheet';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { useAuth } from '@/hooks/useAuth';
+import { useHotelRegistrationCompleted } from '@/hooks/useHotelRegistrationCompleted';
 import { useTranslations } from 'next-intl';
-import { Clock, RefreshCw } from 'lucide-react';
+import { Bell, Clock, Plus, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
@@ -25,8 +28,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 
-// Map routes to their i18n keys
 const routeI18nKeys: Record<string, string> = {
   '/admin': 'dashboard',
   '/admin/dashboard': 'dashboard',
@@ -50,9 +53,7 @@ const routeI18nKeys: Record<string, string> = {
   '/admin/internal-rules': 'internalRules',
 };
 
-// Map routes to their parent menu i18n key (for nested items under collapsible menus)
 const routeParentKeys: Record<string, string> = {
-  // Routes under "Тохиргоо" (settings)
   '/admin/hotel': 'settings',
   '/admin/room': 'settings',
   '/admin/room/price': 'settings',
@@ -66,7 +67,6 @@ const routeParentKeys: Record<string, string> = {
   '/admin/internal-rules': 'settings',
 };
 
-// Format seconds to MM:SS
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -76,64 +76,62 @@ function formatTime(seconds: number): string {
 export function BreadcrumbHeader() {
   const pathname = usePathname();
   const { user, sessionTimeRemaining, refreshSession, isRefreshing } = useAuth();
+  const { hotelRegistrationCompleted } = useHotelRegistrationCompleted();
   const tNav = useTranslations('Navigation');
-  
-  // Check if user is staff (Manager=3 or Reception=4) and not approved
+  const [newBookingOpen, setNewBookingOpen] = useState(false);
+
   const isStaffUser = user?.user_type === 3 || user?.user_type === 4;
   const isApproved = user?.approved;
   const hideSettingsBreadcrumb = isStaffUser && !isApproved;
-  
-  // Build smart breadcrumbs based on menu hierarchy
+
+  const showHotelFullTopbar =
+    pathname === '/admin/hotel' &&
+    Boolean(user?.approved && user?.hotelApproved && hotelRegistrationCompleted);
+
   const buildBreadcrumbs = () => {
     const result: { name: string; path: string; isLast: boolean }[] = [];
-    
-    // For unapproved staff on /admin/hotel, don't show settings breadcrumb
+
     if (hideSettingsBreadcrumb && pathname === '/admin/hotel') {
       result.push({
         name: tNav('waitingApproval') || 'Зөвшөөрөл хүлээгдэж байна',
         path: pathname,
-        isLast: true
+        isLast: true,
       });
       return result;
     }
-    
-    // Check if this route has a parent menu
+
     const parentKey = routeParentKeys[pathname];
-    
+
     if (parentKey) {
-      // Add the parent menu item (e.g., "Тохиргоо")
       result.push({
         name: tNav(parentKey),
-        path: '#', // Parent is not clickable (it's a dropdown)
-        isLast: false
+        path: '#',
+        isLast: false,
       });
     }
-    
-    // Add the current page
+
     const currentKey = routeI18nKeys[pathname];
     if (currentKey) {
       result.push({
         name: tNav(currentKey),
         path: pathname,
-        isLast: true
+        isLast: true,
       });
     } else {
-      // Fallback: use path segment as name
       const segments = pathname.split('/').filter(Boolean);
       const lastSegment = segments[segments.length - 1] || 'dashboard';
       result.push({
         name: lastSegment,
         path: pathname,
-        isLast: true
+        isLast: true,
       });
     }
-    
+
     return result;
   };
-  
+
   const breadcrumbs = buildBreadcrumbs();
 
-  // Determine if session is low (less than 5 minutes)
   const isSessionLow = sessionTimeRemaining !== null && sessionTimeRemaining < 300;
   const isSessionCritical = sessionTimeRemaining !== null && sessionTimeRemaining < 60;
 
@@ -154,90 +152,123 @@ export function BreadcrumbHeader() {
   };
 
   return (
-    <header className="flex h-14 md:h-12 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-10 border-b">
-      <div className="flex items-center justify-between w-full px-4 md:px-4 lg:px-5 xl:px-6 2xl:px-8 py-3 md:py-2 max-w-screen-2xl mx-auto">
-        <div className="flex items-center gap-2">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4 hidden sm:block" />
-          <Breadcrumb>
-            <BreadcrumbList>
-              {breadcrumbs.map((breadcrumb, index) => (
-                <div key={`${breadcrumb.path}-${index}`} className="flex items-center">
-                  {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
-                  <BreadcrumbItem className="hidden md:block">
-                    {breadcrumb.isLast ? (
-                      <BreadcrumbPage className="text-cyrillic">{breadcrumb.name}</BreadcrumbPage>
-                    ) : breadcrumb.path === '#' ? (
-                      <span className="text-muted-foreground text-cyrillic">{breadcrumb.name}</span>
-                    ) : (
-                      <BreadcrumbLink href={breadcrumb.path} className="text-cyrillic">
-                        {breadcrumb.name}
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                </div>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-        
-        <div className="flex items-center gap-2 md:gap-3">
-          {/* Session Timer with Refresh Button */}
-          {sessionTimeRemaining !== null && (
-            <TooltipProvider>
-              <div className="flex items-center gap-1">
-                {/* Timer Display */}
-                <div
-                  className={cn(
-                    "flex items-center gap-1.5 px-2 py-1.5 rounded-l-md text-xs font-medium",
-                    isSessionCritical 
-                      ? "bg-destructive/10 text-destructive animate-pulse" 
-                      : isSessionLow 
-                        ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-500" 
-                        : "bg-muted/50 text-muted-foreground"
-                  )}
-                >
-                  <Clock className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline tabular-nums">{formatTime(sessionTimeRemaining)}</span>
-                  <span className="sm:hidden tabular-nums">{Math.floor(sessionTimeRemaining / 60)}м</span>
-                </div>
-                
-                {/* Refresh Button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={handleRefresh}
-                      disabled={isRefreshing}
-                      className={cn(
-                        "flex items-center justify-center px-2 py-1.5 rounded-r-md text-xs font-medium transition-colors",
-                        isSessionCritical 
-                          ? "bg-destructive/10 text-destructive hover:bg-destructive/20" 
-                          : isSessionLow 
-                            ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 hover:bg-yellow-500/20" 
-                            : "bg-muted/50 text-muted-foreground hover:bg-muted",
-                        isRefreshing && "cursor-not-allowed opacity-70"
+    <>
+      <header className="flex h-14 md:h-16 w-full shrink-0 items-center bg-card transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-14">
+        <div className="flex w-full items-center justify-between gap-4 px-4 py-3 lg:px-6">
+          <div className="flex items-center gap-2 min-w-0">
+            <SidebarTrigger className="-ml-1 shrink-0 md:hidden" />
+            <Separator orientation="vertical" className="mr-2 h-5 hidden sm:block md:hidden" />
+            <Breadcrumb>
+              <BreadcrumbList className="flex-wrap gap-1">
+                {breadcrumbs.map((breadcrumb, index) => (
+                  <div key={`${breadcrumb.path}-${index}`} className="flex items-center">
+                    {index > 0 && <BreadcrumbSeparator className="hidden md:block mx-1" />}
+                    <BreadcrumbItem className="hidden md:block">
+                      {breadcrumb.isLast ? (
+                        <BreadcrumbPage className="text-cyrillic text-2xl font-medium leading-none text-foreground">
+                          {breadcrumb.name}
+                        </BreadcrumbPage>
+                      ) : breadcrumb.path === '#' ? (
+                        <span className="text-muted-foreground text-cyrillic text-2xl font-medium leading-none">
+                          {breadcrumb.name}
+                        </span>
+                      ) : (
+                        <BreadcrumbLink
+                          href={breadcrumb.path}
+                          className="text-cyrillic text-2xl font-medium leading-none text-muted-foreground"
+                        >
+                          {breadcrumb.name}
+                        </BreadcrumbLink>
                       )}
-                    >
-                      <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>Session сунгах</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </TooltipProvider>
-          )}
-          
-          <ThemeSwitcher />
-          <LanguageSwitcher />
-          <Separator orientation="vertical" className="hidden h-5 md:block" />
-          <UserProfileToggle 
-            userApproved={user?.approved || false}
-            hotelApproved={user?.hotelApproved || false}
-          />
+                    </BreadcrumbItem>
+                  </div>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
+            {showHotelFullTopbar && (
+              <>
+                <Button
+                  type="button"
+                  onClick={() => setNewBookingOpen(true)}
+                  className="h-9 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground px-4 text-sm font-medium shadow-sm"
+                >
+                  <span className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary-foreground/25">
+                    <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                  </span>
+                  {tNav('newBooking')}
+                </Button>
+
+                <button
+                  type="button"
+                  className="group relative flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-muted"
+                  aria-label={tNav('newBooking')}
+                  onClick={() => setNewBookingOpen(true)}
+                >
+                  <Bell className="h-4 w-4 transition-opacity group-hover:opacity-0" />
+                  <Plus className="absolute h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" strokeWidth={2.5} />
+                </button>
+              </>
+            )}
+
+            {sessionTimeRemaining !== null && (
+              <TooltipProvider>
+                <div className="flex items-center gap-1">
+                  <div
+                    className={cn(
+                      'flex items-center gap-1.5 px-2 py-1.5 rounded-l-md text-xs font-medium',
+                      isSessionCritical
+                        ? 'bg-destructive/10 text-destructive animate-pulse'
+                        : isSessionLow
+                          ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500'
+                          : 'bg-muted/50 text-muted-foreground'
+                    )}
+                  >
+                    <Clock className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline tabular-nums">{formatTime(sessionTimeRemaining)}</span>
+                    <span className="sm:hidden tabular-nums">{Math.floor(sessionTimeRemaining / 60)}м</span>
+                  </div>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        className={cn(
+                          'flex items-center justify-center px-2 py-1.5 rounded-r-md text-xs font-medium transition-colors',
+                          isSessionCritical
+                            ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
+                            : isSessionLow
+                              ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 hover:bg-yellow-500/20'
+                              : 'bg-muted/50 text-muted-foreground hover:bg-muted',
+                          isRefreshing && 'cursor-not-allowed opacity-70'
+                        )}
+                      >
+                        <RefreshCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Session сунгах</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </TooltipProvider>
+            )}
+
+            {!showHotelFullTopbar && <ThemeSwitcher />}
+            {!showHotelFullTopbar && <LanguageSwitcher />}
+            {!showHotelFullTopbar && <Separator orientation="vertical" className="hidden h-5 md:block" />}
+            <UserProfileToggle
+              userApproved={user?.approved || false}
+              hotelApproved={user?.hotelApproved || false}
+            />
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <NewBookingSheet open={newBookingOpen} onOpenChange={setNewBookingOpen} />
+    </>
   );
 }

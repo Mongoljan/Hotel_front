@@ -198,15 +198,17 @@ export default function ServicesTab({
       items: resolveItems(additionalFacilities, lists.additionalFacilities),
     },
     {
-      key: 'activities',
-      title: t('generalServices'),
+      key: 'paid',
+      title: t('paidServices'),
       items: resolveItems(activities, lists.activities),
     },
     {
-      key: 'paid',
-      title: t('paidServices'),
+      key: 'activities',
+      title: t('generalServices'),
       items: [] as (SelectedItem & FacilityItem)[],
+     
     },
+
   ];
 
   const totalSelected =
@@ -259,7 +261,7 @@ export default function ServicesTab({
           {displayGroups.map(({ key, title, items }) => {
             const isExpanded = displayExpanded === key;
             return (
-              <div key={key} className="border rounded-lg overflow-hidden">
+              <div key={key} className="border rounded-lg bg-card overflow-hidden">
                 <button
                   type="button"
                   onClick={() => toggleDisplayGroup(key)}

@@ -325,7 +325,7 @@ export default function RegisterHotel() {
   ];
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 ">
 
       {view === 'proceed' && proceed !== 2 && (
         <div className="w-full">

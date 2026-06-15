@@ -526,9 +526,9 @@ const sidebarMenuButtonVariants = cva(
           "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },
       size: {
-        default: "h-8 text-sm",
+        default: "h-8 text-[14px]",
         sm: "h-7 text-xs",
-        lg: "h-12 text-sm group-data-[collapsible=icon]:!p-0",
+        lg: "h-12 text-[14px] group-data-[collapsible=icon]:!p-0",
       },
     },
     defaultVariants: {
@@ -730,7 +730,7 @@ const SidebarMenuSubButton = React.forwardRef<
         "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md border border-transparent px-2 text-sidebar-foreground outline-none ring-sidebar-ring transition-[background-color,color,border-color] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
         "data-[active=true]:border-[hsl(var(--sidebar-primary)/0.3)] data-[active=true]:bg-[hsl(var(--sidebar-primary)/0.14)] data-[active=true]:text-[hsl(var(--sidebar-primary))]",
         size === "sm" && "text-xs",
-        size === "md" && "text-sm",
+        size === "md" && "text-[14px]",
         "group-data-[collapsible=icon]:hidden",
         className
       )}

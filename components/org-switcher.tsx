@@ -1,96 +1,34 @@
 'use client';
 
 import * as React from 'react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from '@/components/ui/sidebar';
-import { IconBuilding, IconPlus } from '@tabler/icons-react';
-import { ChevronsUpDown } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useSidebar } from '@/components/ui/sidebar';
+import { ChevronLeft } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function OrgSwitcher() {
-  const { isMobile } = useSidebar();
-  const t = useTranslations('BrandName');
-  
-  const teams = [
-    {
-      name: t('hotelAdmin'),
-      logo: IconBuilding,
-      plan: t('professional'),
-    },
-    {
-      name: t('chainHotels'),
-      logo: IconBuilding,
-      plan: t('enterprise'),
-    },
-  ];
-  
-  const [activeTeam, setActiveTeam] = React.useState(teams[0]);
+  const { toggleSidebar, state } = useSidebar();
+  const isCollapsed = state === 'collapsed';
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          {/* <DropdownMenuTrigger asChild> */}
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <activeTeam.logo className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-semibold">{activeTeam.name}</span>
-                <span className="truncate text-xs">{activeTeam.plan}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto group-data-[collapsible=icon]:hidden" />
-            </SidebarMenuButton>
-          {/* </DropdownMenuTrigger> */}
-          
-          {/* <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            align="start"
-            side={isMobile ? 'bottom' : 'right'}
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              {t('teams')}
-            </DropdownMenuLabel>
-            {teams.map((team, index) => (
-              <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
-                className="gap-2 p-2"
-              >
-                <div className="flex size-6 items-center justify-center rounded-sm border">
-                  <team.logo className="size-4 shrink-0" />
-                </div>
-                {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                <IconPlus className="size-4" />
-              </div>
-              <div className="font-medium text-muted-foreground">{t('addTeam')}</div>
-            </DropdownMenuItem>
-          </DropdownMenuContent> */}
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+    <div className="flex items-center gap-2.5 px-1 py-1">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+        M
+      </div>
+      <span className="truncate text-xl font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+        MyRoom.mn
+      </span>
+      <button
+        type="button"
+        onClick={toggleSidebar}
+        className={cn(
+          'ml-auto flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-muted group-data-[collapsible=icon]:hidden'
+        )}
+        aria-label="Toggle sidebar"
+      >
+        <ChevronLeft
+          className={cn('size-4 transition-transform', isCollapsed && 'rotate-180')}
+        />
+      </button>
+    </div>
   );
 }
