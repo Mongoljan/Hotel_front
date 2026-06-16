@@ -653,7 +653,7 @@ export const schemaHotelSteps6 = (msg?: string) => z.object({
     .min(1, { message: msg || 'Select at least one general facility' }),
   additional_facilities: z.array(facilityItemSchema).default([]),
   activities: z.array(facilityItemSchema).default([]),
-  accessibility_features: z.array(facilityItemSchema).default([]),
+  accessibility_feature: z.array(facilityItemSchema).default([]),
 });
 
 export const schemaRegistrationEmployee2 =z.object({

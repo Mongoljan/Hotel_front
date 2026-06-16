@@ -44,7 +44,7 @@ interface Draft {
   general_facilities: SelectedItem[];
   additional_facilities: SelectedItem[];
   activities: SelectedItem[];
-  accessibility_features: SelectedItem[];
+  accessibility_feature: SelectedItem[];
 }
 
 interface ServicesTabProps {
@@ -80,7 +80,7 @@ export default function ServicesTab({
     general_facilities: [],
     additional_facilities: [],
     activities: [],
-    accessibility_features: [],
+    accessibility_feature: [],
   });
   const [displayExpanded, setDisplayExpanded] = useState<string | null>('general');
   const [editSheetTab, setEditSheetTab] = useState<keyof Draft>('general_facilities');
@@ -129,7 +129,7 @@ export default function ServicesTab({
       general_facilities: normalize(generalFacilities),
       additional_facilities: normalize(additionalFacilities),
       activities: normalize(activities),
-      accessibility_features: normalize(accessibilityFeatures),
+      accessibility_feature: normalize(accessibilityFeatures),
     });
     setEditSheetTab('general_facilities');
     setSearchQuery('');
@@ -163,7 +163,7 @@ export default function ServicesTab({
           general_facilities: draft.general_facilities,
           additional_facilities: draft.additional_facilities,
           activities: draft.activities,
-          accessibility_features: draft.accessibility_features,
+          accessibility_feature: draft.accessibility_feature,
         }),
       });
       if (!res.ok) throw new Error('Хадгалах үед алдаа гарлаа');
@@ -203,12 +203,10 @@ export default function ServicesTab({
       items: resolveItems(activities, lists.activities),
     },
     {
-      key: 'activities',
-      title: t('generalServices'),
-      items: [] as (SelectedItem & FacilityItem)[],
-     
+      key: 'accessibility',
+      title: t('accessibilityTitle'),
+      items: resolveItems(accessibilityFeatures, lists.accessibility_features),
     },
-
   ];
 
   const totalSelected =
@@ -222,7 +220,8 @@ export default function ServicesTab({
   const editSheetTabs: { key: keyof Draft; label: string; items: FacilityItem[] }[] = [
     { key: 'general_facilities', label: t('generalAmenities'), items: lists.facilities },
     { key: 'additional_facilities', label: t('additionalAmenities'), items: lists.additionalFacilities },
-    { key: 'activities', label: t('generalServices'), items: lists.activities },
+    { key: 'activities', label: t('paidServices'), items: lists.activities },
+    { key: 'accessibility_feature', label: t('accessibilityTitle'), items: lists.accessibility_features },
   ];
 
   const activeEditItems = editSheetTabs.find((tab) => tab.key === editSheetTab)?.items ?? [];

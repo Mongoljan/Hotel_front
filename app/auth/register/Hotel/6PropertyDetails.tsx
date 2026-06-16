@@ -54,7 +54,7 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
       general_facilities: [],
       additional_facilities: [],
       activities: [],
-      accessibility_features: [],
+      accessibility_feature: [],
     },
   });
 
@@ -85,7 +85,10 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
         general_facilities: validIds(dataLists.facilities, stored.step6.general_facilities || []),
         additional_facilities: validIds(dataLists.additionalFacilities, stored.step6.additional_facilities || []),
         activities: validIds(dataLists.activities, stored.step6.activities || []),
-        accessibility_features: validIds(dataLists.accessibility_features, stored.step6.accessibility_features || []),
+        accessibility_feature: validIds(
+          dataLists.accessibility_features,
+          stored.step6.accessibility_feature || stored.step6.accessibility_features || []
+        ),
       };
       form.reset(values);
       setInitialValues(values);
@@ -156,7 +159,7 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
         general_facilities: data.general_facilities,
         additional_facilities: data.additional_facilities,
         activities: data.activities,
-        accessibility_features: data.accessibility_features,
+        accessibility_feature: data.accessibility_feature,
       };
 
       const checkRes = await fetch(`${API_PROPERTY_DETAILS}?property=${propertyId}`);
@@ -199,7 +202,7 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
     { key: 'general_facilities', title: t('general_facilities_title'), items: dataLists.facilities },
     { key: 'additional_facilities', title: t('additional_facilities_title'), items: dataLists.additionalFacilities },
     { key: 'activities', title: t('activities_title'), items: dataLists.activities },
-    { key: 'accessibility_features', title: t('accessibility_title'), items: dataLists.accessibility_features },
+    { key: 'accessibility_feature', title: t('accessibility_title'), items: dataLists.accessibility_features },
   ];
 
   const renderGroup = ({ key, title, items }: GroupConfig) => {

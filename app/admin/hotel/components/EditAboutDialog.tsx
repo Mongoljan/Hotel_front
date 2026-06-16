@@ -46,7 +46,7 @@ export function EditAboutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg sm:max-w-xl" hideCloseButton>
+      <DialogContent className="max-w-xl sm:max-w-2xl" hideCloseButton>
         <DialogHeader>
           <DialogTitle>{t('aboutDialogTitle')}</DialogTitle>
           <DialogDescription className="sr-only">{t('aboutDialogTitle')}</DialogDescription>
@@ -55,7 +55,7 @@ export function EditAboutDialog({
           value={draftAbout}
           onChange={(e) => setDraftAbout(e.target.value.slice(0, ABOUT_MAX_LENGTH))}
           placeholder={t('aboutDialogPlaceholder')}
-          className="min-h-[220px] resize-none"
+          className="min-h-[300px] resize-none"
         />
         <DialogFooter className="flex-row items-center justify-between gap-4 sm:justify-between">
           <span className="text-sm text-muted-foreground">
