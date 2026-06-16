@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';

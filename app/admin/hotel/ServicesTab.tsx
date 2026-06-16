@@ -310,24 +310,25 @@ export default function ServicesTab({
           <SheetHeader className="border-b px-5 py-4 space-y-0">
             <SheetTitle className="text-base font-semibold">{t('servicesSheetTitle')}</SheetTitle>
           </SheetHeader>
-
-          <div className="px-5 pt-4 pb-2 flex gap-2 overflow-x-auto custom-scrollbar">
-            {editSheetTabs.map((tab) => (
-              <OptionButton
-                key={tab.key}
-                selected={editSheetTab === tab.key}
-                onClick={() => {
-                  setEditSheetTab(tab.key);
-                  setSearchQuery('');
-                }}
-                className="shrink-0 rounded-full px-3 py-1.5 text-xs"
-              >
-                {tab.label} ({draft[tab.key].length})
-              </OptionButton>
-            ))}
+          <div className="px-5 pt-4 pb-2">
+            <div className="pt-4 pb-2 flex gap-2 overflow-x-auto custom-scrollbar">
+              {editSheetTabs.map((tab) => (
+                <OptionButton
+                  key={tab.key}
+                  selected={editSheetTab === tab.key}
+                  onClick={() => {
+                    setEditSheetTab(tab.key);
+                    setSearchQuery('');
+                  }}
+                  className="shrink-0 rounded-full px-3 py-1.5 text-xs"
+                >
+                  {tab.label} ({draft[tab.key].length})
+                </OptionButton>
+              ))}
+            </div>
           </div>
 
-          <div className="px-5 pb-3">
+          <div className="pt-4 px-5 pb-5">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
