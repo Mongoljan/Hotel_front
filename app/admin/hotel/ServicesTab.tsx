@@ -312,7 +312,7 @@ export default function ServicesTab({
             <SheetTitle className="text-base font-semibold">{t('servicesSheetTitle')}</SheetTitle>
           </SheetHeader>
 
-          <div className="px-5 pt-4 pb-2 flex gap-2 overflow-x-auto">
+          <div className="px-5 pt-4 pb-2 flex gap-2 overflow-x-auto custom-scrollbar">
             {editSheetTabs.map((tab) => (
               <OptionButton
                 key={tab.key}
@@ -340,7 +340,7 @@ export default function ServicesTab({
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 pb-4">
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-5 pb-4">
             <div className="grid grid-cols-2 gap-2">
               {filteredEditItems.map((item) => {
                 const selected = activeSelectedIds.has(item.id);

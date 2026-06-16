@@ -765,7 +765,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                       <IconPencil className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
                     <div className="flex flex-col gap-3 lg:h-[320px]">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
                         <div className="rounded-lg bg-muted/40 px-4 py-3">
@@ -786,7 +786,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                         <p className="text-base leading-relaxed flex-1">{propertyBaseInfo?.location || '—'}</p>
                       </div>
                     </div>
-                    <div className="h-[280px] lg:h-[320px] rounded-lg overflow-hidden border bg-muted/30">
+                    <div className="h-[250px] rounded-lg overflow-hidden border bg-muted/30 mb-4">
                       {(() => {
                         const coordinates = extractCoordinates(propertyDetail?.google_map);
                         if (coordinates && isMapLoaded) {

@@ -46,8 +46,11 @@ export function EditAboutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg sm:max-w-xl" hideCloseButton>
-        <DialogHeader>
+      <DialogContent 
+        className="w-full h-full sm:w-[800px] sm:h-[700px] max-w-[95vw] max-h-[90vh] p-4 sm:p-6 flex flex-col overflow-hidden" 
+        hideCloseButton
+      >
+        <DialogHeader className="shrink-0">
           <DialogTitle>{t('aboutDialogTitle')}</DialogTitle>
           <DialogDescription className="sr-only">{t('aboutDialogTitle')}</DialogDescription>
         </DialogHeader>
@@ -55,13 +58,13 @@ export function EditAboutDialog({
           value={draftAbout}
           onChange={(e) => setDraftAbout(e.target.value.slice(0, ABOUT_MAX_LENGTH))}
           placeholder={t('aboutDialogPlaceholder')}
-          className="min-h-[220px] resize-none"
+          className="flex-1 w-full resize-none min-h-0 mt-4 mb-4 p-3 overflow-y-auto" 
         />
-        <DialogFooter className="flex-row items-center justify-between gap-4 sm:justify-between">
-          <span className="text-sm text-muted-foreground">
+        <DialogFooter className="shrink-0 flex flex-row items-center justify-between gap-4 pt-2 border-t">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">
             {draftAbout.length}/{ABOUT_MAX_LENGTH}
           </span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
               {t('back')}
             </Button>
