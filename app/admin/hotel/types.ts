@@ -24,7 +24,7 @@ export interface PropertyDetail {
   general_facilities: FacilityRef[];
   additional_facilities: FacilityRef[];
   activities: FacilityRef[];
-  accessibility_features: FacilityRef[];
+  accessibility_feature: FacilityRef[];
   Additional_Information: number | null;
 }
 

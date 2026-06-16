@@ -322,12 +322,18 @@ export default function RegisterPage() {
                       {...register('property_type')}
                       className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:placeholder:text-gray-500 ${propertyTypeValue ? "text-gray-900 dark:text-gray-100" : "text-gray-400"} ${errors.property_type ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     >
-                      <option value="">{t("select")}</option>
+                      <option value="" className="text-gray-400 dark:text-gray-500">{t("select")}</option>
                       {propertyTypes.map((type) => (
-                        <option key={type.id} value={type.id}>{locale === 'en' ? type.name_en : type.name_mn}</option>
+                        <option 
+                          key={type.id} 
+                          value={type.id}
+                          className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                        >
+                          {locale === 'en' ? type.name_en : type.name_mn}
+                        </option>
                       ))}
                     </select>
-                 
+                
                     {errors.property_type && <p className="text-sm text-destructive">{errors.property_type.message}</p>}
                   </div>
 
@@ -338,12 +344,19 @@ export default function RegisterPage() {
                       {...register('ownership_type')}
                       className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:placeholder:text-gray-500 ${ownershipTypeValue ? "text-gray-900 dark:text-gray-100" : "text-gray-400"} ${errors.ownership_type ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     >
-                      <option value="">{t("select")}</option>
+                      <option value="" className="text-gray-400 dark:text-gray-500">{t("select")}</option>
                       {ownershipTypes.map((type) => (
-                        <option key={type.id} value={type.id}>{locale === 'en' ? type.name_en : type.name_mn}</option>
+
+                        <option 
+                          key={type.id} 
+                          value={type.id}
+                          className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                        >
+                          {locale === 'en' ? type.name_en : type.name_mn}
+                        </option>
                       ))}
                     </select>
-              
+
                     {errors.ownership_type && <p className="text-xs text-destructive">{errors.ownership_type.message}</p>}
                   </div>
                 </div>

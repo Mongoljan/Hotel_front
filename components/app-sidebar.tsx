@@ -6,11 +6,10 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { NavMain } from '@/components/nav-main';
-import { OrgSwitcher } from '@/components/org-switcher';
+import { OrgSwitcher, SidebarEdgeToggle } from '@/components/org-switcher';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { navSections, dashboardItem, NavSection, NavItem } from '@/constants/data';
 import { USER_TYPES } from '@/lib/userTypes';
@@ -58,7 +57,7 @@ function SidebarStatusMessage({ isApproved, userApproved, hotelRegistrationCompl
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex items-center justify-center py-3 mt-4 mx-auto">
-              <AlertCircle className="h-5 w-5 text-orange-500" />
+              <AlertCircle className="h-6 w-6 text-orange-500" />
             </div>
           </TooltipTrigger>
           <TooltipContent side="right" className="max-w-[250px]">
@@ -158,6 +157,7 @@ export function AppSidebar({ isApproved, userApproved, hotelRegistrationComplete
 
   return (
     <Sidebar collapsible="icon" mobileTitle={mobileSidebarTitle} {...props}>
+      <SidebarEdgeToggle />
       <SidebarHeader>
         <OrgSwitcher />
       </SidebarHeader>
@@ -177,8 +177,6 @@ export function AppSidebar({ isApproved, userApproved, hotelRegistrationComplete
       <SidebarFooter>
         <UserAvatarProfile />
       </SidebarFooter>
-
-      <SidebarRail />
     </Sidebar>
   );
 }

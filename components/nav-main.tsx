@@ -65,7 +65,7 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
         <SidebarMenuItem>
           <CollapsibleTrigger asChild>
             <SidebarMenuButton tooltip={item.i18nKey ? tNav(item.i18nKey) : item.title}>
-              <Icon size={16} />
+              <Icon size={20} />
               <span className="text-cyrillic text-[14px] truncate group-data-[collapsible=icon]:hidden">{item.i18nKey ? tNav(item.i18nKey) : item.title}</span>
               <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
@@ -90,7 +90,7 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
                         }}
                         aria-disabled={!isSubImplemented}
                       >
-                        <SubIcon size={14} />
+                        <SubIcon size={18} />
                         <span className="text-cyrillic text-[14px] truncate">{subItem.i18nKey ? tNav(subItem.i18nKey) : subItem.title}</span>
                         {!isSubImplemented && (
                           <TooltipProvider>
@@ -132,7 +132,7 @@ function NavItemComponent({ item, pathname, tNav }: { item: NavItem; pathname: s
           }}
           aria-disabled={!isImplemented}
         >
-          <Icon size={16} />
+          <Icon size={20} />
           <span className="text-cyrillic text-[14px] truncate flex-1 group-data-[collapsible=icon]:hidden">{item.i18nKey ? tNav(item.i18nKey) : item.title}</span>
           {!isImplemented && <ComingSoonIndicator />}
           {item.badge && item.badge > 0 && (
@@ -167,7 +167,7 @@ export function NavMain({ items, sections, dashboardNav }: NavMainProps) {
                 className={pathname === dashboardNav.url ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground' : ''}
               >
                 <Link href={dashboardNav.url}>
-                  <dashboardNav.icon size={16} />
+                  <dashboardNav.icon size={20} />
                   <span className="text-cyrillic text-[14px] truncate group-data-[collapsible=icon]:hidden">{dashboardNav.i18nKey ? tNav(dashboardNav.i18nKey) : dashboardNav.title}</span>
                 </Link>
               </SidebarMenuButton>
