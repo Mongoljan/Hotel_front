@@ -69,7 +69,7 @@ export function AboutVideoSection({
                 onClick={onEditAbout}
                 className="mt-2 text-sm font-medium text-[#4A7BF7] hover:underline"
               >
-                …{t('readMore')}
+                {t('readMore')}
               </button>
             )}
           </div>

@@ -745,7 +745,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                       <p className="text-sm text-muted-foreground mb-1">{t('totalRoomsLabel')}</p>
                       <p className="text-base font-medium">{basicInfo?.total_hotel_rooms || '—'}</p>
                     </div>
-                    <div className="rounded-lg bg-muted/40 px-4 py-3 sm:col-span-2">
+                    <div className="rounded-lg bg-muted/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground mb-1">{t('chainHotelLabel')}</p>
                       <p className="text-base font-medium">
                         {basicInfo?.part_of_group

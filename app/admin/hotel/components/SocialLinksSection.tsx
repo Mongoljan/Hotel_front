@@ -1,14 +1,7 @@
 'use client';
 
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandLinkedin,
-  IconBrandTwitter,
-  IconBrandYoutube,
-  IconPencil,
-  IconWorld,
-} from '@tabler/icons-react';
+import { IconPencil, IconWorld } from '@tabler/icons-react';
+import { FacebookIcon, InstagramIcon, LinkedinIcon, XIcon, YoutubeIcon } from './SocialIcons';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -19,11 +12,11 @@ import { EditSocialLinksSheet } from './EditSocialLinksSheet';
 
 const SOCIAL_ICONS = [
   { key: 'web', icon: IconWorld, className: 'text-muted-foreground' },
-  { key: 'facebook', icon: IconBrandFacebook, className: 'text-[#1877F2]' },
-  { key: 'instagram', icon: IconBrandInstagram, className: 'text-[#E4405F]' },
-  { key: 'youtube', icon: IconBrandYoutube, className: 'text-[#FF0000]' },
-  { key: 'twitter', icon: IconBrandTwitter, className: 'text-[#1DA1F2]' },
-  { key: 'linkedin', icon: IconBrandLinkedin, className: 'text-[#0A66C2]' },
+  { key: 'facebook', icon: FacebookIcon, className: '' },
+  { key: 'instagram', icon: InstagramIcon, className: '' },
+  { key: 'youtube', icon: YoutubeIcon, className: '' },
+  { key: 'x', icon: XIcon, className: '' },
+  { key: 'linkedin', icon: LinkedinIcon, className: '' },
 ];
 
 export function SocialLinksSection() {

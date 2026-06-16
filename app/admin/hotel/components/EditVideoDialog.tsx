@@ -49,7 +49,7 @@ export function EditVideoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg sm:max-w-xl" hideCloseButton>
+      <DialogContent className="max-w-lg sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{t('videoDialogTitle')}</DialogTitle>
           <DialogDescription className="sr-only">{t('videoDialogTitle')}</DialogDescription>
@@ -89,9 +89,6 @@ export function EditVideoDialog({
           </div>
         </div>
         <DialogFooter className="gap-2 sm:justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
-            {t('back')}
-          </Button>
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving ? t('saving') : t('save')}
           </Button>

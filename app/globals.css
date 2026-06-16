@@ -285,59 +285,66 @@
   .focus-ring {
     @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none;
   }
-/* Global thin scrollbar — applies to all scrollable elements */
-*::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
+  /* 1. Scrollbar for MAIN PAGE (dashboard, content pages) */
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  main::-webkit-scrollbar,
+  .page-scroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
 
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track,
+  main::-webkit-scrollbar-track,
+  .page-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-*::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 999px;
-}
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb,
+  main::-webkit-scrollbar-thumb,
+  .page-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    border-right-width: 4px;
+    background-clip: padding-box;
+  }
 
-*::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
+  html::-webkit-scrollbar-thumb:hover,
+  body::-webkit-scrollbar-thumb:hover,
+  main::-webkit-scrollbar-thumb:hover,
+  .page-scroll::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af; 
+  }
 
-/* Dark mode */
-.dark *::-webkit-scrollbar-thumb {
-  background: #374151;
-}
+  /* 2. NESTED/PANEL SCROLLBARS (Sidebar, Divs, etc.)*/
 
-.dark *::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
-}
 
-/* Custom scrollbar (legacy class, kept for compat) */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
+  *:not(html):not(body):not(main):not(.page-scroll)::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 999px;
-}
+  *:not(html):not(body):not(main):not(.page-scroll)::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 999px;
-}
+  *:not(html):not(body):not(main):not(.page-scroll)::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 999px;
+  }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
+  *:not(html):not(body):not(main):not(.page-scroll)::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af; 
+  }
 
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }

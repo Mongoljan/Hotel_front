@@ -518,7 +518,7 @@ export default function ReceptionPage() {
 
           {/* ── WEEK VIEW ───────────────────────────────────────────────────── */}
           {viewMode === 'week' && (
-            <div className="overflow-auto rounded-2xl border border-border">
+            <div className="page-scroll overflow-auto rounded-2xl border border-border">
               <div className="min-w-[860px]">
 
                 {/* Year + month strip nav */}

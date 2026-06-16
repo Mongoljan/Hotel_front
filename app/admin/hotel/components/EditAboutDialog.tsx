@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,8 +48,7 @@ export function EditAboutDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="w-full h-full sm:w-[800px] sm:h-[700px] max-w-[95vw] max-h-[90vh] p-4 sm:p-6 flex flex-col overflow-hidden" 
-        hideCloseButton
+        className="w-full h-full sm:w-[800px] sm:h-[600px] max-w-[95vw] max-h-[90vh] p-4 sm:p-6 flex flex-col overflow-hidden" 
       >
         <DialogHeader className="shrink-0">
           <DialogTitle>{t('aboutDialogTitle')}</DialogTitle>
@@ -58,16 +58,14 @@ export function EditAboutDialog({
           value={draftAbout}
           onChange={(e) => setDraftAbout(e.target.value.slice(0, ABOUT_MAX_LENGTH))}
           placeholder={t('aboutDialogPlaceholder')}
-          className="flex-1 w-full resize-none min-h-0 mt-4 mb-4 p-3 overflow-y-auto" 
+          className="flex-1 w-full resize-none min-h-0 mt-4 mb-0 p-3 overflow-y-auto" 
         />
-        <DialogFooter className="shrink-0 flex flex-row items-center justify-between gap-4 pt-2 border-t">
           <span className="text-sm text-muted-foreground whitespace-nowrap">
             {draftAbout.length}/{ABOUT_MAX_LENGTH}
           </span>
+        <DialogFooter className="shrink-0 flex flex-row items-center justify-between gap-4 pt-2">
+
           <div className="flex gap-2 shrink-0">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
-              {t('back')}
-            </Button>
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? t('saving') : t('save')}
             </Button>

@@ -1,15 +1,8 @@
 'use client';
 
 import { useEffect, useState, type ComponentType } from 'react';
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandLinkedin,
-  IconBrandTwitter,
-  IconBrandYoutube,
-  IconLink,
-  IconWorld,
-} from '@tabler/icons-react';
+import { IconLink, IconWorld } from '@tabler/icons-react';
+import { FacebookIcon, InstagramIcon, LinkedinIcon, XIcon, YoutubeIcon } from './SocialIcons';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -28,7 +21,7 @@ import { ApiNeededLabel } from '@/components/ApiNeededLabel';
 
 const SHEET_WIDTH = 480;
 
-type SocialLinkKey = 'web' | 'facebook' | 'instagram' | 'youtube' | 'twitter' | 'linkedin';
+type SocialLinkKey = 'web' | 'facebook' | 'instagram' | 'youtube' | 'x' | 'linkedin';
 
 type SocialLinksDraft = Record<SocialLinkKey, string>;
 
@@ -37,7 +30,7 @@ const EMPTY_LINKS: SocialLinksDraft = {
   facebook: '',
   instagram: '',
   youtube: '',
-  twitter: '',
+  x: '',
   linkedin: '',
 };
 
@@ -48,11 +41,11 @@ const LINK_FIELDS: {
   iconClass?: string;
 }[] = [
   { key: 'web', labelKey: 'socialWebLabel', icon: IconWorld, iconClass: 'text-muted-foreground' },
-  { key: 'facebook', labelKey: 'socialFacebookLabel', icon: IconBrandFacebook, iconClass: 'text-[#1877F2]' },
-  { key: 'instagram', labelKey: 'socialInstagramLabel', icon: IconBrandInstagram, iconClass: 'text-[#E4405F]' },
-  { key: 'youtube', labelKey: 'socialYoutubeLabel', icon: IconBrandYoutube, iconClass: 'text-[#FF0000]' },
-  { key: 'twitter', labelKey: 'socialTwitterLabel', icon: IconBrandTwitter, iconClass: 'text-[#1DA1F2]' },
-  { key: 'linkedin', labelKey: 'socialLinkedinLabel', icon: IconBrandLinkedin, iconClass: 'text-[#0A66C2]' },
+  { key: 'facebook', labelKey: 'socialFacebookLabel', icon: FacebookIcon },
+  { key: 'instagram', labelKey: 'socialInstagramLabel', icon: InstagramIcon },
+  { key: 'youtube', labelKey: 'socialYoutubeLabel', icon: YoutubeIcon },
+  { key: 'x', labelKey: 'socialXLabel', icon: XIcon },
+  { key: 'linkedin', labelKey: 'socialLinkedinLabel', icon: LinkedinIcon },
 ];
 
 interface EditSocialLinksSheetProps {

@@ -339,7 +339,7 @@ export default function ServicesTab({
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar px-5 pb-4">
+          <div className="flex-1 overflow-y-auto page-scroll px-5 pb-4">
             <div className="grid grid-cols-2 gap-2">
               {filteredEditItems.map((item) => {
                 const selected = activeSelectedIds.has(item.id);
