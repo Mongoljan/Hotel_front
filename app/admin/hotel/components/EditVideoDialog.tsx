@@ -70,7 +70,7 @@ export function EditVideoDialog({
                 className="border-0 shadow-none focus-visible:ring-0"
               />
             </div>
-            <p className="text-xs text-muted-foreground">{t('youtubeLinkHint')}</p>
+            <p className="text-sm text-muted-foreground">{t('youtubeLinkHint')}</p>
           </div>
 
           <div className="space-y-2">

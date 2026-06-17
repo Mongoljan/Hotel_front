@@ -162,7 +162,7 @@ export default function SuperAdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalProperties}</div>
-            <p className="text-xs text-muted-foreground">Бүртгэгдсэн зочид буудлууд</p>
+            <p className="text-sm text-muted-foreground">Бүртгэгдсэн зочид буудлууд</p>
           </CardContent>
         </Card>
 
@@ -173,7 +173,7 @@ export default function SuperAdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{approvedProperties}</div>
-            <p className="text-xs text-muted-foreground">Идэвхтэй зочид буудлууд</p>
+            <p className="text-sm text-muted-foreground">Идэвхтэй зочид буудлууд</p>
           </CardContent>
         </Card>
 
@@ -184,7 +184,7 @@ export default function SuperAdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">{pendingProperties}</div>
-            <p className="text-xs text-muted-foreground">Зөвшөөрөл хүлээж буй</p>
+            <p className="text-sm text-muted-foreground">Зөвшөөрөл хүлээж буй</p>
           </CardContent>
         </Card>
 
@@ -195,7 +195,7 @@ export default function SuperAdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{propertiesWithOwner}</div>
-            <p className="text-xs text-muted-foreground">Эзэн холбогдсон буудлууд</p>
+            <p className="text-sm text-muted-foreground">Эзэн холбогдсон буудлууд</p>
           </CardContent>
         </Card>
       </div>
@@ -260,7 +260,7 @@ export default function SuperAdminDashboardPage() {
                         <TableRow key={property.pk}>
                           <TableCell>
                             <div className="font-medium">{property.PropertyName}</div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-sm text-muted-foreground">
                               РД: {property.register}
                             </div>
                           </TableCell>
@@ -278,7 +278,7 @@ export default function SuperAdminDashboardPage() {
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <IconBriefcase className="h-3 w-3 text-muted-foreground" />
-                                  <span className="text-xs text-muted-foreground">{property.owner.position}</span>
+                                  <span className="text-sm text-muted-foreground">{property.owner.position}</span>
                                 </div>
                                 <Badge variant={property.owner.approved ? 'default' : 'secondary'} className="text-xs">
                                   {property.owner.approved ? 'Зөвшөөрөгдсөн' : 'Хүлээгдэж буй'}

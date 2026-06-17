@@ -444,7 +444,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       data-sidebar="group-label"
       className={cn(
-        "duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+        "duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-sm font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
         "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
         className
       )}
@@ -527,7 +527,7 @@ const sidebarMenuButtonVariants = cva(
       },
       size: {
         default: "h-8 text-[14px]",
-        sm: "h-7 text-xs",
+        sm: "h-7 text-sm",
         lg: "h-12 text-[14px] group-data-[collapsible=icon]:!p-0",
       },
     },
@@ -729,7 +729,7 @@ const SidebarMenuSubButton = React.forwardRef<
       className={cn(
         "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md border border-transparent px-2 text-sidebar-foreground outline-none ring-sidebar-ring transition-[background-color,color,border-color] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-[18px] [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
         "data-[active=true]:border-[hsl(var(--sidebar-primary)/0.3)] data-[active=true]:bg-[hsl(var(--sidebar-primary)/0.14)] data-[active=true]:text-[hsl(var(--sidebar-primary))]",
-        size === "sm" && "text-xs",
+        size === "sm" && "text-sm",
         size === "md" && "text-[14px]",
         "group-data-[collapsible=icon]:hidden",
         className

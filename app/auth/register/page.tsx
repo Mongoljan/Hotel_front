@@ -256,7 +256,7 @@ export default function RegisterPage() {
                   
                     {errors.register && <p className="text-xs text-destructive">{errors.register.message}</p>}
                     {companyLookupLoading && (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         {companyLookupSlow ? t("company_lookup_slow") : t("company_lookup_loading")}
                       </div>
                     )}

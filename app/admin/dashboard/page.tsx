@@ -158,7 +158,7 @@ export default function DashboardPage() {
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold">24</span>
                 </div>
-                <p className="text-xs text-muted-foreground">12 ирсэн • 12 хүлээгдэж байгаа</p>
+                <p className="text-sm text-muted-foreground">12 ирсэн • 12 хүлээгдэж байгаа</p>
               </div>
               <div className="rounded-full bg-primary/10 p-3">
                 <IconLogin className="h-5 w-5 text-primary" />
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold">7</span>
                 </div>
-                <p className="text-xs text-muted-foreground">3 үлдсэн • 4 гарсан</p>
+                <p className="text-sm text-muted-foreground">3 үлдсэн • 4 гарсан</p>
               </div>
               <div className="rounded-full bg-primary/10 p-3">
                 <IconLogout className="h-5 w-5 text-primary" />
@@ -251,7 +251,7 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-2xl font-bold">{totalBookings.toLocaleString()}</span>
-                  <span className="text-xs text-muted-foreground">Total Bookings</span>
+                  <span className="text-sm text-muted-foreground">Total Bookings</span>
                 </div>
               </div>
             </div>
@@ -361,7 +361,7 @@ export default function DashboardPage() {
             </div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center hidden">
               <span className="text-sm font-medium">43.8%</span>
-              <span className="text-xs text-muted-foreground block">Most guests booked via Direct</span>
+              <span className="text-sm text-muted-foreground block">Most guests booked via Direct</span>
             </div>
             <div className="mt-4 space-y-1.5">
               {bookingChannelsData.map((item, index) => (
@@ -524,7 +524,7 @@ export default function DashboardPage() {
                     )}
                   </div>
                   <div className={`flex-1 space-y-1 ${task.completed ? 'opacity-60' : ''}`}>
-                    <p className="text-xs text-muted-foreground">{task.date}</p>
+                    <p className="text-sm text-muted-foreground">{task.date}</p>
                     <p className={`text-sm font-medium ${task.completed ? 'line-through' : ''}`}>
                       {task.room}
                     </p>
@@ -537,7 +537,7 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <p className="text-xs font-medium">{task.guest}</p>
-                        <p className="text-xs text-muted-foreground">{task.org}</p>
+                        <p className="text-sm text-muted-foreground">{task.org}</p>
                       </div>
                     </div>
                   </div>

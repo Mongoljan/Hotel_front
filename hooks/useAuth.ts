@@ -88,7 +88,12 @@ export function useAuth(): AuthState & {
         })
       }
     } catch (error) {
-      console.error('Session fetch error:', error)
+      const isNetworkError =
+        error instanceof TypeError &&
+        (error.message === "Failed to fetch" || error.message.includes("NetworkError"));
+      if (!isNetworkError) {
+        console.error("Session fetch error:", error);
+      }
       setAuthState({
         user: null,
         isLoading: false,

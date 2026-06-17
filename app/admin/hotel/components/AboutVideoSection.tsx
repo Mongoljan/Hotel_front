@@ -98,7 +98,7 @@ export function AboutVideoSection({
               />
             </div>
             <div className="flex items-center justify-between gap-2 min-w-0">
-              <p className="text-xs text-muted-foreground truncate">{t('videoIntro')}</p>
+              <p className="text-sm text-muted-foreground truncate">{t('videoIntro')}</p>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button

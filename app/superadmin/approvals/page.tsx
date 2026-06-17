@@ -475,7 +475,7 @@ export default function ApprovalsPage() {
                             <div className="text-center">
                               <IconBuilding className="h-12 w-12 mx-auto text-muted-foreground/50" />
                               <p className="mt-2 text-sm font-medium">Буудал олдсонгүй</p>
-                              <p className="text-xs text-muted-foreground">Энэ эзэнд буудал бүртгэгдээгүй байна</p>
+                              <p className="text-sm text-muted-foreground">Энэ эзэнд буудал бүртгэгдээгүй байна</p>
                             </div>
                           </div>
                         )}

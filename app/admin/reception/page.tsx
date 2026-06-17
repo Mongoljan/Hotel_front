@@ -532,7 +532,7 @@ export default function ReceptionPage() {
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </button>
                   </div>
-                  <div className="mt-2 grid grid-cols-12 text-center text-[11px] text-muted-foreground">
+                  <div className="mt-2 grid grid-cols-12 text-center text-sm text-muted-foreground">
                     {MONTHS_MN.map((m, i) => (
                       <span key={i} className={i === weekStart.getMonth() ? 'rounded-full bg-foreground px-1 py-0.5 text-background' : ''}>
                         {m}
@@ -551,16 +551,16 @@ export default function ReceptionPage() {
                       key={col.date}
                       className={`bg-background px-2 py-2 text-center ${i < 6 ? 'border-r border-border/70' : ''} ${col.date === today ? 'outline outline-1 outline-primary/60' : ''}`}
                     >
-                      {col.date === today && <p className="text-[10px] font-semibold text-primary">Өнөөдөр</p>}
+                      {col.date === today && <p className="text-xs font-semibold text-primary">Өнөөдөр</p>}
                       <p className="text-sm font-semibold">{col.day}</p>
-                      <p className="text-[11px] text-muted-foreground">{col.weekday}</p>
+                      <p className="text-sm text-muted-foreground">{col.weekday}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Occupancy row */}
                 <div className="grid border-b border-border/70" style={{ gridTemplateColumns: '175px repeat(7, minmax(105px, 1fr))' }}>
-                  <div className="border-r border-border/70 bg-background px-3 py-2 text-xs text-muted-foreground">
+                  <div className="border-r border-border/70 bg-background px-3 py-2 text-sm text-muted-foreground">
                     Өрөө дүүргэлт %
                   </div>
                   {weekOccupancy.map((occ, i) => (
@@ -585,7 +585,7 @@ export default function ReceptionPage() {
                       <div className="grid border-b border-border/70 bg-muted/30" style={{ gridTemplateColumns: '175px repeat(7, minmax(105px, 1fr))' }}>
                         <div className="border-r border-border/70 bg-muted px-3 py-2 text-xs font-semibold">{rt.name}</div>
                         {weekDays.map((col, i) => (
-                          <div key={col.date} className={`bg-muted px-2 py-2 text-center text-[11px] text-muted-foreground ${i < 6 ? 'border-r border-border/70' : ''}`}>
+                          <div key={col.date} className={`bg-muted px-2 py-2 text-center text-sm text-muted-foreground ${i < 6 ? 'border-r border-border/70' : ''}`}>
                             Сул • {free}/{gr.length}
                           </div>
                         ))}
@@ -625,7 +625,7 @@ export default function ReceptionPage() {
                                 {b && (
                                   <div
                                     title={`${b.guest?.first_name ?? ''} ${b.guest?.last_name ?? ''} — ${STATUS_LABEL[b.status] ?? b.status}`}
-                                    className={`absolute inset-y-1 flex items-center px-1.5 text-[10px] font-medium text-white ${barBg}
+                                    className={`absolute inset-y-1 flex items-center px-1.5 text-xs font-medium text-white ${barBg}
                                       ${isCheckIn  ? 'left-1.5 rounded-l-full' : 'left-0'}
                                       ${isCheckOut ? 'right-1.5 rounded-r-full' : 'right-0'}
                                     `}
@@ -668,7 +668,7 @@ export default function ReceptionPage() {
                 {/* Weekday headers */}
                 <div className="grid grid-cols-7 border-b border-border/70 bg-muted/10">
                   {WEEKDAYS_MN.map((w) => (
-                    <div key={w} className="py-2 text-center text-[11px] font-medium text-muted-foreground">{w}</div>
+                    <div key={w} className="py-2 text-center text-sm font-medium text-muted-foreground">{w}</div>
                   ))}
                 </div>
 
@@ -718,7 +718,7 @@ export default function ReceptionPage() {
                 </div>
 
                 {/* Occupancy legend */}
-                <div className="flex flex-wrap gap-4 border-t border-border/70 px-4 py-2 text-xs text-muted-foreground">
+                <div className="flex flex-wrap gap-4 border-t border-border/70 px-4 py-2 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-red-400" />Муу буюу 50%-с бага</span>
                   <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-yellow-400" />Дунд буюу 50% – 70% хооронд</span>
                   <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-green-500" />Сайн буюу 80%-с дээш</span>
@@ -754,7 +754,7 @@ export default function ReceptionPage() {
                         onClick={() => setPanelFilter((p) =>
                           p.includes(f.key) ? p.filter((k) => k !== f.key) : [...p, f.key]
                         )}
-                        className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition
+                        className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-sm transition
                           ${panelFilter.includes(f.key) ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border text-muted-foreground hover:border-primary/40'}`}
                       >
                         {f.label}
@@ -779,24 +779,24 @@ export default function ReceptionPage() {
                             <div className="flex items-start justify-between gap-2">
                               <div>
                                 <p className="text-xs font-semibold">{rt?.name ?? 'Өрөө'}</p>
-                                <p className="text-[11px] text-muted-foreground">
+                                <p className="text-sm text-muted-foreground">
                                   {b.room_ids.map((rid) => rooms.find((r) => r.id === rid)?.room_number).filter(Boolean).join(', ')} · {b.adults + b.children} зочин
                                 </p>
                                 {b.total_price > 0 && (
-                                  <p className="text-[11px] text-muted-foreground">Үнэ: {fmt(b.total_price)}</p>
+                                  <p className="text-sm text-muted-foreground">Үнэ: {fmt(b.total_price)}</p>
                                 )}
                               </div>
                               <div className="shrink-0 text-right space-y-0.5">
-                                {checkInToday && <Badge className="block bg-primary/10 text-primary text-[10px]">Захиалгатай</Badge>}
-                                {isStaying    && <Badge className="block bg-orange-100 text-orange-700 text-[10px]">Байрлаж байна</Badge>}
-                                {b.check_out === panelDate && <Badge className="block bg-red-100 text-red-700 text-[10px]">Гарах өдөр</Badge>}
+                                {checkInToday && <Badge className="block bg-primary/10 text-primary text-xs">Захиалгатай</Badge>}
+                                {isStaying    && <Badge className="block bg-orange-100 text-orange-700 text-xs">Байрлаж байна</Badge>}
+                                {b.check_out === panelDate && <Badge className="block bg-red-100 text-red-700 text-xs">Гарах өдөр</Badge>}
                               </div>
                             </div>
                             <div className="mt-1 flex items-center justify-between">
-                              <p className="text-[10px] text-muted-foreground">{b.guest?.first_name} {b.guest?.last_name}</p>
+                              <p className="text-sm text-muted-foreground">{b.guest?.first_name} {b.guest?.last_name}</p>
                               <button
                                 onClick={() => handleDelete(b.id)}
-                                className="hidden group-hover:block text-[10px] text-destructive hover:underline"
+                                className="hidden group-hover:block text-xs text-destructive hover:underline"
                               >
                                 Устгах
                               </button>
@@ -874,7 +874,7 @@ export default function ReceptionPage() {
                       >
                         {done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
                       </div>
-                      <span className={`text-[11px] leading-tight ${active ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                      <span className={`text-sm leading-tight ${active ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                         {item.label}
                       </span>
                     </div>
@@ -954,7 +954,7 @@ export default function ReceptionPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold">Боломжит өрөөнүүд</h3>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {availRooms.reduce((s, a) => s + a.available, 0)} / {availRooms.reduce((s, a) => s + a.rooms.length, 0)}
                   </p>
                 </div>
@@ -969,7 +969,7 @@ export default function ReceptionPage() {
                           <div className="h-12 w-16 shrink-0 rounded-lg bg-muted" />
                           <div>
                             <p className="text-sm font-semibold">{rt.name}</p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                               Үлдэгдэл:{' '}
                               <span className={`font-semibold ${available === 0 ? 'text-red-500' : available <= 3 ? 'text-yellow-600' : 'text-green-600'}`}>
                                 {available}
@@ -1224,7 +1224,7 @@ function SummaryRow({ label, hint, value }: { label: string; hint?: string; valu
     <div className="flex items-start justify-between border-b border-border/60 pb-2 last:border-0">
       <div>
         <p className="text-sm">{label}</p>
-        {hint && <p className="text-xs text-muted-foreground">/ {hint} /</p>}
+        {hint && <p className="text-sm text-muted-foreground">/ {hint} /</p>}
       </div>
       <div className="flex items-center gap-1">
         <p className="font-medium">{value}</p>

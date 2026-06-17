@@ -59,7 +59,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ totalSteps, currentStep }
 
               {/* Label */}
               <div
-                className={`mt-2 text-[10px] sm:text-xs text-center leading-tight px-1 line-clamp-2 ${
+                className={`mt-2 text-sm text-center leading-tight px-1 line-clamp-2 ${
                   isCompleted || isActive ? 'text-foreground font-medium' : 'text-muted-foreground'
                 }`}
                 title={stepNames[i]}

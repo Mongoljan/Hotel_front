@@ -62,7 +62,7 @@ export default function Topbar({
                 </div>
                 <div className="hidden text-left md:block">
                   <p className="text-sm font-medium">{user?.name || 'SuperAdmin'}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>

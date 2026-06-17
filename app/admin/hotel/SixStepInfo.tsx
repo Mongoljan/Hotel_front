@@ -657,7 +657,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                             className="object-cover"
                           />
                           {image.is_profile && (
-                            <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] px-2 py-1 rounded-full shadow">
+                            <span className="absolute top-2 left-2 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full shadow">
                               Профайл
                             </span>
                           )}

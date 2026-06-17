@@ -81,7 +81,7 @@ export function UserAvatarProfile() {
                   <span className="truncate font-semibold">
                     {user?.name || 'User'}
                   </span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="truncate text-sm text-muted-foreground">
                     {user?.email || 'user@example.com'}
                   </span>
                   {userTypeName && (

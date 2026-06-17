@@ -131,7 +131,7 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
         <Label className="text-base font-medium">Банк сонгох</Label>
         {errors.bank && <p className="text-sm text-destructive">{errors.bank}</p>}
         {banksLoading ? (
-          <p className="text-xs text-muted-foreground">Банкны жагсаалт уншиж байна…</p>
+          <p className="text-sm text-muted-foreground">Банкны жагсаалт уншиж байна…</p>
         ) : (
         <div className="grid grid-cols-3 gap-3">
           {banks.map((bank) => (
@@ -163,7 +163,7 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
                   <span>{bank.name.charAt(0)}</span>
                 )}
               </div>
-              <span className="text-[10px] text-center leading-tight line-clamp-2">{bank.name}</span>
+              <span className="text-xs text-center leading-tight line-clamp-2">{bank.name}</span>
             </Button>
           ))}
         </div>
@@ -228,7 +228,7 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
         {errors.accountHolder && (
           <p className="text-sm text-destructive">{errors.accountHolder}</p>
         )}
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Энэ нэр нь бүх санхүүгийн тайлан дээр яг энэ хэлбэрээр харагдана.
         </p>
       </div>
@@ -257,7 +257,7 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-sm font-medium">Төлөв</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Дансыг шууд идэвхжүүлэх
               </p>
             </div>
@@ -271,7 +271,7 @@ function BankAccountForm({ onSave, onCancel }: BankAccountFormProps) {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-sm font-medium">Бүх зочны нэхэмжлэх дээр харуулах</p>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                 Үүнийг идэвхжүүлснээр үүсгэсэн нэхэмжлэх болгон дээр банкны мэдээлэл
                 автоматаар багтах болно
               </p>
@@ -431,19 +431,19 @@ export function BankAccountConfigPanel({
                   {primary ? (
                     <div className="grid grid-cols-3 gap-3 text-xs">
                       <div>
-                        <div className="text-[10px] uppercase text-muted-foreground mb-1">
+                        <div className="text-xs uppercase text-muted-foreground mb-1">
                           Банкны нэр
                         </div>
                         <div className="font-semibold uppercase">{primary.bankName}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase text-muted-foreground mb-1">
+                        <div className="text-xs uppercase text-muted-foreground mb-1">
                           Дансны дугаар
                         </div>
                         <div className="font-semibold">{primary.accountNumber}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase text-muted-foreground mb-1">
+                        <div className="text-xs uppercase text-muted-foreground mb-1">
                           Хүлээн авагч
                         </div>
                         <div className="font-semibold uppercase">
@@ -452,11 +452,11 @@ export function BankAccountConfigPanel({
                       </div>
                     </div>
                   ) : (
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-sm text-muted-foreground">
                       Үндсэн данс бүртгээгүй байна
                     </div>
                   )}
-                  <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
+                  <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
                     Энэ мэдээлэл таны бүх гаргасан нэхэмжлэх дээр автоматаар хэвлэгдэнэ.
                   </p>
                 </Card>
@@ -468,7 +468,7 @@ export function BankAccountConfigPanel({
                       <h3 className="font-medium text-foreground text-sm">
                         Идэвхтэй дансууд
                       </h3>
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
                         Дансны удирдлага
                       </p>
                     </div>
@@ -512,17 +512,17 @@ export function BankAccountConfigPanel({
                               <div className="min-w-0">
                                 <div className="text-sm font-medium truncate">
                                   {acc.bankName}{' '}
-                                  <span className="text-xs text-muted-foreground font-normal">
+                                  <span className="text-sm text-muted-foreground font-normal">
                                     ({acc.isPrimary ? 'Үндсэн' : 'Валют'})
                                   </span>
                                 </div>
-                                <div className="text-xs text-muted-foreground truncate">
+                                <div className="text-sm text-muted-foreground truncate">
                                   {acc.accountNumber} • {acc.currency}
                                 </div>
                               </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                              <span className="text-sm text-muted-foreground hidden sm:inline">
                                 Нэхэмжлэх дээр харуулах
                               </span>
                               <Switch

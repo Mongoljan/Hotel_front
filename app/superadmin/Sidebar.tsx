@@ -115,7 +115,7 @@ export default function Sidebar() {
         </div>
         <div>
           <h2 className="font-bold text-lg">SuperAdmin</h2>
-          <p className="text-xs text-muted-foreground">Удирдлагын систем</p>
+          <p className="text-sm text-muted-foreground">Удирдлагын систем</p>
         </div>
       </div>
 
@@ -126,7 +126,7 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="mt-auto border-t pt-4">
-        <p className="px-4 text-xs text-muted-foreground">
+        <p className="px-4 text-sm text-muted-foreground">
           © 2026 Hotel System
         </p>
       </div>

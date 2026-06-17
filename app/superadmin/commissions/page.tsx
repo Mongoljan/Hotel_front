@@ -898,9 +898,9 @@ export default function PropertyCommissionsPage() {
                           </a>
                         )}
                         {currentContractFilePath && !editingCommission?.contract_file_url && (
-                          <p className="text-xs text-muted-foreground break-all">{currentContractFilePath}</p>
+                          <p className="text-sm text-muted-foreground break-all">{currentContractFilePath}</p>
                         )}
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                           PDF, DOC, эсвэл зураг файл байж болно
                         </p>
                       </div>
@@ -1225,7 +1225,7 @@ export default function PropertyCommissionsPage() {
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
                             {isNew && (
-                              <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0">
+                              <Badge className="bg-red-500 text-white text-xs px-1.5 py-0">
                                 Шинэ
                               </Badge>
                             )}
@@ -1267,21 +1267,21 @@ export default function PropertyCommissionsPage() {
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex flex-col items-center gap-1">
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-sm text-muted-foreground">
                             {formatDate(commission.created_at)}
                           </span>
                           {daysDiff === 0 && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-orange-500 text-orange-600">
+                            <Badge variant="outline" className="text-xs px-1.5 py-0 border-orange-500 text-orange-600">
                               Өнөөдөр
                             </Badge>
                           )}
                           {daysDiff === 1 && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-500 text-blue-600">
+                            <Badge variant="outline" className="text-xs px-1.5 py-0 border-blue-500 text-blue-600">
                               Өчигдөр
                             </Badge>
                           )}
                           {daysDiff > 1 && daysDiff <= 7 && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            <Badge variant="outline" className="text-xs px-1.5 py-0">
                               {daysDiff} өдрийн өмнө
                             </Badge>
                           )}
@@ -1398,7 +1398,7 @@ export default function PropertyCommissionsPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
+                      <div className="mt-3 pt-3 border-t text-sm text-muted-foreground">
                         <div className="flex justify-between">
                           <span>Үүсгэсэн: {policy.created_by}</span>
                           <span>{formatDateTime(policy.created_at)}</span>

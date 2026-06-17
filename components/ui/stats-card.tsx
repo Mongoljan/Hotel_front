@@ -64,10 +64,10 @@ export function StatsCard({
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
         {(description || trend) && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
+          <p className="text-sm text-muted-foreground flex items-center gap-1">
             {trend?.icon && (
               <trend.icon className={cn(
-                "h-3 w-3",
+                "h-4 w-4",
                 trend.color || trendColors[iconGradient]
               )} />
             )}

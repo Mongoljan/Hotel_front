@@ -160,7 +160,7 @@ export default function AdminDashboardClient({ hotelName }: Props) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalOwners}</div>
-            <p className="text-xs text-muted-foreground">Бүртгэгдсэн эзэмшигчид</p>
+            <p className="text-sm text-muted-foreground">Бүртгэгдсэн эзэмшигчид</p>
           </CardContent>
         </Card>
 
@@ -173,7 +173,7 @@ export default function AdminDashboardClient({ hotelName }: Props) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{approvedOwners}</div>
-            <p className="text-xs text-muted-foreground">Идэвхжүүлсэн зочид буудал</p>
+            <p className="text-sm text-muted-foreground">Идэвхжүүлсэн зочид буудал</p>
           </CardContent>
         </Card>
 
@@ -186,7 +186,7 @@ export default function AdminDashboardClient({ hotelName }: Props) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingOwners}</div>
-            <p className="text-xs text-muted-foreground">Хянагдаж байгаа хүсэлт</p>
+            <p className="text-sm text-muted-foreground">Хянагдаж байгаа хүсэлт</p>
           </CardContent>
         </Card>
 
@@ -199,7 +199,7 @@ export default function AdminDashboardClient({ hotelName }: Props) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{approvalRate}%</div>
-            <p className="text-xs text-muted-foreground">Амжилттай батлагдсан хувь</p>
+            <p className="text-sm text-muted-foreground">Амжилттай батлагдсан хувь</p>
           </CardContent>
         </Card>
       </div>

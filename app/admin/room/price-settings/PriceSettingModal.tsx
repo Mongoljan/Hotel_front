@@ -287,7 +287,7 @@ export default function PriceSettingModal({
           {/* Name */}
           <div className="space-y-2">
             <Label htmlFor="name">
-              Нэр <span className="text-red-500">*</span>
+              Нэр <span className="text-red">*</span>
             </Label>
             <Input
               id="name"
@@ -301,7 +301,7 @@ export default function PriceSettingModal({
           {/* Room Selection */}
           <div className="space-y-2">
             <Label htmlFor="room_combination">
-              Өрөөний төрөл <span className="text-red-500">*</span>
+              Өрөөний төрөл <span className="text-red">*</span>
             </Label>
             <Select
               key={`room-combo-${editData?.id || 'new'}-${formData.room_combination}`}
@@ -342,7 +342,7 @@ export default function PriceSettingModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start_date">
-                Эхлэх огноо <span className="text-red-500">*</span>
+                Эхлэх огноо <span className="text-red">*</span>
               </Label>
               <DatePickerWithValue
                 value={formData.start_date}
@@ -353,7 +353,7 @@ export default function PriceSettingModal({
 
             <div className="space-y-2">
               <Label htmlFor="end_date">
-                Дуусах огноо <span className="text-red-500">*</span>
+                Дуусах огноо <span className="text-red">*</span>
               </Label>
               <DatePickerWithValue
                 value={formData.end_date}
@@ -366,7 +366,7 @@ export default function PriceSettingModal({
           {/* Adjustment Type */}
           <div className="space-y-2">
             <Label>
-              Үнийн өөрчлөлтийн төрөл <span className="text-red-500">*</span>
+              Үнийн өөрчлөлтийн төрөл <span className="text-red">*</span>
             </Label>
             <div className="flex gap-3">
               <label className="flex items-center cursor-pointer flex-1">
@@ -402,7 +402,7 @@ export default function PriceSettingModal({
           {/* Value Type */}
           <div className="space-y-2">
             <Label>
-              Утгын төрөл <span className="text-red-500">*</span>
+              Утгын төрөл <span className="text-red">*</span>
             </Label>
             <div className="flex gap-3">
               <label className="flex items-center cursor-pointer flex-1">
@@ -438,7 +438,7 @@ export default function PriceSettingModal({
           {/* Value */}
           <div className="space-y-2">
             <Label htmlFor="value">
-              Утга <span className="text-red-500">*</span>
+              Утга <span className="text-red">*</span>
             </Label>
             {formData.value_type === 'AMOUNT' ? (
               <FormattedNumberInput
@@ -489,7 +489,7 @@ export default function PriceSettingModal({
                 className="border-input"
               />
             )}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {formData.value_type === 'PERCENT'
                 ? 'Хувиар илэрхийлнэ (0-100 хооронд, жишээ нь: 10 гэж оруулбал 10% нэмэгдэнэ)'
                 : "Төгрөгөөр илэрхийлнэ (жишээ нь: 50'000 гэж оруулбал 50,000₮ нэмэгдэнэ)"}

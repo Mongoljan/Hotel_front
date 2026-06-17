@@ -72,7 +72,7 @@ function SidebarStatusMessage({ isApproved, userApproved, hotelRegistrationCompl
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="px-4 py-3 mt-4 text-xs text-muted-foreground bg-muted/50 rounded-lg mx-3 cursor-help">
+          <div className="px-4 py-3 mt-4 text-sm text-muted-foreground bg-muted/50 rounded-lg mx-3 cursor-help">
             {message}
           </div>
         </TooltipTrigger>

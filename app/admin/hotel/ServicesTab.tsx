@@ -279,7 +279,7 @@ export default function ServicesTab({
                 {isExpanded && (
                   <div className="px-4 pb-4 pt-2">
                     {items.length === 0 ? (
-                      <p className="text-xs text-muted-foreground py-2">{t('servicesNoneSelected')}</p>
+                      <p className="text-sm text-muted-foreground py-2">{t('servicesNoneSelected')}</p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {items.map((item) => (
@@ -368,7 +368,7 @@ export default function ServicesTab({
                       <p className={cn('text-sm font-medium leading-tight', selected ? 'text-[#4A7BF7]' : '')}>
                         {item.name_mn}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">{item.name_en}</p>
+                      <p className="text-sm text-muted-foreground truncate">{item.name_en}</p>
                     </div>
                   </button>
                 );

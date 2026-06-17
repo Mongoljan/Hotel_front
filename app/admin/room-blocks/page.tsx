@@ -256,7 +256,7 @@ export default function ReceptionPage() {
                 )}
               >
                 <span>{tab.label}</span>
-                <span className="text-xs text-muted-foreground">({tab.count})</span>
+                <span className="text-sm text-muted-foreground">({tab.count})</span>
               </button>
             ))}
           </div>
