@@ -738,7 +738,7 @@
     "password_required": "Нууц үг шаардлагатай.",
     "company": {
       "not_found": "РД: {regno} -тай компани олдсонгүй!",
-      "reg_required": "РД-оо оруулна уу"
+      "reg_required": "РД-аа оруулна уу"
     },
     "form": {
       "incomplete": "Формыг бүрэн бөглөнө үү!"
@@ -808,8 +808,8 @@
    "passwordComplexityRule":"Үсэг, тоо, тэмдэгт орсон байх",
    "passwordMatchOk":"Нууц үг таарч байна",
    "passwordMismatch":"Нууц үг таарахгүй байна",
-      "back":"буцах",
-    "next":"дараах"
+      "back":"Буцах",
+    "next":"Дараах"
 
 },
 

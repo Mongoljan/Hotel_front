@@ -235,7 +235,7 @@ export default function RegisterPage() {
 
         {/* Password requirements checklist */}
         <div className="flex flex-col gap-1.5 mb-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <div className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
               hasMinLength ? 'border-primary bg-primary' : 'border-gray-300'
             }`}>

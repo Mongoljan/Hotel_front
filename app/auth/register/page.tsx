@@ -203,12 +203,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="flex items-center justify-center min-h-screen p-4 md:p-8">
+    <div className="bg-background pb-12">
+      <div className="flex justify-center p-4 pt-10 md:p-8 md:pt-12">
         <div className="w-full max-w-2xl space-y-6">
           <RegistrationStepIndicator currentStep={1} />
           <Card className="border shadow-sm">
-            <CardHeader className="space-y-1 text-center pb-4">
+            <CardHeader className="space-y-1 text-center">
               <CardTitle className="text-2xl font-bold tracking-tight text-cyrillic">{t("hotel_info")}</CardTitle>
             </CardHeader>
             <CardContent>
@@ -253,7 +253,7 @@ export default function RegisterPage() {
                         />
                       )}
                     />
-                  
+
                     {errors.register && <p className="text-xs text-destructive">{errors.register.message}</p>}
                     {companyLookupLoading && (
                       <div className="text-xs text-muted-foreground">
@@ -292,7 +292,7 @@ export default function RegisterPage() {
                       placeholder="Кирилл үсгээр оруулна уу"
                       className={`${registerInputClass} ${errors.PropertyName ? registerInputErrorClass : ""}`}
                     />
-            
+
                     {errors.PropertyName && <p className="text-xs text-destructive">{errors.PropertyName.message}</p>}
                   </div>
 
@@ -309,7 +309,7 @@ export default function RegisterPage() {
                       placeholder="Латин үсгээр оруулна уу"
                       className={`${registerInputClass} ${errors.PropertyName_en ? registerInputErrorClass : ""}`}
                     />
-                 
+
                     {errors.PropertyName_en && <p className="text-xs text-destructive">{errors.PropertyName_en.message}</p>}
                   </div>
                 </div>
@@ -324,8 +324,8 @@ export default function RegisterPage() {
                     >
                       <option value="" className="text-gray-400 dark:text-gray-500">{t("select")}</option>
                       {propertyTypes.map((type) => (
-                        <option 
-                          key={type.id} 
+                        <option
+                          key={type.id}
                           value={type.id}
                           className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
                         >
@@ -333,8 +333,8 @@ export default function RegisterPage() {
                         </option>
                       ))}
                     </select>
-                
-                    {errors.property_type && <p className="text-sm text-destructive">{errors.property_type.message}</p>}
+
+                    {errors.property_type && <p className="text-xs text-destructive">{errors.property_type.message}</p>}
                   </div>
 
                   <div className="space-y-1.5">
@@ -347,8 +347,8 @@ export default function RegisterPage() {
                       <option value="" className="text-gray-400 dark:text-gray-500">{t("select")}</option>
                       {ownershipTypes.map((type) => (
 
-                        <option 
-                          key={type.id} 
+                        <option
+                          key={type.id}
                           value={type.id}
                           className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
                         >
@@ -363,28 +363,27 @@ export default function RegisterPage() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="location" className="text-cyrillic">{t("location")} <span className="text-destructive">*</span></Label>
-                    <textarea
-                      id="location"
-                      rows={3}
-                      {...register('location', {
-                        onChange: (e) => {
-                          e.target.value = e.target.value.replace(/[^А-Яа-яӨөҮүЁё0-9\s.,'-]/g, '');
-                        },
-                      })}
-                      placeholder={t("location_hint")}
-                      className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 ${errors.location ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                    />
+                  <textarea
+                    id="location"
+                    rows={3}
+                    {...register('location', {
+                      onChange: (e) => {
+                        e.target.value = e.target.value.replace(/[^А-Яа-яӨөҮүЁё0-9\s.,'-]/g, '');
+                      },
+                    })}
+                    placeholder={t("location_hint")}
+                    className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500 ${errors.location ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                  />
                   {errors.location && <p className="text-xs text-destructive">{errors.location.message}</p>}
                 </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="phone" className="text-cyrillic">{t("phone_number")} <span className="text-destructive">*</span></Label>
                   <div
-                    className={`flex items-center rounded-lg border bg-white shadow-none outline-none transition focus-within:ring-2 dark:border-gray-600 dark:bg-gray-700 ${
-                      errors.phone
+                    className={`flex items-center rounded-lg border bg-white shadow-none outline-none transition focus-within:ring-2 dark:border-gray-600 dark:bg-gray-700 ${errors.phone
                         ? 'border-destructive focus-within:ring-destructive'
                         : 'border-gray-300 focus-within:border-transparent focus-within:ring-primary'
-                    }`}
+                      }`}
                   >
                     <span className="shrink-0 pl-4 text-sm font-medium text-gray-900 dark:text-gray-100 select-none">+976</span>
                     <Controller
@@ -407,7 +406,7 @@ export default function RegisterPage() {
                       )}
                     />
                   </div>
-                  
+
                   {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
                 </div>
 
@@ -423,8 +422,8 @@ export default function RegisterPage() {
                   {errors.mail && <p className="text-xs text-destructive">{errors.mail.message}</p>}
                 </div>
 
-                <div className="flex gap-4">
-                  <Button variant="outline" className="w-full" asChild>
+                <div className="flex gap-4 pt-4">
+                  <Button variant="outline" className="w-full h-10 rounded-lg" asChild>
                     <Link href="/auth/login" className="flex items-center">
                       <FaArrowLeft className="mr-2 h-4 w-4" /> {t("back")}
                     </Link>
@@ -433,7 +432,7 @@ export default function RegisterPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full"
+                    className="w-full h-10 rounded-lg"
                   >
                     <div className="flex items-center">
                       {t("next")} <FaArrowRight className="ml-2 h-4 w-4" />

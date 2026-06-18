@@ -288,46 +288,46 @@ export const schemaHotelRegistration = z.object({
 export const schemaHotelRegistration2 = z.object({
   register: z
     .string()
-    .min(1, { message: "РД-оо оруулна уу" })
+    .min(1, { message: "РД-аа оруулна уу." })
     .refine((val) => /^\d{7}$/.test((val || '').trim()), {
       message: "РД буруу байна. 7 оронтой тоо байх ёстой.",
     }),
   CompanyName: z
     .string()
-    .min(1, { message: "ААН-н нэрийг оруулна уу?" }),
+    .min(1, { message: "ААН-н нэрийг оруулна уу." }),
   PropertyName: z
     .string()
-    .min(3, { message: "Буудлын нэрийг оруулна уу? (кирил)" })
+    .min(3, { message: "Буудлын нэрийг оруулна уу. (кирилл)" })
     .regex(/^[А-Яа-яӨөҮүЁё0-9\s.,'-]+$/, {
       message: "Зөвхөн кирилл үсэг ашиглана уу. Латин үсэг оруулсан байна.",
     }),
   PropertyName_en: z
     .string()
-    .min(3, { message: "Буудлын англи нэрийг оруулна уу? (латин)" })
+    .min(3, { message: "Буудлын англи нэрийг оруулна уу. (латин)" })
     .regex(/^[A-Za-z0-9\s.,'-]+$/, {
       message: "Зөвхөн латин үсэг ашиглана уу. Кирилл үсэг оруулсан байна.",
     }),
   ownership_type: z
     .coerce.number()
-    .min(1, { message: "Эзэмшлийн төрлийг сонгоно уу" }),
+    .min(1, { message: "Эзэмшлийн төрлийг сонгоно уу." }),
   location: z
     .string()
-    .min(20, { message: "Дэлгэрэнгүй хаягыг оруулна уу? (кирил)" })
+    .min(20, { message: "Дэлгэрэнгүй хаягийг 20-иос дээш тэмдэгтээр оруулна уу. (кирилл)" })
     .regex(/^[А-Яа-яӨөҮүЁё0-9\s.,'-]+$/, {
       message: "Зөвхөн кирилл үсэг ашиглана уу. Латин үсэг оруулсан байна.",
     }),
   property_type: z
     .string()
-    .min(1, { message: "Буудлын төрлийг сонгоно уу?" }),
+    .min(1, { message: "Буудлын төрлийг сонгоно уу." }),
   phone: z
     .string()
-    .min(1, { message: "Гар утасны дугаарыг оруулна уу?" })
+    .min(1, { message: "Гар утасны дугаарыг оруулна уу." })
     .refine((val) => (val || '').replace(/\s/g, '').length >= 8, {
-      message: "Гар утасны дугаарыг оруулна уу?",
+      message: "Гар утасны дугаарыг оруулна уу.",
     }),
   mail: z
     .string()
-    .email({ message: "И-мэйл хаяг буруу байна" }),
+    .email({ message: "И-мэйл хаяг буруу байна." }),
 });
 
 
@@ -348,12 +348,12 @@ export const schemaHotelSteps1 = z
       }),
 
     start_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
-      message: "Эхлэх огноо буруу байна",
+      message: "Эхлэх огноо буруу байна.",
     }),
 
     star_rating: z
       .string()
-      .min(1, { message: "Одны зэрэглэл сонгоно уу" }),
+      .min(1, { message: "Одны зэрэглэл сонгоно уу." }),
 
     part_of_group: z.coerce.boolean(),
 

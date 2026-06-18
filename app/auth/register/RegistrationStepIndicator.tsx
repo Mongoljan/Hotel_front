@@ -23,7 +23,7 @@ export default function RegistrationStepIndicator({ currentStep }: RegistrationS
   const stepNames = [t('hotelInfo'), t('employeeInfo')];
 
   return (
-    <div className="w-full mb-6">
+    <div className="w-full mb-10">
       <div className="flex items-start justify-between gap-1 sm:gap-2">
         {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
           const stepNumber = i + 1;
