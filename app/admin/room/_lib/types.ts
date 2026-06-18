@@ -31,12 +31,24 @@ export interface AllData {
   free_toiletries: LookupItem[];
   food_and_drink: LookupItem[];
   outdoor_and_view: LookupItem[];
+  /** Gap B — present when backend adds room_image_types to /api/all-data/ */
+  room_image_types?: RoomImageTypeLookup[];
+}
+
+export interface RoomImageTypeLookup {
+  id: number;
+  name_en: string;
+  name_mn: string;
 }
 
 export interface RoomImage {
   id: number;
   image: string;
   description: string;
+  /** Gap B — image category (e.g. bedroom/bathroom/kitchen). Null until backend adds this field. */
+  image_type?: number | null;
+  /** Not in room API yet — profile photo for the room group gallery */
+  is_profile?: boolean;
 }
 
 export interface BedSize {
@@ -63,6 +75,8 @@ export interface RoomData {
   room_type_name?: string;
   room_category: number;
   room_category_name?: string;
+  /** Gap A — short internal name (e.g. "DD"). Null until backend adds this field. */
+  room_short_name?: string | null;
   room_size: string;
   /** Bed configuration for the group (was bed_details/room_beds in old API) */
   group_beds: RoomBed[];

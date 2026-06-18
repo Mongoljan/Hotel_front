@@ -179,7 +179,7 @@ export function NavMain({ items, sections, dashboardNav }: NavMainProps) {
       {/* Grouped sections */}
       {useSections.map((section) => (
         <SidebarGroup key={section.i18nKey}>
-          <SidebarGroupLabel className="text-xs text-muted-foreground uppercase tracking-wider truncate">
+          <SidebarGroupLabel className="text-sm text-muted-foreground uppercase tracking-wider truncate">
             {tNav(section.i18nKey)}
           </SidebarGroupLabel>
           <SidebarMenu>

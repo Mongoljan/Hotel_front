@@ -69,7 +69,7 @@ export default function LanguageSwitcher() {
           >
             <span className="text-sm">{language.name}</span>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">
+              <span className="text-sm font-medium text-muted-foreground">
                 {language.code.toUpperCase()}
               </span>
               {locale === language.code && (

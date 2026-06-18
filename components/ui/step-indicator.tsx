@@ -45,20 +45,20 @@ export function StepIndicator({ steps, currentStep, className }: StepIndicatorPr
                 </div>
               )}
 
-              <div className="relative flex h-6 w-6 items-center justify-center">
+              <div className="relative flex h-7 w-7 items-center justify-center">
                 {step.id < currentStep ? (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary">
-                    <Check className="h-3 w-3 text-primary-foreground" />
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
+                    <Check className="h-4 w-4 text-primary-foreground" />
                   </div>
                 ) : step.id === currentStep ? (
                   <div
-                    className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary bg-background"
+                    className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary bg-background"
                     aria-current="step"
                   >
                     <div className="h-2 w-2 rounded-full bg-primary" />
                   </div>
                 ) : (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-muted-foreground/20 bg-background">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-muted-foreground/20 bg-background">
                     <div className="h-2 w-2 rounded-full bg-transparent" />
                   </div>
                 )}
@@ -77,7 +77,7 @@ export function StepIndicator({ steps, currentStep, className }: StepIndicatorPr
                   {step.description && (
                     <span
                       className={cn(
-                        "text-xs",
+                        "text-sm",
                         step.id <= currentStep
                           ? "text-muted-foreground"
                           : "text-muted-foreground/60"

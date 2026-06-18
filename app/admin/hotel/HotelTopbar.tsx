@@ -106,7 +106,7 @@ export function HotelTopbar() {
               <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
                 <span>Property onboarding</span>
                 <span className="hidden h-1.5 w-1.5 rounded-full bg-muted-foreground/50 md:inline-flex" />
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground/80">
+                <span className="flex items-center gap-1 text-sm text-muted-foreground/80">
                   <IconSparkles className="h-3 w-3" />
                   {completedSteps} / {steps.length} алхам биелсэн
                 </span>
@@ -124,7 +124,7 @@ export function HotelTopbar() {
                   {statusBadge.label}
                 </Badge>
                 {hotelInfo?.groupName ? (
-                  <Badge variant="outline" className="rounded-full border-dashed px-3 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="rounded-full border-dashed px-3 text-sm text-muted-foreground">
                     {hotelInfo.groupName}
                   </Badge>
                 ) : null}
@@ -151,7 +151,7 @@ export function HotelTopbar() {
                     <Icon className="h-4 w-4" />
                     <div className="flex flex-col items-start">
                       <span className="font-medium leading-none">{option.label}</span>
-                      <span className="text-[11px] text-muted-foreground/80">{option.description}</span>
+                      <span className="text-sm text-muted-foreground/80">{option.description}</span>
                     </div>
                   </Button>
                 );
@@ -170,22 +170,22 @@ export function HotelTopbar() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold text-foreground">{currentStep?.label ?? 'Алхам тодорхойгүй'}</span>
                     {currentStep ? (
-                      <Badge variant="outline" className="rounded-full border-dashed px-2 text-[11px] text-muted-foreground">
+                      <Badge variant="outline" className="rounded-full border-dashed px-2 text-sm text-muted-foreground">
                         Алхам {currentStep.index} / {steps.length}
                       </Badge>
                     ) : null}
                   </div>
                   {currentStep ? (
-                    <p className="max-w-xl text-xs text-muted-foreground">{currentStep.description}</p>
+                    <p className="max-w-xl text-sm text-muted-foreground">{currentStep.description}</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground">Явцын мэдээлэл дутуу байна.</p>
+                    <p className="text-sm text-muted-foreground">Явцын мэдээлэл дутуу байна.</p>
                   )}
                 </div>
               </div>
 
               <div className="flex-1 min-w-[220px]">
                 <Progress value={progress} className="h-2 rounded-full" />
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {completedSteps} алхам амжилттай биелсэн.
                 </p>
               </div>
@@ -210,7 +210,7 @@ export function HotelTopbar() {
                     Шинэчилсэн цаг: {syncedLabel}
                   </TooltipContent>
                 </Tooltip>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <IconInfoCircle className="h-3.5 w-3.5" />
                   <span>
                     {isRefreshing || loading ? 'Мэдээллийг шинэчилж байна…' : `Сүүлд: ${syncedLabel}`}

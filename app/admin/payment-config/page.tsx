@@ -475,7 +475,7 @@ export default function PaymentConfigPage() {
               )}
               <div>
                 <div className="font-medium text-sm">{config.bank?.name}</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   {config.account_number && `${config.account_number.slice(0, 4)}****${config.account_number.slice(-4)}`} • МНТ
                 </div>
               </div>
@@ -558,7 +558,7 @@ export default function PaymentConfigPage() {
               )}
               <div>
                 <div className="font-medium text-sm">{`${config.bank?.name || 'Банк'} - ПОС Терминал${config.terminal_id ? ` #${config.terminal_id}` : ''}`}</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   {config.created_at ? `холбогдсон ${new Date(config.created_at).toISOString().slice(0, 10)}` : 'холбогдсон огноо бүртгээгүй'}
                 </div>
               </div>
@@ -633,7 +633,7 @@ export default function PaymentConfigPage() {
                   className={isActive ? "data-[state=checked]:bg-primary" : ""}
                 />
               </div>
-              <p className="text-xs text-muted-foreground mb-2 leading-tight">
+              <p className="text-sm text-muted-foreground mb-2 leading-tight">
                 {description}
               </p>
               <Badge
@@ -694,7 +694,7 @@ export default function PaymentConfigPage() {
             <h3 className="text-base font-semibold leading-tight">
               {sc.id}. {sc.title}
             </h3>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
               {sc.description}
             </p>
           </div>
@@ -711,7 +711,7 @@ export default function PaymentConfigPage() {
         <SectionHeader paymentType="bank_account" />
         <div className="flex-1 space-y-2">
           {configs.length === 0 ? (
-            <div className="text-center text-xs text-muted-foreground py-6">
+            <div className="text-center text-sm text-muted-foreground py-6">
               Одоогоор данс бүртгээгүй байна
             </div>
           ) : configs.map((config) => (
@@ -723,7 +723,7 @@ export default function PaymentConfigPage() {
                 <div className="text-xs font-semibold text-foreground truncate uppercase">
                   {config.bank?.name || 'Банк'}
                 </div>
-                <div className="text-xs text-muted-foreground truncate">
+                <div className="text-sm text-muted-foreground truncate">
                   {config.account_number
                     ? `${config.account_number.slice(0, 4)}******${config.account_number.slice(-4)}`
                     : '••••••'}{' '}
@@ -798,7 +798,7 @@ export default function PaymentConfigPage() {
         />
         <div className="flex-1 space-y-2">
           {configs.length === 0 ? (
-            <div className="text-center text-xs text-muted-foreground py-6">
+            <div className="text-center text-sm text-muted-foreground py-6">
               Терминал бүртгээгүй байна
             </div>
           ) : configs.slice(0, 2).map((config) => (
@@ -814,7 +814,7 @@ export default function PaymentConfigPage() {
                   <div className="text-sm font-medium truncate">
                     {`${config.bank?.name || 'Банк'} - ПОС Терминал${config.terminal_id ? ` #${config.terminal_id}` : ''}`}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate uppercase tracking-wide">
+                  <div className="text-sm text-muted-foreground truncate uppercase tracking-wide">
                     {config.created_at
                       ? `Холбогдсон: ${new Date(config.created_at).toISOString().slice(0, 10)}`
                       : 'Холбогдсон огноо бүртгээгүй'}
@@ -824,7 +824,7 @@ export default function PaymentConfigPage() {
               <div className="flex items-center gap-1 shrink-0">
                 <Badge
                   className={cn(
-                    'text-[10px] uppercase font-semibold',
+                    'text-xs uppercase font-semibold',
                     config.is_active
                       ? 'bg-primary/10 text-primary hover:bg-primary/10'
                       : 'bg-muted text-muted-foreground hover:bg-muted'
@@ -861,7 +861,7 @@ export default function PaymentConfigPage() {
             <button
               type="button"
               onClick={() => setBankCardPanel('hub')}
-              className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               Бүгдийг харах →
             </button>
@@ -878,7 +878,7 @@ export default function PaymentConfigPage() {
         <SectionHeader paymentType="payment_solution" />
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
           {solutionTypes.length === 0 ? (
-            <div className="text-xs text-muted-foreground py-4">
+            <div className="text-sm text-muted-foreground py-4">
               Төлбөрийн шийдэл уншиж байна…
             </div>
           ) : solutionTypes.map((solution) => {
@@ -896,11 +896,11 @@ export default function PaymentConfigPage() {
                 <div className="inline-flex items-center px-2 py-0.5 rounded bg-background border border-border text-xs font-bold mb-2">
                   {solution.name}
                 </div>
-                <p className="text-xs text-muted-foreground leading-snug min-h-[48px] mb-3">
+                <p className="text-sm text-muted-foreground leading-snug min-h-[48px] mb-3">
                   {description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     төлөв: {isActive ? 'идэвхтэй' : 'идэвхгүй'}
                   </span>
                   <Switch
@@ -935,7 +935,7 @@ export default function PaymentConfigPage() {
               ) : (
                 <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
               )}
-              <span className="text-xs text-muted-foreground truncate">
+              <span className="text-sm text-muted-foreground truncate">
                 төлөв:{' '}
                 <span className={cn('font-medium', isActive ? 'text-primary' : 'text-foreground')}>
                   {isActive ? 'идэвхтэй' : 'идэвхгүй'}

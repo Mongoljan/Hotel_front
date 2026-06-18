@@ -67,7 +67,7 @@ export function DashboardHero({
       <div className="relative flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-10">
         <div className="space-y-4 max-w-2xl">
           {eyebrow ? (
-            <Badge variant="outline" className="bg-background/70 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <Badge variant="outline" className="bg-background/70 text-sm font-medium uppercase tracking-wide text-muted-foreground">
               {eyebrow}
             </Badge>
           ) : null}
@@ -136,12 +136,12 @@ export function DashboardStats({
             <CardContent className="space-y-2">
               <p className="text-2xl font-semibold text-foreground">{stat.value}</p>
               {stat.helper ? (
-                <p className="text-xs text-muted-foreground">{stat.helper}</p>
+                <p className="text-sm text-muted-foreground">{stat.helper}</p>
               ) : null}
               {stat.change ? (
                 <p
                   className={cn(
-                    "text-xs font-medium",
+                    "text-sm font-medium",
                     stat.change.trend === "up" && "text-emerald-500",
                     stat.change.trend === "down" && "text-rose-500",
                     stat.change.trend === "neutral" && "text-muted-foreground"
@@ -212,18 +212,18 @@ export function DashboardPanel({
       {(title || description) && (
         <CardHeader>
           {title ? (
-            <CardTitle className="text-sm font-semibold text-foreground">
+            <CardTitle className="text-base font-semibold text-foreground">
               {title}
             </CardTitle>
           ) : null}
           {description ? (
-            <p className="text-xs text-muted-foreground">{description}</p>
+            <p className="text-sm text-muted-foreground">{description}</p>
           ) : null}
         </CardHeader>
       )}
       <CardContent className="space-y-4">
         {children}
-        {footer ? <div className="pt-2 text-xs text-muted-foreground">{footer}</div> : null}
+        {footer ? <div className="pt-2 text-sm text-muted-foreground">{footer}</div> : null}
       </CardContent>
     </Card>
   );

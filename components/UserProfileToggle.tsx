@@ -94,14 +94,14 @@ export default function UserProfileToggle({ userApproved, hotelApproved = false 
             
             {user.position && (
               <div>
-                <p className="text-xs text-muted-foreground">{t('position')}</p>
+                <p className="text-sm text-muted-foreground">{t('position')}</p>
                 <p className="text-sm">{formatPosition(user.position as PositionValue, locale)}</p>
               </div>
             )}
 
             {user.user_type !== undefined && (
               <div>
-                <p className="text-xs text-muted-foreground">{t('userLevel')}</p>
+                <p className="text-sm text-muted-foreground">{t('userLevel')}</p>
                 <p className="text-sm font-medium text-primary">{getUserTypeName(user.user_type)}</p>
               </div>
             )}
@@ -113,7 +113,7 @@ export default function UserProfileToggle({ userApproved, hotelApproved = false 
         {/* Approval Status Section */}
         <DropdownMenuLabel className="font-normal">
           <div className="space-y-3">
-            <div className="text-xs font-medium text-muted-foreground mb-2">{t('status')}</div>
+            <div className="text-sm font-medium text-muted-foreground mb-2">{t('status')}</div>
 
             {/* User Approval Status */}
             <div className="flex items-center justify-between">
@@ -167,7 +167,7 @@ export default function UserProfileToggle({ userApproved, hotelApproved = false 
         {user.contact_number && (
           <>
             <DropdownMenuItem className="flex-col items-start">
-              <div className="text-xs text-muted-foreground">{t('phone')}</div>
+              <div className="text-sm text-muted-foreground">{t('phone')}</div>
               <div className="text-sm">{user.contact_number}</div>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

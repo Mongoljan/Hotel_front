@@ -41,7 +41,7 @@ export default function RegistrationStepIndicator({ currentStep }: RegistrationS
           );
 
           const labelClass = cn(
-            'mt-2 text-[10px] sm:text-xs text-center leading-tight px-1 line-clamp-2',
+            'mt-2 text-sm text-center leading-tight px-1 line-clamp-2',
             isActive ? 'text-foreground font-semibold' : isCompleted ? 'text-foreground font-medium' : 'text-muted-foreground'
           );
 

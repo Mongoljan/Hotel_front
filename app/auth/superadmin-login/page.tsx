@@ -179,7 +179,7 @@ export default function SuperAdminLoginPage() {
 
           {/* Footer */}
           <div className="text-center">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {tFooter('copyright', { year })}
             </p>
           </div>

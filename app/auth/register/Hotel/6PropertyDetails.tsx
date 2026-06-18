@@ -284,7 +284,7 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
 
             {unselectedItems.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                   Санал болгох({unselectedItems.length})
                 </p>
                 <div className="flex flex-wrap gap-2">

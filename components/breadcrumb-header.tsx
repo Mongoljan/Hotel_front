@@ -193,10 +193,10 @@ export function BreadcrumbHeader() {
                 <Button
                   type="button"
                   onClick={() => setNewBookingOpen(true)}
-                  className="h-9 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground px-4 text-sm font-medium shadow-sm"
+                  className="h-9 rounded-full bg-primary-gradient hover:brightness-[0.96] text-primary-foreground px-4 text-sm font-medium shadow-sm"
                 >
                   <span className="mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary-foreground/25">
-                    <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                    <Plus className="h-4 w-4" strokeWidth={2.5} />
                   </span>
                   {tNav('newBooking')}
                 </Button>
@@ -218,7 +218,7 @@ export function BreadcrumbHeader() {
                 <div className="flex items-center gap-1">
                   <div
                     className={cn(
-                      'flex items-center gap-1.5 px-2 py-1.5 rounded-l-md text-xs font-medium',
+                      'flex items-center gap-1.5 px-2 py-1.5 rounded-l-md text-sm font-medium',
                       isSessionCritical
                         ? 'bg-destructive/10 text-destructive animate-pulse'
                         : isSessionLow
@@ -226,7 +226,7 @@ export function BreadcrumbHeader() {
                           : 'bg-muted/50 text-muted-foreground'
                     )}
                   >
-                    <Clock className="h-3.5 w-3.5" />
+                    <Clock className="h-4 w-4" />
                     <span className="hidden sm:inline tabular-nums">{formatTime(sessionTimeRemaining)}</span>
                     <span className="sm:hidden tabular-nums">{Math.floor(sessionTimeRemaining / 60)}м</span>
                   </div>
@@ -237,7 +237,7 @@ export function BreadcrumbHeader() {
                         onClick={handleRefresh}
                         disabled={isRefreshing}
                         className={cn(
-                          'flex items-center justify-center px-2 py-1.5 rounded-r-md text-xs font-medium transition-colors',
+                          'flex items-center justify-center px-2 py-1.5 rounded-r-md text-sm font-medium transition-colors',
                           isSessionCritical
                             ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
                             : isSessionLow
@@ -246,7 +246,7 @@ export function BreadcrumbHeader() {
                           isRefreshing && 'cursor-not-allowed opacity-70'
                         )}
                       >
-                        <RefreshCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />
+                        <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
@@ -257,9 +257,9 @@ export function BreadcrumbHeader() {
               </TooltipProvider>
             )}
 
-            {!showHotelFullTopbar && <ThemeSwitcher />}
-            {!showHotelFullTopbar && <LanguageSwitcher />}
-            {!showHotelFullTopbar && <Separator orientation="vertical" className="hidden h-5 md:block" />}
+            <ThemeSwitcher />
+            <LanguageSwitcher />
+            <Separator orientation="vertical" className="hidden h-5 md:block" />
             <UserProfileToggle
               userApproved={user?.approved || false}
               hotelApproved={user?.hotelApproved || false}

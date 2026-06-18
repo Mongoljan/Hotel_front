@@ -17,7 +17,12 @@ export async function getClientBackendToken(): Promise<string | null> {
     }
     return null;
   } catch (error) {
-    console.error('Error getting backend token:', error);
+    const isNetworkError =
+      error instanceof TypeError &&
+      (error.message === "Failed to fetch" || error.message.includes("NetworkError"));
+    if (!isNetworkError) {
+      console.error("Error getting backend token:", error);
+    }
     return null;
   }
 }

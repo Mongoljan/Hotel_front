@@ -226,7 +226,7 @@ export function LanguageMultiSelect({
 
           <div className="flex-1 overflow-y-auto px-4 pb-2 space-y-4 min-h-0">
             <section>
-              <p className="text-xs font-semibold text-muted-foreground mb-2">
+              <p className="text-sm font-semibold text-muted-foreground mb-2">
                 {labels.selected} ({selectedLanguages.length})
               </p>
               {filteredSelected.length === 0 ? (
@@ -249,7 +249,7 @@ export function LanguageMultiSelect({
             </section>
 
             <section>
-              <p className="text-xs font-semibold text-muted-foreground mb-2">
+              <p className="text-sm font-semibold text-muted-foreground mb-2">
                 {labels.available} ({availableLanguages.length})
               </p>
               {filteredAvailable.length === 0 ? (

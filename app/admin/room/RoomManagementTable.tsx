@@ -90,9 +90,9 @@ const CapacityCell = memo(function CapacityCell({ adults, kids }: { adults?: num
 const HousekeepingChip = memo(function HousekeepingChip({ status, label }: { status?: string; label: (status: string) => string }) {
   if (!status) return <Badge variant="secondary">{label("unknown")}</Badge>;
   const variants: Record<string, string> = {
-    clean: "bg-success/20 text-success-600",
-    needs_service: "bg-warning/20 text-warning-700",
-    occupied: "bg-danger/20 text-danger-600",
+    clean: "bg-status-success-muted text-status-success",
+    needs_service: "bg-status-warning-muted text-status-warning",
+    occupied: "bg-red/10 text-red",
   };
   return (
     <Badge className={cn("capitalize", variants[status] ?? "bg-muted/70 text-muted-foreground")}>{label(status)}</Badge>
@@ -196,7 +196,7 @@ export function RoomManagementTable({ rooms, lookups, onEdit, onDeleted, loading
                 <Image src={imageUrl} alt={params.row.typeName} fill className="object-cover" />
               </div>
             ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 text-xs text-muted-foreground">
+              <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 text-sm text-muted-foreground">
                 {t("empty.noImage")}
               </div>
             )}
@@ -221,7 +221,7 @@ export function RoomManagementTable({ rooms, lookups, onEdit, onDeleted, loading
               {params.row.sizeLabel ? ` • ${params.row.sizeLabel}` : ""}
             </div>
             {!isParent && params.row.viewDescription ? (
-              <div className="text-xs text-muted-foreground">{params.row.viewDescription}</div>
+              <div className="text-sm text-muted-foreground">{params.row.viewDescription}</div>
             ) : null}
           </div>
         );

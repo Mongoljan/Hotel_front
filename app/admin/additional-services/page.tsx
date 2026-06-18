@@ -713,7 +713,7 @@ function ServiceCard({ service, onEdit, onDelete, formatPrice }: ServiceCardProp
         <h3 className="text-sm font-medium text-foreground truncate">{service.name}</h3>
         <p className="text-sm text-muted-foreground mt-0.5">{formatPrice(service.price)}</p>
         {service.barcode && (
-          <p className="text-xs text-muted-foreground mt-1">Code: {service.barcode}</p>
+          <p className="text-sm text-muted-foreground mt-1">Code: {service.barcode}</p>
         )}
       </div>
       

@@ -108,7 +108,7 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
       <div className="space-y-3">
         <Label className="text-base font-medium">Банк сонгох</Label>
         {banksLoading ? (
-          <p className="text-xs text-muted-foreground">Банкны жагсаалт уншиж байна…</p>
+          <p className="text-sm text-muted-foreground">Банкны жагсаалт уншиж байна…</p>
         ) : (
         <div className="grid grid-cols-3 gap-3">
           {apiBanks.map((bank) => (
@@ -134,7 +134,7 @@ function NewTerminalForm({ onSave, onCancel }: NewTerminalFormProps) {
                   <span>{bank.name.charAt(0)}</span>
                 )}
               </div>
-              <span className="text-[10px] text-center leading-tight line-clamp-2">{bank.name}</span>
+              <span className="text-xs text-center leading-tight line-clamp-2">{bank.name}</span>
             </Button>
           ))}
         </div>
@@ -355,7 +355,7 @@ export function BankCardPOSConfigPanel({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium text-foreground">Холбогдсон ПОС терминалууд</h3>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {terminals.filter(t => t.status === 'online').length} идэвхтэй төхөөрөмж
                     </p>
                   </div>
@@ -377,7 +377,7 @@ export function BankCardPOSConfigPanel({
                             </div>
                             <div>
                               <div className="font-medium text-sm">{terminal.bankName}</div>
-                              <div className="text-xs text-muted-foreground">
+                              <div className="text-sm text-muted-foreground">
                                 {terminal.terminalNumber}
                                 {terminal.lastConnection && ` • холбогдсон ${terminal.lastConnection}`}
                               </div>

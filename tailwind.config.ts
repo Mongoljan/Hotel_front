@@ -92,6 +92,10 @@ const config: Config = {
   				DEFAULT: 'hsl(var(--primary))',
   				foreground: 'hsl(var(--primary-foreground))'
   			},
+				'theme-secondary': {
+					DEFAULT: 'hsl(var(--theme-secondary))',
+					foreground: 'hsl(var(--theme-secondary-foreground))'
+				},
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
@@ -158,7 +162,10 @@ const config: Config = {
 		backgroundImage: {
 			'brand-gradient': 'var(--brand-gradient)',
 			'brand-radial': 'var(--brand-radial)',
-			'brand-noise': 'var(--brand-noise)'
+			'brand-noise': 'var(--brand-noise)',
+			'primary-gradient': 'var(--primary-gradient)',
+			'theme-secondary-gradient': 'var(--theme-secondary-gradient)',
+			'surface-gradient': 'var(--surface-gradient)',
 		},
 		spacing: {
 			'18': '4.5rem',

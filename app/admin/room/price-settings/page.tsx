@@ -300,8 +300,8 @@ export default function PriceSettingsPage() {
 
       {/* Show info when all rooms have price settings */}
       {!loading && roomOptions.length > 0 && availableRoomOptions.length === 0 && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-          <p className="text-sm text-blue-800">
+        <div className="rounded-lg border border-primary/30 bg-primary/10 p-3">
+          <p className="text-sm text-primary">
             <strong>Мэдээлэл:</strong> Бүх өрөөний үнийн тохиргоо хийгдсэн байна. Шинэ тохиргоо нэмэхийн тулд эхлээд шинэ өрөө нэмэх эсвэл одоогийн тохиргоог устгана уу.
           </p>
         </div>
@@ -309,8 +309,8 @@ export default function PriceSettingsPage() {
 
       {/* Show info when there are available room options */}
       {!loading && availableRoomOptions.length > 0 && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-          <p className="text-sm text-green-800">
+        <div className="rounded-lg border border-status-success/30 bg-status-success-muted p-3">
+          <p className="text-sm text-status-success">
             <strong>{availableRoomOptions.length}</strong> өрөөний бүлэг үнийн тохиргоо хийх боломжтой байна
           </p>
         </div>
@@ -353,7 +353,7 @@ export default function PriceSettingsPage() {
                       </TableCell>
                       <TableCell className="text-center">
                         <span className={`font-semibold ${
-                          setting.adjustment_type === 'ADD' ? 'text-green-600' : 'text-red-600'
+                          setting.adjustment_type === 'ADD' ? 'text-status-success' : 'text-red'
                         }`}>
                           {getAdjustmentLabel(setting.adjustment_type, setting.value_type, setting.value)}
                         </span>
@@ -361,7 +361,7 @@ export default function PriceSettingsPage() {
                       <TableCell className="text-center">
                         <Badge
                           variant={setting.is_active ? 'default' : 'secondary'}
-                          className={setting.is_active ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}
+                          className={setting.is_active ? 'bg-status-success-muted text-status-success hover:bg-status-success-muted' : ''}
                         >
                           {setting.is_active ? 'Идэвхтэй' : 'Идэвхгүй'}
                         </Badge>

@@ -14,7 +14,7 @@
     /* ─────────────────────────────────────────────────────────────────────────
        CORE COLORS - Neutral palette (stays consistent across themes)
        ─────────────────────────────────────────────────────────────────────── */
-    --background: 210 20% 98%;
+    --background: 210 45% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -30,9 +30,16 @@
     /* ─────────────────────────────────────────────────────────────────────────
        ACCENT COLORS - Changed by theme switcher (default: near-black)
        ─────────────────────────────────────────────────────────────────────── */
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --ring: 240 5.9% 10%;
+    --primary: 204 90% 54%;
+    --primary-end: 212 95% 62%;
+    --primary-foreground: 0 0% 100%;
+    --primary-gradient: linear-gradient(135deg, hsl(204 90% 54%) 0%, hsl(212 95% 62%) 100%);
+    --theme-secondary: 18 88% 62%;
+    --theme-secondary-end: 12 82% 55%;
+    --theme-secondary-foreground: 0 0% 100%;
+    --theme-secondary-gradient: linear-gradient(135deg, hsl(18 88% 62%) 0%, hsl(12 82% 55%) 100%);
+    --surface-gradient: radial-gradient(ellipse 130% 80% at 50% -20%, hsl(204 90% 54% / 0.14) 0%, transparent 65%);
+    --ring: 204 90% 54%;
     
     /* ─────────────────────────────────────────────────────────────────────────
        SEMANTIC STATUS COLORS - Consistent across all themes
@@ -55,7 +62,7 @@
        ─────────────────────────────────────────────────────────────────────── */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --input-focus: 240 5.9% 10%;
+    --input-focus: 204 90% 54%;
     
     /* ─────────────────────────────────────────────────────────────────────────
        RADIUS SCALE - Use these for consistent rounded corners
@@ -82,17 +89,26 @@
        ─────────────────────────────────────────────────────────────────────── */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary: 204 90% 54%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 96%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 240 5.9% 10%;
+    --sidebar-ring: 204 90% 54%;
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       TYPOGRAPHY SCALE
+       Body 14px · Section 16px · Page title 18px · Compact 12px (sparingly)
+       ─────────────────────────────────────────────────────────────────────── */
+    --font-size-compact: 0.75rem;
+    --font-size-body: 0.875rem;
+    --font-size-section: 1rem;
+    --font-size-page: 1.125rem;
 
     /* ─────────────────────────────────────────────────────────────────────────
        CHART COLORS
        ─────────────────────────────────────────────────────────────────────── */
-    --chart-1: 240 5.9% 10%;
+    --chart-1: 204 90% 54%;
     --chart-2: 160 84% 39%;
     --chart-3: 38 92% 50%;
     --chart-4: 280 65% 60%;
@@ -118,9 +134,16 @@
     --accent-foreground: 210 40% 98%;
     
     /* Accent colors - dark mode (changed by theme) */
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --ring: 0 0% 98%;
+    --primary: 204 85% 62%;
+    --primary-end: 210 88% 68%;
+    --primary-foreground: 204 40% 12%;
+    --primary-gradient: linear-gradient(135deg, hsl(204 85% 62%) 0%, hsl(210 88% 68%) 100%);
+    --theme-secondary: 18 82% 66%;
+    --theme-secondary-end: 14 78% 58%;
+    --theme-secondary-foreground: 0 0% 100%;
+    --theme-secondary-gradient: linear-gradient(135deg, hsl(18 82% 66%) 0%, hsl(14 78% 58%) 100%);
+    --surface-gradient: radial-gradient(ellipse 130% 80% at 50% -20%, hsl(204 85% 62% / 0.18) 0%, transparent 65%);
+    --ring: 204 85% 62%;
     
     /* Semantic status colors - dark mode */
     --success: 142 76% 45%;
@@ -139,7 +162,7 @@
     /* Borders & inputs - dark mode */
     --border: 217 33% 20%;
     --input: 217 33% 20%;
-    --input-focus: 0 0% 98%;
+    --input-focus: 204 85% 62%;
     
     /* Shadows - dark mode (use colored shadows) */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -151,12 +174,12 @@
     /* Sidebar - dark mode */
     --sidebar-background: 222 30% 11%;
     --sidebar-foreground: 210 35% 92%;
-    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary: 204 85% 62%;
     --sidebar-primary-foreground: 240 5.9% 10%;
     --sidebar-accent: 220 22% 18%;
     --sidebar-accent-foreground: 210 40% 96%;
     --sidebar-border: 220 18% 24%;
-    --sidebar-ring: 0 0% 98%;
+    --sidebar-ring: 204 85% 62%;
   }
 
   * {
@@ -168,9 +191,13 @@
     z-index: 0;
     min-height: 100vh;
     background-color: hsl(var(--background));
+    background-image: var(--surface-gradient);
+    background-attachment: fixed;
     color: hsl(var(--foreground));
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-size: var(--font-size-body);
+    line-height: 1.25rem;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -182,6 +209,35 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer components {
+  /* Typography scale — prefer these over ad-hoc text-xs / text-[11px] */
+  .type-body {
+    @apply text-sm;
+  }
+
+  .type-section-title {
+    @apply text-base font-semibold tracking-wide;
+  }
+
+  .type-page-title {
+    @apply text-lg font-semibold;
+  }
+
+  .type-compact {
+    @apply text-xs;
+  }
+
+  .icon-inline {
+    @apply h-4 w-4 shrink-0;
+  }
+
+  .icon-section {
+    @apply h-5 w-5 shrink-0;
+  }
+
+  .icon-page {
+    @apply h-5 w-5 shrink-0;
+  }
+
   /* Typography */
   .text-cyrillic {
     font-family: 'PT Sans', 'Noto Sans', system-ui, sans-serif;
@@ -273,7 +329,33 @@
   
   /* Gradient text */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70;
+    @apply bg-clip-text text-transparent;
+    background-image: var(--primary-gradient);
+  }
+
+  /* Theme accent gradients — subtle 135° shifts for CTAs & progress */
+  .bg-primary-gradient {
+    background-color: hsl(var(--primary));
+    background-image: var(--primary-gradient);
+    color: hsl(var(--primary-foreground));
+  }
+
+  .bg-primary-gradient:hover {
+    filter: brightness(0.96);
+  }
+
+  .bg-theme-secondary-gradient {
+    background-color: hsl(var(--theme-secondary));
+    background-image: var(--theme-secondary-gradient);
+    color: hsl(var(--theme-secondary-foreground));
+  }
+
+  .bg-theme-secondary-gradient:hover {
+    filter: brightness(0.96);
+  }
+
+  .bg-theme-secondary-gradient-line {
+    background-image: var(--theme-secondary-gradient);
   }
   
   /* Consistent transitions */

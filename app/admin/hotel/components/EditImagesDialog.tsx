@@ -572,7 +572,7 @@ export function EditImagesDialog({
                       <Star className={cn('h-3.5 w-3.5', isProfile && 'fill-white')} />
                       {!isProfile && (
                         <span
-                          className="pointer-events-none absolute left-full top-1/2 z-30 ml-1.5 -translate-y-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-0.5 text-[10px] font-medium text-white opacity-0 transition-opacity group-hover/star:opacity-100"
+                          className="pointer-events-none absolute left-full top-1/2 z-30 ml-1.5 -translate-y-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-0.5 text-xs font-medium text-white opacity-0 transition-opacity group-hover/star:opacity-100"
                         >
                           {t('setAsProfile')}
                         </span>

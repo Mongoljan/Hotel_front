@@ -144,7 +144,12 @@ export const useRoomData = ({
         toast.success(t('Rooms.actions.dataRefreshed'));
       }
     } catch (error) {
-      console.error("Room data fetch failed", error);
+      const isNetworkError =
+        error instanceof TypeError &&
+        (error.message === "Failed to fetch" || error.message.includes("NetworkError"));
+      if (!isNetworkError) {
+        console.error("Room data fetch failed", error);
+      }
       if (!usedCache) {
         const message =
           error instanceof Error ? error.message : "Failed to load room information.";

@@ -127,7 +127,7 @@ function SectionHeader({
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="space-y-0.5">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
       <div className="text-sm font-medium">{value ?? '—'}</div>
     </div>
   );

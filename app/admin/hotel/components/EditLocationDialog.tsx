@@ -209,7 +209,7 @@ export function EditLocationDialog({
               rows={4}
               className="resize-none"
             />
-            <p className="text-xs text-muted-foreground">{t('addressMinHint')}</p>
+            <p className="text-sm text-muted-foreground">{t('addressMinHint')}</p>
           </div>
 
           <div className="space-y-2">

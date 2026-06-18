@@ -138,7 +138,7 @@ export function NewBookingSheet({ open, onOpenChange }: NewBookingSheetProps) {
                     </div>
                     <span
                       className={cn(
-                        'text-[11px] leading-tight',
+                        'text-sm leading-tight',
                         active ? 'font-semibold text-foreground' : 'text-muted-foreground'
                       )}
                     >

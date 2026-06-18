@@ -91,13 +91,13 @@ export function HotelSidebar() {
             {statusBadge.label}
           </Badge>
           {hotelInfo?.groupName ? (
-            <Badge variant="outline" className="rounded-full border-dashed px-3 text-xs text-muted-foreground">
+            <Badge variant="outline" className="rounded-full border-dashed px-3 text-sm text-muted-foreground">
               {hotelInfo.groupName}
             </Badge>
           ) : null}
         </div>
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>Ahиц</span>
             <span>{progress}%</span>
           </div>
@@ -123,7 +123,7 @@ export function HotelSidebar() {
                       </div>
                       <Icon className="h-4 w-4" />
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {step.description}
                     </p>
                   </SidebarMenuItem>
@@ -146,7 +146,7 @@ export function HotelSidebar() {
                       <item.icon className="h-4 w-4" />
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{item.label}</span>
-                        <span className="text-xs text-muted-foreground">{item.description}</span>
+                        <span className="text-sm text-muted-foreground">{item.description}</span>
                       </div>
                     </a>
                   </SidebarMenuButton>
@@ -158,7 +158,7 @@ export function HotelSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="space-y-3 border-t border-border/60 px-4 py-5">
-        <div className="rounded-xl border border-border/60 bg-muted/40 p-3 text-xs text-muted-foreground">
+        <div className="rounded-xl border border-border/60 bg-muted/40 p-3 text-sm text-muted-foreground">
           <div className="flex items-center justify-between">
             <span>Сүүлд шинэчилсэн</span>
             <span className="font-medium text-foreground">{syncedAtLabel}</span>

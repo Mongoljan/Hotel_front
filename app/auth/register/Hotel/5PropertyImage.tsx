@@ -579,7 +579,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#4A7BF7]/10">
                     <Upload className="h-4 w-4" />
                   </div>
-                  <span className="text-[11px] font-medium leading-tight px-1 text-center">
+                  <span className="text-sm font-medium leading-tight px-1 text-center">
                     {t('upload_slot_label')}
                   </span>
                 </button>

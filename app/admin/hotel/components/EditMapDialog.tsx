@@ -118,7 +118,7 @@ export function EditMapDialog({
               Газрын зураг ачаалж байна...
             </div>
           )}
-          <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+          <div className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground space-y-1">
             <p>Сонгосон координат: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</p>
             <p className="break-all">Хадгалагдах холбоос: {generatedGoogleMapUrl}</p>
           </div>

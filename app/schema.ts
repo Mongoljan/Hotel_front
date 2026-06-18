@@ -51,152 +51,182 @@ export const schemaLogin = z.object({
   });
 
 
-export const schemaCreateRoom = z.object({
-  entries: z.array(
-    z.object({
-      images: z.string(),
-      descriptions: z.string(), // Allow empty strings for descriptions
-    })
-  )
-  .refine(
-    (entries) => {
-      // At least one entry must have a valid image
-      return entries.some(entry => {
-        const img = entry.images.trim();
-        return img.length > 0 && (
-          img.startsWith('http://') || 
-          img.startsWith('https://') || 
-          img.startsWith('data:image/')
-        );
-      });
-    },
-    { message: 'At least one valid image is required.' }
-  ),
-    // room_number: z.string().min(1, { message: "Room number is required" }),
-    room_type: z.string().min(1, { message: "Room type is required" }),
-    room_category:  z.string().min(1, { message: "Room category is required" }),
-    room_size: z.string().min(1, { message: "Room size must be at least 5m²" }),
-    // New: room_beds array for multiple bed types with quantities
+export type RoomFormValidationMessages = {
+  room_type_required: string;
+  room_category_required: string;
+  room_size_required: string;
+  bed_type_required: string;
+  bed_size_required: string;
+  bed_quantity_required: string;
+  beds_required: string;
+  adult_qty_required: string;
+  child_qty_required: string;
+  number_of_rooms_int: string;
+  number_of_rooms_min: string;
+  rooms_to_sell_required: string;
+  rooms_to_sell_number: string;
+  rooms_to_sell_exceed: string;
+  room_no_required: string;
+  select_one: string;
+  facility_required: string;
+  image_required: string;
+};
+
+const DEFAULT_ROOM_FORM_MESSAGES: RoomFormValidationMessages = {
+  room_type_required: "Room type is required",
+  room_category_required: "Room category is required",
+  room_size_required: "Room size must be at least 5m²",
+  bed_type_required: "Bed type is required",
+  bed_size_required: "Bed size is required",
+  bed_quantity_required: "Quantity must be at least 1",
+  beds_required: "At least one bed type is required",
+  adult_qty_required: "Please enter the number of adults",
+  child_qty_required: "Please enter the number of children",
+  number_of_rooms_int: "Must be a whole number",
+  number_of_rooms_min: "Must be a natural number (1 or greater)",
+  rooms_to_sell_required: "Rooms to sell is required",
+  rooms_to_sell_number: "Must be a valid number",
+  rooms_to_sell_exceed: "Rooms to sell cannot exceed total number of rooms",
+  room_no_required: "Enter valid room numbers",
+  select_one: "Please select an option",
+  facility_required: "Select at least one facility",
+  image_required: "At least one valid image is required.",
+};
+
+export function createSchemaCreateRoom(m: RoomFormValidationMessages = DEFAULT_ROOM_FORM_MESSAGES) {
+  return z.object({
+    entries: z.array(
+      z.object({
+        images: z.string(),
+        descriptions: z.string(),
+        image_type: z.string().optional(),
+        is_profile: z.boolean().optional(),
+      })
+    ).default([]),
+    room_type: z.string().min(1, { message: m.room_type_required }),
+    room_category: z.string().min(1, { message: m.room_category_required }),
+    room_short_name: z.string().max(50).optional(),
+    room_size: z.string().min(1, { message: m.room_size_required }),
     room_beds: z.array(
       z.object({
-        bed_type: z.string().min(1, { message: "Bed type is required" }),
-        bed_size: z.string().min(1, { message: "Bed size is required" }),
-        quantity: z.number().min(1, { message: "Quantity must be at least 1" }),
+        bed_type: z.string().min(1, { message: m.bed_type_required }),
+        bed_size: z.string().min(1, { message: m.bed_size_required }),
+        quantity: z.number().min(1, { message: m.bed_quantity_required }),
       })
-    ).min(1, { message: "At least one bed type is required" }),
-    is_Bathroom: z.string().min(1, { message: "Нэгийг сонгонo уу?"}),
-    room_Facilities: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-    bathroom_Items: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-    free_Toiletries: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-    food_And_Drink: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-    outdoor_And_View: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-    adultQty: z.string().min(1,{message:"Орох насанд хүрсэн хүний тоог оруулна уу?"}),
-        childQty: z.string().min(1,{message:"Орох хүүхдийн тоог оруулна уу?"}),
+    ).min(1, { message: m.beds_required }),
+    is_Bathroom: z.string().min(1, { message: m.select_one }),
+    room_Facilities: z.array(z.string()).min(1, { message: m.facility_required }),
+    bathroom_Items: z.array(z.string()).min(1, { message: m.facility_required }),
+    free_Toiletries: z.array(z.string()).min(1, { message: m.facility_required }),
+    food_And_Drink: z.array(z.string()).default([]),
+    outdoor_And_View: z.array(z.string()).default([]),
+    adultQty: z.string()
+      .min(1, { message: m.adult_qty_required })
+      .refine(val => parseInt(val, 10) >= 1, { message: m.adult_qty_required }),
+    childQty: z.string().min(1, { message: m.child_qty_required }),
     number_of_rooms: z.preprocess(
-      (val) => Number(val), // Convert input to number
+      (val) => Number(val),
       z.number()
-        .int({ message: "Must be a whole number" }) // Ensures it's an integer
-        .min(1, { message: "Must be a natural number (1 or greater)" }) // Ensures it's ≥ 1
+        .int({ message: m.number_of_rooms_int })
+        .min(1, { message: m.number_of_rooms_min })
     ),
-    
-    number_of_rooms_to_sell: z.string().min(1, { message: "Rooms to sell is required" })
-        .regex(/^\d+$/, { message: "Must be a valid number" }),
-    room_Description: z.string().min(5, { message: "Description is required" }),
-    smoking_allowed: z.string().min(1, { message: "Нэгийг сонгонo уу?"}),
-    RoomNo: z.string().min(1, { message: "Enter valid room numbers" }),
-}).refine((data) => {
+    number_of_rooms_to_sell: z.string().min(1, { message: m.rooms_to_sell_required })
+      .regex(/^\d+$/, { message: m.rooms_to_sell_number }),
+    room_Description: z.string().optional().default(""),
+    smoking_allowed: z.string().min(1, { message: m.select_one }),
+    RoomNo: z.string().min(1, { message: m.room_no_required }),
+  }).refine((data) => {
     return parseInt(data.number_of_rooms_to_sell, 10) <= data.number_of_rooms;
-}, {
-    message: "Rooms to sell cannot exceed total number of rooms",
-    path: ["number_of_rooms_to_sell"], // Attach error to this field
-});
+  }, {
+    message: m.rooms_to_sell_exceed,
+    path: ["number_of_rooms_to_sell"],
+  });
+}
 
-// Simplified schema for addToGroupMode - only validates room numbers and counts
-export const schemaAddToGroup = z.object({
-  RoomNo: z.string().min(1, { message: "Enter valid room numbers" }),
-  number_of_rooms: z.preprocess(
-    (val) => Number(val),
-    z.number()
-      .int({ message: "Must be a whole number" })
-      .min(1, { message: "Must be a natural number (1 or greater)" })
-  ),
-  number_of_rooms_to_sell: z.string().min(1, { message: "Rooms to sell is required" })
-    .regex(/^\d+$/, { message: "Must be a valid number" }),
-  // Include other fields as optional so we can pass them through
-  room_type: z.string().optional(),
-  room_category: z.string().optional(),
-  room_size: z.string().optional(),
-  room_beds: z.array(z.object({
-    bed_type: z.string(),
-    bed_size: z.string().optional(),
-    quantity: z.number(),
-  })).optional(),
-  is_Bathroom: z.string().optional(),
-  room_Facilities: z.array(z.string()).optional(),
-  bathroom_Items: z.array(z.string()).optional(),
-  free_Toiletries: z.array(z.string()).optional(),
-  food_And_Drink: z.array(z.string()).optional(),
-  outdoor_And_View: z.array(z.string()).optional(),
-  adultQty: z.string().optional(),
-  childQty: z.string().optional(),
-  room_Description: z.string().optional(),
-  smoking_allowed: z.string().optional(),
-  entries: z.array(z.object({
-    images: z.string(),
-    descriptions: z.string(),
-  })).optional(),
-}).refine((data) => {
-  return parseInt(data.number_of_rooms_to_sell, 10) <= data.number_of_rooms;
-}, {
-  message: "Rooms to sell cannot exceed total number of rooms",
-  path: ["number_of_rooms_to_sell"],
-});
-
-// Schema for editGroupMode - validates the group's shared data fields but
-// treats per-room fields (RoomNo, counts) as optional since they aren't
-// editable from this modal mode.
-export const schemaEditGroup = z.object({
-  entries: z.array(
-    z.object({
+export function createSchemaAddToGroup(m: RoomFormValidationMessages = DEFAULT_ROOM_FORM_MESSAGES) {
+  return z.object({
+    RoomNo: z.string().min(1, { message: m.room_no_required }),
+    number_of_rooms: z.preprocess(
+      (val) => Number(val),
+      z.number()
+        .int({ message: m.number_of_rooms_int })
+        .min(1, { message: m.number_of_rooms_min })
+    ),
+    number_of_rooms_to_sell: z.string().min(1, { message: m.rooms_to_sell_required })
+      .regex(/^\d+$/, { message: m.rooms_to_sell_number }),
+    room_type: z.string().optional(),
+    room_category: z.string().optional(),
+    room_size: z.string().optional(),
+    room_beds: z.array(z.object({
+      bed_type: z.string(),
+      bed_size: z.string().optional(),
+      quantity: z.number(),
+    })).optional(),
+    is_Bathroom: z.string().optional(),
+    room_Facilities: z.array(z.string()).optional(),
+    bathroom_Items: z.array(z.string()).optional(),
+    free_Toiletries: z.array(z.string()).optional(),
+    food_And_Drink: z.array(z.string()).optional(),
+    outdoor_And_View: z.array(z.string()).optional(),
+    adultQty: z.string().optional(),
+    childQty: z.string().optional(),
+    room_Description: z.string().optional(),
+    smoking_allowed: z.string().optional(),
+    entries: z.array(z.object({
       images: z.string(),
       descriptions: z.string(),
-    })
-  ).refine(
-    (entries) => entries.some(entry => {
-      const img = entry.images.trim();
-      return img.length > 0 && (
-        img.startsWith('http://') ||
-        img.startsWith('https://') ||
-        img.startsWith('data:image/')
-      );
-    }),
-    { message: 'At least one valid image is required.' }
-  ),
-  room_type: z.string().min(1, { message: "Room type is required" }),
-  room_category: z.string().min(1, { message: "Room category is required" }),
-  room_size: z.string().min(1, { message: "Room size must be at least 5m²" }),
-  room_beds: z.array(
-    z.object({
-      bed_type: z.string().min(1, { message: "Bed type is required" }),
-      bed_size: z.string().min(1, { message: "Bed size is required" }),
-      quantity: z.number().min(1, { message: "Quantity must be at least 1" }),
-    })
-  ).min(1, { message: "At least one bed type is required" }),
-  is_Bathroom: z.string().min(1, { message: "Нэгийг сонгонo уу?" }),
-  room_Facilities: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-  bathroom_Items: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-  free_Toiletries: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-  food_And_Drink: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-  outdoor_And_View: z.array(z.string()).min(1, { message: "Select at least one facility" }),
-  adultQty: z.string().min(1, { message: "Орох насанд хүрсэн хүний тоог оруулна уу?" }),
-  childQty: z.string().min(1, { message: "Орох хүүхдийн тоог оруулна уу?" }),
-  room_Description: z.string().min(5, { message: "Description is required" }),
-  smoking_allowed: z.string().min(1, { message: "Нэгийг сонгонo уу?" }),
-  // Per-room fields are not editable in editGroupMode — accept any value
-  RoomNo: z.string().optional(),
-  number_of_rooms: z.any().optional(),
-  number_of_rooms_to_sell: z.string().optional(),
-});
+    })).optional(),
+  }).refine((data) => {
+    return parseInt(data.number_of_rooms_to_sell, 10) <= data.number_of_rooms;
+  }, {
+    message: m.rooms_to_sell_exceed,
+    path: ["number_of_rooms_to_sell"],
+  });
+}
+
+export function createSchemaEditGroup(m: RoomFormValidationMessages = DEFAULT_ROOM_FORM_MESSAGES) {
+  return z.object({
+    entries: z.array(
+      z.object({
+        images: z.string(),
+        descriptions: z.string(),
+        image_type: z.string().optional(),
+        is_profile: z.boolean().optional(),
+      })
+    ).default([]),
+    room_type: z.string().min(1, { message: m.room_type_required }),
+    room_category: z.string().min(1, { message: m.room_category_required }),
+    room_short_name: z.string().max(50).optional(),
+    room_size: z.string().min(1, { message: m.room_size_required }),
+    room_beds: z.array(
+      z.object({
+        bed_type: z.string().min(1, { message: m.bed_type_required }),
+        bed_size: z.string().min(1, { message: m.bed_size_required }),
+        quantity: z.number().min(1, { message: m.bed_quantity_required }),
+      })
+    ).min(1, { message: m.beds_required }),
+    is_Bathroom: z.string().min(1, { message: m.select_one }),
+    room_Facilities: z.array(z.string()).min(1, { message: m.facility_required }),
+    bathroom_Items: z.array(z.string()).min(1, { message: m.facility_required }),
+    free_Toiletries: z.array(z.string()).min(1, { message: m.facility_required }),
+    food_And_Drink: z.array(z.string()).default([]),
+    outdoor_And_View: z.array(z.string()).default([]),
+    adultQty: z.string()
+      .min(1, { message: m.adult_qty_required })
+      .refine(val => parseInt(val, 10) >= 1, { message: m.adult_qty_required }),
+    childQty: z.string().min(1, { message: m.child_qty_required }),
+    room_Description: z.string().optional().default(""),
+    smoking_allowed: z.string().min(1, { message: m.select_one }),
+    RoomNo: z.string().optional(),
+    number_of_rooms: z.any().optional(),
+    number_of_rooms_to_sell: z.string().optional(),
+  });
+}
+
+export const schemaCreateRoom = createSchemaCreateRoom();
+
+export const schemaAddToGroup = createSchemaAddToGroup();
+export const schemaEditGroup = createSchemaEditGroup();
 
 export const schemaRegistration = z
 .object({

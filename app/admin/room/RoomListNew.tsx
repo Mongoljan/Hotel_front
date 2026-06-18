@@ -1,1626 +1,1155 @@
-// RoomListNew.tsx - Using shadcn components with advanced table functionality
 "use client";
 
-import React, { useCallback, useMemo, useState, useEffect } from "react";
-import { useTranslations } from 'next-intl';
+import React, { useCallback, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { getClientBackendToken } from "@/utils/auth";
 import { useAuth } from "@/hooks/useAuth";
-import { ColumnDef } from "@tanstack/react-table";
-
-// Hotel room limits type
-interface HotelRoomLimits {
-  totalHotelRooms: number;
-  availableRooms: number;
-}
-
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { AdvancedTable, ExportColumn } from "@/components/ui/advanced-table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader as SSheetHeader, SheetTitle as SSheetTitle } from "@/components/ui/sheet";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
-  Building2,
   Plus,
-  RefreshCw,
-  Sparkles,
-  Users as UsersIcon,
-  Wifi,
-  Edit,
-  Trash2,
+  Filter,
+  Printer,
+  Download,
+  ChevronUp,
   ChevronDown,
-  ChevronRight,
   ChevronLeft,
-  ImageIcon,
-  Info,
-  ArrowRightLeft
+  ChevronRight,
+  Pencil,
+  Trash2,
+  ArrowUpDown,
+  CheckCircle2,
+  Search,
+  AlertTriangle,
+  Lock,
+  Wifi,
+  Waves,
+  Mountain,
+  Cigarette,
+  X,
+  Star,
 } from "lucide-react";
-
-import { AiOutlineWifi, AiOutlinePlus } from "react-icons/ai";
-import { FaCheck, FaEdit, FaTrashAlt } from "react-icons/fa";
-import { GiCigarette } from "react-icons/gi";
-import { LiaSmokingBanSolid } from "react-icons/lia";
 import { IoPerson } from "react-icons/io5";
 import { FaChild } from "react-icons/fa6";
 import { LuBedSingle, LuBedDouble } from "react-icons/lu";
-
+import { FaCheck } from "react-icons/fa";
 import RoomModal from "./RoomModal";
 import { toast } from "sonner";
-import {
-  buildLookupMaps,
-  calculateRoomInsights,
-  createFlattenedRows,
-  getRelativeSyncedLabel
-} from "./_lib/transformers";
-import type { FlattenRow, LookupMaps, RoomData, RoomInsights } from "./_lib/types";
+import { buildLookupMaps } from "./_lib/transformers";
+import type { RoomData, LookupMaps } from "./_lib/types";
 import { useRoomData } from "./_lib/hooks";
-
-const formatNumber = (value: number, options?: Intl.NumberFormatOptions) =>
-  new Intl.NumberFormat("en-US", options).format(Number.isFinite(value) ? value : 0);
+import { ApiRequiredNotice } from "./modal/ApiRequiredNotice";
 
 interface RoomListProps {
   isRoomAdded: boolean;
   setIsRoomAdded: (value: boolean) => void;
 }
 
-type StatCardProps = {
-  label: string;
-  value: string;
-  helper?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  accent?: string;
-};
+interface HotelRoomLimits {
+  totalHotelRooms: number;
+  availableRooms: number;
+}
 
-const StatCard = ({ label, value, helper, icon: Icon, accent }: StatCardProps) => (
-  <Card className="relative overflow-hidden border border-border/50 bg-background/70 shadow-xl backdrop-blur">
-    <div
-      className={cn(
-        "pointer-events-none absolute inset-x-0 -top-16 h-32 bg-gradient-to-r opacity-40 blur-3xl",
-        accent ?? "from-indigo-500/40 via-sky-500/30 to-cyan-500/40"
+// ─── Centered confirm/success modal ─────────────────────────────────────────
+
+interface ConfirmModalProps {
+  open: boolean;
+  title: string;
+  message: string;
+  confirmLabel: string;
+  cancelLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  loading?: boolean;
+  variant?: "danger" | "warning";
+}
+
+function ConfirmModal({ open, title, message, confirmLabel, cancelLabel, onConfirm, onCancel, loading, variant = "danger" }: ConfirmModalProps) {
+  const isWarning = variant === "warning";
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onCancel(); }}>
+      <DialogContent className="max-w-sm text-center p-8">
+        <div className="flex flex-col items-center gap-4">
+          <div className={cn(
+            "w-14 h-14 rounded-full flex items-center justify-center",
+            isWarning ? "bg-status-warning-muted" : "bg-red/10"
+          )}>
+            <AlertTriangle className={cn("h-7 w-7", isWarning ? "text-status-warning" : "text-red")} />
+          </div>
+          <DialogHeader className="items-center space-y-1">
+            <DialogTitle className="text-base font-semibold">{title}</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground text-center">{message}</DialogDescription>
+          </DialogHeader>
+        </div>
+        <DialogFooter className="flex-row gap-3 mt-6 sm:justify-center">
+          <Button variant="outline" className="flex-1" onClick={onCancel} disabled={loading}>{cancelLabel}</Button>
+          <Button
+            className={cn("flex-1 text-white", isWarning ? "bg-primary hover:bg-primary/90" : "bg-red hover:bg-red/90")}
+            onClick={onConfirm}
+            disabled={loading}
+          >
+            {loading ? "..." : confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface SuccessModalProps {
+  open: boolean;
+  message: string;
+  detail: string;
+  closeLabel: string;
+  onClose: () => void;
+}
+
+function SuccessModal({ open, message, detail, closeLabel, onClose }: SuccessModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-sm text-center p-8">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-status-success-muted flex items-center justify-center">
+            <CheckCircle2 className="h-7 w-7 text-status-success" />
+          </div>
+          <DialogHeader className="items-center space-y-1">
+            <DialogTitle className="text-base font-semibold">{message}</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground text-center">{detail}</DialogDescription>
+          </DialogHeader>
+        </div>
+        <Button className="w-full mt-6" variant="outline" onClick={onClose}>{closeLabel}</Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Room image gallery sheet (list preview) ───────────────────────────────────
+
+type GalleryFilterId = "all" | "bedroom" | "bathroom" | "kitchen";
+
+interface RoomImageGallerySheetProps {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  images: string[];
+  hasImageTypeApi: boolean;
+  hasProfileApi: boolean;
+  hasDeleteApi: boolean;
+  tGallery: ReturnType<typeof useTranslations>;
+  tModal: ReturnType<typeof useTranslations>;
+}
+
+function RoomImageGallerySheet({
+  open,
+  onClose,
+  title,
+  images,
+  hasImageTypeApi,
+  hasProfileApi,
+  hasDeleteApi,
+  tGallery,
+  tModal,
+}: RoomImageGallerySheetProps) {
+  const [activeFilter, setActiveFilter] = useState<GalleryFilterId>("all");
+  const [profileIdx, setProfileIdx] = useState(0);
+
+  React.useEffect(() => {
+    if (!open) return;
+    setActiveFilter("all");
+    setProfileIdx(0);
+  }, [open, images]);
+
+  const filters: { id: GalleryFilterId; label: string; count: number }[] = [
+    { id: "all", label: tGallery("filterAll"), count: images.length },
+    { id: "bedroom", label: tGallery("filterBedroom"), count: 0 },
+    { id: "bathroom", label: tGallery("filterBathroom"), count: 0 },
+    { id: "kitchen", label: tGallery("filterKitchen"), count: 0 },
+  ];
+
+  const visibleImages = activeFilter === "all" ? images : [];
+
+  return (
+    <Sheet open={open} onOpenChange={o => { if (!o) onClose(); }}>
+      <SheetContent
+        side="right"
+        fallbackTitle={title}
+        className="flex h-full flex-col gap-0 p-0 sm:max-w-none"
+        style={{ width: 420, maxWidth: 420 }}
+      >
+        <SSheetHeader className="border-b border-border px-5 py-4 flex-row items-center justify-between space-y-0">
+          <SSheetTitle className="text-base font-semibold pr-8">{title}</SSheetTitle>
+        </SSheetHeader>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {filters.map(f => {
+              const isActive = activeFilter === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setActiveFilter(f.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "border-border bg-muted text-foreground shadow-sm"
+                      : "border-border/70 bg-background text-muted-foreground hover:bg-muted/40"
+                  )}
+                >
+                  {f.label} ({f.count})
+                </button>
+              );
+            })}
+          </div>
+
+          {!hasImageTypeApi && (
+            <ApiRequiredNotice message={tModal("apiRequiredImageType")} />
+          )}
+          {activeFilter !== "all" && (
+            <p className="text-sm text-muted-foreground">{tGallery("filterUnavailable")}</p>
+          )}
+          {!hasProfileApi && images.length > 0 && (
+            <ApiRequiredNotice message={tModal("apiRequiredProfile")} />
+          )}
+          {!hasDeleteApi && images.length > 0 && (
+            <ApiRequiredNotice message={tGallery("apiRequiredDelete")} />
+          )}
+
+          {visibleImages.length === 0 ? (
+            <div className="flex min-h-[12rem] items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-4 text-center text-sm text-muted-foreground">
+              {tGallery("noImagesInFilter")}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2.5">
+              {visibleImages.map((src, idx) => {
+                const isProfile = profileIdx === idx;
+                return (
+                  <div
+                    key={`${src}-${idx}`}
+                    className={cn(
+                      "group relative aspect-square overflow-hidden rounded-xl border bg-muted/20 transition-colors",
+                      isProfile ? "border-primary ring-2 ring-primary ring-offset-2" : "border-border"
+                    )}
+                  >
+                    <img src={src} alt="" className="h-full w-full object-cover" />
+
+                    <button
+                      type="button"
+                      onClick={() => setProfileIdx(idx)}
+                      className={cn(
+                        "group/star absolute top-1.5 left-1.5 z-10 rounded-full p-1.5 shadow transition-all",
+                        isProfile
+                          ? "bg-warning text-warning-foreground"
+                          : "bg-white/90 text-muted-foreground hover:bg-white"
+                      )}
+                      aria-label={!isProfile ? tModal("setAsProfile") : undefined}
+                    >
+                      <Star className={cn("h-3.5 w-3.5", isProfile && "fill-current")} />
+                      {!isProfile && (
+                        <span className="pointer-events-none absolute left-full top-1/2 z-30 ml-1.5 -translate-y-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-0.5 text-xs font-medium text-white opacity-0 transition-opacity group-hover/star:opacity-100">
+                          {tModal("setAsProfile")}
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={e => {
+                        e.stopPropagation();
+                        toast.info(tGallery("apiRequiredDelete"));
+                      }}
+                      className="absolute top-1.5 right-1.5 z-10 rounded-full bg-black/55 p-1 text-white opacity-0 shadow transition-opacity group-hover:opacity-100 hover:bg-black/75"
+                      aria-label={tGallery("deleteImage")}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// ─── Room detail panel (Бүртгэлтэй өрөө) ────────────────────────────────────
+
+function getGroupLabel(group: RoomData, lookupMaps: LookupMaps) {
+  const catName = group.room_category_name ?? lookupMaps.roomCategoryMap.get(group.room_category) ?? "—";
+  const typeName = group.room_type_name ?? lookupMaps.roomTypesMap.get(group.room_type) ?? "—";
+  return `${catName} — ${typeName}`;
+}
+
+interface RoomDetailPanelProps {
+  open: boolean;
+  onClose: () => void;
+  roomNumber: number;
+  group: RoomData;
+  allGroups: RoomData[];
+  lookupMaps: LookupMaps;
+  onTransferRoom: (roomNumber: number, targetGroupId: number) => Promise<void>;
+}
+
+function RoomDetailPanel({ open, onClose, roomNumber, group, allGroups, lookupMaps, onTransferRoom }: RoomDetailPanelProps) {
+  const tc = useTranslations("Rooms.confirm");
+  const [selectedGroupId, setSelectedGroupId] = useState(String(group.id));
+  const [isTransferring, setIsTransferring] = useState(false);
+  const [pendingTransfer, setPendingTransfer] = useState<{ targetGroupId: number; targetLabel: string } | null>(null);
+
+  React.useEffect(() => {
+    setSelectedGroupId(String(group.id));
+    setPendingTransfer(null);
+  }, [group.id, open]);
+
+  const fromGroupLabel = getGroupLabel(group, lookupMaps);
+
+  const handleGroupChange = (value: string) => {
+    const targetId = parseInt(value, 10);
+    if (!targetId || targetId === group.id || isTransferring) return;
+
+    const targetGroup = allGroups.find(g => g.id === targetId);
+    if (!targetGroup) return;
+
+    setPendingTransfer({
+      targetGroupId: targetId,
+      targetLabel: getGroupLabel(targetGroup, lookupMaps),
+    });
+  };
+
+  const handleConfirmTransfer = async () => {
+    if (!pendingTransfer) return;
+    setIsTransferring(true);
+    try {
+      await onTransferRoom(roomNumber, pendingTransfer.targetGroupId);
+      setSelectedGroupId(String(pendingTransfer.targetGroupId));
+      setPendingTransfer(null);
+      onClose();
+    } catch {
+      setPendingTransfer(null);
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  const handleCancelTransfer = () => {
+    if (isTransferring) return;
+    setPendingTransfer(null);
+  };
+
+  const toggles = [
+    { label: "Өрөөнд тамхи татах боломжтой эсэх", icon: <Cigarette className="h-4 w-4" /> },
+    { label: "Өрөө интернет холболтой эсэх", icon: <Wifi className="h-4 w-4" /> },
+    { label: "Нуур луу харсан", icon: <Waves className="h-4 w-4" /> },
+    { label: "Уул руу харсан", icon: <Mountain className="h-4 w-4" /> },
+  ];
+
+  return (
+    <>
+      <Sheet open={open} onOpenChange={o => { if (!o) onClose(); }}>
+      <SheetContent
+        side="right"
+        fallbackTitle="Бүртгэлтэй өрөө"
+        className="flex flex-col h-full gap-0 p-0 sm:max-w-none"
+        style={{ width: 400, maxWidth: 400 }}
+      >
+        <SSheetHeader className="border-b border-border px-5 py-4 flex-row items-center justify-between space-y-0">
+          <SSheetTitle className="text-base font-semibold">Бүртгэлтэй өрөө</SSheetTitle>
+        </SSheetHeader>
+
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+          {/* Room number */}
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Өрөөний №</label>
+            <div className="mt-1 h-10 rounded-lg border border-border px-3 flex items-center text-sm font-medium bg-muted/20">
+              {roomNumber}
+            </div>
+          </div>
+
+          {/* Category / Type — change group via dropdown */}
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Ангилал / Төрөл</label>
+            <Select
+              value={selectedGroupId}
+              onValueChange={handleGroupChange}
+              disabled={isTransferring}
+            >
+              <SelectTrigger className="mt-1 h-10 rounded-lg border-border bg-muted/20 text-sm">
+                <SelectValue placeholder="Ангилал / төрөл сонгох" />
+              </SelectTrigger>
+              <SelectContent>
+                {allGroups.map((g) => (
+                  <SelectItem key={g.id} value={String(g.id)}>
+                    {getGroupLabel(g, lookupMaps)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isTransferring && (
+              <p className="mt-1.5 text-xs text-muted-foreground">Өрөө шилжүүлж байна...</p>
+            )}
+          </div>
+
+          {/* Тохиргоо section */}
+          <div className="rounded-xl border border-border overflow-hidden">
+            <div className="flex items-center gap-2 bg-muted/30 px-4 py-2.5">
+              <span className="text-base font-semibold tracking-wide">Тохиргоо</span>
+            </div>
+            <div className="p-4 space-y-3">
+              {/* API badge */}
+              <div className="flex items-center gap-2 rounded-lg bg-status-warning-muted border border-status-warning/30 px-3 py-2">
+                <Lock className="h-3.5 w-3.5 text-status-warning flex-shrink-0" />
+                <span className="text-xs font-semibold text-status-warning">
+                  API шаардлагатай — тохиргоо хадгалагдахгүй
+                </span>
+              </div>
+              {toggles.map(({ label, icon }) => (
+                <div key={label} className="flex items-center justify-between py-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    {icon}
+                    <span>{label}</span>
+                  </div>
+                  {/* Display-only toggle (always off) */}
+                  <div className="relative w-9 h-5 rounded-full bg-muted border border-border pointer-events-none">
+                    <span className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-border px-5 py-4 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors"
+          >
+            Буцах
+          </button>
+          <button
+            disabled
+            className="flex-1 h-10 rounded-lg bg-primary/40 text-white text-sm font-medium cursor-not-allowed"
+            title="API шаардлагатай"
+          >
+            Хадгалах
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+
+      <ConfirmModal
+        open={!!pendingTransfer}
+        variant="warning"
+        title={tc("transferTitle")}
+        message={tc("transferMessage", {
+          roomNo: roomNumber,
+          fromGroup: fromGroupLabel,
+          toGroup: pendingTransfer?.targetLabel ?? "",
+        })}
+        confirmLabel={tc("transferYes")}
+        cancelLabel={tc("transferNo")}
+        onConfirm={handleConfirmTransfer}
+        onCancel={handleCancelTransfer}
+        loading={isTransferring}
+      />
+    </>
+  );
+}
+
+// ─── Inline room image carousel (table cell) ───────────────────────────────────
+
+interface RoomRowImageCarouselProps {
+  images: string[];
+  emptyLabel: string;
+  onOpenPreview: () => void;
+}
+
+function RoomRowImageCarousel({ images, emptyLabel, onOpenPreview }: RoomRowImageCarouselProps) {
+  const [idx, setIdx] = useState(0);
+  const imagesKey = images.join("|");
+
+  React.useEffect(() => {
+    setIdx(0);
+  }, [imagesKey]);
+
+  if (!images.length) {
+    return (
+      <div className="h-[7.5rem] w-[10.5rem] shrink-0 rounded-xl border border-border/60 bg-muted/30 flex items-center justify-center text-muted-foreground/50 text-xs px-2 text-center">
+        {emptyLabel}
+      </div>
+    );
+  }
+
+  const safeIdx = Math.min(idx, images.length - 1);
+  const hasMultiple = images.length > 1;
+
+  const goPrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIdx(p => (p > 0 ? p - 1 : images.length - 1));
+  };
+
+  const goNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIdx(p => (p + 1) % images.length);
+  };
+
+  return (
+    <div className="relative h-[7.5rem] w-[10.5rem] shrink-0 overflow-hidden rounded-xl border border-border/40 bg-muted/20 shadow-sm group/img">
+      <button
+        type="button"
+        className="absolute inset-0 z-0"
+        onClick={() => onOpenPreview()}
+        aria-label="Preview room images"
+      >
+        <img
+          src={images[safeIdx]}
+          alt="Room"
+          className="h-full w-full object-cover"
+        />
+      </button>
+
+      {hasMultiple && (
+        <>
+          <button
+            type="button"
+            onClick={goPrev}
+            className="absolute left-1.5 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/45 bg-white/25 text-white shadow-sm backdrop-blur-md transition-colors hover:bg-white/40"
+            aria-label="Previous image"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            className="absolute right-1.5 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/45 bg-white/25 text-white shadow-sm backdrop-blur-md transition-colors hover:bg-white/40"
+            aria-label="Next image"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+
+          <div className="pointer-events-none absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/35 bg-black/25 px-2 py-1 backdrop-blur-md">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "rounded-full transition-all",
+                  i === safeIdx
+                    ? "h-1.5 w-4 bg-white"
+                    : "h-1.5 w-1.5 bg-white/55"
+                )}
+              />
+            ))}
+          </div>
+        </>
       )}
-    />
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-      <span className="rounded-full bg-primary/10 p-2 text-primary">
-        <Icon className="h-4 w-4" />
-      </span>
-    </CardHeader>
-    <CardContent>
-      <p className="text-2xl font-semibold text-foreground">{value}</p>
-      {helper ? <p className="mt-1 text-xs text-muted-foreground">{helper}</p> : null}
-    </CardContent>
-  </Card>
-);
+    </div>
+  );
+}
+
+// ─── Room number chips ───────────────────────────────────────────────────────
+
+interface RoomChipsProps {
+  roomNumbers: number[];
+  onAddToGroup: () => void;
+  onChipClick: (roomNumber: number) => void;
+}
+
+function RoomChips({ roomNumbers, onAddToGroup, onChipClick }: RoomChipsProps) {
+  return (
+    <div className="flex flex-wrap gap-2 py-3 px-4">
+      {/* Add room button */}
+      <button
+        onClick={onAddToGroup}
+        className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+      {/* Room number chips */}
+      {roomNumbers.map((num) => (
+        <button
+          key={num}
+          type="button"
+          onClick={() => onChipClick(num)}
+          className="flex items-center border border-border rounded-xl px-2.5 py-1.5 bg-background shadow-sm text-sm font-medium hover:border-primary/50 transition-colors"
+        >
+          {num}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Main component ──────────────────────────────────────────────────────────
 
 export default function RoomListNew({ isRoomAdded, setIsRoomAdded }: RoomListProps) {
-  const t = useTranslations('Rooms');
+  const t = useTranslations("Rooms");
+  const tGallery = useTranslations("Rooms.gallery");
+  const tModal = useTranslations("Rooms.modal");
   const { user } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const handleAuthLost = useCallback(() => {
-    setIsModalOpen(false);
-  }, [setIsModalOpen]);
-  
-  // Auto-update sync time label every 60 seconds
-  const [tick, setTick] = useState(0);
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setTick((prev) => prev + 1);
-    }, 60000); // Update every 60 seconds
-    return () => clearInterval(interval);
-  }, []);
-  
-  const {
-    rawRooms,
-    lookup,
-    loading,
-    authError,
-    setAuthError,
-    lastSynced,
-    refreshData
-  } = useRoomData({
+
+  const handleAuthLost = useCallback(() => setIsModalOpen(false), []);
+
+  const { rawRooms, lookup, loading, authError, setAuthError, refreshData } = useRoomData({
     isRoomAdded,
     setIsRoomAdded,
-    onAuthLost: handleAuthLost
+    onAuthLost: handleAuthLost,
   });
 
-  // Hotel room limits from property-basic-info API
   const [hotelRoomLimits, setHotelRoomLimits] = useState<HotelRoomLimits | null>(null);
 
-  // Fetch hotel room limits from property-basic-info API (where total_hotel_rooms and available_rooms are stored)
-  useEffect(() => {
-    const fetchHotelLimits = async () => {
-      
-      if (!user?.hotel) {
-        return;
-      }
-      
+  React.useEffect(() => {
+    const fetchLimits = async () => {
+      if (!user?.hotel) return;
       try {
         const token = await getClientBackendToken();
         if (!token) return;
-        // Fetch through BFF — keeps backend URL server-side and adds auth token
-        const url = `/api/property-info?property=${user.hotel}&token=${encodeURIComponent(token)}`;
-        
-        const res = await fetch(url, { cache: 'no-store' });
-        
-        if (!res.ok) {
-          console.error('Failed to fetch hotel limits:', res.status);
-          return;
+        const res = await fetch(`/api/property-info?property=${user.hotel}&token=${encodeURIComponent(token)}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const list = await res.json();
+        if (Array.isArray(list) && list.length > 0) {
+          setHotelRoomLimits({ totalHotelRooms: list[0].total_hotel_rooms || 0, availableRooms: list[0].available_rooms || 0 });
         }
-        
-        const basicInfoList = await res.json();
-        
-        if (Array.isArray(basicInfoList) && basicInfoList.length > 0) {
-          const basicInfo = basicInfoList[0];
-          
-          const limits = {
-            totalHotelRooms: basicInfo.total_hotel_rooms || 0,
-            availableRooms: basicInfo.available_rooms || 0
-          };
-          setHotelRoomLimits(limits);
-        } else {
-        }
-      } catch (error) {
-        console.error('Error fetching hotel limits:', error);
-      }
+      } catch {}
     };
-    
-    fetchHotelLimits();
+    fetchLimits();
   }, [user?.hotel]);
 
-  // Which groups are expanded?
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-
-  // ─── Modal state for Create / Edit ─────────────────────────────────────────
+  // ── Modal state ─────────────────────────────────────────────────────────────
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<RoomData | null>(null);
   const [addToGroupMode, setAddToGroupMode] = useState(false);
   const [editGroupMode, setEditGroupMode] = useState(false);
 
-  // Transfer dialog state
-  const [transferDialog, setTransferDialog] = useState<{
-    open: boolean;
-    roomNumber: number;
-    fromGroupId: number;
-  } | null>(null);
-  const [targetGroupId, setTargetGroupId] = useState<string>("");
+  // ── Expand state ─────────────────────────────────────────────────────────────
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
-  // Image preview state
-  const [previewImages, setPreviewImages] = useState<string[]>([]);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  
-  // Delete confirmation state
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [roomToDelete, setRoomToDelete] = useState<number | null>(null);
-  
-  // Bulk delete state
-  const [selectedRoomIds, setSelectedRoomIds] = useState<Set<number>>(new Set());
-  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
-
-  // Keyboard navigation for image carousel
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isImageModalOpen || previewImages.length <= 1) return;
-      
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        setCurrentImageIndex((prev) =>
-          prev > 0 ? prev - 1 : previewImages.length - 1
-        );
-      } else if (event.key === 'ArrowRight') {
-        event.preventDefault();
-        setCurrentImageIndex((prev) => (prev + 1) % previewImages.length);
-      } else if (event.key === 'Escape') {
-        event.preventDefault();
-        setIsImageModalOpen(false);
-      }
-    };
-
-    if (isImageModalOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isImageModalOpen, previewImages.length]);
-
-  // Build lookupMaps and flattened rows
-  const lookupMaps = React.useMemo<LookupMaps>(
-    () => buildLookupMaps(rawRooms, lookup),
-    [rawRooms, lookup]
-  );
-
-  // Expand all groups by default
-  React.useEffect(() => {
-    if (lookupMaps.groupMap.size > 0) {
-      const allKeys = Array.from(lookupMaps.groupMap.keys());
-      setExpanded(new Set(allKeys));
-    }
-  }, [lookupMaps.groupMap]);
-
-  const rows = useMemo<FlattenRow[]>(
-    () => {
-      const baseRows = createFlattenedRows({
-        lookupMaps,
-        expandedKeys: expanded
-      });
-
-      // Insert preview rows after collapsed groups
-      const rowsWithPreviews: FlattenRow[] = [];
-      baseRows.forEach((row) => {
-        rowsWithPreviews.push(row);
-
-        // If it's a group row and it's NOT expanded, add a preview row
-        if (row.isGroup && row.arrowPlaceholder && !expanded.has(row.arrowPlaceholder)) {
-          rowsWithPreviews.push({
-            ...row,
-            id: `${row.id}-preview`,
-            isPreviewRow: true,
-          } as FlattenRow);
-        }
-      });
-
-      return rowsWithPreviews;
-    },
-    [lookupMaps, expanded]
-  );
-
-  // Calculate totals directly from rawRooms (each is a group in the new API)
-  const groupTotals = useMemo(() => {
-    const totalRooms = rawRooms.reduce((sum, g) => sum + (g.room_numbers?.length ?? 0), 0);
-    const totalForSale = rawRooms.reduce((sum, g) => sum + (Number(g.number_of_rooms_to_sell) || 0), 0);
-    return { totalRooms, totalForSale };
-  }, [rawRooms]);
-
-  const insights = useMemo<RoomInsights>(
-    () =>
-      calculateRoomInsights(rawRooms, {
-        facilitiesMapEn: lookupMaps.facilitiesMapEn,
-        facilitiesMapMn: lookupMaps.facilitiesMapMn
-      }),
-    [rawRooms, lookupMaps.facilitiesMapEn, lookupMaps.facilitiesMapMn]
-  );
-
-  const relativeSyncedLabel = useMemo(
-    () => getRelativeSyncedLabel(lastSynced, t),
-    [lastSynced, tick, t] // Include tick to auto-update every 60 seconds
-  );
-
-  const handleRefresh = () => {
-    refreshData();
-    setAuthError(null);
+  const toggleExpand = (id: number) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
 
-  const openCreateModal = () => {
+  // ── Delete state ─────────────────────────────────────────────────────────────
+  const [deleteTarget, setDeleteTarget] = useState<RoomData | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
+
+  // ── Room chip detail panel ───────────────────────────────────────────────────
+  const [selectedChip, setSelectedChip] = useState<{ roomNumber: number; group: RoomData } | null>(null);
+
+  // ── Image gallery sheet ─────────────────────────────────────────────────────
+  const [galleryContext, setGalleryContext] = useState<{
+    group: RoomData;
+    images: string[];
+  } | null>(null);
+
+  const hasRoomImageTypeApi = (lookup?.room_image_types?.length ?? 0) > 0;
+
+  // ── Search ───────────────────────────────────────────────────────────────────
+  const [search, setSearch] = useState("");
+
+  // ── Lookup maps ──────────────────────────────────────────────────────────────
+  const lookupMaps = useMemo(() => buildLookupMaps(rawRooms, lookup), [rawRooms, lookup]);
+
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://dev.kacc.mn";
+  const resolveImage = (img: string) => {
+    if (!img) return "";
+    if (img.startsWith("http") || img.startsWith("data:")) return img;
+    if (img.startsWith("/")) return `${backendUrl}${img}`;
+    return img;
+  };
+
+  const getGroupImages = (group: RoomData): string[] => {
+    return (group.images ?? [])
+      .map(i => resolveImage(i.image))
+      .filter(Boolean);
+  };
+
+  const getFacilityNames = (ids: number[]): string[] =>
+    (ids ?? []).map(id => lookupMaps.facilitiesMapMn.get(id)).filter(Boolean) as string[];
+
+  const getBathroomNames = (ids: number[]): string[] =>
+    (ids ?? []).map(id => lookupMaps.bathroomItemsMap.get(id)).filter(Boolean) as string[];
+
+  const getCategoryName = (group: RoomData) =>
+    group.room_category_name ??
+    lookupMaps.roomCategoryMap.get(group.room_category) ??
+    `Cat ${group.room_category}`;
+
+  const getTypeName = (group: RoomData) =>
+    group.room_type_name ??
+    lookupMaps.roomTypesMap.get(group.room_type) ??
+    `Type ${group.room_type}`;
+
+  const getBedLabel = (group: RoomData): string => {
+    const beds = group.group_beds ?? [];
+    if (!beds.length) return "—";
+    return beds.map(b => {
+      const typeName = lookupMaps.bedTypesMap.get(b.bed_type) ?? "";
+      const sizeName = b.bed_size ? lookupMaps.bedSizesMap?.get(b.bed_size.id) ?? b.bed_size.size : "";
+      return `${sizeName || typeName}`;
+    }).join(", ");
+  };
+
+  // ── Filtered rooms ───────────────────────────────────────────────────────────
+  const filteredRooms = useMemo(() => {
+    if (!search.trim()) return rawRooms;
+    const q = search.toLowerCase();
+    return rawRooms.filter(g => {
+      const catName = getCategoryName(g).toLowerCase();
+      const typeName = getTypeName(g).toLowerCase();
+      const roomNums = (g.room_numbers ?? []).join(",");
+      return catName.includes(q) || typeName.includes(q) || roomNums.includes(q);
+    });
+  }, [rawRooms, search, lookupMaps]);
+
+  const handlePrint = useCallback(() => {
+    if (!filteredRooms.length) {
+      toast.error(t("header.printEmpty"));
+      return;
+    }
+    window.print();
+  }, [filteredRooms.length, t]);
+
+  const handleDownload = useCallback(() => {
+    if (!filteredRooms.length) {
+      toast.error(t("header.exportEmpty"));
+      return;
+    }
+
+    const headers = [
+      t("table.colRoom"),
+      t("table.colCapacity"),
+      t("table.colBed"),
+      t("table.colAmenities"),
+      "Өрөөний №",
+    ];
+
+    const rows = filteredRooms.map(group => {
+      const facilityNames = getFacilityNames(group.room_Facilities ?? []);
+      const bathroomNames = getBathroomNames(group.bathroom_Items ?? []);
+      const amenities = [...facilityNames, ...bathroomNames].join("; ");
+      return [
+        `${getCategoryName(group)} — ${getTypeName(group)}`,
+        `${group.adultQty ?? 0} / ${group.childQty ?? 0}`,
+        getBedLabel(group),
+        amenities,
+        (group.room_numbers ?? []).join(", "),
+      ];
+    });
+
+    const escapeCell = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows]
+      .map(row => row.map(cell => escapeCell(String(cell ?? ""))).join(","))
+      .join("\n");
+
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `rooms-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(t("header.exportSuccess"));
+  }, [filteredRooms, t, lookupMaps]);
+
+  // ── Modal openers ─────────────────────────────────────────────────────────────
+  const openCreate = () => {
     setSelectedRoom(null);
     setAddToGroupMode(false);
     setEditGroupMode(false);
     setIsModalOpen(true);
   };
 
-  const handleAddToGroup = (groupKey: string) => {
-    // groupKey is now the group id (String(group.id))
-    const groupId = parseInt(groupKey, 10);
-    const group = rawRooms.find((r) => r.id === groupId);
-    if (!group) { console.warn("Group not found:", groupKey); return; }
+  const openAddToGroup = (group: RoomData) => {
     setSelectedRoom(group);
     setAddToGroupMode(true);
     setEditGroupMode(false);
     setIsModalOpen(true);
   };
 
-  const handleEditGroup = (groupKey: string) => {
-    const groupId = parseInt(groupKey, 10);
-    const group = rawRooms.find((r) => r.id === groupId);
-    if (!group) { console.warn("Group not found:", groupKey); return; }
+  const openEdit = (group: RoomData) => {
     setSelectedRoom(group);
     setEditGroupMode(true);
     setAddToGroupMode(false);
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (groupId: number | undefined) => {
-    if (groupId == null) return;
-    setRoomToDelete(groupId);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allGroupIds = new Set(rawRooms.map(group => group.id));
-      setSelectedRoomIds(allGroupIds);
-    } else {
-      setSelectedRoomIds(new Set());
-    }
-  };
-
-  const handleSelectRoom = (groupId: number, checked: boolean) => {
-    const newSelected = new Set(selectedRoomIds);
-    if (checked) { newSelected.add(groupId); } else { newSelected.delete(groupId); }
-    setSelectedRoomIds(newSelected);
-  };
-
-  const handleBulkDeleteClick = () => {
-    if (selectedRoomIds.size === 0) return;
-    setBulkDeleteDialogOpen(true);
-  };
-
-  const handleBulkDelete = async () => {
-    const token = await getClientBackendToken();
-    if (!token) {
-      const message = "Authentication required. Please sign in again to delete room groups.";
-      setAuthError(message);
-      toast.error(message);
-      setBulkDeleteDialogOpen(false);
-      return;
-    }
-
-    const deletePromises = Array.from(selectedRoomIds).map(async (groupId) => {
-      try {
-        const response = await fetch(`/api/roomsNew?id=${groupId}&token=${token}`, {
-          method: "DELETE",
-        });
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Failed to delete group ${groupId}`);
-        }
-        return { success: true, groupId };
-      } catch (error) {
-        return { success: false, groupId, error: error instanceof Error ? error.message : 'Unknown error' };
-      }
-    });
-
-    const results = await Promise.all(deletePromises);
-    const successCount = results.filter(r => r.success).length;
-    const failCount = results.filter(r => !r.success).length;
-
-    if (successCount > 0) { toast.success(`${successCount} бүлэг амжилттай устгагдлаа`); setIsRoomAdded(true); }
-    if (failCount > 0) { toast.error(`${failCount} бүлэг устгахад алдаа гарлаа`); }
-
-    setSelectedRoomIds(new Set());
-    setBulkDeleteDialogOpen(false);
-  };
-
+  // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
-    if (roomToDelete == null) return;
-    
-    const token = await getClientBackendToken();
-    if (!token) {
-      const message = "Authentication required. Please sign in again to delete rooms.";
-      setAuthError(message);
-      toast.error(message);
-      setDeleteDialogOpen(false);
-      return;
-    }
-
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
-      const res = await fetch(`/api/roomsNew?id=${roomToDelete}&token=${encodeURIComponent(token)}`, {
-        method: "DELETE"
-      });
+      const token = await getClientBackendToken();
+      if (!token) { toast.error("Нэвтрэх шаардлагатай."); setIsDeleting(false); return; }
+      const res = await fetch(`/api/roomsNew?id=${deleteTarget.id}&token=${encodeURIComponent(token)}`, { method: "DELETE" });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to delete room group.");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Устгахад алдаа гарлаа.");
       }
-      toast.success("Өрөөний бүлэг амжилттай устгагдлаа.");
-      setIsRoomAdded(true);
-      setDeleteDialogOpen(false);
-      setRoomToDelete(null);
-    } catch (err: any) {
-      console.error("Delete failed:", err);
-      toast.error(err.message || "Устгах амжилтгүй.");
-      setDeleteDialogOpen(false);
-    }
-  };
-
-  const handleTransfer = async () => {
-    if (!transferDialog) return;
-    const targetId = parseInt(targetGroupId, 10);
-    if (!targetId || isNaN(targetId)) {
-      toast.error("Шилжүүлэх бүлгийг сонгоно уу");
-      return;
-    }
-
-    const token = await getClientBackendToken();
-    if (!token) {
-      toast.error("Authentication required.");
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/roomsNew/transfer?token=${encodeURIComponent(token)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          room_numbers: [transferDialog.roomNumber],
-          target_room_group_id: targetId,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Transfer failed.");
-      }
-      toast.success(`Өрөө №${transferDialog.roomNumber} амжилттай шилжүүлэгдлээ`);
+      const name = getCategoryName(deleteTarget);
+      setDeleteTarget(null);
+      setDeleteSuccess(name);
       setIsRoomAdded(true);
     } catch (err: any) {
-      toast.error(err.message || "Шилжүүлэхэд алдаа гарлаа");
+      toast.error(err.message || "Устгахад алдаа гарлаа.");
+      setDeleteTarget(null);
     } finally {
-      setTransferDialog(null);
-      setTargetGroupId("");
+      setIsDeleting(false);
     }
   };
 
-  // Column definitions for shadcn table
-  const columns: ColumnDef<FlattenRow>[] = [
-    // Hidden searchable column for room numbers (enables global filter to find rooms by number)
-    {
-      id: "roomNumbersSearch",
-      accessorFn: (row) => row.roomNumbersStr ?? "",
-      header: "",
-      cell: () => null,
-      enableHiding: false,
-      size: 0,
-    },
-
-    // Checkbox Column
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={selectedRoomIds.size === rawRooms.length && rawRooms.length > 0}
-          onCheckedChange={(checked) => handleSelectAll(!!checked)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow || !row.original.isGroup) return null;
-        const groupId = row.original.groupId;
-        if (!groupId) return null;
-        
-        return (
-          <Checkbox
-            checked={selectedRoomIds.has(groupId)}
-            onCheckedChange={(checked) => handleSelectRoom(groupId, !!checked)}
-            aria-label="Select group"
-          />
-        );
-      },
-      enableSorting: false,
-      size: 40,
-    },
-    
-    // Expand/Collapse Column
-    {
-      id: "expand",
-      header: "",
-      cell: ({ row, table }) => {
-        // Rooms card row — single expanded row showing all room numbers as cards
-        if (row.original.isRoomsCardRow) {
-          const roomNumbers = row.original.roomNumbersArr || [];
-          const groupId = row.original.groupId!;
-
-          if (roomNumbers.length === 0) return null;
-
-          return (
-            <div className="flex flex-wrap gap-3 py-1">
-              {roomNumbers.map((roomNum: number) => {
-                return (
-                  <div
-                    key={roomNum}
-                    className="flex items-center gap-2 border border-border rounded-xl px-3 py-2.5 bg-background shadow-sm min-w-[110px] justify-between"
-                  >
-                    <span className="font-semibold text-base text-foreground tabular-nums">{roomNum}</span>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                            onClick={() => {
-                              setTransferDialog({ open: true, roomNumber: roomNum, fromGroupId: groupId });
-                              setTargetGroupId("");
-                            }}
-                          >
-                            <ArrowRightLeft className="h-3.5 w-3.5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Өрөөг өөр бүлэгрүү шилжүүлэх</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                            disabled
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Өрөөний дугаар засах (удахгүй)</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        }
-
-        // Preview row - thin row showing room numbers when collapsed
-        if (row.original.isPreviewRow) {
-          const roomNumbers = row.original.roomNumbersStr || "";
-          
-          // If no room numbers, don't show anything
-          if (!roomNumbers.trim()) {
-            return null;
-          }
-          
-          const roomNumbersArray = roomNumbers.split(",").map(n => n.trim()).filter(n => n);
-          
-          // If no valid room numbers after filtering, don't show
-          if (roomNumbersArray.length === 0) {
-            return null;
-          }
-          
-          const shouldTruncate = roomNumbersArray.length > 10;
-          const displayNumbers = shouldTruncate
-            ? roomNumbersArray.slice(0, 10).join(", ") + "..."
-            : roomNumbersArray.join(", ");
-
-          return (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="font-medium text-muted-foreground whitespace-nowrap">Өрөөний №:</span>
-              <span className="text-foreground/70">{displayNumbers}</span>
-              {shouldTruncate && (
-                <HoverCard>
-                  <HoverCardTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-5 px-1.5 text-xs rounded hover:bg-muted"
-                    >
-                      <span className="text-muted-foreground">+{roomNumbersArray.length - 10} бусад</span>
-                    </Button>
-                  </HoverCardTrigger>
-                  <HoverCardContent align="start" className="w-80 p-3">
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-sm">Бүх өрөөний дугаарууд ({roomNumbersArray.length})</h4>
-                      <p className="text-sm text-muted-foreground">{roomNumbersArray.join(", ")}</p>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              )}
-            </div>
-          );
-        }
-
-        if (row.original.isGroup) {
-          const grpKey = row.original.arrowPlaceholder!;
-          const isExpanded = expanded.has(grpKey);
-          return (
-            <Button
-              variant={isExpanded ? "default" : "secondary"}
-              size="sm"
-              onClick={() => {
-                const newSet = new Set(expanded);
-                if (newSet.has(grpKey)) newSet.delete(grpKey);
-                else newSet.add(grpKey);
-                setExpanded(newSet);
-              }}
-              className={cn(
-                "h-8 w-8 p-0 rounded-md border-2 shadow-md transition-all duration-200 text-white",
-                isExpanded
-                  ? "bg-primary border-primary hover:bg-primary/90 hover:scale-105"
-                  : "bg-primary/80 border-primary hover:bg-primary hover:scale-105"
-              )}
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-5 w-5" />
-              ) : (
-                <ChevronRight className="h-5 w-5" />
-              )}
-            </Button>
-          );
-        }
-        return null;
-      },
-      enableSorting: false,
-      size: 50,
-    },
-    
-    // Images Column
-    {
-      accessorKey: "roomNumberLeaf",
-      header: "Зураг",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        // Filter out empty or invalid images
-        const rawImages = row.original.images || [];
-        const images = rawImages.filter((url: string) => {
-          if (!url || typeof url !== 'string') return false;
-          const trimmed = url.trim();
-          return trimmed.length > 0 && (
-            trimmed.startsWith('http://') || 
-            trimmed.startsWith('https://') || 
-            trimmed.startsWith('data:image/')
-          );
-        });
-
-        if (row.original.isGroup) {
-          // Only show if there are valid images
-          if (!images || images.length === 0) {
-            return (
-              <div className="flex items-center justify-center h-12 w-16 bg-muted/30 rounded border border-border/30">
-                <ImageIcon className="h-4 w-4 text-muted-foreground/50" />
-              </div>
-            );
-          }
-          
-          return (
-            <div className="flex gap-1 flex-wrap max-w-[200px]">
-              {images.slice(0, 3).map((url: string, idx: number) => (
-                <img
-                  key={idx}
-                  src={url}
-                  alt={`Room img ${idx}`}
-                  className="h-12 w-16 flex-shrink-0 object-cover rounded cursor-pointer border border-border/50 hover:border-primary transition-colors"
-                  onClick={() => {
-                    setPreviewImages(images);
-                    setCurrentImageIndex(idx);
-                    setIsImageModalOpen(true);
-                  }}
-                  onError={(e) => {
-                    // Handle broken image links
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              ))}
-              {images.length > 3 && (
-                <div className="h-12 w-16 flex-shrink-0 border border-border/50 rounded flex items-center justify-center bg-muted text-xs font-medium cursor-pointer hover:bg-muted/80 transition-colors"
-                  onClick={() => {
-                    setPreviewImages(images);
-                    setCurrentImageIndex(3);
-                    setIsImageModalOpen(true);
-                  }}
-                >
-                  +{images.length - 3}
-                </div>
-              )}
-            </div>
-          );
-        } else {
-          // For individual rooms, show room number
-          return (
-            <span className="font-semibold text-sm">
-              {row.original.roomNumberLeaf}
-            </span>
-          );
-        }
-      },
-      enableSorting: true,
-      sortingFn: (rowA, rowB) => {
-        const a = rowA.original.roomNumberLeaf ? parseInt(rowA.original.roomNumberLeaf) : 0;
-        const b = rowB.original.roomNumberLeaf ? parseInt(rowB.original.roomNumberLeaf) : 0;
-        return a - b;
-      },
-      size: 220,
-    },
-
-    // Room Name/Category Column
-    {
-      accessorKey: "categoryName",
-      header: "Өрөөний нэр",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        if (row.original.isGroup) {
-          return (
-            <div className="flex flex-col space-y-1">
-              <span className="font-semibold">{row.original.categoryName}</span>
-              <span className="text-sm text-muted-foreground">
-                {row.original.typeName}
-              </span>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>{row.original.sizeGroup} м²</span>
-                {row.original.hasWifiGroup ? (
-                  <Wifi className="h-3 w-3 text-green-600" />
-                ) : (
-                  <Wifi className="h-3 w-3 text-gray-400" />
-                )}
-              </div>
-            </div>
-          );
-        } else {
-          // For individual rooms, show size, wifi, and smoking icons
-          return (
-            <div className="flex items-center gap-2">
-              {row.original.leafSize && (
-                <span className="text-sm">{row.original.leafSize} м²</span>
-              )}
-              {row.original.hasWifi ? (
-                <Wifi className="h-4 w-4 text-green-600" />
-              ) : (
-                <Wifi className="h-4 w-4 text-gray-400" />
-              )}
-              {row.original.smokingAllowed ? (
-                <GiCigarette className="h-4 w-4" />
-              ) : (
-                <LiaSmokingBanSolid className="h-4 w-4 text-red-500" />
-              )}
-            </div>
-          );
-        }
-      },
-      size: 200,
-    },
-
-
-
-    // Combined Rooms Column (Total / For Sale)
-    {
-      accessorKey: "totalRoomsInGroup",
-      header: "Нийт / Зарах",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        if (row.original.isGroup) {
-          const total = row.original.totalRoomsInGroup ?? 0;
-          const forSale = row.original.totalRoomsToSellInGroup ?? 0;
-          
-          return (
-            <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-1 text-sm">
-                <span className="font-medium">{total}</span>
-                <span className="text-xs text-muted-foreground">нийт</span>
-              </div>
-              <div className="flex items-center gap-1 text-sm">
-                <span className="font-medium text-green-600">{forSale}</span>
-                <span className="text-xs text-muted-foreground">зарах</span>
-              </div>
-            </div>
-          );
-        } else {
-          return null;
-        }
-      },
-      size: 110,
-    },
-
-    // Capacity Column
-    {
-      id: "capacity",
-      header: "Хүний тоо / Орны тоо",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        if (row.original.isGroup) {
-          return (
-            <div className="flex items-center gap-3">
-              {row.original.groupHasAdult && <IoPerson className="h-4 w-4" />}
-              {row.original.groupHasChild && <FaChild className="h-4 w-4" />}
-              {/* Display multiple bed types for groups */}
-              {row.original.roomBeds && row.original.roomBeds.length > 0 ? (
-                row.original.roomBeds.map((bed: { bed_type: number; quantity: number; bedTypeName?: string }, idx: number) => {
-                  const isDouble = (bed.bedTypeName ?? "").toLowerCase().includes("2") || 
-                                   (bed.bedTypeName ?? "").toLowerCase().includes("double") ||
-                                   (bed.bedTypeName ?? "").toLowerCase().includes("давхар");
-                  return (
-                    <div key={idx} className="flex items-center gap-0.5">
-                      {isDouble ? <LuBedDouble className="h-4 w-4" /> : <LuBedSingle className="h-4 w-4" />}
-                      {bed.quantity > 1 && <span className="text-xs">×{bed.quantity}</span>}
-                    </div>
-                  );
-                })
-              ) : (
-                <>
-                  {row.original.groupHasSingleBed && <LuBedSingle className="h-4 w-4" />}
-                  {row.original.groupHasDoubleBed && <LuBedDouble className="h-4 w-4" />}
-                </>
-              )}
-            </div>
-          );
-        } else {
-          return (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <IoPerson className="h-4 w-4" />
-                <span>{row.original.adultQty}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <FaChild className="h-4 w-4" />
-                <span>{row.original.childQty}</span>
-              </div>
-              {/* Display multiple bed types for individual rooms */}
-              {row.original.roomBeds && row.original.roomBeds.length > 0 ? (
-                row.original.roomBeds.map((bed: { bed_type: number; bed_size?: number; quantity: number; bedTypeName?: string; bedSizeName?: string }, idx: number) => {
-                  const isDouble = (bed.bedTypeName ?? "").toLowerCase().includes("2") || 
-                                   (bed.bedTypeName ?? "").toLowerCase().includes("double") ||
-                                   (bed.bedTypeName ?? "").toLowerCase().includes("давхар");
-                  return (
-                    <div key={idx} className="flex items-center gap-0.5" title={bed.bedSizeName ? `${bed.bedTypeName} — ${bed.bedSizeName}` : bed.bedTypeName}>
-                      {isDouble ? <LuBedDouble className="h-4 w-4" /> : <LuBedSingle className="h-4 w-4" />}
-                      {bed.quantity > 1 && <span className="text-xs">×{bed.quantity}</span>}
-                      {bed.bedSizeName && <span className="text-xs text-gray-500 hidden xl:inline">{bed.bedSizeName}</span>}
-                    </div>
-                  );
-                })
-              ) : (
-                row.original.bedType === 2 ? (
-                  <LuBedDouble className="h-4 w-4" />
-                ) : (
-                  <LuBedSingle className="h-4 w-4" />
-                )
-              )}
-            </div>
-          );
-        }
-      },
-      enableSorting: false,
-      size: 200,
-    },
-
-    // Facilities Column (Тохижилт)
-    {
-      accessorKey: "commonFacilitiesArr",
-      header: "Тохижилт",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        const features = row.original.isGroup
-          ? row.original.commonFacilitiesArr
-          : row.original.thisRoomExtraFacilitiesArr || [];
-
-        if (!features?.length) return null;
-
-        const displayFeatures = features.slice(0, 3);
-        const hasMore = features.length > 3;
-
-        return (
-          <div className="flex flex-col gap-1">
-            {displayFeatures.map((feat: string, idx: number) => (
-              <div key={idx} className="flex items-center gap-1 text-sm">
-                <FaCheck className="h-3 w-3 text-green-600" />
-                <span className="truncate">{feat}</span>
-              </div>
-            ))}
-            {hasMore && (
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
-                    +{features.length - 3} илүү
-                  </button>
-                </HoverCardTrigger>
-                <HoverCardContent side="bottom" align="start" className="w-64 max-h-60 overflow-y-auto p-3">
-                  <div className="flex flex-col gap-1">
-                    <h4 className="font-medium text-sm mb-2">Бүх тохижилт</h4>
-                    {features.map((feat: string, idx: number) => (
-                      <div key={idx} className="flex items-center gap-1 text-sm">
-                        <FaCheck className="h-3 w-3 text-green-600" />
-                        <span>{feat}</span>
-                      </div>
-                    ))}
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
-            )}
-          </div>
-        );
-      },
-      enableSorting: false,
-      size: 200,
-    },
-
-    // Bathroom Column
-    {
-      accessorKey: "commonBathroomArr",
-      header: "Угаалгын өрөөнд",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        const bathFeatures = row.original.isGroup
-          ? row.original.commonBathroomArr
-          : row.original.thisRoomExtraBathroomArr || [];
-
-        if (!bathFeatures?.length) return null;
-
-        const displayFeatures = bathFeatures.slice(0, 3);
-        const hasMore = bathFeatures.length > 3;
-
-        return (
-          <div className="flex flex-col gap-1">
-            {displayFeatures.map((item: string, idx: number) => (
-              <div key={idx} className="flex items-center gap-1 text-sm">
-                <FaCheck className="h-3 w-3 text-green-600" />
-                <span className="truncate">{item}</span>
-              </div>
-            ))}
-            {hasMore && (
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
-                    +{bathFeatures.length - 3} илүү
-                  </button>
-                </HoverCardTrigger>
-                <HoverCardContent side="bottom" align="start" className="w-64 max-h-60 overflow-y-auto p-3">
-                  <div className="flex flex-col gap-1">
-                    <h4 className="font-medium text-sm mb-2">Угаалгын өрөөнд</h4>
-                    {bathFeatures.map((item: string, idx: number) => (
-                      <div key={idx} className="flex items-center gap-1 text-sm">
-                        <FaCheck className="h-3 w-3 text-green-600" />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
-            )}
-          </div>
-        );
-      },
-      enableSorting: false,
-      size: 200,
-    },
-
-    // Toiletries Column (Ариун цэврийн хэрэгсэл)
-    {
-      accessorKey: "commonToiletriesArr",
-      header: "Ариун цэврийн хэрэгсэл",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        const features = row.original.isGroup
-          ? row.original.commonToiletriesArr
-          : row.original.thisRoomExtraToiletriesArr || [];
-
-        if (!features?.length) return null;
-
-        const displayFeatures = features.slice(0, 3);
-        const hasMore = features.length > 3;
-
-        return (
-          <div className="flex flex-col gap-1">
-            {displayFeatures.map((item: string, idx: number) => (
-              <div key={idx} className="flex items-center gap-1 text-sm">
-                <FaCheck className="h-3 w-3 text-green-600" />
-                <span className="truncate">{item}</span>
-              </div>
-            ))}
-            {hasMore && (
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
-                    +{features.length - 3} илүү
-                  </button>
-                </HoverCardTrigger>
-                <HoverCardContent side="bottom" align="start" className="w-64 max-h-60 overflow-y-auto p-3">
-                  <div className="flex flex-col gap-1">
-                    <h4 className="font-medium text-sm mb-2">Ариун цэврийн хэрэгсэл</h4>
-                    {features.map((item: string, idx: number) => (
-                      <div key={idx} className="flex items-center gap-1 text-sm">
-                        <FaCheck className="h-3 w-3 text-green-600" />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
-            )}
-          </div>
-        );
-      },
-      enableSorting: false,
-      size: 200,
-    },
-
-    // Food & Drink Column (Хоол, ундаа)
-    {
-      accessorKey: "commonFoodDrinkArr",
-      header: "Хоол, ундаа",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        const features = row.original.isGroup
-          ? row.original.commonFoodDrinkArr
-          : row.original.thisRoomExtraFoodDrinkArr || [];
-
-        if (!features?.length) return null;
-
-        const displayFeatures = features.slice(0, 3);
-        const hasMore = features.length > 3;
-
-        return (
-          <div className="flex flex-col gap-1">
-            {displayFeatures.map((item: string, idx: number) => (
-              <div key={idx} className="flex items-center gap-1 text-sm">
-                <FaCheck className="h-3 w-3 text-green-600" />
-                <span className="truncate">{item}</span>
-              </div>
-            ))}
-            {hasMore && (
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
-                    +{features.length - 3} илүү
-                  </button>
-                </HoverCardTrigger>
-                <HoverCardContent side="bottom" align="start" className="w-64 max-h-60 overflow-y-auto p-3">
-                  <div className="flex flex-col gap-1">
-                    <h4 className="font-medium text-sm mb-2">Хоол, ундаа</h4>
-                    {features.map((item: string, idx: number) => (
-                      <div key={idx} className="flex items-center gap-1 text-sm">
-                        <FaCheck className="h-3 w-3 text-green-600" />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
-            )}
-          </div>
-        );
-      },
-      enableSorting: false,
-      size: 200,
-    },
-
-    // Outdoor & View Column (Байршил ба үзэмж)
-    {
-      accessorKey: "commonOutdoorViewArr",
-      header: "Байршил ба үзэмж",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        const features = row.original.isGroup
-          ? row.original.commonOutdoorViewArr
-          : row.original.thisRoomExtraOutdoorViewArr || [];
-
-        if (!features?.length) return null;
-
-        const displayFeatures = features.slice(0, 3);
-        const hasMore = features.length > 3;
-
-        return (
-          <div className="flex flex-col gap-1">
-            {displayFeatures.map((item: string, idx: number) => (
-              <div key={idx} className="flex items-center gap-1 text-sm">
-                <FaCheck className="h-3 w-3 text-green-600" />
-                <span className="truncate">{item}</span>
-              </div>
-            ))}
-            {hasMore && (
-              <HoverCard>
-                <HoverCardTrigger asChild>
-                  <button className="text-xs text-primary cursor-pointer hover:underline transition-colors text-left">
-                    +{features.length - 3} илүү
-                  </button>
-                </HoverCardTrigger>
-                <HoverCardContent side="bottom" align="start" className="w-64 max-h-60 overflow-y-auto p-3">
-                  <div className="flex flex-col gap-1">
-                    <h4 className="font-medium text-sm mb-2">Байршил ба үзэмж</h4>
-                    {features.map((item: string, idx: number) => (
-                      <div key={idx} className="flex items-center gap-1 text-sm">
-                        <FaCheck className="h-3 w-3 text-green-600" />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
-            )}
-          </div>
-        );
-      },
-      enableSorting: false,
-      size: 200,
-    },
-
-    // Actions Column
-    {
-      id: "actions",
-      header: "Засах",
-      cell: ({ row }) => {
-        if (row.original.isPreviewRow) return null;
-
-        // For group rows - show "+" button to add more rooms to this group and edit button for group editing
-        if (row.original.isGroup && row.original.arrowPlaceholder) {
-          return (
-            <div className="flex gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAddToGroup(row.original.arrowPlaceholder)}
-                      className="border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Энэ бүлэгт өрөө нэмэх</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditGroup(row.original.arrowPlaceholder)}
-                      className="border-amber-400/60 text-amber-600 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-colors"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Бүлгийн дата засах (зураг, хэмжээ, г.м)</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          );
-        }
-        return null;
-      },
-      enableSorting: false,
-      size: 100,
-    },
-  ];
-
-  // Create a map to lookup group data by group key for export
-  const groupDataMap = useMemo(() => {
-    const map = new Map<string, FlattenRow>();
-    rows.forEach(row => {
-      if (row.isGroup && row.arrowPlaceholder) {
-        map.set(row.arrowPlaceholder, row);
-      }
-    });
-    return map;
-  }, [rows]);
-
-  // Helper function to get parent group's common items
-  const getParentGroupData = useCallback((leafRow: FlattenRow): FlattenRow | undefined => {
-    // Leaf row ID format: "groupKey-roomNumber", extract group key
-    const rowId = leafRow.id;
-    const lastDashIndex = rowId.lastIndexOf('-');
-    if (lastDashIndex > 0) {
-      const groupKey = rowId.substring(0, lastDashIndex);
-      return groupDataMap.get(groupKey);
+  // ── Transfer room to another group ───────────────────────────────────────────
+  const transferRoomToGroup = async (roomNumber: number, targetGroupId: number) => {
+    const token = await getClientBackendToken();
+    if (!token) {
+      toast.error("Нэвтрэх шаардлагатай.");
+      throw new Error("auth");
     }
-    return undefined;
-  }, [groupDataMap]);
+    const res = await fetch(`/api/roomsNew/transfer?token=${encodeURIComponent(token)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ room_numbers: [roomNumber], target_room_group_id: targetGroupId }),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      const message = e.error || "Шилжүүлэхэд алдаа гарлаа.";
+      toast.error(message);
+      throw new Error(message);
+    }
+    toast.success(`Өрөө №${roomNumber} амжилттай шилжүүлэгдлээ`);
+    setIsRoomAdded(true);
+  };
 
-  // Export columns configuration for CSV export
-  const exportColumns: ExportColumn<FlattenRow>[] = useMemo(() => [
-    { 
-      header: 'Өрөөний дугаар', 
-      getValue: (d) => d.roomNumberLeaf || '' 
-    },
-    { 
-      header: 'Категори', 
-      getValue: (d) => {
-        if (d.categoryName) return d.categoryName;
-        const parent = getParentGroupData(d);
-        return parent?.categoryName || '';
-      }
-    },
-    { 
-      header: 'Төрөл', 
-      getValue: (d) => {
-        if (d.typeName) return d.typeName;
-        const parent = getParentGroupData(d);
-        return parent?.typeName || '';
-      }
-    },
-    { 
-      header: 'Хэмжээ (м²)', 
-      getValue: (d) => d.leafSize || d.sizeGroup || '' 
-    },
-    { 
-      header: 'WiFi', 
-      getValue: (d) => d.hasWifi ?? d.hasWifiGroup ?? false
-    },
-    { 
-      header: 'Тамхи зөвшөөрөх', 
-      getValue: (d) => d.smokingAllowed ?? false
-    },
-    { 
-      header: 'Том хүн', 
-      getValue: (d) => d.adultQty ?? '' 
-    },
-    { 
-      header: 'Хүүхэд', 
-      getValue: (d) => d.childQty ?? '' 
-    },
-    { 
-      header: 'Орны төрөл', 
-      getValue: (d) => {
-        // Use roomBeds if available
-        if (d.roomBeds && d.roomBeds.length > 0) {
-          return d.roomBeds.map((bed: { bed_type: number; quantity: number; bedTypeName?: string }) => {
-            const name = bed.bedTypeName || (bed.bed_type === 2 ? 'Давхар ор' : 'Ганц ор');
-            return bed.quantity > 1 ? `${name} ×${bed.quantity}` : name;
-          }).join(', ');
-        }
-        // Fallback to legacy bedType
-        if (d.bedType === 2) return 'Давхар ор';
-        if (d.bedType === 1) return 'Ганц ор';
-        return '';
-      }
-    },
-    { 
-      header: 'Тохижилт', 
-      getValue: (d) => {
-        const parent = getParentGroupData(d);
-        const common = parent?.commonFacilitiesArr || d.commonFacilitiesArr || [];
-        const extra = d.thisRoomExtraFacilitiesArr || [];
-        return [...common, ...extra];
-      }
-    },
-    { 
-      header: 'Угаалгын өрөөнд', 
-      getValue: (d) => {
-        const parent = getParentGroupData(d);
-        const common = parent?.commonBathroomArr || d.commonBathroomArr || [];
-        const extra = d.thisRoomExtraBathroomArr || [];
-        return [...common, ...extra];
-      }
-    },
-    { 
-      header: 'Ариун цэврийн хэрэгсэл', 
-      getValue: (d) => {
-        const parent = getParentGroupData(d);
-        const common = parent?.commonToiletriesArr || d.commonToiletriesArr || [];
-        const extra = d.thisRoomExtraToiletriesArr || [];
-        return [...common, ...extra];
-      }
-    },
-    { 
-      header: 'Хоол ундаа', 
-      getValue: (d) => {
-        const parent = getParentGroupData(d);
-        const common = parent?.commonFoodDrinkArr || d.commonFoodDrinkArr || [];
-        const extra = d.thisRoomExtraFoodDrinkArr || [];
-        return [...common, ...extra];
-      }
-    },
-    { 
-      header: 'Байршил ба үзэмж', 
-      getValue: (d) => {
-        const parent = getParentGroupData(d);
-        const common = parent?.commonOutdoorViewArr || d.commonOutdoorViewArr || [];
-        const extra = d.thisRoomExtraOutdoorViewArr || [];
-        return [...common, ...extra];
-      }
-    },
-  ], [getParentGroupData]);
+  // ── Stats ────────────────────────────────────────────────────────────────────
+  const totalRooms = rawRooms.reduce((s, g) => s + (g.room_numbers?.length ?? 0), 0);
 
-  // Export only group rows (each represents a room group in the new API)
-  const exportRowFilter = useCallback((row: FlattenRow) => {
-    return row.isGroup && !row.isPreviewRow;
-  }, []);
+  if (loading) {
+    return (
+      <div className="space-y-3 animate-pulse">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-20 rounded-lg bg-muted" />
+        ))}
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="border border-destructive/40 bg-destructive/10 rounded-lg p-8 text-center">
+        <p className="font-semibold text-destructive">{t("errors.authRequired")}</p>
+        <p className="mt-1 text-sm text-destructive/80">{authError}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="">
-      {/* Header with metrics */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between  pb-4">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <Building2 className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold">{t('table.title')}</h1>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="font-medium text-foreground">{groupTotals.totalRooms}</span>
-                <span>нийт</span>
-              </span>
-              <span className="text-border">|</span>
-              <span className="flex items-center gap-1">
-                <span className="font-medium text-green-600">{groupTotals.totalForSale}</span>
-                <span>зарах</span>
-              </span>
-            </div>
-          </div>
+    <div className="w-full print:text-foreground">
+      {/* ── Header chips ─────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mb-4 flex-wrap print:hidden">
+        <div className="flex items-center gap-1.5 border border-border rounded-full px-3 py-1 text-sm bg-background">
+          <span className="text-muted-foreground">{t("header.totalRooms")}</span>
+          <span className="font-semibold text-foreground">
+            {totalRooms}
+            {hotelRoomLimits ? `/${hotelRoomLimits.totalHotelRooms}` : ""}
+          </span>
         </div>
-        <div className="flex gap-2">
-          {/* Delete buttons removed - rooms should not be deleted individually */}
-          {/* <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
+        <div className="flex items-center gap-1.5 border border-border rounded-full px-3 py-1 text-sm bg-background">
+          <span className="text-muted-foreground">{t("header.typeCategory")}</span>
+          <span className="font-semibold text-foreground">{rawRooms.length}</span>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            title={t("header.export")}
+            aria-label={t("header.export")}
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Шинэчлэх
-          </Button> */}
+            <Download className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            title={t("header.print")}
+            aria-label={t("header.print")}
+          >
+            <Printer className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Toolbar ──────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mb-4 print:hidden">
+        <div className="relative flex-1 max-w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Өрөө №, төрлөөр хайх"
+            className="pl-9 h-9 rounded-full border-border/60 bg-background"
+          />
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-9 gap-2 rounded-full border-border/60">
+            <Filter className="h-4 w-4" />
+            Шүүлтүүр
+          </Button>
           <Button
-            onClick={openCreateModal}
-            disabled={!!authError}
             size="sm"
+            onClick={openCreate}
+            className="h-9 gap-2 rounded-full bg-primary hover:bg-primary/90 text-white border-0"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Өрөө нэмэх
+            <Plus className="h-4 w-4" />
+            {t("header.addRoomType")}
           </Button>
         </div>
       </div>
 
-      {authError ? (
-        <Card className="border-destructive/40 bg-destructive/10">
-          <CardContent className="p-8 text-center">
-            <p className="text-lg font-semibold text-destructive">{t('errors.authRequired')}</p>
-            <p className="mt-2 text-sm text-destructive/80">{authError}</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <RoomModal
-            key={addToGroupMode ? 'add-to-group' : editGroupMode ? 'edit-group' : 'normal'}
-            isOpen={isModalOpen}
-            onClose={() => {
-              const wasAddingToGroup = addToGroupMode;
-              setIsModalOpen(false);
-              setAddToGroupMode(false);
-              setEditGroupMode(false);
-              // Force a fresh fetch after adding rooms to a group — the reactive
-              // refresh via isRoomAdded fires while the modal is still open and
-              // may complete before onClose is called, missing newly added data.
-              if (wasAddingToGroup) {
-                refreshData();
-              }
-            }}
-            roomToEdit={selectedRoom}
-            isRoomAdded={isRoomAdded}
-            setIsRoomAdded={setIsRoomAdded}
-            existingRooms={rawRooms}
-            hotelRoomLimits={hotelRoomLimits}
-            addToGroupMode={addToGroupMode}
-            editGroupMode={editGroupMode}
-            lookupData={lookup}
-          />
+      {/* ── Table ────────────────────────────────────────────────────────── */}
+      <div id="room-list-print-area" className="rounded-xl border border-border bg-background p-2 print:border-0 print:p-0">
+        {/* Table header */}
+        <div className="grid grid-cols-[12.5rem_1fr_140px_160px_1fr_72px] gap-3 rounded-lg border border-border/50 bg-muted/25 px-4 py-2.5 mb-1">
+          {[t("table.colImage"), t("table.colRoom"), t("table.colCapacity"), t("table.colBed"), t("table.colAmenities"), ""].map((h, i) => (
+            <div key={i} className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+              {h}
+              {h && <ArrowUpDown className="h-3 w-3 opacity-50" />}
+            </div>
+          ))}
+        </div>
 
-          {/* Advanced Table with sync status in title row */}
-          <TooltipProvider>
-            <AdvancedTable
-              data={rows}
-              columns={columns}
-              searchPlaceholder={t('search.placeholder')}
-              title={
-                <div className="flex items-center justify-between w-full">
-                  {/* <span>Өрөөнүүд ({rawRooms.length})</span>
-                  <Badge variant="outline" className="border-dashed border-muted-foreground/50 bg-muted/20 text-muted-foreground text-xs">
-                    {relativeSyncedLabel}
-                  </Badge> */}
+        {/* Table body */}
+        {filteredRooms.length === 0 ? (
+          <div className="py-16 text-center text-muted-foreground text-sm">{t("table.noRooms")}</div>
+        ) : (
+          filteredRooms.map((group) => {
+            const images = getGroupImages(group);
+            const isExpanded = expanded.has(group.id);
+            const categoryName = getCategoryName(group);
+            const typeName = getTypeName(group);
+            const facilityNames = getFacilityNames(group.room_Facilities ?? []);
+            const bathroomNames = getBathroomNames(group.bathroom_Items ?? []);
+            const allAmenities = [...facilityNames, ...bathroomNames];
+            const displayAmenities = allAmenities.slice(0, 4);
+            const moreCount = allAmenities.length - displayAmenities.length;
+            const bedLabel = getBedLabel(group);
+            const roomCount = group.room_numbers?.length ?? 0;
+
+            return (
+              <React.Fragment key={group.id}>
+                {/* Group row */}
+                <div
+                  className={cn(
+                    "grid grid-cols-[12.5rem_1fr_140px_160px_1fr_72px] gap-3 px-4 py-3 rounded-lg border border-transparent items-start transition-all",
+                    "hover:border-primary/35 hover:bg-muted/15",
+                    isExpanded && "border-border/60 bg-muted/10"
+                  )}
+                >
+                  {/* Image + chevron */}
+                  <div className="flex items-start gap-2 print:hidden">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(group.id)}
+                      className="mt-10 flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+                    <RoomRowImageCarousel
+                      images={images}
+                      emptyLabel={t("empty.noImage")}
+                      onOpenPreview={() => {
+                        setGalleryContext({ group, images });
+                      }}
+                    />
+                  </div>
+
+                  {/* Room name — 16px for type+category, 14px for everything else */}
+                  <div className="flex flex-col gap-0.5 min-w-0 pr-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-primary text-base leading-tight hover:underline cursor-pointer">
+                        {categoryName}
+                      </span>
+                      <span className="inline-flex items-center rounded-full bg-[#DBEAFE] text-[#1D4ED8] text-xs font-medium px-2 py-0.5">
+                        x {roomCount}
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-foreground/80">{typeName}</span>
+                    {group.room_short_name && (
+                      <span className="text-sm text-muted-foreground">{group.room_short_name}</span>
+                    )}
+                    <span className="text-sm text-muted-foreground">Хэмжээ: {group.room_size} м²</span>
+                  </div>
+
+                  {/* Capacity */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-1 text-sm">
+                      <span className="inline-flex items-center gap-0.5 border border-border rounded px-1.5 py-0.5 text-xs">
+                        <IoPerson className="h-3 w-3" /> x {group.adultQty ?? 0}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm">
+                      <span className="inline-flex items-center gap-0.5 border border-border rounded px-1.5 py-0.5 text-xs">
+                        <FaChild className="h-3 w-3" /> x {group.childQty ?? 0}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bed info */}
+                  <div className="flex items-start gap-1.5">
+                    <span className="inline-flex items-center gap-1 border border-border rounded px-2 py-0.5 text-sm text-muted-foreground">
+                      <LuBedDouble className="h-3.5 w-3.5" />
+                      x1 ({bedLabel})
+                    </span>
+                  </div>
+
+                  {/* Amenities */}
+                  <div className="flex flex-col gap-0.5 min-w-0 pr-2">
+                    {displayAmenities.map((name, i) => (
+                      <div key={i} className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <FaCheck className="h-2.5 w-2.5 text-status-success flex-shrink-0" />
+                        <span className="truncate">{name}</span>
+                      </div>
+                    ))}
+                    {moreCount > 0 && (
+                      <button className="text-xs text-primary hover:underline text-left mt-0.5">
+                        {t("table.seeMore")} →
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 justify-end print:hidden">
+                    <button
+                      onClick={() => openEdit(group)}
+                      className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      title="Засах"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(group)}
+                      className="p-1.5 rounded-md text-muted-foreground hover:text-red hover:bg-red/10 transition-colors"
+                      title="Устгах"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-              }
-              enableExport={true}
-              enableColumnFilter={true}
-              enableGlobalSearch={true}
-              exportColumns={exportColumns}
-              exportRowFilter={exportRowFilter}
-            />
-          </TooltipProvider>
-        </>
+
+                {/* Expanded: room number chips */}
+                {isExpanded && (
+                  <div className="mx-2 mb-1 rounded-lg border border-border/40 bg-muted/5 print:hidden">
+                    <RoomChips
+                      roomNumbers={group.room_numbers ?? []}
+                      onAddToGroup={() => openAddToGroup(group)}
+                      onChipClick={(num) => setSelectedChip({ roomNumber: num, group })}
+                    />
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })
+        )}
+      </div>
+
+      {/* ── Pagination placeholder ─────────────────────────────────────── */}
+      {rawRooms.length > 0 && (
+        <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground print:hidden">
+          <span>Хуудас 1: 1–{Math.min(filteredRooms.length, 9)} ({filteredRooms.length})</span>
+          <div className="flex items-center gap-1">
+            {[1].map(p => (
+              <button key={p} className="w-7 h-7 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium">
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
-      {/* Image Preview Modal with Carousel Indicators */}
-      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-        <DialogContent className="max-w-5xl">
-          <DialogHeader className="pt-2">
-            <DialogTitle className="flex items-center justify-between">
-              <span>Өрөөний зургууд</span>
-              <span className="text-sm font-normal text-muted-foreground mr-6">
-                {currentImageIndex + 1} / {previewImages.length}
-              </span>
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="relative">
-            {/* Main Image Display */}
-            <div className="flex justify-center items-center min-h-[500px] bg-muted/20 rounded-lg">
-              {previewImages.length > 0 && (
-                <img
-                  src={previewImages[currentImageIndex]}
-                  alt={`Room preview ${currentImageIndex + 1}`}
-                  className="max-h-[70vh] max-w-full object-contain rounded-lg"
-                />
-              )}
-            </div>
-            
-            {/* Navigation Arrows */}
-            {previewImages.length > 1 && (
-              <>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm"
-                  onClick={() =>
-                    setCurrentImageIndex((prev) =>
-                      prev > 0 ? prev - 1 : previewImages.length - 1
-                    )
-                  }
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm"
-                  onClick={() =>
-                    setCurrentImageIndex((prev) => (prev + 1) % previewImages.length)
-                  }
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-          </div>
+      {/* ── RoomModal ─────────────────────────────────────────────────────── */}
+      <RoomModal
+        key={addToGroupMode ? "add" : editGroupMode ? "edit" : "create"}
+        isOpen={isModalOpen}
+        onClose={() => {
+          const wasAdding = addToGroupMode;
+          setIsModalOpen(false);
+          setAddToGroupMode(false);
+          setEditGroupMode(false);
+          if (wasAdding) refreshData();
+        }}
+        roomToEdit={selectedRoom}
+        isRoomAdded={isRoomAdded}
+        setIsRoomAdded={setIsRoomAdded}
+        existingRooms={rawRooms}
+        hotelRoomLimits={hotelRoomLimits}
+        addToGroupMode={addToGroupMode}
+        editGroupMode={editGroupMode}
+        lookupData={lookup}
+      />
 
-          {/* Carousel Indicators */}
-          {previewImages.length > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-4">
-              {previewImages.map((_, index) => (
-                <button
-                  key={index}
-                  className={cn(
-                    "w-3 h-3 rounded-full transition-all duration-200 hover:scale-110 border",
-                    index === currentImageIndex
-                      ? "bg-primary border-primary scale-110"
-                      : "bg-gray-300 dark:bg-gray-600 border-gray-400 dark:border-gray-500 hover:bg-gray-400 dark:hover:bg-gray-500"
-                  )}
-                  onClick={() => setCurrentImageIndex(index)}
-                  aria-label={`Go to image ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
+      {/* ── Delete confirm modal ──────────────────────────────────────────── */}
+      <ConfirmModal
+        open={!!deleteTarget}
+        title={t("confirm.deleteTitle")}
+        message={t("confirm.deleteMessage", { name: deleteTarget ? getCategoryName(deleteTarget) : "" })}
+        confirmLabel={t("confirm.deleteYes")}
+        cancelLabel={t("confirm.deleteNo")}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={isDeleting}
+      />
 
-          {/* Thumbnail Strip for Better Navigation */}
-          {previewImages.length > 3 && (
-            <div className="mt-4 max-w-full overflow-x-auto">
-              <div className="flex gap-2 pb-2">
-                {previewImages.map((image, index) => (
-                  <button
-                    key={index}
-                    className={cn(
-                      "flex-shrink-0 relative rounded-lg overflow-hidden border-2 transition-all duration-200",
-                      index === currentImageIndex
-                        ? "border-primary scale-105"
-                        : "border-border hover:border-muted-foreground"
-                    )}
-                    onClick={() => setCurrentImageIndex(index)}
-                  >
-                    <img
-                      src={image}
-                      alt={`Thumbnail ${index + 1}`}
-                      className="w-16 h-12 object-cover"
-                    />
-                    {index === currentImageIndex && (
-                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                        <div className="w-2 h-2 bg-primary rounded-full" />
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* ── Delete success modal ──────────────────────────────────────────── */}
+      <SuccessModal
+        open={!!deleteSuccess}
+        message={t("confirm.deleteSuccess")}
+        detail={t("confirm.deleteSuccessDetail", { name: deleteSuccess ?? "" })}
+        closeLabel={t("confirm.close")}
+        onClose={() => setDeleteSuccess(null)}
+      />
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Өрөөний бүлэг устгах</AlertDialogTitle>
-            <AlertDialogDescription>
-              Та үнэхээр энэ өрөөний бүлгийг устгахыг хүсэж байна уу? Бүлэгт багтах бүх өрөөнүүд болон 
-              тэдгээртэй холбоотой бүх мэдээлэл устах болно.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Цуцлах</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Устгах
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* ── Image gallery sheet ───────────────────────────────────────────── */}
+      <RoomImageGallerySheet
+        open={!!galleryContext}
+        onClose={() => setGalleryContext(null)}
+        title={galleryContext ? getTypeName(galleryContext.group) : ""}
+        images={galleryContext?.images ?? []}
+        hasImageTypeApi={hasRoomImageTypeApi}
+        hasProfileApi={false}
+        hasDeleteApi={false}
+        tGallery={tGallery}
+        tModal={tModal}
+      />
 
-      {/* Bulk Delete Confirmation Dialog */}
-      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Олон бүлэг устгах</AlertDialogTitle>
-            <AlertDialogDescription>
-              Та үнэхээр {selectedRoomIds.size} өрөөний бүлгийг устгахыг хүсэж байна уу? Бүлэгт багтах бүх өрөөнүүд устах болно.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Цуцлах</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Бүгдийг устгах
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Transfer Room Dialog */}
-      <Dialog open={!!transferDialog?.open} onOpenChange={(open) => { if (!open) { setTransferDialog(null); setTargetGroupId(""); } }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Өрөө шилжүүлэх</DialogTitle>
-            <DialogDescription>
-              Өрөө №{transferDialog?.roomNumber} — шилжүүлэх зорилтот бүлгийг сонгоно уу
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-3">
-            {rawRooms
-              .filter(g => g.id !== transferDialog?.fromGroupId)
-              .map(g => {
-                const typeName = lookupMaps.roomTypesMap.get(g.room_type) ?? `Type ${g.room_type}`;
-                const catName = lookupMaps.roomCategoryMap.get(g.room_category) ?? `Cat ${g.room_category}`;
-                return (
-                  <div
-                    key={g.id}
-                    className={cn(
-                      "p-3 rounded-md border cursor-pointer transition-colors",
-                      targetGroupId === String(g.id)
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    )}
-                    onClick={() => setTargetGroupId(String(g.id))}
-                  >
-                    <p className="font-medium text-sm">{catName} — {typeName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Өрөөнүүд: {(g.room_numbers ?? []).join(", ") || "—"}
-                    </p>
-                  </div>
-                );
-              })
-            }
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setTransferDialog(null); setTargetGroupId(""); }}>Цуцлах</Button>
-            <Button onClick={handleTransfer} disabled={!targetGroupId}>Шилжүүлэх</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* ── Room chip detail panel ────────────────────────────────────────── */}
+      {selectedChip && (
+        <RoomDetailPanel
+          open={!!selectedChip}
+          onClose={() => setSelectedChip(null)}
+          roomNumber={selectedChip.roomNumber}
+          group={selectedChip.group}
+          allGroups={rawRooms}
+          lookupMaps={lookupMaps}
+          onTransferRoom={transferRoomToGroup}
+        />
+      )}
     </div>
   );
 }

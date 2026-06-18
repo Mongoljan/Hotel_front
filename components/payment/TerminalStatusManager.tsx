@@ -218,7 +218,7 @@ export function TerminalStatusManager({ paymentConfigs, onRefresh }: TerminalSta
                         </div>
                         <div>
                           <h3 className="font-medium text-sm">{terminal.bank_name}</h3>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-sm text-muted-foreground">
                             ПОС Терминал #{terminal.terminal_id}
                           </p>
                         </div>
@@ -254,7 +254,7 @@ export function TerminalStatusManager({ paymentConfigs, onRefresh }: TerminalSta
                     <div className="space-y-2">
                       {getStatusBadge(terminal.status)}
                       
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         Сүүлийн гүйлгээ: {terminal.last_transaction ? formatLastTransaction(terminal.last_transaction) : 'Мэдээлэл байхгүй'}
                       </div>
