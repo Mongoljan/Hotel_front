@@ -29,22 +29,35 @@ export async function registerEmployeeAction(formData: {
     const data = await response.json();
 
     if (!response.ok) {
-      return { error: data.detail || 'Registration failed' };
+      return {
+        success: false as const,
+        error: (data.detail || data.email?.[0] || 'Employee registration failed') as string,
+      };
     }
 
-    // Set server-side cookie
     const cookieStore = await cookies();
-    cookieStore.set('token', data.token, {
+    const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'strict' as const,
       path: '/',
-      maxAge: 60 * 30, // 30 mins
-    });
+      maxAge: 60 * 30,
+    };
 
-    return { success: true, userInfo: data };
+    cookieStore.set('token', data.token, options);
+    cookieStore.set('hotel', String(formData.hotel), options);
+    cookieStore.set('user_type', String(formData.user_type), options);
+    cookieStore.set('userName', formData.contact_person_name, options);
+    cookieStore.set('userEmail', formData.email, options);
+    cookieStore.set('user_approved', 'false', options);
+    cookieStore.set('isApproved', 'false', options);
+
+    return { success: true as const, userInfo: data };
   } catch (err) {
     console.error(err);
-    return { error: 'Unexpected server error' };
+    return {
+      success: false as const,
+      error: 'Unexpected server error',
+    };
   }
 }

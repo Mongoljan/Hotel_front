@@ -49,8 +49,8 @@ import {
   EditBasicInfoDialog,
   EditLocationDialog,
   SocialLinksSection,
+  FaqManager,
 } from './components';
-import { ApiNeededLabel } from '@/components/ApiNeededLabel';
 
 interface ProceedProps {
   proceed: number;
@@ -276,33 +276,48 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     [soums, districts]
   );
 
-  const saveAdditionalInfo = async (about: string, youtubeUrl: string) => {
+  const saveAdditionalInfo = async (updates: Partial<AdditionalInformation>) => {
     if (!propertyDetail?.property || !propertyDetail?.id) {
       toast.error('Зочид буудлын мэдээлэл олдсонгүй');
       return false;
     }
 
-    const res = await fetch('https://dev.kacc.mn/api/additionalInfo/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        About: about,
-        YoutubeUrl: youtubeUrl,
-        property: propertyDetail.property,
-      }),
-    });
+    const existingId = additionalInfo?.id;
+
+    // Existing record → partial PATCH; new record → POST with sensible defaults.
+    const body: Record<string, unknown> = existingId
+      ? { ...updates, property: propertyDetail.property }
+      : {
+          About: '',
+          YoutubeUrl: '',
+          ...updates,
+          property: propertyDetail.property,
+        };
+
+    const res = await fetch(
+      existingId
+        ? `https://dev.kacc.mn/api/additionalInfo/${existingId}/`
+        : 'https://dev.kacc.mn/api/additionalInfo/',
+      {
+        method: existingId ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }
+    );
 
     if (!res.ok) throw new Error('Хадгалах үед алдаа гарлаа');
 
     const data = await res.json();
 
-    const patch = await fetch(`https://dev.kacc.mn/api/property-details/${propertyDetail.id}/`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ Additional_Information: data.id }),
-    });
+    if (!existingId) {
+      const patch = await fetch(`https://dev.kacc.mn/api/property-details/${propertyDetail.id}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Additional_Information: data.id }),
+      });
 
-    if (!patch.ok) throw new Error('Additional Info-г холбох үед алдаа гарлаа');
+      if (!patch.ok) throw new Error('Additional Info-г холбох үед алдаа гарлаа');
+    }
 
     setAdditionalInfo(data);
     return true;
@@ -319,7 +334,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const handleSaveAbout = async (about: string) => {
     try {
       setIsAboutSaving(true);
-      const ok = await saveAdditionalInfo(about, additionalInfo?.YoutubeUrl || '');
+      const ok = await saveAdditionalInfo({ About: about });
       if (ok) {
         toast.success('Амжилттай хадгалагдлаа');
         setIsAboutDialogOpen(false);
@@ -334,7 +349,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const handleSaveVideo = async (youtubeUrl: string) => {
     try {
       setIsVideoSaving(true);
-      const ok = await saveAdditionalInfo(additionalInfo?.About || '', youtubeUrl);
+      const ok = await saveAdditionalInfo({ YoutubeUrl: youtubeUrl });
       if (ok) {
         toast.success('Амжилттай хадгалагдлаа');
         setIsVideoDialogOpen(false);
@@ -353,7 +368,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
   const handleDeleteVideo = async () => {
     try {
       setIsVideoSaving(true);
-      const ok = await saveAdditionalInfo(additionalInfo?.About || '', '');
+      const ok = await saveAdditionalInfo({ YoutubeUrl: '' });
       if (ok) {
         toast.success('Видео амжилттай устгагдлаа');
       }
@@ -362,6 +377,25 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     } finally {
       setIsVideoSaving(false);
     }
+  };
+
+  const handleSaveSocialLinks = async (links: {
+    website_url: string;
+    facebook_url: string;
+    instagram_url: string;
+    youtube_url: string;
+    tiktok_url: string;
+    twitter_url: string;
+  }) => {
+    const normalize = (v: string) => (v.trim() === '' ? null : v.trim());
+    return await saveAdditionalInfo({
+      website_url: normalize(links.website_url),
+      facebook_url: normalize(links.facebook_url),
+      instagram_url: normalize(links.instagram_url),
+      youtube_url: normalize(links.youtube_url),
+      tiktok_url: normalize(links.tiktok_url),
+      twitter_url: normalize(links.twitter_url),
+    });
   };
 
 
@@ -382,7 +416,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
       total_hotel_rooms: basicInfo?.total_hotel_rooms?.toString() || '',
       available_rooms: basicInfo?.available_rooms?.toString() || '',
       sales_room_limitation: basicInfo?.sales_room_limitation || false,
-      total_floor_number: address?.total_floor_number?.toString() || '',
+      total_floor_number: basicInfo?.total_floor != null ? basicInfo.total_floor.toString() : '',
     });
     setIsBasicInfoDialogOpen(true);
   };
@@ -396,6 +430,9 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
     try {
       setIsBasicInfoSaving(true);
 
+      const requiresFloor = basicInfo?.requires_floor_count !== false;
+      const parsedFloor = parseInt(editBasicInfo.total_floor_number);
+
       const payload = {
         property_name_mn: editBasicInfo.property_name_mn,
         property_name_en: editBasicInfo.property_name_en,
@@ -406,6 +443,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         total_hotel_rooms: parseInt(editBasicInfo.total_hotel_rooms),
         available_rooms: parseInt(editBasicInfo.available_rooms),
         sales_room_limitation: editBasicInfo.sales_room_limitation,
+        total_floor: requiresFloor && !isNaN(parsedFloor) ? parsedFloor : null,
         property: user?.hotel,
       };
 
@@ -419,25 +457,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
       const data = await res.json();
       setBasicInfo(data);
-
-      if (address?.id && editBasicInfo.total_floor_number) {
-        const floorRes = await fetch(`https://dev.kacc.mn/api/confirm-address/${address.id}/`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            province_city: address.province_city,
-            soum: address.soum || address.district,
-            district: address.district || 1,
-            zipCode: address.zipCode || '00000',
-            total_floor_number: parseInt(editBasicInfo.total_floor_number) || address.total_floor_number,
-            property: user?.hotel,
-          }),
-        });
-        if (floorRes.ok) {
-          const addressData = await floorRes.json();
-          setAddress(addressData);
-        }
-      }
 
       toast.success('Үндсэн мэдээлэл амжилттай хадгалагдлаа');
       setIsBasicInfoDialogOpen(false);
@@ -483,7 +502,6 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         soum: parseInt(editLocation.soum),
         district: parseInt(editLocation.district) || 1,
         zipCode: address.zipCode || '00000',
-        total_floor_number: parseInt(editLocation.total_floor_number) || 1,
         property: user?.hotel,
       };
 
@@ -739,7 +757,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground mb-1">{t('totalFloorsLabel')}</p>
-                      <p className="text-base font-medium">{address?.total_floor_number || '—'}</p>
+                      <p className="text-base font-medium">{basicInfo?.total_floor || '—'}</p>
                     </div>
                     <div className="rounded-lg bg-muted/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground mb-1">{t('totalRoomsLabel')}</p>
@@ -813,13 +831,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
               </TabsContent>
 
               <TabsContent value="faq" className="mt-4">
-                <div className="text-center py-6">
-                  <IconMessageQuestion className="mx-auto h-10 w-10 text-muted-foreground/40 mb-3" />
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <ApiNeededLabel />
-                  </div>
-                  <p className="text-sm text-muted-foreground">{t('faqApiNeeded')}</p>
-                </div>
+                <FaqManager propertyId={user?.hotel ? Number(user.hotel) : null} />
               </TabsContent>
 
               <TabsContent value="services" className="mt-4">
@@ -845,7 +857,10 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
         </div>
 
         <div className="min-w-0 w-full space-y-4">
-          <SocialLinksSection />
+          <SocialLinksSection
+            additionalInfo={additionalInfo}
+            onSave={handleSaveSocialLinks}
+          />
           <AboutVideoSection
             additionalInfo={additionalInfo}
             onEditAbout={handleEditAbout}

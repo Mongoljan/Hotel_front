@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 
 interface CombinedData {
-  property_types: { id: number; name_en: string; name_mn: string; order?: number }[];
+  property_types: { id: number; name_en: string; name_mn: string; order?: number; requires_floor_count?: boolean }[];
   ownership_type: { id: number; name_en: string; name_mn: string; order?: number }[];
   ratings: { id: number; rating: string }[];
   facilities: { id: number; name_en: string; name_mn: string }[];

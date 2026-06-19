@@ -15,17 +15,11 @@ import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { useTranslations } from 'next-intl';
 import CancellationPolicySection from './sections/CancellationPolicySection';
-import { buildCancellationPayload, normalizePercent } from '@/lib/policyFormatters';
+import { buildCancellationPayload, normalizeCancellationToForm } from '@/lib/policyFormatters';
 
 const API_URL = 'https://dev.kacc.mn/api/cancellation-fees/';
 
 type FormFields = z.infer<typeof schemaHotelStepsCancellation>;
-
-const normalizeTime = (time: string | null | undefined): string => {
-  if (!time) return '';
-  const match = time.match(/^(\d{1,2}:\d{2})/);
-  return match ? match[1] : time;
-};
 
 type Props = {
   onNext: () => void;
@@ -43,12 +37,8 @@ export default function RegisterHotel5Cancellation({ onNext, onBack }: Props) {
     reValidateMode: 'onChange',
     defaultValues: {
       cancel_time: '12:00',
-      single_before_time_percentage: '',
-      single_after_time_percentage: '',
-      multi_5days_before_percentage: '',
-      multi_3days_before_percentage: '',
-      multi_2days_before_percentage: '',
-      multi_1day_before_percentage: '',
+      single_rules: [{ days_before: 1, before_time_percentage: '0', after_time_percentage: '100' }],
+      multi_rules: [{ days_before: 7, before_time_percentage: '0', after_time_percentage: '' }],
     },
   });
 
@@ -67,15 +57,8 @@ export default function RegisterHotel5Cancellation({ onNext, onBack }: Props) {
         const initialData = stored.step5Cancellation || existing;
 
         if (initialData) {
-          const normalizedValues: FormFields = {
-            cancel_time: normalizeTime(initialData.cancel_time) || '12:00',
-            single_before_time_percentage: normalizePercent(initialData.single_before_time_percentage),
-            single_after_time_percentage: normalizePercent(initialData.single_after_time_percentage),
-            multi_5days_before_percentage: normalizePercent(initialData.multi_5days_before_percentage),
-            multi_3days_before_percentage: normalizePercent(initialData.multi_3days_before_percentage),
-            multi_2days_before_percentage: normalizePercent(initialData.multi_2days_before_percentage),
-            multi_1day_before_percentage: normalizePercent(initialData.multi_1day_before_percentage),
-          };
+          const normalizedValues = normalizeCancellationToForm(initialData);
+          if (!normalizedValues.cancel_time) normalizedValues.cancel_time = '12:00';
 
           setInitialValues(normalizedValues);
           form.reset(normalizedValues);

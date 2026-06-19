@@ -87,20 +87,69 @@ export function normalizePolicyToForm(policy: any): PolicyFormFields {
     allow_children: policy?.child_policy?.allow_children ?? false,
     max_child_age: policy?.child_policy?.max_child_age ?? undefined,
     child_bed_available: policy?.child_policy?.child_bed_available ?? undefined,
+    free_breakfast_max_age: policy?.child_policy?.free_breakfast_max_age ?? undefined,
     allow_extra_bed: policy?.child_policy?.allow_extra_bed ?? false,
     extra_bed_price: policy?.child_policy?.extra_bed_price ?? null,
+    total_extra_beds: policy?.total_extra_beds ?? 0,
   };
 }
 
+type CancellationRuleForm = {
+  days_before: number;
+  before_time_percentage: string;
+  after_time_percentage: string;
+};
+
+function apiRuleToForm(rule: any): CancellationRuleForm {
+  return {
+    days_before: Number(rule?.days_before ?? 0),
+    before_time_percentage: normalizePercent(rule?.before_time_percentage),
+    after_time_percentage:
+      rule?.after_time_percentage === null || rule?.after_time_percentage === undefined
+        ? ''
+        : normalizePercent(rule?.after_time_percentage),
+  };
+}
+
+const sortByOrder = (a: any, b: any) => (a?.order ?? 0) - (b?.order ?? 0);
+
+// Single room: exactly one row. Cancel free up to X days before; after that no refund.
+// Maps to before_time_percentage: 0 (free) and after_time_percentage: 100 (no refund).
+function buildSingleRow(rules: any[], defaultDays: number): CancellationRuleForm {
+  const single = rules.filter((r: any) => r?.room_group === 'single').sort(sortByOrder);
+  const rule = single[0];
+  return {
+    days_before: rule ? Number(rule.days_before ?? defaultDays) : defaultDays,
+    before_time_percentage: '0',
+    after_time_percentage: '100',
+  };
+}
+
+// Multi room: the first row is the mandatory "free" row (0% deduction), then deduction rows.
+function buildMultiRows(rules: any[], defaultFreeDays: number): CancellationRuleForm[] {
+  const groupRules = rules
+    .filter((r: any) => r?.room_group === 'multi')
+    .sort(sortByOrder);
+
+  const freeRule = groupRules.find((r: any) => Number(r?.before_time_percentage ?? 0) === 0);
+  const paidRules = groupRules.filter((r: any) => Number(r?.before_time_percentage ?? 0) !== 0);
+
+  const freeRow: CancellationRuleForm = {
+    days_before: freeRule ? Number(freeRule.days_before ?? defaultFreeDays) : defaultFreeDays,
+    before_time_percentage: '0',
+    after_time_percentage: '',
+  };
+
+  return [freeRow, ...paidRules.map(apiRuleToForm)];
+}
+
 export function normalizeCancellationToForm(cancellation: any): CancellationFormFields {
+  const rules = Array.isArray(cancellation?.rules) ? cancellation.rules : [];
+
   return {
     cancel_time: normalizeTime(cancellation?.cancel_time, '00:00'),
-    single_before_time_percentage: normalizePercent(cancellation?.single_before_time_percentage),
-    single_after_time_percentage: normalizePercent(cancellation?.single_after_time_percentage),
-    multi_5days_before_percentage: normalizePercent(cancellation?.multi_5days_before_percentage),
-    multi_3days_before_percentage: normalizePercent(cancellation?.multi_3days_before_percentage),
-    multi_2days_before_percentage: normalizePercent(cancellation?.multi_2days_before_percentage),
-    multi_1day_before_percentage: normalizePercent(cancellation?.multi_1day_before_percentage),
+    single_rules: [buildSingleRow(rules, 1)],
+    multi_rules: buildMultiRows(rules, 7),
   };
 }
 
@@ -115,6 +164,7 @@ export function buildPolicyPayload(data: PolicyFormFields, propertyId: number | 
     check_out_until: stripSeconds(data.check_out_until),
     pet_policy: data.pet_policy,
     min_guest_age: data.min_guest_age,
+    total_extra_beds: data.total_extra_beds ?? 0,
     languages: data.languages,
     accepted_card_ids: data.accepted_card_ids ?? [],
     breakfast_policy: {
@@ -136,6 +186,10 @@ export function buildPolicyPayload(data: PolicyFormFields, propertyId: number | 
       allow_children: data.allow_children,
       max_child_age: data.allow_children ? data.max_child_age : 0,
       child_bed_available: data.allow_children ? data.child_bed_available : 'no',
+      free_breakfast_max_age:
+        data.free_breakfast_max_age !== undefined && data.free_breakfast_max_age !== null
+          ? data.free_breakfast_max_age
+          : null,
       allow_extra_bed: data.allow_extra_bed || false,
       extra_bed_price: data.allow_extra_bed ? data.extra_bed_price : null,
     },
@@ -249,8 +303,10 @@ export const schemaInternalRulesChildren = z.object({
     .max(18, { message: 'Хүүхдийн нас 18-аас бага байх ёстой' })
     .optional(),
   child_bed_available: z.enum(['yes', 'no']).optional(),
+  free_breakfast_max_age: z.number().min(0).max(18).nullable().optional(),
   allow_extra_bed: z.boolean().optional(),
   extra_bed_price: z.string().nullable().optional(),
+  total_extra_beds: z.coerce.number().min(0).optional(),
 }).superRefine((data, ctx) => {
   if (data.allow_children) {
     if (data.max_child_age === undefined || data.max_child_age === null) {
@@ -327,8 +383,10 @@ export function pickSectionFormValues(
         allow_children: values.allow_children,
         max_child_age: values.max_child_age,
         child_bed_available: values.child_bed_available,
+        free_breakfast_max_age: values.free_breakfast_max_age,
         allow_extra_bed: values.allow_extra_bed,
         extra_bed_price: values.extra_bed_price,
+        total_extra_beds: values.total_extra_beds,
       };
     default:
       return {};
@@ -349,14 +407,29 @@ export function getFirstZodErrorMessage(error: z.ZodError): string {
 }
 
 export function buildCancellationPayload(data: CancellationFormFields, propertyId: number | string) {
+  const buildRules = (rules: CancellationRuleForm[], roomGroup: 'single' | 'multi') =>
+    rules.map((rule, index) => {
+      const hasAfter =
+        rule.after_time_percentage !== undefined &&
+        rule.after_time_percentage !== null &&
+        String(rule.after_time_percentage).trim() !== '';
+      return {
+        room_group: roomGroup,
+        days_before: Number(rule.days_before) || 0,
+        before_time_percentage: formatCancellationPercentage(rule.before_time_percentage),
+        after_time_percentage: hasAfter
+          ? formatCancellationPercentage(rule.after_time_percentage as string)
+          : null,
+        order: index + 1,
+      };
+    });
+
   return {
     cancel_time: formatCancellationTime(data.cancel_time),
-    single_before_time_percentage: formatCancellationPercentage(data.single_before_time_percentage),
-    single_after_time_percentage: formatCancellationPercentage(data.single_after_time_percentage),
-    multi_5days_before_percentage: formatCancellationPercentage(data.multi_5days_before_percentage),
-    multi_3days_before_percentage: formatCancellationPercentage(data.multi_3days_before_percentage),
-    multi_2days_before_percentage: formatCancellationPercentage(data.multi_2days_before_percentage),
-    multi_1day_before_percentage: formatCancellationPercentage(data.multi_1day_before_percentage),
+    rules: [
+      ...buildRules(data.single_rules ?? [], 'single'),
+      ...buildRules(data.multi_rules ?? [], 'multi'),
+    ],
     property: Number(propertyId),
   };
 }

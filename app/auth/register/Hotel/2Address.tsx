@@ -47,7 +47,6 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       soum: '',
       district: 1,
       zipCode: '00000',
-      total_floor_number: 1,
     },
   });
 
@@ -94,7 +93,6 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
             soum: String(initialValues.soum || ''),
             district: Number(initialValues.district || 0),
             zipCode: initialValues.zipCode || '00000',
-            total_floor_number: Number(initialValues.total_floor_number || 1),
           };
 
           // Store initial values for comparison
@@ -104,7 +102,6 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
           form.setValue('province_city', normalizedValues.province_city);
           form.setValue('district', normalizedValues.district);
           form.setValue('zipCode', normalizedValues.zipCode);
-          form.setValue('total_floor_number', normalizedValues.total_floor_number);
 
           // Store soum value to set after filteredSoum is populated
           if (normalizedValues.soum) {
@@ -150,8 +147,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
       const hasChanged = 
         data.province_city !== initialValues.province_city ||
         data.soum !== initialValues.soum ||
-        data.district !== initialValues.district ||
-        data.total_floor_number !== initialValues.total_floor_number;
+        data.district !== initialValues.district;
 
       if (!hasChanged) {
         // No changes, just go to next step
@@ -299,48 +295,6 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
                         onBlur={(e) => {
                           // Enforce minimum of 1 when field loses focus
                           const value = parseInt(e.target.value, 10);
-                          if (isNaN(value) || value < 1) {
-                            field.onChange(1);
-                          }
-                          field.onBlur();
-                        }}
-                        onKeyDown={(e) => {
-                          // Prevent decimal point and minus sign
-                          if (e.key === '.' || e.key === '-' || e.key === 'e') {
-                            e.preventDefault();
-                          }
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="total_floor_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('floor_label')}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min={1}
-                        placeholder={t('floors_placeholder')}
-                        {...field}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          // Allow empty string while typing
-                          if (value === '') {
-                            field.onChange('');
-                          } else {
-                            field.onChange(Number(value));
-                          }
-                        }}
-                        onBlur={(e) => {
-                          // Enforce minimum of 1 when field loses focus
-                          const value = Number(e.target.value);
                           if (isNaN(value) || value < 1) {
                             field.onChange(1);
                           }

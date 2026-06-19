@@ -398,6 +398,8 @@ export const schemaHotelSteps1 = z
       .min(1, { message: "Боломжит өрөөний тоог оруулна уу?" }),
 
     sales_room_limitation: z.coerce.boolean(),
+
+    total_floor: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -426,11 +428,6 @@ export const schemaHotelSteps2 = z.object({
     .string()
     .optional()
     .default('00000'),
-
-  total_floor_number: z
-    .coerce.number()
-    .int({ message: "Бүхэл тоо байх ёстой" })
-    .min(1, { message: "Барилгын давхарын тоо хамгийн багадаа 1 байх ёстой" }),
 
   province_city: z
     .coerce.string()
@@ -491,8 +488,18 @@ export const schemaHotelSteps3 = z.object({
     .max(18, { message: "Хүүхдийн нас 18-аас бага байх ёстой" })
     .optional(),
   child_bed_available: z.enum(['yes', 'no']).optional(),
+  free_breakfast_max_age: z.number()
+    .min(0, { message: "Нас 0-с их байх ёстой" })
+    .max(18, { message: "Нас 18-аас бага байх ёстой" })
+    .nullable()
+    .optional(),
   allow_extra_bed: z.boolean().optional(),
   extra_bed_price: z.string().nullable().optional(),
+
+  // Total extra beds available property-wide (0 = none)
+  total_extra_beds: z.coerce.number()
+    .min(0, { message: "Нэмэлт орны тоо 0-с багагүй байх ёстой" })
+    .optional(),
 }).refine((data) => {
   if (data.breakfast_status === 'no') return true;
   const startTime = data.breakfast_start_time?.trim() || '';
@@ -598,52 +605,38 @@ export const schemaHotelSteps3 = z.object({
   path: ["extra_bed_price"],
 });
 
+const cancellationPercentField = z.string()
+  .min(1, { message: "Хувийг оруулна уу" })
+  .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
+  .refine((val) => {
+    const num = parseInt(val, 10);
+    return num >= 0 && num <= 100;
+  }, { message: "Хувь 0-100 хооронд байх ёстой" });
+
+const optionalCancellationPercentField = z.string()
+  .optional()
+  .nullable()
+  .refine((val) => {
+    if (val === undefined || val === null || val === '') return true;
+    if (!/^[0-9]+$/.test(val)) return false;
+    const num = parseInt(val, 10);
+    return num >= 0 && num <= 100;
+  }, { message: "Хувь 0-100 хооронд байх ёстой" });
+
+export const cancellationRuleSchema = z.object({
+  days_before: z.coerce.number()
+    .int({ message: "Бүхэл тоо байх ёстой" })
+    .min(0, { message: "Хоног 0-с багагүй байх ёстой" }),
+  before_time_percentage: cancellationPercentField,
+  after_time_percentage: optionalCancellationPercentField,
+});
+
 export const schemaHotelStepsCancellation = z.object({
   cancel_time: z.string()
     .min(1, { message: "Цуцлах боломжтой цагийг сонгоно уу" })
     .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Цагийн формат буруу байна (ЦЦ:ММ)" }),
-  single_before_time_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
-  single_after_time_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
-  multi_5days_before_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
-  multi_3days_before_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
-  multi_2days_before_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
-  multi_1day_before_percentage: z.string()
-    .min(1, { message: "Хувийг оруулна уу" })
-    .regex(/^[0-9]+$/, { message: "Зөвхөн эерэг бүхэл тоо оруулна уу" })
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 0 && num <= 100;
-    }, { message: "Хувь 0-100 хооронд байх ёстой" }),
+  single_rules: z.array(cancellationRuleSchema).min(1, { message: "Хамгийн багадаа нэг дүрэм оруулна уу" }),
+  multi_rules: z.array(cancellationRuleSchema).min(1, { message: "Хамгийн багадаа нэг дүрэм оруулна уу" }),
 });
 
 export const schemaHotelSteps5 = z.object({

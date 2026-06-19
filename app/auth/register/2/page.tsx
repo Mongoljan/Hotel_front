@@ -12,7 +12,7 @@ import { PatternFormat } from 'react-number-format';
 import { schemaRegistrationEmployee2 } from '@/app/schema';
 import { useTranslations } from 'next-intl';
 import Cookies from 'js-cookie';
-import { registerHotelAndEmployeeAction } from '../registerHotelAndEmployeeAction';
+import { registerEmployeeAction } from './RegisterEmployeeAction';
 import { getEmployeePositions, EmployeePosition } from '@/lib/api';
 
 import { Button } from "@/components/ui/button";
@@ -99,33 +99,49 @@ export default function RegisterEmployee() {
       .catch(() => setPositions([]));
   }, []);
 
+  useEffect(() => {
+    const hotelId = localStorage.getItem('registeredHotelId');
+    if (!hotelId) {
+      toast.error(tErr('hotel.missing'));
+      router.replace('/auth/register');
+    }
+  }, [router, tErr]);
+
   const onError = (formErrors: any) => {
     toast.error(tErr('form.incomplete'));
   };
 
   const onSubmit: SubmitHandler<FormFields> = async (employeeData) => {
     const hotelData = JSON.parse(localStorage.getItem('hotelFormData') || '{}');
+    const hotelId = localStorage.getItem('registeredHotelId');
 
-
-    if (!hotelData || !hotelData.register) {
+    if (!hotelData?.register || !hotelId) {
       toast.error(tErr('hotel.missing'));
+      router.replace('/auth/register');
       return;
     }
 
-    // ✅ Normalize phone number
     employeeData.contact_number = `976${employeeData.contact_number.replace(/\s/g, '')}`;
-    const result = await registerHotelAndEmployeeAction(hotelData, employeeData);
+
+    const result = await registerEmployeeAction({
+      contact_person_name: employeeData.contact_person_name,
+      position: employeeData.position,
+      contact_number: employeeData.contact_number,
+      email: employeeData.email,
+      password: employeeData.password,
+      user_type: employeeData.user_type,
+      hotel: Number(hotelId),
+    });
+
     if (result.success) {
-      if (result.hotelId) {
-        saveRegistrationHotelNames(
-          result.hotelId,
-          {
-            property_name_mn: hotelData.PropertyName || '',
-            property_name_en: hotelData.PropertyName_en || '',
-          },
-          hotelData.register
-        );
-      }
+      saveRegistrationHotelNames(
+        Number(hotelId),
+        {
+          property_name_mn: hotelData.PropertyName || '',
+          property_name_en: hotelData.PropertyName_en || '',
+        },
+        hotelData.register
+      );
 
       toast.success(tMsg('register_success_redirect'));
 
@@ -133,6 +149,7 @@ export default function RegisterEmployee() {
         Object.keys(Cookies.get()).forEach((cookieName) => Cookies.remove(cookieName));
         localStorage.removeItem('hotelFormData');
         localStorage.removeItem('employeeFormData');
+        localStorage.removeItem('registeredHotelId');
         router.push('/auth/login');
       }, 1500);
     } else {

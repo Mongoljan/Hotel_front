@@ -163,6 +163,25 @@ export function YoutubeIcon({ className }: IconProps) {
   );
 }
 
+export function TiktokIcon({ className }: IconProps) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <rect x="1.25" y="1.25" width="17.5" height="17.5" rx="4" fill="#010101" />
+      <path
+        d="M13.5 5.5c.27 1.06.95 1.92 1.94 2.27.36.13.74.2 1.12.2v1.86a4.6 4.6 0 0 1-2.65-.85v3.86a3.55 3.55 0 1 1-3.55-3.55c.18 0 .36.01.53.04v1.9a1.69 1.69 0 1 0 1.18 1.61V5.5h1.43Z"
+        fill="#fff"
+      />
+    </svg>
+  );
+}
+
 export function LinkedinIcon({ className }: IconProps) {
   return (
     <svg

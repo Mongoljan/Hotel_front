@@ -6,6 +6,8 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { BreadcrumbHeader } from '@/components/breadcrumb-header';
 import { useAuth } from '@/hooks/useAuth';
 import { useHotelRegistrationCompleted } from '@/hooks/useHotelRegistrationCompleted';
+import { PAGE_CONTAINER_CLASS } from '@/lib/layout';
+import { cn } from '@/lib/utils';
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -25,7 +27,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       />
       <main className="flex min-w-0 w-full flex-1 flex-col bg-background">
         <BreadcrumbHeader />
-        <div className="flex min-w-0 w-full flex-1 flex-col rounded-t-2xl bg-background px-4 py-4 lg:px-6">
+        <div className={cn('flex min-w-0 w-full flex-1 flex-col rounded-t-2xl bg-background py-4', PAGE_CONTAINER_CLASS)}>
           {children}
         </div>
       </main>

@@ -98,7 +98,7 @@ export function HotelTopbar() {
       };
 
   return (
-    <TooltipProvider delayDuration={150}>
+    <TooltipProvider>
       <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex flex-col gap-4 px-4 py-4 md:px-8">
           <div className="flex flex-wrap items-start justify-between gap-4">

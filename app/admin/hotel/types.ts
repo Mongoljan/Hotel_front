@@ -28,10 +28,34 @@ export interface PropertyDetail {
   Additional_Information: number | null;
 }
 
+export interface AdditionalVideo {
+  id?: number;
+  video_url: string;
+  description?: string;
+  order?: number;
+}
+
 export interface AdditionalInformation {
   id: number;
   About: string;
   YoutubeUrl: string;
+  website_url?: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  youtube_url?: string | null;
+  tiktok_url?: string | null;
+  twitter_url?: string | null;
+  videos?: AdditionalVideo[];
+  property?: number;
+}
+
+export interface CancellationRule {
+  id?: number;
+  room_group: 'single' | 'multi';
+  days_before: number;
+  before_time_percentage: number | string;
+  after_time_percentage?: number | string | null;
+  order: number;
 }
 
 export interface PropertyPolicy {
@@ -55,12 +79,14 @@ export interface PropertyPolicy {
     id?: number;
     property: number;
     cancel_time: string;
-    single_before_time_percentage: string;
-    single_after_time_percentage: string;
-    multi_5days_before_percentage: string;
-    multi_3days_before_percentage: string;
-    multi_2days_before_percentage: string;
-    multi_1day_before_percentage: string;
+    rules?: CancellationRule[];
+    // Legacy flat fields (kept optional for backward compatibility)
+    single_before_time_percentage?: string;
+    single_after_time_percentage?: string;
+    multi_5days_before_percentage?: string;
+    multi_3days_before_percentage?: string;
+    multi_2days_before_percentage?: string;
+    multi_1day_before_percentage?: string;
     created_at?: string;
     updated_at?: string;
   } | null;
@@ -81,11 +107,13 @@ export interface PropertyPolicy {
     indoor_fee_type: 'hour' | 'day' | null;
     indoor_price: string | null;
   } | null;
+  total_extra_beds?: number;
   child_policy: {
     id?: number;
     allow_children: boolean;
     max_child_age: number | null;
     child_bed_available: 'yes' | 'no' | null;
+    free_breakfast_max_age?: number | null;
     allow_extra_bed: boolean;
     extra_bed_price: string | null;
   } | null;
@@ -112,6 +140,8 @@ export interface BasicInfo {
   group_name?: string;
   sales_room_limitation: boolean;
   languages?: number[];
+  total_floor?: number | null;
+  requires_floor_count?: boolean;
 }
 
 export interface PropertyBaseInfo {
@@ -149,4 +179,5 @@ export interface PropertyType {
   id: number;
   name_en: string;
   name_mn: string;
+  requires_floor_count?: boolean;
 }

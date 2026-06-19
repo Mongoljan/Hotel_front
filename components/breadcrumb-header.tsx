@@ -29,6 +29,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+import { PAGE_CONTAINER_CLASS } from '@/lib/layout';
 
 const routeI18nKeys: Record<string, string> = {
   '/admin': 'dashboard',
@@ -154,7 +155,7 @@ export function BreadcrumbHeader() {
   return (
     <>
       <header className="flex h-14 md:h-16 w-full shrink-0 items-center bg-card transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-14">
-        <div className="flex w-full items-center justify-between gap-4 px-4 py-3 lg:px-6">
+        <div className={cn('flex w-full items-center justify-between gap-4 py-3', PAGE_CONTAINER_CLASS)}>
           <div className="flex items-center gap-2 min-w-0">
             <SidebarTrigger className="-ml-1 shrink-0 md:hidden" />
             <Separator orientation="vertical" className="mr-2 h-5 hidden sm:block md:hidden" />

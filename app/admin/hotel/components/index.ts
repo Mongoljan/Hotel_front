@@ -12,3 +12,4 @@ export { EditLocationDialog } from './EditLocationDialog';
 export { EditImagesDialog } from './EditImagesDialog';
 export { EditSocialLinksSheet } from './EditSocialLinksSheet';
 export { SocialLinksSection } from './SocialLinksSection';
+export { FaqManager } from './FaqManager';

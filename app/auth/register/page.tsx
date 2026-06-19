@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { useCombinedData } from '@/app/hooks/useCombinedData';
 import RegistrationStepIndicator from './RegistrationStepIndicator';
 import { lookupEbarimt } from '@/utils/ebarimtLookup';
+import { registerHotelAction } from './registerHotelAction';
 
 
 interface PropertyType {
@@ -191,15 +192,27 @@ export default function RegisterPage() {
     };
   }, [clearLookupSlowTimer]);
 
-  const onSubmit: SubmitHandler<FormFields> = (data) => {
+  const onSubmit: SubmitHandler<FormFields> = async (data) => {
     const phoneRaw = data.phone.replace(/\s/g, '');
     const dataToSave = { ...data, phone: phoneRaw };
     localStorage.setItem('hotelFormData', JSON.stringify(dataToSave));
 
-    toast.success(tMsg('saved_next'));
-    setTimeout(() => {
+    const existingHotelId = localStorage.getItem('registeredHotelId');
+    if (existingHotelId) {
+      toast.success(tMsg('saved_next'));
       router.push('/auth/register/2');
-    }, 1000);
+      return;
+    }
+
+    const result = await registerHotelAction(dataToSave);
+    if (result.success) {
+      localStorage.setItem('registeredHotelId', String(result.hotelId));
+      toast.success(tMsg('saved_next'));
+      router.push('/auth/register/2');
+      return;
+    }
+
+    toast.error(result.error);
   };
 
   return (

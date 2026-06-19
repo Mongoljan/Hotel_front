@@ -1,25 +1,42 @@
 'use client';
 
 import { IconPencil, IconWorld } from '@tabler/icons-react';
-import { FacebookIcon, InstagramIcon, LinkedinIcon, XIcon, YoutubeIcon } from './SocialIcons';
+import { FacebookIcon, InstagramIcon, TiktokIcon, XIcon, YoutubeIcon } from './SocialIcons';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ApiNeededLabel } from '@/components/ApiNeededLabel';
-import { EditSocialLinksSheet } from './EditSocialLinksSheet';
+import { EditSocialLinksSheet, type SocialLinksDraft } from './EditSocialLinksSheet';
+import type { AdditionalInformation } from '../types';
 
-const SOCIAL_ICONS = [
-  { key: 'web', icon: IconWorld, className: 'text-muted-foreground' },
-  { key: 'facebook', icon: FacebookIcon, className: '' },
-  { key: 'instagram', icon: InstagramIcon, className: '' },
-  { key: 'youtube', icon: YoutubeIcon, className: '' },
-  { key: 'x', icon: XIcon, className: '' },
-  { key: 'linkedin', icon: LinkedinIcon, className: '' },
+const SOCIAL_ICONS: {
+  key: keyof SocialLinksDraft;
+  field: keyof AdditionalInformation;
+  icon: React.ComponentType<{ className?: string }>;
+  className?: string;
+}[] = [
+  { key: 'web', field: 'website_url', icon: IconWorld, className: 'text-muted-foreground' },
+  { key: 'facebook', field: 'facebook_url', icon: FacebookIcon },
+  { key: 'instagram', field: 'instagram_url', icon: InstagramIcon },
+  { key: 'youtube', field: 'youtube_url', icon: YoutubeIcon },
+  { key: 'tiktok', field: 'tiktok_url', icon: TiktokIcon },
+  { key: 'x', field: 'twitter_url', icon: XIcon },
 ];
 
-export function SocialLinksSection() {
+interface SocialLinksSectionProps {
+  additionalInfo: AdditionalInformation | null;
+  onSave: (links: {
+    website_url: string;
+    facebook_url: string;
+    instagram_url: string;
+    youtube_url: string;
+    tiktok_url: string;
+    twitter_url: string;
+  }) => Promise<boolean | undefined>;
+}
+
+export function SocialLinksSection({ additionalInfo, onSave }: SocialLinksSectionProps) {
   const t = useTranslations('SixStepInfo');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -29,7 +46,6 @@ export function SocialLinksSection() {
         <div className="flex items-center justify-between mb-3 gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-wrap">
             <h3 className="font-semibold text-sm shrink-0">{t('socialLinksTitle')}</h3>
-            <ApiNeededLabel />
           </div>
           <Button
             variant="outline"
@@ -42,19 +58,38 @@ export function SocialLinksSection() {
           </Button>
         </div>
         <div className="flex flex-wrap gap-2">
-          {SOCIAL_ICONS.map(({ key, icon: Icon, className }) => (
-            <div
-              key={key}
-              className="flex h-9 w-9 items-center justify-center rounded-full border bg-muted/40"
-              title={key}
-            >
-              <Icon className={cn('h-4 w-4', className)} />
-            </div>
-          ))}
+          {SOCIAL_ICONS.map(({ key, field, icon: Icon, className }) => {
+            const url = (additionalInfo?.[field] as string | null | undefined) || '';
+            const hasLink = url.trim() !== '';
+            const circle = (
+              <div
+                key={key}
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-full border bg-muted/40',
+                  hasLink ? 'opacity-100' : 'opacity-40'
+                )}
+                title={key}
+              >
+                <Icon className={cn('h-4 w-4', className)} />
+              </div>
+            );
+            return hasLink ? (
+              <a key={key} href={url} target="_blank" rel="noopener noreferrer">
+                {circle}
+              </a>
+            ) : (
+              circle
+            );
+          })}
         </div>
       </div>
 
-      <EditSocialLinksSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} />
+      <EditSocialLinksSheet
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        additionalInfo={additionalInfo}
+        onSave={onSave}
+      />
     </>
   );
 }

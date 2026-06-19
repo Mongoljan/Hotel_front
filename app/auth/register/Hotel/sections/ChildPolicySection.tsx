@@ -120,6 +120,47 @@ export default function ChildPolicySection({ form, t }: Props) {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="free_breakfast_max_age"
+              render={({ field }) => (
+                <FormItem>
+                  <PolicyFormRow
+                    label={
+                      <span className="flex items-center gap-1">
+                        {t('free_breakfast_max_age')}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-3.5 w-3.5 text-muted-foreground " />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-[250px]">{t('free_breakfast_max_age_helper')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </span>
+                    }
+                    alignRight
+                  >
+                    <FormControl className="bg-white">
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        min="0"
+                        max="18"
+                        step="1"
+                        className={POLICY_INPUT_CLASS}
+                        value={field.value ?? ''}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                      />
+                    </FormControl>
+                  </PolicyFormRow>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         )}
       </div>
@@ -129,6 +170,46 @@ export default function ChildPolicySection({ form, t }: Props) {
           <BedDouble className="h-4 w-4" />
           <PolicySubsectionTitle > <div className="text-[16px]">{t('extra_bed_subtitle')}</div></PolicySubsectionTitle>
         </div>
+
+        <FormField
+          control={form.control}
+          name="total_extra_beds"
+          render={({ field }) => (
+            <FormItem>
+              <PolicyFormRow
+                label={
+                  <span className="flex items-center gap-1">
+                    {t('total_extra_beds')}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground " />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-[250px]">{t('total_extra_beds_helper')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </span>
+                }
+                alignRight
+              >
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    min="0"
+                    step="1"
+                    className={POLICY_INPUT_CLASS}
+                    value={field.value ?? 0}
+                    onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
+                  />
+                </FormControl>
+              </PolicyFormRow>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}

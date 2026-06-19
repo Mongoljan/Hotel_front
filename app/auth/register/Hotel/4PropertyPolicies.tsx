@@ -86,8 +86,10 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       allow_children: false,
       max_child_age: undefined,
       child_bed_available: undefined,
+      free_breakfast_max_age: undefined,
       allow_extra_bed: false,
       extra_bed_price: null,
+      total_extra_beds: 0,
     },
   });
 
@@ -142,8 +144,11 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
             allow_children: initialData.child_policy?.allow_children || false,
             max_child_age: initialData.child_policy?.max_child_age || undefined,
             child_bed_available: initialData.child_policy?.child_bed_available || undefined,
+            free_breakfast_max_age:
+              initialData.child_policy?.free_breakfast_max_age ?? undefined,
             allow_extra_bed: initialData.child_policy?.allow_extra_bed || false,
             extra_bed_price: normalizePrice(initialData.child_policy?.extra_bed_price),
+            total_extra_beds: initialData.total_extra_beds ?? 0,
           };
 
           setInitialValues(normalizedValues);
@@ -189,6 +194,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
       check_out_until: stripSeconds(data.check_out_until || data.check_out_from),
       pet_policy: data.pet_policy,
       min_guest_age: data.min_guest_age,
+      total_extra_beds: data.total_extra_beds ?? 0,
       languages: data.languages,
       accepted_card_ids: data.accepted_card_ids ?? [],
       breakfast_policy: {
@@ -210,6 +216,10 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
         allow_children: data.allow_children,
         max_child_age: data.allow_children ? data.max_child_age : 0,
         child_bed_available: data.allow_children ? data.child_bed_available : 'no',
+        free_breakfast_max_age:
+          data.free_breakfast_max_age !== undefined && data.free_breakfast_max_age !== null
+            ? data.free_breakfast_max_age
+            : null,
         allow_extra_bed: data.allow_extra_bed || false,
         extra_bed_price: data.allow_extra_bed ? data.extra_bed_price : null,
       },

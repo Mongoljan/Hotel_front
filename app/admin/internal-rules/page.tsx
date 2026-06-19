@@ -94,8 +94,10 @@ const DEFAULT_VALUES: PolicyFormFields = {
   allow_children: false,
   max_child_age: undefined,
   child_bed_available: undefined,
+  free_breakfast_max_age: undefined,
   allow_extra_bed: false,
   extra_bed_price: null,
+  total_extra_beds: 0,
 };
 
 // ---- small read-only display helpers ---------------------------------------
@@ -522,6 +524,10 @@ function ChildrenSection({ policy, onEdit }: { policy: PropertyPolicy; onEdit: (
                 label="Хүүхдийн ор"
                 value={cp?.child_bed_available === 'yes' ? 'Байгаа' : 'Байхгүй'}
               />
+              <InfoRow
+                label="Үнэгүй өглөөний цайны дээд нас"
+                value={cp?.free_breakfast_max_age != null ? `${cp.free_breakfast_max_age}` : '—'}
+              />
             </>
           )}
         </div>
@@ -532,6 +538,10 @@ function ChildrenSection({ policy, onEdit }: { policy: PropertyPolicy; onEdit: (
       <div className="space-y-4">
         <SectionHeader title="Нэмэлт ор" />
         <div className="grid grid-cols-2 gap-6">
+          <InfoRow
+            label="Нийт нэмэлт орны тоо"
+            value={`${policy.total_extra_beds ?? 0}`}
+          />
           <InfoRow
             label="Нэмэлт ор тавих боломжтой эсэх"
             value={cp?.allow_extra_bed ? 'Тийм' : 'Үгүй'}

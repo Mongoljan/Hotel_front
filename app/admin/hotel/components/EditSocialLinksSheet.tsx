@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ComponentType } from 'react';
 import { IconLink, IconWorld } from '@tabler/icons-react';
-import { FacebookIcon, InstagramIcon, LinkedinIcon, XIcon, YoutubeIcon } from './SocialIcons';
+import { FacebookIcon, InstagramIcon, TiktokIcon, XIcon, YoutubeIcon } from './SocialIcons';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -17,21 +17,21 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { ApiNeededLabel } from '@/components/ApiNeededLabel';
+import type { AdditionalInformation } from '../types';
 
 const SHEET_WIDTH = 480;
 
-type SocialLinkKey = 'web' | 'facebook' | 'instagram' | 'youtube' | 'x' | 'linkedin';
+export type SocialLinkKey = 'web' | 'facebook' | 'instagram' | 'youtube' | 'tiktok' | 'x';
 
-type SocialLinksDraft = Record<SocialLinkKey, string>;
+export type SocialLinksDraft = Record<SocialLinkKey, string>;
 
 const EMPTY_LINKS: SocialLinksDraft = {
   web: '',
   facebook: '',
   instagram: '',
   youtube: '',
+  tiktok: '',
   x: '',
-  linkedin: '',
 };
 
 const LINK_FIELDS: {
@@ -44,28 +44,62 @@ const LINK_FIELDS: {
   { key: 'facebook', labelKey: 'socialFacebookLabel', icon: FacebookIcon },
   { key: 'instagram', labelKey: 'socialInstagramLabel', icon: InstagramIcon },
   { key: 'youtube', labelKey: 'socialYoutubeLabel', icon: YoutubeIcon },
+  { key: 'tiktok', labelKey: 'socialTiktokLabel', icon: TiktokIcon },
   { key: 'x', labelKey: 'socialXLabel', icon: XIcon },
-  { key: 'linkedin', labelKey: 'socialLinkedinLabel', icon: LinkedinIcon },
 ];
 
 interface EditSocialLinksSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  additionalInfo: AdditionalInformation | null;
+  onSave: (links: {
+    website_url: string;
+    facebook_url: string;
+    instagram_url: string;
+    youtube_url: string;
+    tiktok_url: string;
+    twitter_url: string;
+  }) => Promise<boolean | undefined>;
 }
 
-export function EditSocialLinksSheet({ open, onOpenChange }: EditSocialLinksSheetProps) {
+export function EditSocialLinksSheet({ open, onOpenChange, additionalInfo, onSave }: EditSocialLinksSheetProps) {
   const t = useTranslations('SixStepInfo');
   const [draft, setDraft] = useState<SocialLinksDraft>(EMPTY_LINKS);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setDraft(EMPTY_LINKS);
+      setDraft({
+        web: additionalInfo?.website_url || '',
+        facebook: additionalInfo?.facebook_url || '',
+        instagram: additionalInfo?.instagram_url || '',
+        youtube: additionalInfo?.youtube_url || '',
+        tiktok: additionalInfo?.tiktok_url || '',
+        x: additionalInfo?.twitter_url || '',
+      });
     }
-  }, [open]);
+  }, [open, additionalInfo]);
 
-  const handleSave = () => {
-    toast.info(t('apiNeededLabel'));
-    onOpenChange(false);
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const ok = await onSave({
+        website_url: draft.web,
+        facebook_url: draft.facebook,
+        instagram_url: draft.instagram,
+        youtube_url: draft.youtube,
+        tiktok_url: draft.tiktok,
+        twitter_url: draft.x,
+      });
+      if (ok) {
+        toast.success(t('save'));
+        onOpenChange(false);
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Алдаа гарлаа');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -81,7 +115,6 @@ export function EditSocialLinksSheet({ open, onOpenChange }: EditSocialLinksShee
             <SheetTitle className="text-sm font-medium leading-snug text-foreground">
               {t('socialLinksSheetTitle')}
             </SheetTitle>
-            <ApiNeededLabel />
           </div>
           <p className="text-sm text-muted-foreground leading-snug pr-2">{t('socialLinksSheetIntro')}</p>
         </SheetHeader>
@@ -110,11 +143,11 @@ export function EditSocialLinksSheet({ open, onOpenChange }: EditSocialLinksShee
         </div>
 
         <SheetFooter className="border-t px-5 py-4 flex-row gap-3 sm:justify-end">
-          <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => onOpenChange(false)} disabled={isSaving}>
             {t('close')}
           </Button>
-          <Button className="flex-1 sm:flex-none" onClick={handleSave}>
-            {t('save')}
+          <Button className="flex-1 sm:flex-none" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? t('saving') : t('save')}
           </Button>
         </SheetFooter>
       </SheetContent>

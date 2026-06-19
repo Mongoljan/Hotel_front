@@ -9,7 +9,7 @@ import {
 
 export function AutoFillInfo({ text }: { text: string }) {
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <button

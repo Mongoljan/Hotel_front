@@ -86,6 +86,10 @@ function formatStep1FormData(
     group_name: (step1Data.group_name as string) || '',
     start_date: (step1Data.start_date as string) || '',
     sales_room_limitation: Boolean(step1Data.sales_room_limitation),
+    total_floor:
+      step1Data.total_floor !== null && step1Data.total_floor !== undefined
+        ? String(step1Data.total_floor)
+        : '',
   } as FormFields;
 }
 
@@ -99,6 +103,7 @@ const EMPTY_STEP1_DEFAULTS: FormFields = {
   total_hotel_rooms: '',
   available_rooms: '',
   sales_room_limitation: false,
+  total_floor: '',
 };
 
 interface RatingType { id: number; rating: string }
@@ -110,12 +115,32 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
   const { user } = useAuth();
   const [ratings, setRatings] = useState<RatingType[]>([]);
   const [defaultValues, setDefaultValues] = useState<FormFields | null>(null);
+  const [requiresFloor, setRequiresFloor] = useState<boolean>(false);
 
   const { data: combinedHook } = useCombinedData();
   useEffect(() => {
     if (!combinedHook) return;
     setRatings(combinedHook.ratings || []);
   }, [combinedHook]);
+
+  // Determine whether this property's type requires a floor count.
+  useEffect(() => {
+    const determineFloorRequirement = async () => {
+      if (!user?.hotel || !combinedHook?.property_types) return;
+      try {
+        const res = await fetch(`${PROPERTIES_API}/${user.hotel}/`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const type = combinedHook.property_types.find((p) => p.id === data.property_type);
+        if (type && typeof type.requires_floor_count === 'boolean') {
+          setRequiresFloor(type.requires_floor_count);
+        }
+      } catch {
+        // Non-fatal: fall back to the requires_floor_count returned by basic-info GET.
+      }
+    };
+    determineFloorRequirement();
+  }, [user?.hotel, combinedHook]);
 
   useEffect(() => {
     const initDefaults = async () => {
@@ -143,6 +168,9 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         const res = await fetch(`${API_URL}?property=${user.hotel}`, { cache: 'no-store' });
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
+          if (typeof data[0].requires_floor_count === 'boolean') {
+            setRequiresFloor(data[0].requires_floor_count);
+          }
           const formattedData = formatStep1FormData(data[0], registrationNames);
           UserStorage.setItem('propertyData', JSON.stringify({
             step1: formattedData,
@@ -189,6 +217,17 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
       return;
     }
 
+    if (requiresFloor) {
+      const floorValue = Number(data.total_floor);
+      if (!data.total_floor || isNaN(floorValue) || floorValue < 1) {
+        form.setError('total_floor', {
+          type: 'manual',
+          message: t('floor_required'),
+        });
+        return;
+      }
+    }
+
     if (defaultValues) {
       const hasChanged = JSON.stringify(data) !== JSON.stringify(defaultValues);
       if (!hasChanged) {
@@ -206,6 +245,7 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
         ...data,
         group_name: data.part_of_group ? data.group_name : '',
         sales_room_limitation: false,
+        total_floor: requiresFloor ? Number(data.total_floor) : null,
         property: user.hotel,
       };
 
@@ -394,6 +434,37 @@ export default function RegisterHotel1({ onNext, onBack }: Props) {
                   />
                 </div>
               </div>
+
+              {requiresFloor && (
+                <FormField
+                  control={form.control}
+                  name="total_floor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('floor_label')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          placeholder={t('floor_placeholder')}
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            form.clearErrors('total_floor');
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === '.' || e.key === '-' || e.key === 'e') {
+                              e.preventDefault();
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
