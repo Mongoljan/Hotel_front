@@ -351,7 +351,7 @@ export default function RegisterEmployee() {
                       </svg>
                     )}
                   </div>
-                  <span className="text-sm text-gray-500">{t('passwordMinCharsRule')}</span>
+                  <span className="text-xs text-gray-500">{t('passwordMinCharsRule')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div
@@ -369,13 +369,13 @@ export default function RegisterEmployee() {
                       </svg>
                     )}
                   </div>
-                  <span className="text-sm text-gray-500">{t('passwordComplexityRule')}</span>
+                  <span className="text-xs text-gray-500">{t('passwordComplexityRule')}</span>
                 </div>
-                {watchedConfirm.length > 0 && (
+              {watchedConfirm.length > 0 && (
                   <div className="flex items-center gap-2">
                     <div
                       className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
-                        passwordsMatch ? 'border-primary bg-primary' : 'border-red-400 bg-red-400'
+                        passwordsMatch ? 'border-primary bg-primary' : 'border-gray-300'
                       }`}
                     >
                       {passwordsMatch ? (
@@ -396,15 +396,15 @@ export default function RegisterEmployee() {
                         </svg>
                       )}
                     </div>
-                    <span className={`text-sm ${passwordsMatch ? 'text-gray-500' : 'text-red-500'}`}>
+                    <span className="text-xs text-gray-500">
                       {passwordsMatch ? t('passwordMatchOk') : t('passwordMismatch')}
                     </span>
                   </div>
                 )}
               </div>
 
-                  <div className="flex gap-4 ">
-                    <Button variant="outline" className="w-full rounded-lg h-10" asChild>
+                  <div className="flex gap-20 pt-8">
+                    <Button variant="outline" className="w-full rounded-lg h-11" asChild>
                       <Link href="/auth/register" className="flex items-center">
                         <ArrowLeft className="mr-2 h-4 w-4" /> {t('back')}
                       </Link>
@@ -413,7 +413,7 @@ export default function RegisterEmployee() {
                     <Button
                       type="submit"
                       disabled={form.formState.isSubmitting}
-                      className="w-full rounded-lg h-10"
+                      className="w-full rounded-lg h-11"
                     >
                       <div className="flex items-center">
                         {t('next')} <ArrowRight className="ml-2 h-4 w-4" />

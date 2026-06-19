@@ -19,7 +19,11 @@ import { Label } from "@/components/ui/label";
 import { useCombinedData } from '@/app/hooks/useCombinedData';
 import RegistrationStepIndicator from './RegistrationStepIndicator';
 import { lookupEbarimt } from '@/utils/ebarimtLookup';
+<<<<<<< HEAD
 import { registerHotelAction } from './registerHotelAction';
+=======
+import { ChevronDown } from 'lucide-react';
+>>>>>>> bc76cf9aabc36572bbe2f8c6b6ea0d860a353574
 
 
 interface PropertyType {
@@ -330,45 +334,50 @@ export default function RegisterPage() {
                 <div className="grid gap-5 md:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="propertyType" className="text-cyrillic">{t("hotel_type")} <span className="text-destructive">*</span></Label>
-                    <select
-                      id="propertyType"
-                      {...register('property_type')}
-                      className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:placeholder:text-gray-500 ${propertyTypeValue ? "text-gray-900 dark:text-gray-100" : "text-gray-400"} ${errors.property_type ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                    >
-                      <option value="" className="text-gray-400 dark:text-gray-500">{t("select")}</option>
-                      {propertyTypes.map((type) => (
-                        <option
-                          key={type.id}
-                          value={type.id}
-                          className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
-                        >
-                          {locale === 'en' ? type.name_en : type.name_mn}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        id="propertyType"
+                        {...register('property_type')}
+                        className={`h-auto w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:placeholder:text-gray-500 ${propertyTypeValue ? "text-gray-900 dark:text-gray-100" : "text-gray-400"} ${errors.property_type ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      >
+                        <option value="" className="text-gray-400 dark:text-gray-500">{t("select")}</option>
+                        {propertyTypes.map((type) => (
+                          <option
+                            key={type.id}
+                            value={type.id}
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                          >
+                            {locale === 'en' ? type.name_en : type.name_mn}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    </div>
 
                     {errors.property_type && <p className="text-xs text-destructive">{errors.property_type.message}</p>}
                   </div>
 
                   <div className="space-y-1.5">
                     <Label htmlFor="ownershipType" className="text-cyrillic">{t("ownership_type")} <span className="text-destructive">*</span></Label>
-                    <select
-                      id="ownershipType"
-                      {...register('ownership_type')}
-                      className={`h-auto w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:placeholder:text-gray-500 ${ownershipTypeValue ? "text-gray-900 dark:text-gray-100" : "text-gray-400"} ${errors.ownership_type ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                    >
-                      <option value="" className="text-gray-400 dark:text-gray-500">{t("select")}</option>
-                      {ownershipTypes.map((type) => (
-
-                        <option
-                          key={type.id}
-                          value={type.id}
-                          className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
-                        >
-                          {locale === 'en' ? type.name_en : type.name_mn}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        id="ownershipType"
+                        {...register('ownership_type')}
+                        className={`h-auto w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-10 text-sm shadow-none outline-none transition placeholder:text-gray-400 focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:placeholder:text-gray-500 ${ownershipTypeValue ? "text-gray-900 dark:text-gray-100" : "text-gray-400"} ${errors.ownership_type ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      >
+                        <option value="" className="text-gray-400 dark:text-gray-500">{t("select")}</option>
+                        {ownershipTypes.map((type) => (
+                          <option
+                            key={type.id}
+                            value={type.id}
+                            className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                          >
+                            {locale === 'en' ? type.name_en : type.name_mn}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    </div>
 
                     {errors.ownership_type && <p className="text-xs text-destructive">{errors.ownership_type.message}</p>}
                   </div>
@@ -435,8 +444,8 @@ export default function RegisterPage() {
                   {errors.mail && <p className="text-xs text-destructive">{errors.mail.message}</p>}
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                  <Button variant="outline" className="w-full h-10 rounded-lg" asChild>
+                <div className="flex gap-20 pt-8">
+                  <Button variant="outline" className="w-full h-11 rounded-lg" asChild>
                     <Link href="/auth/login" className="flex items-center">
                       <FaArrowLeft className="mr-2 h-4 w-4" /> {t("back")}
                     </Link>
@@ -445,7 +454,7 @@ export default function RegisterPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full h-10 rounded-lg"
+                    className="w-full h-11 rounded-lg"
                   >
                     <div className="flex items-center">
                       {t("next")} <FaArrowRight className="ml-2 h-4 w-4" />
