@@ -97,7 +97,7 @@ export function normalizePolicyToForm(policy: any): PolicyFormFields {
 type CancellationRuleForm = {
   days_before: number;
   before_time_percentage: string;
-  after_time_percentage: string;
+  after_time_percentage?: string | null;
 };
 
 function apiRuleToForm(rule: any): CancellationRuleForm {

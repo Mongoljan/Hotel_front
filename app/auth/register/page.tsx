@@ -19,11 +19,8 @@ import { Label } from "@/components/ui/label";
 import { useCombinedData } from '@/app/hooks/useCombinedData';
 import RegistrationStepIndicator from './RegistrationStepIndicator';
 import { lookupEbarimt } from '@/utils/ebarimtLookup';
-<<<<<<< HEAD
 import { registerHotelAction } from './registerHotelAction';
-=======
 import { ChevronDown } from 'lucide-react';
->>>>>>> bc76cf9aabc36572bbe2f8c6b6ea0d860a353574
 
 
 interface PropertyType {
