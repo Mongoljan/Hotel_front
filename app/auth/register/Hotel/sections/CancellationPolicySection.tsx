@@ -208,8 +208,7 @@ export default function CancellationPolicySection({ form, t }: Props) {
   return (
     <div className="space-y-8">
       <p className="text-sm leading-relaxed text-muted-foreground">{t('cancellation_description')}</p>
-
-      {/* Cancel time cutoff */}
+      
       <div className="rounded-lg bg-gray-75 p-3 py-4">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
           <span className="text-muted-foreground">{t('rule_applies_prefix')}</span>

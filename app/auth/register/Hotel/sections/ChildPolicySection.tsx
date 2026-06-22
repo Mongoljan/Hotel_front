@@ -5,6 +5,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { Baby, BedDouble, Info } from 'lucide-react';
 import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { YesNoToggle } from "@/components/ui/yes-no-toggle";
 import { NumericFormat } from 'react-number-format';
 import { z } from 'zod';
@@ -14,6 +15,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 type FormFields = z.infer<typeof schemaHotelSteps3>;
 
+const MAX_CHILD_AGE_LIMIT = 18;
+
+function buildAgeOptions(max: number): number[] {
+  return Array.from({ length: max + 1 }, (_, i) => i);
+}
+
 type Props = {
   form: UseFormReturn<FormFields>;
   t: (key: string) => string;
@@ -22,6 +29,14 @@ type Props = {
 export default function ChildPolicySection({ form, t }: Props) {
   const allowChildren = form.watch('allow_children');
   const allowExtraBed = form.watch('allow_extra_bed');
+  const maxChildAge = form.watch('max_child_age');
+  const freeBreakfastMaxAge = form.watch('free_breakfast_max_age');
+
+  const maxChildAgeOptions = buildAgeOptions(MAX_CHILD_AGE_LIMIT);
+  const freeBreakfastAgeOptions =
+    maxChildAge !== undefined && maxChildAge !== null
+      ? buildAgeOptions(maxChildAge)
+      : [];
 
   React.useEffect(() => {
     if (allowChildren) {
@@ -34,6 +49,18 @@ export default function ChildPolicySection({ form, t }: Props) {
       form.clearErrors(['extra_bed_price']);
     }
   }, [allowExtraBed, form]);
+
+  React.useEffect(() => {
+    if (
+      maxChildAge !== undefined &&
+      maxChildAge !== null &&
+      freeBreakfastMaxAge !== undefined &&
+      freeBreakfastMaxAge !== null &&
+      freeBreakfastMaxAge > maxChildAge
+    ) {
+      form.setValue('free_breakfast_max_age', maxChildAge);
+    }
+  }, [maxChildAge, freeBreakfastMaxAge, form]);
 
   return (
     <div className="space-y-5">
@@ -85,16 +112,21 @@ export default function ChildPolicySection({ form, t }: Props) {
                     alignRight
                   >
                     <FormControl className="bg-white">
-                      <Input
-                        type="number"
-                        placeholder="17"
-                        min="0"
-                        max="18"
-                        step="1"
-                        className={POLICY_INPUT_CLASS}
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      />
+                      <Select
+                        value={field.value !== undefined && field.value !== null ? String(field.value) : undefined}
+                        onValueChange={(value) => field.onChange(Number(value))}
+                      >
+                        <SelectTrigger className={`${POLICY_INPUT_CLASS} bg-white`}>
+                          <SelectValue placeholder={<span className="text-muted-foreground">{t('select_placeholder')}</span>} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[260px]">
+                          {maxChildAgeOptions.map((age) => (
+                            <SelectItem key={age} value={String(age)}>
+                              {age}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                   </PolicyFormRow>
                   <FormMessage />
@@ -145,16 +177,22 @@ export default function ChildPolicySection({ form, t }: Props) {
                     alignRight
                   >
                     <FormControl className="bg-white">
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        min="0"
-                        max="18"
-                        step="1"
-                        className={POLICY_INPUT_CLASS}
-                        value={field.value ?? ''}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
-                      />
+                      <Select
+                        value={field.value !== undefined && field.value !== null ? String(field.value) : undefined}
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        disabled={maxChildAge === undefined || maxChildAge === null}
+                      >
+                        <SelectTrigger className={`${POLICY_INPUT_CLASS} bg-white`}>
+                          <SelectValue placeholder={<span className="text-muted-foreground">{t('select_placeholder')}</span>} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[260px]">
+                          {freeBreakfastAgeOptions.map((age) => (
+                            <SelectItem key={age} value={String(age)}>
+                              {age}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                   </PolicyFormRow>
                   <FormMessage />

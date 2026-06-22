@@ -227,6 +227,7 @@ export function BreadcrumbHeader() {
                           : 'bg-muted/50 text-muted-foreground'
                     )}
                   >
+                    
                     <Clock className="h-4 w-4" />
                     <span className="hidden sm:inline tabular-nums">{formatTime(sessionTimeRemaining)}</span>
                     <span className="sm:hidden tabular-nums">{Math.floor(sessionTimeRemaining / 60)}м</span>
