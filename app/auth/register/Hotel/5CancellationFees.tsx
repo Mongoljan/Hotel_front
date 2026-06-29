@@ -32,7 +32,7 @@ export default function RegisterHotel5Cancellation({ onNext, onBack }: Props) {
   const [initialValues, setInitialValues] = React.useState<FormFields | null>(null);
 
   const form = useForm<FormFields>({
-    resolver: zodResolver(schemaHotelStepsCancellation),
+    resolver: zodResolver(schemaHotelStepsCancellation) as any,
     mode: 'onBlur',
     reValidateMode: 'onChange',
     defaultValues: {

@@ -181,7 +181,7 @@ export default function WorkersPage() {
       const validationResult = schema.safeParse(validationData);
       
       if (!validationResult.success) {
-        const firstError = validationResult.error.errors[0];
+        const firstError = validationResult.error.issues[0];
         setError(firstError.message);
         toast.error(firstError.message);
         setIsSaving(false);

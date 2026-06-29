@@ -219,8 +219,8 @@ export default function PriceSettingModal({
     const validateResult = schemaPriceSetting.safeParse(validationData);
     console.log('Validation result:', validateResult);
     if (!validateResult.success) {
-      const firstError = validateResult.error.errors[0];
-      console.log('All errors:', validateResult.error.errors);
+      const firstError = validateResult.error.issues[0];
+      console.log('All errors:', validateResult.error.issues);
       toast.error(firstError.message);
       return;
     }

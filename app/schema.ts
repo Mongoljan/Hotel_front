@@ -378,7 +378,7 @@ export const schemaHotelSteps1 = z
       }),
 
     start_date: z.string().refine((date) => !isNaN(Date.parse(date)), {
-      message: "Эхлэх огноо буруу байна.",
+      message: "Огноо сонгоогүй байна.",
     }),
 
     star_rating: z
@@ -415,7 +415,7 @@ export const schemaHotelSteps1 = z
   .superRefine((data, ctx) => {
     if (data.part_of_group && (!data.group_name || data.group_name.trim() === '')) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: "Сүлжээ эсвэл группын нэрээ оруулна уу.",
         path: ["group_name"],
       });
@@ -464,7 +464,7 @@ export const schemaHotelSteps3 = z.object({
   languages: z
     .array(z.coerce.number())
     .min(1, { message: "Хамгийн багадаа нэг хэл сонгоно уу" }),
-  accepted_card_ids: z.array(z.coerce.number()).default([]),
+  accepted_card_ids: z.array(z.coerce.number()).min(1, { message: "Хамгийн багадаа нэг төлбөрийн хэрэгсэл сонгоно уу" }),
 
   // Breakfast policy
   breakfast_status: z.enum(['no', 'free', 'paid']),
@@ -936,10 +936,10 @@ export const schemaPriceSetting = z.object({
   start_date: z.string().min(1, { message: "Эхлэх огноо оруулна уу" }),
   end_date: z.string().min(1, { message: "Дуусах огноо оруулна уу" }),
   adjustment_type: z.enum(['ADD', 'SUB'], { 
-    errorMap: () => ({ message: "Үнийн өөрчлөлтийн төрлийг сонгоно уу" })
+    error: () => "Үнийн өөрчлөлтийн төрлийг сонгоно уу"
   }),
   value_type: z.enum(['PERCENT', 'AMOUNT'], { 
-    errorMap: () => ({ message: "Утгын төрлийг сонгоно уу" })
+    error: () => "Утгын төрлийг сонгоно уу"
   }),
   value: z.string()
     .min(1, { message: "Утга оруулна уу" })

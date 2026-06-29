@@ -277,7 +277,7 @@ export default function UsersPage() {
     const schema = editingUser ? schemaEmployeeEdit : schemaEmployee;
     const validateResult = schema.safeParse(formData);
     if (!validateResult.success) {
-      const firstError = validateResult.error.errors[0];
+      const firstError = validateResult.error.issues[0];
       toast.error(firstError.message);
       return;
     }

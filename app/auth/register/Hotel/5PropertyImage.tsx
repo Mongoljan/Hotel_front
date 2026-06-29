@@ -74,7 +74,7 @@ export default function RegisterHotel5({ onNext, onBack }: Props) {
   }, []);
 
   const form = useForm<FormFields>({
-    resolver: zodResolver(schemaHotelSteps5),
+    resolver: zodResolver(schemaHotelSteps5) as any,
     mode: 'onChange',
     defaultValues,
   });

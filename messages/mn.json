@@ -565,7 +565,7 @@
 },
 
   "RegistrationSteps": {
-    "hotelInfo": "Зочид буудлын мэдээлэл",
+    "hotelInfo": "Компанийн мэдээлэл",
     "employeeInfo": "Ажилтны мэдээлэл",
     "basicInfo": "Буудлын үндсэн мэдээлэл",
     "confirmAddress": "Байршил баталгаажуулах",

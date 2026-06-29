@@ -40,7 +40,7 @@ export default function RegisterHotel2({ onNext, onBack }: { onNext: () => void;
   const [initialValues, setInitialValues] = useState<FormFields | null>(null);
 
   const form = useForm<FormFields>({
-    resolver: zodResolver(schemaHotelSteps2),
+    resolver: zodResolver(schemaHotelSteps2) as any,
     mode: 'onChange',
     defaultValues: {
       province_city: '',

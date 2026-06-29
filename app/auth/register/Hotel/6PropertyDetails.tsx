@@ -48,7 +48,7 @@ export default function RegisterHotel6({ onNext, onBack }: Props) {
   const [initialValues, setInitialValues] = useState<FormFields | null>(null);
 
   const form = useForm<FormFields>({
-    resolver: zodResolver(schemaHotelSteps6(t('select_facility_error'))),
+    resolver: zodResolver(schemaHotelSteps6(t('select_facility_error'))) as any,
     mode: 'onChange',
     defaultValues: {
       general_facilities: [],

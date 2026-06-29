@@ -83,7 +83,7 @@ export default function RegisterPage() {
     control,
     formState: { errors, isSubmitting },
   } = useForm<FormFields>({
-    resolver: zodResolver(schemaHotelRegistration2),
+    resolver: zodResolver(schemaHotelRegistration2) as any,
     mode: 'onChange',
     defaultValues: {
       register: '',

@@ -232,6 +232,7 @@ export default function AdminDashboardClient({ hotelName }: Props) {
                 ) : undefined
               }))}
               loading={loading}
+              showToolbar
               slots={{ toolbar: GridToolbar }}
               getRowId={(row) => row.owner_pk}
               sx={{

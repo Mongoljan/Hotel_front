@@ -401,10 +401,7 @@ export default function SixStepInfo({ proceed, setProceed }: ProceedProps) {
 
 
   const handleEditBasicInfo = () => {
-    const ratingId = basicInfo?.star_rating
-      ? ratings.find((r) => parseInt(r.rating) === basicInfo.star_rating)?.id?.toString() ||
-        String(basicInfo.star_rating)
-      : '';
+    const ratingId = basicInfo?.star_rating ? String(basicInfo.star_rating) : '';
 
     setEditBasicInfo({
       property_name_mn: basicInfo?.property_name_mn || propertyBaseInfo?.PropertyName || '',

@@ -60,7 +60,7 @@ export default function RegisterHotel4({ onNext, onBack }: Props) {
   }, [combinedData]);
 
   const form = useForm<FormFields>({
-    resolver: zodResolver(schemaHotelSteps3),
+    resolver: zodResolver(schemaHotelSteps3) as any,
     mode: 'onBlur',
     reValidateMode: 'onChange',
     defaultValues: {

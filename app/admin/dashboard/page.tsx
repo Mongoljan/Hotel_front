@@ -309,7 +309,7 @@ export default function DashboardPage() {
                   ticks={[0, 200, 400, 600, 800, 1000]}
                 />
                 <Tooltip 
-                  formatter={(value: number) => [value, 'Зочид']}
+                  formatter={(value) => [value as number, 'Зочид']}
                   labelFormatter={(label) => `Өдөр: ${label}`}
                 />
                 <Bar

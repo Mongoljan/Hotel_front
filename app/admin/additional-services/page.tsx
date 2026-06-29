@@ -194,7 +194,7 @@ export default function AdditionalServicesPage() {
     // Validate with Zod
     const validationResult = schemaServiceType.safeParse({ name: typeName });
     if (!validationResult.success) {
-      toast.error(validationResult.error.errors[0].message);
+      toast.error(validationResult.error.issues[0].message);
       return;
     }
 
@@ -309,7 +309,7 @@ export default function AdditionalServicesPage() {
     });
 
     if (!validationResult.success) {
-      toast.error(validationResult.error.errors[0].message);
+      toast.error(validationResult.error.issues[0].message);
       return;
     }
 

@@ -4,8 +4,8 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin();
 
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true
+  turbopack: {
+    root: process.cwd()
   },
   images: {
     // Cache optimized images for 31 days (Vercel recommended minimum).
