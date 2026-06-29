@@ -50,6 +50,7 @@ import ChildPolicySection from '@/app/auth/register/Hotel/sections/ChildPolicySe
 import GeneralPolicySection from '@/app/auth/register/Hotel/sections/GeneralPolicySection';
 import { useCombinedData } from '@/app/hooks/useCombinedData';
 import type { AcceptedCardType } from '@/app/auth/register/Hotel/sections/AcceptedCardsSection';
+import type { LanguageOption } from '@/components/LanguageMultiSelect';
 
 const API_URL = 'https://dev.kacc.mn/api/property-policies/';
 
@@ -304,7 +305,12 @@ export default function InternalRulesPage() {
               <ChildrenSection policy={propertyPolicy} onEdit={() => openEditDialog('children')} />
             )}
             {activeMenuItem === 'general' && (
-              <GeneralSection policy={propertyPolicy} onEdit={() => openEditDialog('general')} />
+              <GeneralSection
+                policy={propertyPolicy}
+                onEdit={() => openEditDialog('general')}
+                languages={languages}
+                locale={locale}
+              />
             )}
           </CardContent>
         </Card>
@@ -385,17 +391,35 @@ function TimeSection({ policy, onEdit }: { policy: PropertyPolicy; onEdit: () =>
   );
 }
 
-function GeneralSection({ policy, onEdit }: { policy: PropertyPolicy; onEdit: () => void }) {
+function GeneralSection({
+  policy,
+  onEdit,
+  languages,
+  locale,
+}: {
+  policy: PropertyPolicy;
+  onEdit: () => void;
+  languages: LanguageOption[];
+  locale: string;
+}) {
+  const languageLabels =
+    Array.isArray(policy.languages) && policy.languages.length > 0
+      ? policy.languages
+          .map((langId) => {
+            const match = languages.find((l) => String(l.id) === String(langId));
+            if (!match) return String(langId);
+            return locale === 'en' && match.languages_name_en
+              ? match.languages_name_en
+              : match.languages_name_mn;
+          })
+          .join(', ')
+      : '—';
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <SectionHeader icon={<IconLanguage className="h-4 w-4" />} title="Зочдод үйлчилгээ үзүүлэх хэлүүд" onEdit={onEdit} />
-        <InfoRow
-          label="Хэлнүүд"
-          value={Array.isArray(policy.languages) && policy.languages.length > 0
-            ? policy.languages.join(', ')
-            : '—'}
-        />
+        <InfoRow label="Хэлнүүд" value={languageLabels} />
       </div>
 
       <Separator />
